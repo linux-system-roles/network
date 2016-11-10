@@ -1,0 +1,80 @@
+---
+- hosts: network-test
+  vars:
+    network:
+      connections:
+
+        - name: 'eth2'
+          state: 'absent'
+
+        - name: 'eth1'
+          #state: 'present'                   # 'present' is implied by 'type'
+          type: 'ethernet'
+          autoconnect: no
+          interface_name: 'eth1'              # restrict the connection to the interface 'eth1'
+          #mac: '52:54:00:2c:5f:34'            # restrict the connection to the interface by MAC address
+          ip:
+            dhcp4: yes
+            dhcp4_send_hostname: no
+            route_metric4: 103
+            gateway4: 192.168.5.1
+            auto6: no
+            route_metric6: -1
+            gateway6: fc00::1
+            address:
+              - 192.168.5.3/24
+              - 10.0.10.3/16
+              - fc00::80/7
+
+        - name: br0
+          interface_name: br0
+          type: 'bridge'
+          autoconnect: no
+          ip:
+            address:
+              - 192.168.10.7/24
+
+        - name: bond0
+          #interface_name: bond0    # the interface-name for virtual devices default to the profile name.
+          type: 'bond'
+          autoconnect: no
+
+        - name: team0               # team is not supported on RHEL6
+          type: 'team'
+          interface_name: team0
+          autoconnect: no
+
+        - name: eth1.7
+          type: vlan
+          interface_name: eth1.7
+          autoconnect: no
+          parent: eth1
+          vlan_id: 7
+          ip:
+            address:
+              - 192.168.11.7/24
+
+        - name: br0.5
+          type: vlan
+          #interface_name: br0.5
+          autoconnect: no
+          parent: br0
+          vlan_id: 5
+
+        - name: 'br0-eth1'
+          type: 'ethernet'
+          autoconnect: no
+          interface_name: eth1
+          slave_type: bridge
+          master: br0
+
+        - name: 'eth1'
+          state: 'up'
+          wait: 0
+
+        #- name: 'ens4'
+        #  state: 'down'
+        #  wait: 0
+
+  roles:
+    - network

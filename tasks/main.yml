@@ -1,0 +1,41 @@
+---
+- name: Detect network provider
+  set_fact:
+      network_provider: "{{ network.provider | default(network_provider_default[ansible_distribution][ansible_distribution_major_version] | default('nm')) }}"
+  when: network_provider is not defined
+
+
+- name: Enable network service
+  service: name=network enabled=yes
+  when: network_provider == 'initscripts'
+
+
+- name: Install NetworkManager package
+  package: name=NetworkManager state=present
+  when: network_provider == 'nm'
+
+- name: Enable NetworkManager service
+  service: name=NetworkManager state=running enabled=yes
+  when: network_provider == 'nm'
+
+
+- name: Configure networking connection profiles
+  network_connections:
+      provider:       "{{ network_provider    | mandatory }}"
+      name:           "{{ item.name           | mandatory }}"
+      state:          "{{ item.state          | default(omit) }}"
+      wait:           "{{ item.wait           | default(omit) }}"
+      type:           "{{ item.type           | default(omit) }}"
+      autoconnect:    "{{ item.autoconnect    | default(omit) }}"
+      slave_type:     "{{ item.slave_type     | default(omit) }}"
+      master:         "{{ item.master         | default(omit) }}"
+      interface_name: "{{ item.interface_name | default(omit) }}"
+      mac:            "{{ item.mac            | default(omit) }}"
+      parent:         "{{ item.parent         | default(omit) }}"
+      vlan_id:        "{{ item.vlan_id        | default(omit) }}"
+      ip:             "{{ item.ip             | default(omit) }}"
+  with_items: "{{ network.connections | default([]) }}"
+
+
+- name: Re-test connectivity
+  ping:

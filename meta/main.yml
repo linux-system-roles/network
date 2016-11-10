@@ -1,0 +1,10 @@
+galaxy_info:
+  author: Thomas Haller
+  description: networking role for NetworkManager and ifcfg-rh
+  company: Red Hat
+
+  license: BSD
+
+  min_ansible_version: 1.2
+
+  galaxy_tags: network networking

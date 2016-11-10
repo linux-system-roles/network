@@ -1,0 +1,9 @@
+---
+
+# The default network_provider is detected based on
+# network_provider_default[ansible_distribution][ansible_distribution_major_version]
+#
+# If unspecified, the last default is 'nm'
+network_provider_default:
+  RedHat:
+      "6": "initscripts"
