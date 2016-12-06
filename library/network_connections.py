@@ -402,13 +402,21 @@ class _AnsibleUtil:
             kwargs['rc'] = rc
         return kwargs
 
-    def exit_json(self, changed, **kwargs):
+    def exit_json(self, changed = True, **kwargs):
         kwargs['changed'] = changed
         self.module.exit_json(**self._complete_kwargs(kwargs))
 
     def fail_json(self, msg, **kwargs):
         kwargs['msg'] = msg
         self.module.fail_json(**self._complete_kwargs(kwargs))
+
+    def fail_json_check(self, msg, **kwargs):
+        if self.check_mode:
+            self.warn("would-fail: " + msg)
+            if 'changed' not in kwargs:
+                kwargs['changed'] = True
+            self.exit_json(**kwargs)
+        self.fail_json(msg, **kwargs)
 
 AnsibleUtil = _AnsibleUtil()
 
@@ -1071,7 +1079,7 @@ class Cmd_nm(Cmd):
             if not connections:
                 AnsibleUtil.exit_json(changed)
             if AnsibleUtil.check_mode:
-                AnsibleUtil.exit_json(True)
+                AnsibleUtil.exit_json()
             c = connections[-1]
             try:
                 self.nmcmd.connection_delete(c)
@@ -1090,7 +1098,7 @@ class Cmd_nm(Cmd):
             except Exception as e:
                 AnsibleUtil.warn('exception: %s' % (traceback.format_exc()))
                 AnsibleUtil.fail_json('failure adding connection: %s' % (e))
-            AnsibleUtil.exit_json(True)
+            AnsibleUtil.exit_json()
 
         changed = False
         connection = connections[0]
@@ -1109,7 +1117,7 @@ class Cmd_nm(Cmd):
             if not connections:
                 AnsibleUtil.exit_json(changed)
             if AnsibleUtil.check_mode:
-                AnsibleUtil.exit_json(True)
+                AnsibleUtil.exit_json()
             c = connections[-1]
             try:
                 self.nmcmd.connection_delete(c)
@@ -1123,30 +1131,28 @@ class Cmd_nm(Cmd):
             AnsibleUtil.warn('wait for activation is not yet implemented')
         connections = self.nmcmd.connection_list(name = AnsibleUtil.params['name'])
         if not connections:
-            AnsibleUtil.fail_json('failure to up connection %s: does not exist' % (AnsibleUtil.params['name']))
+            AnsibleUtil.fail_json_check('failure to up connection %s: does not exist' % (AnsibleUtil.params['name']))
         if AnsibleUtil.check_mode:
-            AnsibleUtil.exit_json(True)
+            AnsibleUtil.exit_json()
         active_connection = None
         try:
             active_connection = self.nmcmd.connection_activate (connections[0])
         except Exception as e:
             AnsibleUtil.fail_json('up connection failed: %s' % (e))
-        AnsibleUtil.exit_json(True)
+        AnsibleUtil.exit_json()
 
     def run_state_down(self):
         if AnsibleUtil.params_wait != 0:
             AnsibleUtil.warn('wait for activation is not yet implemented')
         connections = self.nmcmd.connection_list(name = AnsibleUtil.params['name'])
         if not connections:
-            AnsibleUtil.fail_json('failure to down connection %s: does not exist' % (AnsibleUtil.params['name']))
+            AnsibleUtil.fail_json_check('failure to down connection %s: does not exist' % (AnsibleUtil.params['name']))
         changed = False
         seen = set()
         while True:
             acons = self.nmcmd.active_connection_list(connections, black_list = seen)
-            if not acons:
-                break
-            if AnsibleUtil.check_mode:
-                AnsibleUtil.exit_json(True)
+            if AnsibleUtil.check_mode or not acons:
+                AnsibleUtil.exit_json(changed)
             ac = acons[0]
             seen.add(ac)
             del acons
@@ -1156,7 +1162,6 @@ class Cmd_nm(Cmd):
                 AnsibleUtil.fail_json('failure deactivating connection: %s' % (e))
             changed = True
             Util.GMainLoop_iterate()
-        AnsibleUtil.exit_json(changed)
 
 ###############################################################################
 
@@ -1193,7 +1198,7 @@ class Cmd_initscripts(Cmd):
         for path in paths:
             if AnsibleUtil.check_mode:
                 if os.path.isfile(path):
-                    AnsibleUtil.exit_json(True)
+                    AnsibleUtil.exit_json()
             else:
                 try:
                     try:
@@ -1221,7 +1226,7 @@ class Cmd_initscripts(Cmd):
         if not dirty and old_content == new_content:
             AnsibleUtil.exit_json(False)
         if AnsibleUtil.check_mode:
-            AnsibleUtil.exit_json(True)
+            AnsibleUtil.exit_json()
 
         try:
             IfcfgUtil.content_to_file(self.name, new_content)
@@ -1229,7 +1234,7 @@ class Cmd_initscripts(Cmd):
             AnsibleUtil.warn('exception: %s' % (traceback.format_exc()))
             AnsibleUtil.fail_json('writing ifcfg file failed: %s' % (e))
 
-        AnsibleUtil.exit_json(True)
+        AnsibleUtil.exit_json()
 
     def _run_state_updown(self, cmd):
         import os
@@ -1243,12 +1248,12 @@ class Cmd_initscripts(Cmd):
 
         path = self.ifcfg_path()
         if not os.path.isfile(path):
-            AnsibleUtil.exit_json(False)
+            AnsibleUtil.fail_json_check('ifcfg file "%s" does not exist' % (path))
         if AnsibleUtil.check_mode:
-            AnsibleUtil.exit_json(True)
+            AnsibleUtil.exit_json()
 
         rc, out, err = AnsibleUtil.module.run_command([cmd, self.name], encoding=None)
-        AnsibleUtil.exit_json(True, rc = rc, stdout = out, stderr = err)
+        AnsibleUtil.exit_json(rc = rc, stdout = out, stderr = err)
 
     def run_state_up(self):
         self._run_state_updown('ifup')
