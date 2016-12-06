@@ -771,8 +771,8 @@ class NMCmd:
         if len(cons) != 1:
             raise Exception('a unique %s connection "%s" was not found, instead there are [ %s ]' % (field, args[field], ' '.join([c.get_uuid() for c in cons])))
         con = cons[0]
-        if expected_type is not None and con.get_type() != expected_type:
-            raise Exception('the %s connection "%s" is expected to be of type %s but is %s (%s)' % (field, args[field], expected_type, con.get_type(), con.get_uuid()))
+        if expected_type is not None and con.get_connection_type() != expected_type:
+            raise Exception('the %s connection "%s" is expected to be of type %s but is %s (%s)' % (field, args[field], expected_type, con.get_connection_type(), con.get_uuid()))
         return con
 
     def connection_find_master(self, args, field, check_mode = False, expected_type = None):
@@ -872,7 +872,7 @@ class NMCmd:
 
         if 'slave_type' in args:
             s_con.set_property(NM.SETTING_CONNECTION_SLAVE_TYPE, args['slave_type'])
-            m = self.connection_find_master(args, 'master', check_mode)
+            m = self.connection_find_master(args, 'master', check_mode, args['slave_type'])
             if m is None:
                 dirty = True
             else:

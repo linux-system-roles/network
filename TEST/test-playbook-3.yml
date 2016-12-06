@@ -1,0 +1,38 @@
+---
+- hosts: network-test
+  vars:
+    network:
+      connections:
+        - name: p-3-auto
+          autoconnect: no
+          interface_name: eth0
+          type: ethernet
+        - name: p-3-auto
+
+
+        - name: p-3-manual
+          autoconnect: no
+          interface_name: eth0
+          type: ethernet
+          ip:
+            dhcp4: no
+            gateway4: 192.168.122.1
+            address:
+              - 192.168.122.97/24
+        - name: p-3-manual
+
+
+        - name: p-3-br0
+          autoconnect: no
+          interface_name: br0
+          type: bridge
+        - name: p-3-br0-eth0
+          autoconnect: no
+          interface_name: eth0
+          type: ethernet
+          slave_type: bridge
+          master: p-3-br0
+        - name: p-3-br0-eth0
+
+  roles:
+    - network
