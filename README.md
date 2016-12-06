@@ -19,11 +19,12 @@ General
 -------
 
 The role supports two providers: `nm` and `initscripts`. The provider can be configured per host
-via the [`provider`][#provider]. In absence of explicit configuration, it is autodetected based on
-the distribution. So the `nm` provider is used by default on RHEL7 and
+via the [`provider`][#provider] variable. In absence of explicit configuration, it is autodetected based on
+the distribution. The `nm` provider is used by default on RHEL7 and
 `initscripts` on RHEL6. However, note that the provider is not tied to a certain distribution,
-given that the required API is available. For `nm` this means that a certain NetworkManager
-API is available and `initscripts` are commonly only available on the Fedora/RHEL family.
+given that the required API is available. For `nm` this means that at least version 1.2 of NetworkManager's
+API is available. For `initscripts`, it requires the legacy network service as commonly available
+on Fedora/RHEL.
 
 For each host a list of networking profiles can be configure via the `network` variable.
 
@@ -33,9 +34,9 @@ For each host a list of networking profiles can be configure via the `network` v
 
 Note that the role primarily operates on networking profiles (connections) and
 not on devices. For example, in the role you would not configure the current IP address
-of a interface. Instead, you create a profile with a certain IP configuration and
+of an interface. Instead, you create a profile with a certain IP configuration and
 optionally activate the profile on a device. Which means, to apply the configuration
-to the networking interface.
+to the actual networking interface.
 
 Limitations
 -----------
@@ -49,16 +50,15 @@ to a management LAN or VLAN. It strongly depends on your environment.
 
 - For initscripts provider, deploying a profile merely means to create the ifcfg
   files. Nothing happening automatically until the play issues `ifup` or `ifdown`
-  via the `up` or `down` [states](#state) or until the network service is restarted.
+  via the `up` or `down` [states](#state) -- unless of course, there are other
+  components that watch the ifcfg files and react on changes.
 
 - For NetworkManager, modifying a connection with autoconnect enabled
   may result in the activation of the new profile on a previously disconnected
-  interface. If that poses a problem, some careful handling of the [autoconnect](#autoconnect)
-  property is necessary.
-  Also, deleting a NetworkManager connection that is currently active will tear
-  down the interface. Therefore, you may want to first ensure that the intended profile
-  is active, and delete old profiles as the last step.
-  This should be improved in NetworkManager [rh#1401515](https://bugzilla.redhat.com/show_bug.cgi?id=1401515).
+  interface. Also, deleting a NetworkManager connection that is currently active
+  will tear down the interface. Therefore, the order of the steps may matter
+  and or careful handling of [autoconnect](#autoconnect) property may be necessary.
+  This should be improved in NetworkManager RFE [rh#1401515](https://bugzilla.redhat.com/show_bug.cgi?id=1401515).
 
 - It seems difficult to change networking of the target host in a way that breaks the current
   SSH connection of ansible. If you want to do that, ansible-pull might be a solution.
@@ -70,7 +70,7 @@ to a management LAN or VLAN. It strongly depends on your environment.
 In general, to successfully run the play, one must understand which configuration is
 active in the first place and then carefully configure a sequence of steps to change to
 the new configuration. Don't cut off the branch on which you are sitting. The actual
-solution depends a strongly on your environment.
+solution depends strongly on your environment.
 
 ### If something goes wrong
 
@@ -93,7 +93,7 @@ Double-check your configuration before applying it.
 
 The role supports the same configuration scheme for both providers. So, you might use
 the same playbook with NetworkManager and initscripts. Note however, that not every
-option is supported by every provider. Do a test run first with `--check`.
+option is handled exactly the same by every provider. Do a test run first with `--check`.
 
 It is also not supported to create a configuration for one provider, and expect another
 provider to handle them. For example, creating proviles with `initscripts` provider
@@ -101,8 +101,8 @@ and later on enabling NetworkManager is not guaranteed to work automatically. Po
 you have to adjust the configuration so that it can be used by another provider.
 
 Depending on NetworkManager's configuration, connections may be stored as ifcfg files
-as well, but again it's not guaranteed that initscripts can handle these ifcfg files after
-disabling the NetworkManager service.
+as well, but again it is not guaranteed that plain initscripts can handle these ifcfg files
+after disabling the NetworkManager service.
 
 Variables
 ---------
@@ -115,9 +115,10 @@ is a list of dictionaries that have a `name`.
 
 The `name` identifies the connection profile. It is not the name of the
 networking interface for which the profile applies, though it makes
-sense to restrict the profile to an interface and name them the same.
-Note also that you can have multiple profiles for the same device, of
-course at any time only one profile can be active.
+sense to restrict the profile to an interface and give them the same name.
+Note also that you can have multiple profiles for the same device, but of
+course only one profile can be active on the device at each time. Note that
+for NetworkManager, a connection can only be active at one device at a time.
 
 * For NetworkManager, the `name` translates to [`connection.id`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.connection.id).
   Altough NetworkManager supports multiple connections with the same `connection.id`,
@@ -127,6 +128,8 @@ course at any time only one profile can be active.
 * For initscripts, the name determines the ifcfg file name `/etc/sysconfig/network-scripts/-ifcfg-$NAME`.
   Note that here too the name doesn't specify the `DEVICE` but a filename. As a consequence
   `'/'` is not a valid character for the name.
+
+### `state`
 
 #### Example
 
@@ -143,13 +146,11 @@ exists, it will be deleted.
 * For NetworkManager this deletes all connection profiles with the matching `connection.id`.
   Deleting a profile usually does not change the current networking configuration, unless
   the profile was currently activated on a device. In that case deleting the currently
-  active connection profile disconnects the device. This will cause NetworkManager to
-  search for another connection to autoconnect (see also [rh#1401515](https://bugzilla.redhat.com/show_bug.cgi?id=1401515)).
+  active connection profile disconnects the device. That makes the device eligible
+  to autoconnect another connection (see also [rh#1401515](https://bugzilla.redhat.com/show_bug.cgi?id=1401515)).
 
 * For initscripts it results in the deletion of the ifcfg file. Usually that
   has no side-effect, unless some component is watching the sysconfig directory.
-
-### `state`
 
 We already saw that state `absent` before. There are more states:
 
@@ -167,6 +168,7 @@ in which case the default is `present`.
 network:
   connections:
     - name: "eth0"
+      #state: present        # default, as a type is present
       type: "ethernet"
       autoconnect: yes
       interface_name: "eth0"
@@ -175,11 +177,11 @@ network:
 ```
 
 Above example creates a new connection profile or ensures that it is present
-with the given configuration.
+with the given configuration. It has implicitly `state` `present`, due to the
+presence of `type`. On the other hand, the `present` state requires at least a `type`
+variable.
 
-It has implicitly `state` `present`, due to the presence of `type`.
-On the other hand, the `present` state requires at least a `type`
-variable. Valid values for `type` are:
+Valid values for `type` are:
 
   - `ethernet`
   - `bridge`
@@ -188,11 +190,11 @@ variable. Valid values for `type` are:
   - `vlan`
 
 `state` `present` does not directly result in a change in the network configuration.
-That is, the profile is only created, not activated.
+That is, the profile is only created or modified, not activated.
 
 - For NetworkManager, note the new connection profile is created with
-  `connection.autoconnect` turned on. Thus, NetworkManager may very well decide
-  right away to activate the new profile on currently disconnected devices.
+  `autoconnect` turned on by default. Thus, NetworkManager may very well decide
+  right away to activate the new profile on a currently disconnected device.
   ([rh#1401515](https://bugzilla.redhat.com/show_bug.cgi?id=1401515)).
 
 ### `autoconnect`
@@ -219,9 +221,8 @@ For type `ethernet`, this option restricts the profile to the
 given interface by name. This argument is optional and by default
 a profile is not restricted to any interface by name.
 
-For virtual interface types, this argument is mandatory and the
-name of the created interface. In case of a missing `interface_name`, the
-profile name `name` is used.
+For virtual interface types like bridges, this argument is the name of the created
+interface. In case of a missing `interface_name`, the profile name `name` is used.
 
 Note the destinction between the profile name `name` and the device
 name `interface_name`, which may or may not be the same.
@@ -234,6 +235,7 @@ name `interface_name`, which may or may not be the same.
 network:
   connections:
     - name: "eth0"
+      #state: up        # implicit default, as there is no type specified
       wait: 0
 ```
 
@@ -246,10 +248,12 @@ example the `state` is redundant.
 - For initscripts it is the same as `ifup {{name}}`.
 
 `up` also supports an optional integer argument `wait`. `wait=0` will only initiate
-the activation but not wait until the device is fully connected. That will happen
-later in the background. `wait=<SECONDS>` is a timeout for how long we give the device
-to activate. The default is `wait=-1` which uses a default timeout. Note that this
-argument only makes sense for NetworkManager. **TODO** not yet implemented.
+the activation but not wait until the device is fully connected. Connection will complete
+in the background, for example after a DHCP lease was received.
+`wait: <SECONDS>` is a timeout for how long we give the device
+to activate. The default is `wait=-1` which uses a suitable timeout. Note that this
+argument only makes sense for NetworkManager.
+**TODO** `wait` different from zero is not yet implemented.
 
 Note that `up` always re-activates the profile and possibly changes the networking
 configuration, even if the profile was already active before. As such, it always
@@ -264,6 +268,7 @@ network:
   connections:
     - name: eth0
       state: down
+      wait: 0
 ```
 
 Another `state` is `down`.
@@ -272,10 +277,13 @@ Another `state` is `down`.
 
 - For initscripts this means to call `ifdown {{name}}`.
 
-Again, this will always issue the command to deactivate the profile, even
-if the profile was not active previously. That may or may not have side-effects.
+This is the opposite of the `up` state. It also will always issue the command
+to deactivate the profile, even it if seemingly is currently not active. As such,
+`down` always changes the system.
 
 For NetworkManager, a `wait` argument is supported like for `up` state.
+
+### Refer to the same connection multiple times
 
 #### Example
 
@@ -287,6 +295,7 @@ network:
       mac: "d6:06:b9:56:12:5d"
       ip:
         dhcp4: yes
+
     - name: "eth0"
 ```
 
@@ -322,13 +331,21 @@ network:
 Manual addressing can be specified via a list of addresses and prefixes `address`.
 Also, manual addressing can be combined with either `dhcp4` and `auto6` for DHCPv4
 and SLAAC. The `dhcp4` and `auto6` keys can be omitted and the default depends on the
-presence of manual addresses. If `dhcp4` is enabled, it can be configured whether
-the DHCPv4 request includes the hostname via `dhcp4_send_hostname`. Note that `dhcp4_send_hostname`
-is only supported by the `nm` provider.
+presence of manual addresses.
 
-- For NetworkManager, `route_metric4` and `route_metric6` corresponds to the `ipv4.route-metric`
-and `ipv6.route-metric` properties, respectively. If specified, it determines the route metric
+If `dhcp4` is enabled, it can be configured whether
+the DHCPv4 request includes the hostname via `dhcp4_send_hostname`.
+Note that `dhcp4_send_hostname` is only supported by the `nm` provider and translates
+to [`ipv4.dhcp-send-hostname`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv4.dhcp-send-hostname)
+property.
+
+- For NetworkManager, `route_metric4` and `route_metric6` corresponds to the 
+[`ipv4.route-metric`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv4.route-metric) and
+[`ipv6.route-metric`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv6.route-metric)
+ properties, respectively. If specified, it determines the route metric
 for DHCP assigned routes and the default route, and thus the priority for multiple interfaces.
+
+Slaves to bridge/bond/team devices cannot specify `ip` settings.
 
 ### Virtual types and Slaves
 
@@ -339,13 +356,13 @@ network:
   connections:
     - name: "br0"
       type: bridge
-      #interface_name: br0    # implied by name
+      #interface_name: br0    # defaults to the connection name
 ```
 
-Note that `team` is not supported on RHEL6.
+Note that `team` is not supported on RHEL6 kernels.
 
 For slaves of these virtual types, the special properites `slave_type` and
-`master` must be set. Also note that slaves cannot have an `ip` section.
+`master` must be set. Also note that slaves cannot have `ip` settings.
 
 ```yaml
 network:
@@ -380,8 +397,10 @@ NetworkManager.
   ifcfg file.
 
 As `master` refers to other profiles of the same or another play,
-the order of the `connections` list matters. Also, `--check` may
-return wrong results as to wether an actual run changes anything.
+the order of the `connections` list matters. Also, `--check` ignores
+the value of the `master` and assumes it will be present during a real
+run. That means, in presence of an invalid `master`, `--check` may
+signal success but the actual play run fails.
 
 ### `type: vlan`
 

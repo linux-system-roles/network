@@ -1237,7 +1237,9 @@ class Cmd_initscripts(Cmd):
         self.check_name()
 
         if AnsibleUtil.params_wait != 0:
-            AnsibleUtil.warn('initscripts don\'t support "wait" argument and anyway block')
+            # initscripts don't support wait, they always block until the ifup/ifdown
+            # command completes. Silently ignore the argument.
+            pass
 
         path = self.ifcfg_path()
         if not os.path.isfile(path):
