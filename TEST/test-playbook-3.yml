@@ -14,11 +14,12 @@
           autoconnect: no
           interface_name: eth0
           type: ethernet
+          mac: "{{ network_mac | default(omit) }}"
           ip:
             dhcp4: no
             gateway4: 192.168.122.1
             address:
-              - 192.168.122.97/24
+              - "192.168.122.{{ network_iphost }}/24"
         - name: p-3-manual
 
 

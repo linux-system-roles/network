@@ -11,11 +11,11 @@ cd ./ansible-network-role/
 
 cat <<EOF > ./TEST/inventory
 [network-test]
-v-rhel6-1 ansible_user=root
-v-rhel7-b ansible_user=root
+v-rhel6 ansible_user=root network_iphost=196 network_mac=52:54:00:44:9f:ba
+v-rhel7 ansible_user=root network_iphost=97  network_mac=52:54:00:05:f5:b3
 EOF
 
 ../ansible/hacking/test-module -m ./library/network_connections.py -a 'provider=nm name=t-eth0 state=present type=ethernet' --check
 
-ansible-playbook -i ./TEST/inventory ./TEST/test-playbook.yml --verbose --check
+ansible-playbook -i ./TEST/inventory -l '*rhel*' ./TEST/test-playbook-3.yml --verbose --check
 ```

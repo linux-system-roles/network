@@ -856,12 +856,15 @@ class NMCmd:
         s_con.set_property(NM.SETTING_CONNECTION_INTERFACE_NAME, args['interface_name'])
 
         if args['type'] == 'ethernet':
+            s_con.set_property(NM.SETTING_CONNECTION_TYPE, '802-3-ethernet')
             s_wired = NM.SettingWired.new()
             connection.add_setting(s_wired)
-            s_con.set_property(NM.SETTING_CONNECTION_TYPE, '802-3-ethernet')
             s_wired.set_property(NM.SETTING_WIRED_MAC_ADDRESS, args['mac'])
         elif args['type'] == 'bridge':
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, 'bridge')
+            s_bridge = NM.SettingBridge.new()
+            connection.add_setting(s_bridge)
+            s_bridge.set_property(NM.SETTING_BRIDGE_STP, False)
         elif args['type'] == 'bond':
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, 'bond')
         elif args['type'] == 'team':
