@@ -19,7 +19,7 @@ General
 -------
 
 The role supports two providers: `nm` and `initscripts`. The provider can be configured per host
-via the [`provider`][#provider] variable. In absence of explicit configuration, it is autodetected based on
+via the [`provider`](#provider) variable. In absence of explicit configuration, it is autodetected based on
 the distribution. The `nm` provider is used by default on RHEL7 and
 `initscripts` on RHEL6. However, note that the provider is not tied to a certain distribution,
 given that the required API is available. For `nm` this means that at least version 1.2 of NetworkManager's
@@ -44,9 +44,9 @@ Limitations
 ### Configure over the Network
 
 Ansible usually works via the network, for example via SSH. This role doesn't answer
-how to bootstrap networking configuration. You may use ansible-pull, or initially
-auto-configure the host via kickstart or other means so that the host is connected
-to a management LAN or VLAN. It strongly depends on your environment.
+how to bootstrap networking configuration. One option may be [ansible-pull](https://docs.ansible.com/ansible/playbooks_intro.html#ansible-pull).
+Another to initially auto-configure the host during installation (ISO based, kickstart, etc.),
+so that the host is connected to a management LAN or VLAN. It strongly depends on your environment.
 
 - For initscripts provider, deploying a profile merely means to create the ifcfg
   files. Nothing happening automatically until the play issues `ifup` or `ifdown`
@@ -91,14 +91,19 @@ Double-check your configuration before applying it.
 
 ### Compatibility
 
-The role supports the same configuration scheme for both providers. So, you might use
-the same playbook with NetworkManager and initscripts. Note however, that not every
+The role supports the same configuration scheme for both providers. That means, you can
+use the same playbook with NetworkManager and initscripts. Note however, that not every
 option is handled exactly the same by every provider. Do a test run first with `--check`.
 
 It is also not supported to create a configuration for one provider, and expect another
 provider to handle them. For example, creating proviles with `initscripts` provider
-and later on enabling NetworkManager is not guaranteed to work automatically. Possibly
+and later enabling NetworkManager is not guaranteed to work automatically. Possibly
 you have to adjust the configuration so that it can be used by another provider.
+
+For example what will work is to configure a RHEL6 host with initscripts and upgrade to
+RHEL7 while continuing to use initscripts on RHEL7. What is not guaranteed to work
+it to upgrade to RHEL7, disable initscripts and expect NetworkManager to take over
+the configuration automatically.
 
 Depending on NetworkManager's configuration, connections may be stored as ifcfg files
 as well, but again it is not guaranteed that plain initscripts can handle these ifcfg files
@@ -171,7 +176,7 @@ network:
       #state: present        # default, as a type is present
       type: "ethernet"
       autoconnect: yes
-      interface_name: "eth0"
+      mac: "d6:06:b9:56:12:5d"
       ip:
         dhcp4: yes
 ```
@@ -220,6 +225,9 @@ to match a non-virtual device with the profile.
 For type `ethernet`, this option restricts the profile to the
 given interface by name. This argument is optional and by default
 a profile is not restricted to any interface by name.
+Note that with [persistent interface naming](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Networking_Guide/ch-Consistent_Network_Device_Naming.html),
+the interface is predictable based on the hardware configuration.
+Otherwise, the `mac` address might be an option.
 
 For virtual interface types like bridges, this argument is the name of the created
 interface. In case of a missing `interface_name`, the profile name `name` is used.
@@ -290,13 +298,13 @@ For NetworkManager, a `wait` argument is supported like for `up` state.
 ```yaml
 network:
   connections:
-    - name: "eth0"
+    - name: "Wired0"
       type: "ethernet"
-      mac: "d6:06:b9:56:12:5d"
+      interface_name: "eth0"
       ip:
         dhcp4: yes
 
-    - name: "eth0"
+    - name: "Wired0"
 ```
 
 As said, the `name` identifies a unique profile. However, you can refer to the same
