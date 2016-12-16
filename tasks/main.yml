@@ -15,19 +15,7 @@
 - name: Configure networking connection profiles
   network_connections:
       provider:       "{{ network.provider    | default(network_provider) | mandatory }}"
-      name:           "{{ item.name           | mandatory }}"
-      state:          "{{ item.state          | default(omit) }}"
-      wait:           "{{ item.wait           | default(omit) }}"
-      type:           "{{ item.type           | default(omit) }}"
-      autoconnect:    "{{ item.autoconnect    | default(omit) }}"
-      slave_type:     "{{ item.slave_type     | default(omit) }}"
-      master:         "{{ item.master         | default(omit) }}"
-      interface_name: "{{ item.interface_name | default(omit) }}"
-      mac:            "{{ item.mac            | default(omit) }}"
-      parent:         "{{ item.parent         | default(omit) }}"
-      vlan_id:        "{{ item.vlan_id        | default(omit) }}"
-      ip:             "{{ item.ip             | default(omit) }}"
-  with_items: "{{ network.connections | default([]) }}"
+      connections:    "{{ network.connections | default([]) }}"
 
 - name: Re-test connectivity
   ping:

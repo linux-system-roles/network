@@ -12,23 +12,53 @@ description: Manage networking profiles (connections) for NetworkManager and ini
   networking providers.
 options: Documentation needs to be written. Note that the network_connections module
   tightly integrates with the network role and currently it is not expected to use
-  this module outside the role. Thus, consule README.md for examples for the role.
+  this module outside the role. Thus, consult README.md for examples for the role.
 '''
 
 import socket
 import sys
 import traceback
 
-PY3 = sys.version_info[0] == 3
-
-if PY3:
-    string_types = str,
-else:
-    string_types = basestring,
-
 ###############################################################################
 
+class CheckMode:
+    DRY_RUN  = 'dry-run'
+    PRE_RUN  = 'pre-run'
+    REAL_RUN = 'real-run'
+    DONE     = 'done'
+
+class LogLevel:
+    ERROR = 'error'
+    WARN  = 'warn'
+    INFO  = 'info'
+    DEBUG = 'debug'
+
+    @staticmethod
+    def fmt(level):
+        return '<%-6s' % (str(level) + '>')
+
+class MyError(Exception):
+    pass
+
+class ValidationError(MyError):
+    def __init__(self, name, message):
+        Exception.__init__(self, name + ': ' + message)
+        self.error_message = message
+        self.name = name
+
 class Util:
+
+    PY3 = (sys.version_info[0] == 3)
+
+    STRING_TYPE = (str if PY3 else basestring)
+
+    @staticmethod
+    def first(iterable, default = None, pred = None):
+        for v in iterable:
+            if pred is not None and pred(v):
+                continue
+            return v
+        return default
 
     @classmethod
     def create_uuid(cls):
@@ -73,18 +103,19 @@ class Util:
         return gmainloop
 
     @classmethod
-    def GMainLoop_iterate(cls, may_block = False):
-        cls.GMainLoop().get_context().iteration(may_block)
+    def GMainLoop_run(cls):
+        cls.GMainLoop().run()
 
     @classmethod
-    def create_nm_client(cls):
-        return cls.NM().Client.new(None)
+    def GMainLoop_iterate(cls, may_block = False):
+        return cls.GMainLoop().get_context().iteration(may_block)
 
-    @staticmethod
-    def kwargs_extend(d, **kwargs):
-        d = dict(d)
-        d.update(kwargs)
-        return d
+    @classmethod
+    def GMainLoop_iterate_all(cls):
+        r = False
+        while cls.GMainLoop_iterate():
+            r = True
+        return r
 
     @staticmethod
     def ifname_valid(ifname):
@@ -99,6 +130,21 @@ class Util:
             return False
         # FIXME: encoding issues regarding python unicode string
         return True
+
+    @staticmethod
+    def boolean(arg):
+        import ansible.module_utils.basic as basic
+
+        if arg is None or isinstance(arg, bool):
+            return arg
+        if isinstance(arg, Util.STRING_TYPE):
+            arg = arg.lower()
+        if arg in basic.BOOLEANS_TRUE:
+            return True
+        elif arg in basic.BOOLEANS_FALSE:
+            return False
+        else:
+            raise MyError('value "%s" is not a boolean' % (arg))
 
     @staticmethod
     def parse_ip(addr, family=None):
@@ -118,151 +164,225 @@ class Util:
         return (socket.inet_ntop(family, a), family)
 
     @staticmethod
-    def parse_address(address):
+    def addr_family_to_v(family):
+        if family is None:
+            return ''
+        if family == socket.AF_INET:
+            return 'v4'
+        if family == socket.AF_INET6:
+            return 'v6'
+        raise MyError('invalid address family "%s"' % (family))
+
+    @staticmethod
+    def parse_address(address, family = None):
         result = {}
         try:
             parts = address.split()
             addr_parts = parts[0].split('/')
             if len(addr_parts) != 2:
-                raise Exception('expect two addr-parts: ADDR/PLEN')
-            a, family = Util.parse_ip(addr_parts[0])
+                raise MyError('expect two addr-parts: ADDR/PLEN')
+            a, family = Util.parse_ip(addr_parts[0], family)
             result['address'] = a
             result['is_v4'] = (family == socket.AF_INET)
             result['family'] = family
             prefix = int(addr_parts[1])
             if not (prefix >=0 and prefix <= (32 if family == socket.AF_INET else 128)):
-                raise Exception('invalid prefix %s' % (prefix))
+                raise MyError('invalid prefix %s' % (prefix))
             result['prefix'] = prefix
             if len(parts) > 1:
-                raise Exception('too many parts')
+                raise MyError('too many parts')
         except Exception as e:
-            raise Exception('invalid address "%s"' % (address))
+            raise MyError('invalid address "%s"' % (address))
         return result
 
 ###############################################################################
 
-class _AnsibleUtil:
+class ArgUtil:
+    @staticmethod
+    def connection_find_by_name(name, connections, n_connections = None):
+        if not name:
+            raise ValueError("missing name argument")
+        c = None
+        for idx, connection in enumerate(connections):
+            if n_connections is not None and idx >= n_connections:
+                break
+            if 'name' not in connection or name != connection['name']:
+                continue
 
-    ARGS = {
-        'provider':       { 'required': True,  'default': None, 'type': 'str' },
-        'name':           { 'required': True,  'default': None, 'type': 'str' },
-        'state':          { 'required': False, 'default': None, 'type': 'str' },
-        'wait':           { 'required': False, 'default': 0,    'type': 'int' },
-        'type':           { 'required': False, 'default': None, 'type': 'str' },
-        'autoconnect':    { 'required': False, 'default': True, 'type': 'bool' },
-        'slave_type':     { 'required': False, 'default': None, 'type': 'str' },
-        'master':         { 'required': False, 'default': None, 'type': 'str' },
-        'interface_name': { 'required': False, 'default': None, 'type': 'str' },
-        'mac':            { 'required': False, 'default': None, 'type': 'str' },
-        'vlan_id':        { 'required': False, 'default': -1,   'type': 'int' },
-        'parent':         { 'required': False, 'default': None, 'type': 'str' },
-        'ip':             { 'required': False, 'default': None, 'type': 'dict' },
-    }
+            if connection['state'] == 'absent':
+                c = None
+            elif 'type' in connection:
+                assert connection['state'] in ['up', 'present']
+                c = connection
+        return c
 
-    def __init__(self):
-        from ansible.module_utils.basic import AnsibleModule
+class ArgValidator:
+    MISSING = object()
 
-        self.AnsibleModule = AnsibleModule
-        self._module = None
-        self._rc = None
-        self._warnings = list()
+    def __init__(self, name = None, required = False, default_value = None):
+        self.name = name
+        self.required = required
+        self.default_value = default_value
 
-    @property
-    def module(self):
-        module = self._module
-        if module is None:
-            module = self.AnsibleModule(
-                argument_spec = self.ARGS,
-                supports_check_mode = True,
-            )
-            self._module = module
-        return module
-
-    @property
-    def params(self):
-        return self.module.params
-
-    @property
-    def params_wait(self):
-        wait = AnsibleUtil.params['wait']
-        if not (wait >= 0):
-            wait = 90
-        return wait
-
-    @property
-    def check_mode(self):
-        return self.module.check_mode
-
-    def warn(self, msg):
-        self._warnings.append(msg)
-
-    def check_type_boolean(self, key, value, allow_none = True):
-        if allow_none and value is None:
-            return None
+    def get_default_value(self):
         try:
-            if isinstance(value, bool):
-                return value
-            if isinstance(value, string_types) or isinstance(value, int):
-                return self.module.boolean(value)
+            return self.default_value()
         except:
-            pass
-        raise TypeError('%s must be a bool but is %s' % (key, value))
+            return self.default_value
 
-    def check_type_int(self, key, value, allow_none = True, val_min = None, val_max = None):
-        if allow_none and value is None:
-            return None
+    def validate(self, value, name = None):
+        name = name or self.name or ''
+        v = self._validate(value, name)
+        return self._validate_post(value, name, v)
+
+    def _validate_post(self, value, name, result):
+        return result
+
+class ArgValidatorStr(ArgValidator):
+    def __init__(self, name, required = False, default_value = None, enum_values = None):
+        ArgValidator.__init__(self, name, required, default_value)
+        self.enum_values = enum_values
+    def _validate(self, value, name):
+        if not isinstance(value, Util.STRING_TYPE):
+            raise ValidationError(name, 'must be a string but is "%s"' % (value))
+        v = str(value)
+        if self.enum_values is not None and v not in self.enum_values:
+            raise ValidationError(name, 'is "%s" but must be one of "%s"' % (value, '" "'.join(sorted(self.enum_values))))
+        return v
+
+class ArgValidatorInt(ArgValidator):
+    def __init__(self, name, required = False, val_min = None, val_max = None, default_value = 0):
+        ArgValidator.__init__(self, name, required, default_value)
+        self.val_min = val_min
+        self.val_max = val_max
+    def _validate(self, value, name):
         v = None
         try:
             if isinstance(value, int):
                 v = value
-            if isinstance(value, string_types):
+            if isinstance(value, Util.STRING_TYPE):
                 v = int(value)
         except:
             pass
         if v is None:
-            raise TypeError('%s must be an int but is %s' % (key, value))
-        if val_min is not None and v < val_min:
-            raise TypeError('%s is %s but cannot be less then %s' % (key, v, val_min))
-        if val_max is not None and v > val_max:
-            raise TypeError('%s is %s but cannot be greater then %s' % (key, v, val_max))
+            raise ValidationError(name, 'must be an integer number but is "%s"' % (value))
+        if self.val_min is not None and v < self.val_min:
+            raise ValidationError(name, 'value is %s but cannot be less then %s' % (value, self.val_min))
+        if self.val_max is not None and v > self.val_max:
+            raise ValidationError(name, 'value is %s but cannot be greater then %s' % (value, self.val_max))
         return v
 
-    @property
-    def ansible_managed(self):
-        return  '# this file was created by ansible'
-
-    @property
-    def rc(self):
-        return self._rc
-
-    @rc.setter
-    def rc(self, value):
-        if self._rc is not None:
-            raise Exception('cannot set rc multiple times')
-        value = int(value)
-        self._rc = value
-
-    def kwargs_whitelist(self, kwargs, allow_defaults, *allowed_args):
-        s = set(allowed_args)
-        if allow_defaults:
-            s.update(['provider', 'name', 'state'])
-        for key in kwargs:
-            if key in self.ARGS:
-                if kwargs[key] == self.ARGS[key]['default']:
-                    continue
-                if key in s:
-                    continue
-            raise Exception('command does not support variable %s' % (key))
-
-    def kwargs_whitelist_check(self, allow_defaults, *allowed_args):
+class ArgValidatorBool(ArgValidator):
+    def __init__(self, name, required = False, default_value = False):
+        ArgValidator.__init__(self, name, required, default_value)
+    def _validate(self, value, name):
         try:
-            self.kwargs_whitelist(self.params, allow_defaults, *allowed_args)
-        except Exception as e:
-            self.fail_json(str(e))
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, Util.STRING_TYPE) or isinstance(value, int):
+                return Util.boolean(value)
+        except:
+            pass
+        raise ValidationError(name, 'must be an boolean but is "%s"' % (value))
 
-    def kwargs_check_connection_args_ip(self, ip):
-        if ip is None:
-            return {
+class ArgValidatorIP(ArgValidatorStr):
+    def __init__(self, name, family = None, required = False, default_value = None, plain_address = True):
+        ArgValidatorStr.__init__(self, name, required, default_value, None)
+        self.family = family
+        self.plain_address = plain_address
+    def _validate(self, value, name):
+        v = ArgValidatorStr._validate(self, value, name)
+        try:
+            addr, family = Util.parse_ip(v, self.family)
+        except:
+            raise ValidationError(name, 'value "%s" is not a valid IP%s address' % (value, Util.addr_family_to_v(self.family)))
+        if self.plain_address:
+            return addr
+        return { "family": family, "address": addr }
+
+class ArgValidatorIPAddr(ArgValidatorStr):
+    def __init__(self, name, family = None, required = False, default_value = None):
+        ArgValidatorStr.__init__(self, name, required, default_value, None)
+        self.family = family
+    def _validate(self, value, name):
+        v = ArgValidatorStr._validate(self, value, name)
+        try:
+            return Util.parse_address(v, self.family)
+        except:
+            raise ValidationError(name, 'value "%s" is not a valid IP%s address with prefix length' % (value, Util.addr_family_to_v(self.family)))
+
+class ArgValidatorDict(ArgValidator):
+    def __init__(self, name = None, required = False, nested = None, default_value = None, all_missing_during_validate = False):
+        ArgValidator.__init__(self, name, required, default_value)
+        if nested is not None:
+            self.nested = dict([(v.name, v) for v in nested])
+        else:
+            self.nested = {}
+        self.all_missing_during_validate = all_missing_during_validate
+    def _validate(self, value, name):
+        result = {}
+        seen_keys = set()
+        try:
+            l = list(value.items())
+        except:
+            raise ValidationError(name, 'invalid content is not a dictionary')
+        for (k,v) in l:
+            if k in seen_keys:
+                raise ValidationError(name, 'duplicate key "%s"' % (k))
+            seen_keys.add(k)
+            validator = self.nested.get(k, None)
+            if validator is None:
+                raise ValidationError(name, 'invalid key "%s"' % (k))
+            try:
+                vv = validator.validate(v, name + '.' + k)
+            except ValidationError as e:
+                raise ValidationError(e.name, e.error_message)
+            result[k] = vv
+        for (k,v) in self.nested.items():
+            if k in seen_keys:
+                continue
+            if v.required:
+                raise ValidationError(name, 'missing required key "%s"' % (k))
+            vv = v.get_default_value()
+            if not self.all_missing_during_validate and vv is not ArgValidator.MISSING:
+                result[k] = vv
+        return result
+
+class ArgValidatorList(ArgValidator):
+    def __init__(self, name, nested, default_value = None):
+        ArgValidator.__init__(self, name, required = False, default_value = default_value)
+        self.nested = nested
+    def construct_name(self, name):
+        return ('' if n is None else n) + name
+    def _validate(self, value, name):
+        result = []
+        for (idx, v) in enumerate(value):
+            try:
+                vv = self.nested.validate(v, name + '[' + str(idx) + ']')
+            except ValidationError as e:
+                raise ValidationError(e.name, e.error_message)
+            result.append(vv)
+        return result
+
+class ArgValidator_DictIP(ArgValidatorDict):
+    def __init__(self):
+        ArgValidatorDict.__init__(self,
+            name = 'ip',
+            required = False,
+            nested = [
+                ArgValidatorBool('dhcp4', default_value = None),
+                ArgValidatorBool('dhcp4_send_hostname', default_value = None),
+                ArgValidatorIP  ('gateway4', family = socket.AF_INET),
+                ArgValidatorInt ('route_metric4', val_min = -1, val_max = 0xFFFFFFFF, default_value = None),
+                ArgValidatorBool('auto6'),
+                ArgValidatorIP  ('gateway6', family = socket.AF_INET6),
+                ArgValidatorInt ('route_metric6', val_min = -1, val_max = 0xFFFFFFFF, default_value = None),
+                ArgValidatorList('address',
+                    nested = ArgValidatorIPAddr('address[?]'),
+                    default_value = list,
+                ),
+            ],
+            default_value = lambda: {
                 'ip_is_present': False,
                 'dhcp4': True,
                 'dhcp4_send_hostname': None,
@@ -272,153 +392,178 @@ class _AnsibleUtil:
                 'gateway6': None,
                 'route_metric6': None,
                 'address': [],
-            }
-        valid_keys = [
-            'dhcp4',
-            'dhcp4_send_hostname',
-            'gateway4',
-            'route_metric4',
-            'auto6',
-            'gateway6',
-            'route_metric6',
-            'address',
-        ]
-        for key in ip.keys():
-            if key not in valid_keys:
-                raise Exception('invalid argument ip.%s' % (key))
-        r = {
-            'ip_is_present': True,
-            'dhcp4':               self.check_type_boolean('ip.dhcp4', ip.get('dhcp4', None)),
-            'dhcp4_send_hostname': self.check_type_boolean('ip.dhcp4_send_hostname', ip.get('dhcp4_send_hostname', None)),
-            'gateway4':            Util.parse_ip(ip.get('gateway4', None), socket.AF_INET)[0],
-            'route_metric4':       self.check_type_int('route_metric4', ip.get('route_metric4', None), val_min = -1, val_max = 0xFFFFFFFF),
-            'auto6':               self.check_type_boolean('ip.auto6', ip.get('auto6', None)),
-            'gateway6':            Util.parse_ip(ip.get('gateway6', None), socket.AF_INET6)[0],
-            'route_metric6':       self.check_type_int('route_metric6', ip.get('route_metric6', None), val_min = -1, val_max = 0xFFFFFFFF),
-            'address':             list([Util.parse_address(a) for a in ip.get('address',[])]),
-        }
-        if r['dhcp4'] is None:
-            r['dhcp4'] = r['dhcp4_send_hostname'] is not None or not any([a for a in r['address'] if a['is_v4']])
-        if r['auto6'] is None:
-            r['auto6'] = not any([a for a in r['address'] if not a['is_v4']])
-        if not r['dhcp4'] and r['dhcp4_send_hostname'] is not None:
-            raise Exception('ip.dhcp4_send_hostname can only be set with ip.dhcp4')
-        return r
+            },
+            all_missing_during_validate = False,
+        )
 
-    def kwargs_check_connection_args(self, kwargs):
-        args = { }
-        handled_keys = set()
-
-        args['name'] = kwargs['name']
-        handled_keys.add('name')
-
-        if not kwargs['type']:
-            raise Exception('missing "type" property')
+    def _validate_post(self, value, name, result):
+        if 'ip_is_present' not in result:
+            result['ip_is_present'] = True
+        if result['dhcp4'] is None:
+            result['dhcp4'] = result['dhcp4_send_hostname'] is not None or not any([a for a in result['address'] if a['is_v4']])
+        if result['auto6'] is None:
+            result['auto6'] = not any([a for a in result['address'] if not a['is_v4']])
+        if result['dhcp4_send_hostname'] is None:
+            result['dhcp4_send_hostname'] = False
         else:
-            if kwargs['type'] not in [ 'ethernet', 'bridge', 'team', 'bond', 'vlan' ]:
-                raise Exception('invalid type "%s"' % (kwargs['type']))
-            args['type'] = kwargs['type']
-        handled_keys.add('type')
+            if not result['dhcp4']:
+                raise ValidationError(name, '"dhcp4_send_hostname" is only valid if "dhcp4" is enabled')
+        return result
 
-        if kwargs['slave_type'] is not None:
-            if kwargs['slave_type'] not in [ 'bridge', 'bond', 'team' ]:
-                raise Exception('invalid slave_type "%s"' % (kwargs['slave_type']))
-            if kwargs['master'] is None:
-                raise Exception('A slave_type "%s" requires a master' % (kwargs['slave_type']))
-            args['slave_type'] = kwargs['slave_type']
-            args['master'] = kwargs['master']
-        elif kwargs['master'] is not None:
-            raise Exception('A slave with a "master" property needs a "slave_type" specified')
-        handled_keys.add('slave_type')
-        handled_keys.add('master')
+class ArgValidator_DictConnection(ArgValidatorDict):
 
-        if 'slave_type' in args:
-            if kwargs['ip'] is not None:
-                raise Exception('slave type "%s" does not support an ip configuration' % (args['slave_type']))
-        args['ip'] = self.kwargs_check_connection_args_ip(kwargs['ip'])
-        handled_keys.add('ip')
+    VALID_STATES = ['up', 'down', 'present', 'absent', 'wait']
+    VALID_TYPES = [ 'ethernet', 'bridge', 'team', 'bond', 'vlan' ]
+    VALID_SLAVE_TYPES = [ 'bridge', 'bond', 'team' ]
 
-        if kwargs['mac']:
-            if kwargs['type'] not in [ 'ethernet' ]:
-                raise Exception('mac is not supported for type "%s"' % (kwargs['type']))
-        args['mac'] = kwargs['mac']
-        handled_keys.add('mac')
+    def __init__(self):
+        ArgValidatorDict.__init__(self,
+            name = 'connections[?]',
+            required = False,
+            nested = [
+                ArgValidatorStr ('name'),
+                ArgValidatorStr ('state', enum_values = ArgValidator_DictConnection.VALID_STATES),
+                ArgValidatorInt ('wait', val_min = -1, val_max = 1200),
+                ArgValidatorStr ('type', enum_values = ArgValidator_DictConnection.VALID_TYPES),
+                ArgValidatorBool('autoconnect', default_value = True),
+                ArgValidatorStr ('slave_type', enum_values = ArgValidator_DictConnection.VALID_SLAVE_TYPES),
+                ArgValidatorStr ('master'),
+                ArgValidatorStr ('interface_name'),
+                ArgValidatorStr ('mac'),
+                ArgValidatorStr ('parent'),
+                ArgValidatorInt ('vlan_id', val_min = 0, val_max = 4095, default_value = None),
+                ArgValidatorStr ('on_error', enum_values = ['continue', 'fail'], default_value = 'fail'),
+                ArgValidator_DictIP(),
+            ],
+            default_value = dict,
+            all_missing_during_validate = True,
+        )
 
-        args['interface_name'] = kwargs['interface_name']
-        handled_keys.add('interface_name')
-        if not args['interface_name']:
-            if kwargs['type'] in [ 'bridge', 'bond', 'team', 'vlan' ]:
-                args['interface_name'] = kwargs['name']
-        if args['interface_name'] is not None and not Util.ifname_valid(args['interface_name']):
-            raise Exception('invalid interface-name "%s"' % (args['interface_name']))
+    def _validate_post(self, value, name, result):
+        if 'state' not in result:
+            if 'type' in result:
+                result['state'] = 'present'
+            elif list(result.keys()) == [ 'wait' ]:
+                result['state'] = 'wait'
+            else:
+                result['state'] = 'up'
 
-        if args['type'] == 'vlan':
-            if kwargs['vlan_id'] == -1:
-                raise Exception('missing vlan_id')
-            try:
-                i = int(kwargs['vlan_id'])
-                if i < 0 or i >= 4095:
-                    i = None
-            except:
-                i = None
-            if i is None:
-                raise Exception('invalid vlan_id "%s"' % (kwargs['vlan_id']))
-            args['vlan_id'] = str(i)
-        elif kwargs['vlan_id'] != -1:
-            raise Exception('vlan_id not allowed for type "%s"' % (args['type']))
-        handled_keys.add('vlan_id')
-
-        if args['type'] == 'vlan':
-            if not kwargs['parent']:
-                raise Exception('vlan needs a parent connection')
-            args['parent'] = kwargs['parent']
+        if result['state'] == 'present' or (result['state'] == 'up' and 'type' in result):
+            VALID_FIELDS = list(self.nested.keys())
+            if result['state'] == 'present':
+                VALID_FIELDS.remove('wait')
+        elif result['state'] in ['up', 'down']:
+            VALID_FIELDS = ['name', 'state', 'wait', 'on_error']
+        elif result['state'] == 'absent':
+            VALID_FIELDS = ['name', 'state', 'on_error']
+        elif result['state'] == 'wait':
+            VALID_FIELDS = ['state', 'wait']
         else:
-            if kwargs['parent']:
-                raise Exception('type "%s" does not support  needs a parent connection')
-        handled_keys.add('parent')
+            assert False
 
-        args['autoconnect'] = kwargs['autoconnect']
-        handled_keys.add('autoconnect')
+        VALID_FIELDS = set(VALID_FIELDS)
+        for k in result:
+            if k not in VALID_FIELDS:
+               raise ValidationError(name + '.' + k, 'property is not allowed for state "%s"' % (result['state']))
 
-        for k in kwargs:
-            if k in [ 'provider', 'state', 'wait' ]:
+        if result['state'] != 'wait':
+            if 'name' not in result:
+                raise ValidationError(name, 'missing "name"')
+            if not result['name']:
+                raise ValidationError(name + '.name', 'empty "name" is invalid')
+
+        if result['state'] == 'wait':
+            if result.get('wait', -1) == -1:
+                result['wait'] = 10
+            elif result['wait'] == 0:
+                raise ValidationError(name + '.wait', 'the "wait" value for state "wait" must be positive')
+        elif result['state'] in ['up', 'down']:
+            if result.get('wait', -1) == -1:
+                result['wait'] = 90
+        else:
+            if 'wait' in result:
+                raise ValidationError(name + '.wait', '"wait" is not allowed for state "%s"' % (result['state']))
+
+        if result['state'] == 'present' and 'type' not in result:
+            raise ValidationError(name + '.state', '"present" state requires a "type" argument')
+
+        if 'type' in result:
+
+            if 'slave_type' in result:
+                if 'master' not in result:
+                    raise ValidationError(name + '.slave_type', '"slave_type" requires a "master" property')
+                if result['master'] == result['name']:
+                    raise ValidationError(name + '.master', '"master" cannot refer to itself')
+            else:
+                if 'master' in result:
+                    raise ValidationError(name + '.master', '"master" requires a "slave_type" property')
+
+            if 'ip' in result:
+                if 'slave_type' in result:
+                    raise ValidationError(name + '.ip', 'a "slave_type" cannot have an "ip" property')
+            else:
+                if 'slave_type' not in result:
+                    result['ip'] = self.nested['ip'].get_default_value()
+
+            if 'mac' in result:
+                if result['type'] != 'ethernet':
+                    raise ValidationError(name + '.mac', 'a "mac" address is only allowed for type "ethernet"')
+
+            if 'interface_name' in result:
+                if not Util.ifname_valid(result['interface_name']):
+                    raise ValidationError(name + '.interface_name', 'invalid "interface_name" "%s"' % (result['interface_name']))
+            else:
+                if result['type'] in [ 'bridge', 'bond', 'team', 'vlan' ]:
+                    if not Util.ifname_valid(result['name']):
+                        raise ValidationError(name + '.interface_name', 'requires "interface_name" as "name" "%s" is not valid' % (result['name']))
+                    result['interface_name'] = result['name']
+
+            if result['type'] == 'vlan':
+                if 'vlan_id' not in result:
+                    raise ValidationError(name + '.vlan_id', 'missing "vlan_id" for "type" "vlan"')
+                if 'parent' not in result:
+                    raise ValidationError(name + '.parent', 'missing "parent" for "type" "vlan"')
+                if result['parent'] == result['name']:
+                    raise ValidationError(name + '.parent', '"parent" cannot refer to itself')
+            else:
+                if 'vlan_id' in result:
+                    raise ValidationError(name + '.vlan_id', '"vlan_id" is only allowed for "type" "vlan"')
+                if 'parent' in result:
+                    raise ValidationError(name + '.parent', '"parent" is only allowed for "type" "vlan"')
+
+        for k in VALID_FIELDS:
+            if k in result:
                 continue
-            if k not in handled_keys:
-                raise Exception('unsupported key "%s"' % (k))
+            v = self.nested[k]
+            vv = v.get_default_value()
+            if vv is not ArgValidator.MISSING:
+                result[k] = vv
 
-        return args
+        return result
 
-    def _complete_kwargs(self, kwargs):
-        if 'warnings' in kwargs:
-            kwargs['warnings'] = self._warnings + kwargs['warnings']
-        else:
-            kwargs['warnings'] = self._warnings
-        if 'rc' in kwargs:
-            self.rc = kwargs['rc']
-            rc = self.rc
-        else:
-            rc = self.rc
-        if rc is not None:
-            kwargs['rc'] = rc
-        return kwargs
+class ArgValidator_ListConnections(ArgValidatorList):
+    def __init__(self):
+        ArgValidatorList.__init__(self,
+            name = 'connections',
+            nested = ArgValidator_DictConnection(),
+            default_value = list
+        )
 
-    def exit_json(self, changed = True, **kwargs):
-        kwargs['changed'] = changed
-        self.module.exit_json(**self._complete_kwargs(kwargs))
-
-    def fail_json(self, msg, **kwargs):
-        kwargs['msg'] = msg
-        self.module.fail_json(**self._complete_kwargs(kwargs))
-
-    def fail_json_check(self, msg, **kwargs):
-        if self.check_mode:
-            self.warn("would-fail: " + msg)
-            if 'changed' not in kwargs:
-                kwargs['changed'] = True
-            self.exit_json(**kwargs)
-        self.fail_json(msg, **kwargs)
-
-AnsibleUtil = _AnsibleUtil()
+    def _validate_post(self, value, name, result):
+        for idx, connection in enumerate(result):
+            if connection['state'] in ['down', 'up']:
+                if connection['state'] == 'up' and 'type' in connection:
+                    pass
+                elif not ArgUtil.connection_find_by_name(connection['name'], result, idx):
+                    raise ValidationError(name + '[' + str(idx) + '].name', 'references non-existing connection "%s"' % (connection['name']))
+            if 'type' in connection:
+                if connection['master']:
+                    if not ArgUtil.connection_find_by_name(connection['master'], result, idx):
+                        raise ValidationError(name + '[' + str(idx) + '].master', 'references non-existing "master" connection "%s"' % (connection['master']))
+                if connection['parent']:
+                    if not ArgUtil.connection_find_by_name(connection['parent'], result, idx):
+                        raise ValidationError(name + '[' + str(idx) + '].parent', 'references non-existing "parent" connection "%s"' % (connection['parent']))
+        return result
 
 ###############################################################################
 
@@ -456,11 +601,11 @@ class IfcfgUtil:
            n == '.' or \
            n == '..' or \
            n.find('/') != -1:
-            raise Exception('invalid ifcfg-name %s' % (name))
+            raise MyError('invalid ifcfg-name %s' % (name))
         if file_type is None:
             file_type = 'ifcfg'
         if file_type not in cls.FILE_TYPES:
-            raise Exception('invalid file-type %s' % (file_type))
+            raise MyError('invalid file-type %s' % (file_type))
         return '/etc/sysconfig/network-scripts/' + file_type + '-' + n
 
     @classmethod
@@ -511,92 +656,71 @@ class IfcfgUtil:
         return s
 
     @classmethod
-    def ifcfg_find_master_from_file(cls, args, field):
-        content = cls.content_from_file(args[field], 'ifcfg')
-        if content['ifcfg'] is None:
-            raise Exception('cannot lookup %s connection from file "ifcfg-%s"' % (field, args[field]))
-        cdict = cls.content_to_dict(content, 'ifcfg')
-        ifcfg = cdict['ifcfg']
-        if 'DEVICE' not in ifcfg:
-            raise Exception('cannot lookup DEVICE in %s connection from file "ifcfg-%s"' % (field, args[field]))
-        if not Util.ifname_valid(ifcfg['DEVICE']):
-            raise Exception('invalid DEVICE for %s connection in file "ifcfg-%s"' % (field, args[field]))
-        return ifcfg['DEVICE']
+    def _connection_find_master(cls, name, connections, n_connections = None):
+        c = ArgUtil.connection_find_by_name(name, connections, n_connections)
+        if not c:
+            raise MyError('invalid master/parent "%s"' % (name))
+        if not Util.ifname_valid(c['interface_name']):
+            raise MyError('invalid master/parent "%s" which has not a valid interface name ("%s")' % (name, c['interface_name']))
+        return c['interface_name']
 
     @classmethod
-    def ifcfg_find_master(cls, args, field, check_mode = False):
-        try:
-            return cls.ifcfg_find_master_from_file(args, field)
-        except:
-            if not check_mode:
-                raise
-            return None
+    def ifcfg_create(cls, connections, idx, warn_fcn):
+        connection = connections[idx]
+        ip = connection['ip']
 
-    @classmethod
-    def ifcfg_create(cls, check_mode, **kwargs):
         ifcfg_all = {}
         for file_type in cls.FILE_TYPES:
             ifcfg_all[file_type] = {}
         ifcfg = ifcfg_all['ifcfg']
 
-        dirty = False
-
-        args = AnsibleUtil.kwargs_check_connection_args(kwargs)
-        ip = args['ip']
-
         if ip['dhcp4_send_hostname'] is not None:
-            AnsibleUtil.warn('ip.dhcp4_send_hostname is not supported by initscripts provider')
+            warn_fcn('ip.dhcp4_send_hostname is not supported by initscripts provider')
         if ip['route_metric4'] is not None and ip['route_metric4'] >= 0:
-            AnsibleUtil.warn('ip.route_metric4 is not supported by initscripts provider')
+            warn_fcn('ip.route_metric4 is not supported by initscripts provider')
         if ip['route_metric6'] is not None and ip['route_metric6'] >= 0:
-            AnsibleUtil.warn('ip.route_metric6 is not supported by initscripts provider')
+            warn_fcn('ip.route_metric6 is not supported by initscripts provider')
 
         ifcfg['NM_CONTROLLED'] = 'no'
 
-        if args['autoconnect']:
+        if connection['autoconnect']:
             ifcfg['ONBOOT'] = 'yes'
 
-        ifcfg['DEVICE'] = args['interface_name']
+        ifcfg['DEVICE'] = connection['interface_name']
 
-        if args['type'] == 'ethernet':
+        if connection['type'] == 'ethernet':
             ifcfg['TYPE'] = 'Ethernet'
-            ifcfg['HWADDR'] = args['mac']
-        elif args['type'] == 'bridge':
+            ifcfg['HWADDR'] = connection['mac']
+        elif connection['type'] == 'bridge':
             ifcfg['TYPE'] = 'Bridge'
-        elif args['type'] == 'bond':
+        elif connection['type'] == 'bond':
             ifcfg['TYPE'] = 'Bond'
             ifcfg['BONDING_MASTER'] = 'yes'
-        elif args['type'] == 'team':
+        elif connection['type'] == 'team':
             ifcfg['DEVICETYPE'] = 'Team'
-        elif args['type'] == 'vlan':
+        elif connection['type'] == 'vlan':
             ifcfg['VLAN'] = 'yes'
             ifcfg['TYPE'] = 'Vlan'
-            m = cls.ifcfg_find_master(args, 'parent', check_mode)
-            if m is None:
-                dirty = True
-            else:
-                ifcfg['PHYSDEV'] = m
-            ifcfg['VID'] = args['vlan_id']
+            ifcfg['PHYSDEV'] = cls._connection_find_master(connection['parent'], connections, idx)
+            ifcfg['VID'] = connection['vlan_id']
         else:
-            raise Exception('unsupported type %s' % (args['type']))
+            raise MyError('unsupported type %s' % (connection['type']))
 
-        if 'slave_type' in args:
-            m = cls.ifcfg_find_master(args, 'master', check_mode)
-            if m is None:
-                dirty = True
-            if args['slave_type'] == 'bridge':
+        if connection['slave_type'] is not None:
+            m = cls._connection_find_master(connection['master'], connections, idx)
+            if connection['slave_type'] == 'bridge':
                 ifcfg['BRIDGE'] = m
-            elif args['slave_type'] == 'bond':
+            elif connection['slave_type'] == 'bond':
                 ifcfg['MASTER'] = m
                 ifcfg['SLAVE'] = 'yes'
-            elif args['slave_type'] == 'team':
+            elif connection['slave_type'] == 'team':
                 ifcfg['TEAM_MASTER'] = m
                 if 'TYPE' in ifcfg:
                     del ifcfg['TYPE']
-                if args['type'] != 'team':
+                if connection['type'] != 'team':
                     ifcfg['DEVICETYPE'] = 'TeamPort'
             else:
-                raise Exception('invalid slave_type "%s"' % (args['slave_type']))
+                raise MyError('invalid slave_type "%s"' % (connection['slave_type']))
         else:
             addrs4 = list([a for a in ip['address'] if     a['is_v4']])
             addrs6 = list([a for a in ip['address'] if not a['is_v4']])
@@ -611,7 +735,7 @@ class IfcfgUtil:
                 a = addrs4[i]
                 ifcfg['IPADDR' + ('' if i == 0 else str(i))] = a['address']
                 ifcfg['PREFIX' + ('' if i == 0 else str(i))] = str(a['prefix'])
-            if ip['gateway4']:
+            if ip['gateway4'] is not None:
                 ifcfg['GATEWAY'] = ip['gateway4']
 
             if ip['auto6']:
@@ -626,7 +750,7 @@ class IfcfgUtil:
                 ifcfg['IPVADDR'] = addrs6[0]['address'] + '/' + str(addrs6[0]['prefix'])
                 if len(addrs6) > 1:
                     ifcfg['IPVADDR_SECONDARIES'] = ' '.join([a['address'] + '/' + str(a['prefix']) for a in addrs6[1:]])
-            if ip['gateway6']:
+            if ip['gateway6'] is not None:
                 ifcfg['IPV6_DEFAULTGW'] = ip['gateway6']
 
         for file_type in cls.FILE_TYPES:
@@ -638,7 +762,7 @@ class IfcfgUtil:
                 if type(h[key]) == type(True):
                     h[key] = 'yes' if h[key] else 'no'
 
-        return (ifcfg_all, dirty)
+        return ifcfg_all
 
     @classmethod
     def ifcfg_parse_line(cls, line):
@@ -678,6 +802,8 @@ class IfcfgUtil:
                 ifcfg[val[0]] = val[1]
         return ifcfg
 
+    ANSIBLE_MANAGED = '# this file was created by ansible'
+
     @classmethod
     def content_from_dict(cls, ifcfg_all, file_type = None):
         content = {}
@@ -687,11 +813,11 @@ class IfcfgUtil:
                 if file_type != 'ifcfg':
                     content[file_type] = None
                 continue
-            s = AnsibleUtil.ansible_managed + '\n'
+            s = cls.ANSIBLE_MANAGED + '\n'
             for key in sorted(h.keys()):
                 value = h[key]
                 if not cls.KeyValid(key):
-                    raise Exception('invalid ifcfg key %s' % (key))
+                    raise MyError('invalid ifcfg key %s' % (key))
                 if value is not None:
                     s += key + '=' + cls.ValueEscape(value) + '\n'
             content[file_type] = s
@@ -719,7 +845,7 @@ class IfcfgUtil:
 
     @classmethod
     def content_to_file(cls, name, content, file_type = None):
-        import os, errno
+        import os
         for file_type in cls._file_types(file_type):
             path = cls.ifcfg_path(name, file_type)
             h = content[file_type]
@@ -727,6 +853,7 @@ class IfcfgUtil:
                 try:
                     os.unlink(path)
                 except OSError as e:
+                    import errno
                     if e.errno != errno.ENOENT:
                         raise
             else:
@@ -735,12 +862,14 @@ class IfcfgUtil:
 
 ###############################################################################
 
-class NMCmd:
+class NMUtil:
 
     def __init__(self, nmclient):
         self.nmclient = nmclient
 
-    def active_connection_list(self, connections = None, black_list = None):
+    def active_connection_list(self, connections = None, black_list = None, mainloop_iterate = True):
+        if mainloop_iterate:
+            Util.GMainLoop_iterate_all()
         active_cons = self.nmclient.get_active_connections()
         if connections:
             connections = set(connections)
@@ -750,7 +879,9 @@ class NMCmd:
         active_cons = list(active_cons)
         return active_cons;
 
-    def connection_list(self, name = None, uuid = None, black_list = None):
+    def connection_list(self, name = None, uuid = None, black_list = None, black_list_uuid = None, mainloop_iterate = True):
+        if mainloop_iterate:
+            Util.GMainLoop_iterate_all()
         cons = self.nmclient.get_connections()
         if name is not None:
             cons = [c for c in cons if c.get_id() == name]
@@ -759,257 +890,383 @@ class NMCmd:
 
         if black_list:
             cons = [c for c in cons if c not in black_list]
+        if black_list_uuid:
+            cons = [c for c in cons if c.get_uuid() not in black_list]
 
         cons = list(cons)
-        def _get_timestamp(connection):
-            s_con = connection.get_setting_connection()
-            if not s_con:
-                return 0L
-            return s_con.get_timestamp()
-        cons.sort(key = _get_timestamp)
+        def _cmp(a, b):
+            s_a = a.get_setting_connection()
+            s_b = b.get_setting_connection()
+            if not s_a and not s_b:
+                return 0
+            if not s_a:
+                return 1
+            if not s_b:
+                return -1
+            t_a = s_a.get_timestamp()
+            t_b = s_b.get_timestamp()
+            if t_a == t_b:
+                return 0
+            if t_a <= 0:
+                return 1
+            if t_b <= 0:
+                return -1
+            return cmp(t_a, t_b)
+        cons.sort(cmp = _cmp)
         return cons
 
-    def connection_find_master_connection(self, args, field, expected_type = None):
-        # we lookup the master/parent by the ID. That is different from NetworkManager, for
-        # which connection.master either names the ifname of the parent interface
-        # or the UUID of the parent connection.
-        cons = self.connection_list(name = args[field])
-        if not cons:
-            raise Exception('a %s connection "%s" was not found' % (field, args[field]))
-        if len(cons) != 1:
-            raise Exception('a unique %s connection "%s" was not found, instead there are [ %s ]' % (field, args[field], ' '.join([c.get_uuid() for c in cons])))
-        con = cons[0]
-        if expected_type is not None and con.get_connection_type() != expected_type:
-            raise Exception('the %s connection "%s" is expected to be of type %s but is %s (%s)' % (field, args[field], expected_type, con.get_connection_type(), con.get_uuid()))
-        return con
-
-    def connection_find_master(self, args, field, check_mode = False, expected_type = None):
-        try:
-            con = self.connection_find_master_connection(args, field, expected_type)
-        except:
-            if not check_mode:
-                raise
-            return None
-        return con.get_uuid()
-
-    def _ip_settings_create(self, ip, connection = None):
+    def connection_compare(self, con_a, con_b, normalize_a = False, normalize_b = False, compare_flags = None):
         NM = Util.NM()
 
-        s_ip4 = NM.SettingIP4Config.new()
-        s_ip6 = NM.SettingIP6Config.new()
+        if normalize_a:
+            con_a = NM.SimpleConnection.new_clone(con_a)
+            try:
+                con_a.normalize()
+            except:
+                pass
+        if normalize_b:
+            con_b = NM.SimpleConnection.new_clone(con_b)
+            try:
+                con_b.normalize()
+            except:
+                pass
+        if compare_flags == None:
+            compare_flags = NM.SettingCompareFlags.IGNORE_TIMESTAMP
 
-        s_ip4.set_property(NM.SETTING_IP_CONFIG_METHOD, 'auto')
-        s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, 'auto')
+        return not(not(con_a.compare (con_b, compare_flags)))
 
-        addrs4 = list([a for a in ip['address'] if     a['is_v4']])
-        addrs6 = list([a for a in ip['address'] if not a['is_v4']])
+    @staticmethod
+    def _connection_find_master_uuid(name, connections, n_connections = None):
+        c = ArgUtil.connection_find_by_name(name, connections, n_connections)
+        if not c:
+            raise MyError('invalid master/parent "%s"' % (name))
+        assert c.get('nm.uuid', None)
+        return c['nm.uuid']
 
-        if ip['dhcp4']:
-            s_ip4.set_property(NM.SETTING_IP_CONFIG_METHOD, 'auto')
-            s_ip4.set_property(NM.SETTING_IP_CONFIG_DHCP_SEND_HOSTNAME, ip['dhcp4_send_hostname'] != False)
-        elif addrs4:
-           s_ip4.set_property(NM.SETTING_IP_CONFIG_METHOD, 'manual')
-        else:
-            s_ip4.set_property(NM.SETTING_IP_CONFIG_METHOD, 'disabled')
-        for a in addrs4:
-            s_ip4.add_address(NM.IPAddress.new(a['family'], a['address'], a['prefix']))
-        if ip['gateway4']:
-            s_ip4.set_property(NM.SETTING_IP_CONFIG_GATEWAY, ip['gateway4'])
-        if ip['route_metric4'] is not None and ip['route_metric4'] >= 0:
-            s_ip4.set_property(NM.SETTING_IP_CONFIG_ROUTE_METRIC, ip['route_metric4'])
-
-        if ip['auto6']:
-            s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, 'auto')
-        elif addrs6:
-            s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, 'manual')
-        else:
-            s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, 'ignore')
-        for a in addrs6:
-            s_ip6.add_address(NM.IPAddress.new(a['family'], a['address'], a['prefix']))
-        if ip['gateway6']:
-            s_ip6.set_property(NM.SETTING_IP_CONFIG_GATEWAY, ip['gateway6'])
-        if ip['route_metric6'] is not None and ip['route_metric6'] >= 0:
-            s_ip6.set_property(NM.SETTING_IP_CONFIG_ROUTE_METRIC, ip['route_metric6'])
-
-        if connection is not None:
-            connection.add_setting(s_ip4)
-            connection.add_setting(s_ip6)
-        return (s_ip4, s_ip6)
-
-    def connection_create(self, check_mode, uuid = None, **kwargs):
+    def connection_create(self, connections, idx):
         NM = Util.NM()
 
-        if uuid is None:
-            uuid = Util.create_uuid()
+        connection = connections[idx]
 
-        dirty = False
-
-        args = AnsibleUtil.kwargs_check_connection_args(kwargs)
-
-        connection = NM.SimpleConnection.new()
+        con = NM.SimpleConnection.new()
         s_con = NM.SettingConnection.new()
-        connection.add_setting(s_con)
+        con.add_setting(s_con)
 
-        s_con.set_property(NM.SETTING_CONNECTION_ID, args['name'])
-        s_con.set_property(NM.SETTING_CONNECTION_UUID, uuid)
-        s_con.set_property(NM.SETTING_CONNECTION_AUTOCONNECT, args['autoconnect'])
-        s_con.set_property(NM.SETTING_CONNECTION_INTERFACE_NAME, args['interface_name'])
+        s_con.set_property(NM.SETTING_CONNECTION_ID, connection['name'])
+        s_con.set_property(NM.SETTING_CONNECTION_UUID, connection['nm.uuid'])
+        s_con.set_property(NM.SETTING_CONNECTION_AUTOCONNECT, connection['autoconnect'])
+        s_con.set_property(NM.SETTING_CONNECTION_INTERFACE_NAME, connection['interface_name'])
 
-        if args['type'] == 'ethernet':
+        if connection['type'] == 'ethernet':
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, '802-3-ethernet')
             s_wired = NM.SettingWired.new()
-            connection.add_setting(s_wired)
-            s_wired.set_property(NM.SETTING_WIRED_MAC_ADDRESS, args['mac'])
-        elif args['type'] == 'bridge':
+            con.add_setting(s_wired)
+            s_wired.set_property(NM.SETTING_WIRED_MAC_ADDRESS, connection['mac'])
+        elif connection['type'] == 'bridge':
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, 'bridge')
             s_bridge = NM.SettingBridge.new()
-            connection.add_setting(s_bridge)
+            con.add_setting(s_bridge)
             s_bridge.set_property(NM.SETTING_BRIDGE_STP, False)
-        elif args['type'] == 'bond':
+        elif connection['type'] == 'bond':
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, 'bond')
-        elif args['type'] == 'team':
+        elif connection['type'] == 'team':
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, 'team')
-        elif args['type'] == 'vlan':
+        elif connection['type'] == 'vlan':
             s_vlan = NM.SettingVlan.new()
-            connection.add_setting(s_vlan)
-            s_vlan.set_property(NM.SETTING_VLAN_ID, int(args['vlan_id']))
-            m = self.connection_find_master(args, 'parent', check_mode)
-            if m is None:
-                dirty = True
-            else:
-                s_vlan.set_property(NM.SETTING_VLAN_PARENT, m)
+            con.add_setting(s_vlan)
+            s_vlan.set_property(NM.SETTING_VLAN_ID, int(connection['vlan_id']))
+            s_vlan.set_property(NM.SETTING_VLAN_PARENT, self._connection_find_master_uuid(connection['parent'], connections, idx))
         else:
-            raise Exception('unsupported type %s' % (args['type']))
+            raise MyError('unsupported type %s' % (connection['type']))
 
-        if 'slave_type' in args:
-            s_con.set_property(NM.SETTING_CONNECTION_SLAVE_TYPE, args['slave_type'])
-            m = self.connection_find_master(args, 'master', check_mode, args['slave_type'])
-            if m is None:
-                dirty = True
-            else:
-                s_con.set_property(NM.SETTING_CONNECTION_MASTER, m)
+        if connection['slave_type'] is not None:
+            s_con.set_property(NM.SETTING_CONNECTION_SLAVE_TYPE, connection['slave_type'])
+            s_con.set_property(NM.SETTING_CONNECTION_MASTER, self._connection_find_master_uuid(connection['master'], connections, idx))
         else:
-            self._ip_settings_create(args['ip'], connection)
+            ip = connection['ip']
+
+            s_ip4 = NM.SettingIP4Config.new()
+            s_ip6 = NM.SettingIP6Config.new()
+
+            s_ip4.set_property(NM.SETTING_IP_CONFIG_METHOD, 'auto')
+            s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, 'auto')
+
+            addrs4 = list([a for a in ip['address'] if     a['is_v4']])
+            addrs6 = list([a for a in ip['address'] if not a['is_v4']])
+
+            if ip['dhcp4']:
+                s_ip4.set_property(NM.SETTING_IP_CONFIG_METHOD, 'auto')
+                s_ip4.set_property(NM.SETTING_IP_CONFIG_DHCP_SEND_HOSTNAME, ip['dhcp4_send_hostname'] != False)
+            elif addrs4:
+               s_ip4.set_property(NM.SETTING_IP_CONFIG_METHOD, 'manual')
+            else:
+                s_ip4.set_property(NM.SETTING_IP_CONFIG_METHOD, 'disabled')
+            for a in addrs4:
+                s_ip4.add_address(NM.IPAddress.new(a['family'], a['address'], a['prefix']))
+            if ip['gateway4'] is not None:
+                s_ip4.set_property(NM.SETTING_IP_CONFIG_GATEWAY, ip['gateway4'])
+            if ip['route_metric4'] is not None and ip['route_metric4'] >= 0:
+                s_ip4.set_property(NM.SETTING_IP_CONFIG_ROUTE_METRIC, ip['route_metric4'])
+
+            if ip['auto6']:
+                s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, 'auto')
+            elif addrs6:
+                s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, 'manual')
+            else:
+                s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, 'ignore')
+            for a in addrs6:
+                s_ip6.add_address(NM.IPAddress.new(a['family'], a['address'], a['prefix']))
+            if ip['gateway6'] is not None:
+                s_ip6.set_property(NM.SETTING_IP_CONFIG_GATEWAY, ip['gateway6'])
+            if ip['route_metric6'] is not None and ip['route_metric6'] >= 0:
+                s_ip6.set_property(NM.SETTING_IP_CONFIG_ROUTE_METRIC, ip['route_metric6'])
+
+            con.add_setting(s_ip4)
+            con.add_setting(s_ip6)
 
         try:
-            connection.normalize()
+            con.normalize()
         except Exception as e:
-            if not check_mode:
-                raise Exception('failure to create normalized connection: %s' % (e))
-        return (connection, dirty)
+            raise MyError('created connection failed to normalize: %s' % (e))
+        return con
 
+    def connection_add(self, con):
 
-    def _connection_add_cb(self, client, result, cb_args):
-        con = None
-        try:
-            con = client.add_connection_finish(result)
-        except Exception as e:
-            cb_args['error'] = str(e)
-        cb_args['con'] = con
-        Util.GMainLoop().quit()
-
-    def connection_add(self, check_mode = False, **kwargs):
-        connection, dirty = self.connection_create(check_mode, **kwargs)
-        if check_mode:
-            return True
+        def add_cb(client, result, cb_args):
+            con = None
+            try:
+                con = client.add_connection_finish(result)
+            except Exception as e:
+                cb_args['error'] = str(e)
+            cb_args['con'] = con
+            Util.GMainLoop().quit()
 
         cb_args = {}
-        self.nmclient.add_connection_async(connection, True,
-                                           None, self._connection_add_cb, cb_args)
-        Util.GMainLoop().run()
+        self.nmclient.add_connection_async(con, True,
+                                           None, add_cb, cb_args)
+        Util.GMainLoop_run()
         if not cb_args.get('con', None):
-            raise Exception('failure to add connection: %s' % (cb_args.get('error', 'unknown error')))
-        return True
+            raise MyError('failure to add connection: %s' % (cb_args.get('error', 'unknown error')))
+        return cb_args['con']
 
-
-    def _connection_update_cb(self, connection, result, cb_args):
-        success = False
-        try:
-            success = connection.commit_changes_finish(result)
-        except Exception as e:
-            cb_args['error'] = str(e)
-        cb_args['success'] = success
-        Util.GMainLoop().quit()
-
-    def connection_update(self, connection, check_mode = False, **kwargs):
+    def connection_update(self, con, con_new):
         NM = Util.NM()
 
-        connection_new, dirty = self.connection_create(check_mode, **Util.kwargs_extend (kwargs, uuid = connection.get_uuid()))
+        con.replace_settings_from_connection(con_new)
 
-        connection_cur = NM.SimpleConnection.new_clone(connection)
-        try:
-            connection_cur.normalize()
-        except:
-            pass
-        changed = not connection_cur.compare (connection_new, NM.SettingCompareFlags.IGNORE_TIMESTAMP)
-
-        if check_mode:
-            return changed or dirty
-
-        if not changed:
-            return False
-
-        connection.replace_settings_from_connection(connection_new)
+        def update_cb(connection, result, cb_args):
+            success = False
+            try:
+                success = connection.commit_changes_finish(result)
+            except Exception as e:
+                cb_args['error'] = str(e)
+            cb_args['success'] = success
+            Util.GMainLoop().quit()
 
         cb_args = {}
-        connection.commit_changes_async(True, None, self._connection_update_cb, cb_args)
-        Util.GMainLoop().run()
+        con.commit_changes_async(True, None, update_cb, cb_args)
+        Util.GMainLoop_run()
         if not cb_args.get('success', False):
-            raise Exception('failure to update connection: %s' % (cb_args.get('error', 'unknown error')))
+            raise MyError('failure to update connection: %s' % (cb_args.get('error', 'unknown error')))
         return True
-
-
-    def _connection_delete_cb(self, connection, result, cb_args):
-        success = False
-        try:
-            success = connection.delete_finish(result)
-        except Exception as e:
-            cb_args['error'] = str(e)
-        cb_args['success'] = success
-        Util.GMainLoop().quit()
 
     def connection_delete(self, connection):
+
+        def delete_cb(connection, result, cb_args):
+            success = False
+            try:
+                success = connection.delete_finish(result)
+            except Exception as e:
+                cb_args['error'] = str(e)
+            cb_args['success'] = success
+            Util.GMainLoop().quit()
+
         cb_args = {}
-        connection.delete_async(None, self._connection_delete_cb, cb_args)
-        Util.GMainLoop().run()
+        connection.delete_async(None, delete_cb, cb_args)
+        Util.GMainLoop_run()
         if not cb_args.get('success', False):
-            raise Exception('failure to delete connection: %s' % (cb_args.get('error', 'unknown error')))
-
-
-    def _connection_activate_cb(self, client, result, cb_args):
-        active_connection = False
-        try:
-            active_connection = client.activate_connection_finish(result)
-        except Exception as e:
-            cb_args['error'] = str(e)
-        cb_args['active_connection'] = active_connection
-        Util.GMainLoop().quit()
+            raise MyError('failure to delete connection: %s' % (cb_args.get('error', 'unknown error')))
 
     def connection_activate(self, connection):
+
+        def activate_cb(client, result, cb_args):
+            active_connection = False
+            try:
+                active_connection = client.activate_connection_finish(result)
+            except Exception as e:
+                cb_args['error'] = str(e)
+            cb_args['active_connection'] = active_connection
+            Util.GMainLoop().quit()
+
         cb_args = {}
-        self.nmclient.activate_connection_async(connection, None, None, None, self._connection_activate_cb, cb_args)
-        Util.GMainLoop().run()
+        self.nmclient.activate_connection_async(connection, None, None, None, activate_cb, cb_args)
+        Util.GMainLoop_run()
         if not cb_args.get('active_connection', None):
-            raise Exception('failure to activate connection: %s' % (cb_args.get('error', 'unknown error')))
+            raise MyError('failure to activate connection: %s' % (cb_args.get('error', 'unknown error')))
         return cb_args['active_connection']
 
-
-    def _active_connection_deactivate_cb(self, client, result, cb_args):
-        success = False
-        try:
-            success = client.deactivate_connection_finish(result)
-        except Exception as e:
-            cb_args['error'] = str(ex)
-        cb_args['success'] = success
-        Util.GMainLoop().quit()
-
     def active_connection_deactivate(self, ac):
+
+        def deactivate_cb(client, result, cb_args):
+            success = False
+            try:
+                success = client.deactivate_connection_finish(result)
+            except Exception as e:
+                cb_args['error'] = str(ex)
+            cb_args['success'] = success
+            Util.GMainLoop().quit()
+
         cb_args = {}
-        self.nmclient.deactivate_connection_async(ac, None, self._active_connection_deactivate_cb, cb_args)
-        Util.GMainLoop().run()
+        self.nmclient.deactivate_connection_async(ac, None, deactivate_cb, cb_args)
+        Util.GMainLoop_run()
         if not cb_args.get('success', False):
-            raise Exception('failure to deactivate connection: %s' % (cb_args.get('error', 'unknown error')))
+            raise MyError('failure to deactivate connection: %s' % (cb_args.get('error', 'unknown error')))
         return True
+
+###############################################################################
+
+class _AnsibleUtil:
+
+    ARGS = {
+        'provider':       { 'required': True,  'default': None, 'type': 'str' },
+        'connections':    { 'required': False, 'default': None, 'type': 'list' },
+    }
+
+    ARGS_CONNECTIONS = ArgValidator_ListConnections()
+
+    def __init__(self):
+        from ansible.module_utils.basic import AnsibleModule
+
+        self.AnsibleModule = AnsibleModule
+        self._module = None
+        self._connections = None
+        self._run_results = None
+        self._check_mode = None
+
+    @property
+    def check_mode(self):
+        if self._check_mode == None:
+            raise MyError('check_mode is not initialized')
+        return self._check_mode
+
+    def check_mode_next(self):
+        if self._check_mode == None:
+            if self.module.check_mode:
+                self._check_mode = CheckMode.DRY_RUN
+            else:
+                self._check_mode = CheckMode.PRE_RUN
+            return self._check_mode
+        if self.check_mode == CheckMode.PRE_RUN:
+            self._run_results = None
+            self._check_mode = CheckMode.REAL_RUN
+            return CheckMode.REAL_RUN
+        if self._check_mode != CheckMode.DONE:
+            self._check_mode = CheckMode.DONE
+            return CheckMode.DONE
+        assert False
+
+    @property
+    def module(self):
+        module = self._module
+        if module is None:
+            module = self.AnsibleModule(
+                argument_spec = self.ARGS,
+                supports_check_mode = True,
+            )
+            self._module = module
+        return module
+
+    @property
+    def params(self):
+        return self.module.params
+
+    @property
+    def connections(self):
+        c = self._connections
+        if c is None:
+            try:
+                c = self.ARGS_CONNECTIONS.validate(self.params['connections'])
+            except ValidationError as e:
+                self.fail_json('configuration error: %s' % (e),
+                               warn_traceback = True)
+            self._connections = c
+        return c
+
+    @property
+    def run_results(self):
+        c = self._run_results
+        if c is None:
+            c = []
+            for cc in self.connections:
+                c.append({
+                    'changed': False,
+                    'log': [],
+                    'rc': [],
+                })
+            self._run_results = c
+        return c
+
+    def run_results_changed(self, idx, changed = None):
+        if changed is None:
+            changed = True
+        self.run_results[idx]['changed'] = bool(changed)
+
+    def run_results_rc(self, idx, rc, msg):
+        self.run_results[idx]['rc'].append((rc, msg))
+        self.log(idx, LogLevel.INFO, 'command: %s (rc=%s)' % (msg, rc))
+
+    def log_debug(self, idx, msg):
+        self.log(idx, LogLevel.DEBUG, msg)
+
+    def log_info(self, idx, msg):
+        self.log(idx, LogLevel.INFO, msg)
+
+    def log_warn(self, idx, msg):
+        self.log(idx, LogLevel.WARN, msg)
+
+    def log_error(self, idx, msg, warn_traceback = False):
+        self.log(idx, LogLevel.ERROR, msg, warn_traceback = warn_traceback)
+
+    def log(self, idx, severity, msg, warn_traceback = False):
+        self.run_results[idx]['log'].append((severity, msg))
+        if severity == LogLevel.ERROR and self.connections[idx]['on_error'] != 'continue':
+            self.fail_json('error: %s' % (msg), warn_traceback = warn_traceback)
+
+    def _complete_kwargs(self, kwargs, traceback_msg = None):
+        if 'warnings' in kwargs:
+            logs = list(kwargs['warnings'])
+        else:
+            logs = []
+        if self._run_results is not None:
+            for idx, rr in enumerate(self.run_results):
+                c = self.connections[idx]
+                prefix = 'state:%s' % (c['state'])
+                if c['state'] != 'wait':
+                    prefix = prefix + (', "%s"' % (c['name']))
+                for r in rr['log']:
+                    logs.append('%s #%s, %s: %s' % (LogLevel.fmt(r[0]), idx, prefix, r[1]))
+        if traceback_msg is not None:
+            logs.append(traceback_msg)
+        kwargs['warnings'] = logs
+        return kwargs
+
+    def exit_json(self, **kwargs):
+        changed = False
+        if self._run_results is not None:
+            for rr in self.run_results:
+                if rr['changed']:
+                    changed = True
+        kwargs['changed'] = changed
+        self.module.exit_json(**self._complete_kwargs(kwargs))
+
+    def fail_json(self, msg, warn_traceback = False, **kwargs):
+        traceback_msg = None
+        if warn_traceback:
+            traceback_msg = 'exception: %s' % (traceback.format_exc())
+        kwargs['msg'] = msg
+        self.module.fail_json(**self._complete_kwargs(kwargs, traceback_msg))
+
+AnsibleUtil = _AnsibleUtil()
 
 ###############################################################################
 
@@ -1020,252 +1277,307 @@ class Cmd:
         provider = AnsibleUtil.params['provider']
         if provider == 'nm':
             return Cmd_nm()
-        if provider == 'initscripts':
+        elif provider == 'initscripts':
             return Cmd_initscripts()
         AnsibleUtil.fail_json('unsupported provider %s' % (provider))
 
     def run(self):
-        state = AnsibleUtil.params['state']
-        if state is None:
-            if AnsibleUtil.params['type'] is None:
-                state = 'up'
-            else:
-                state = 'present'
-        if state == 'absent':
-            AnsibleUtil.kwargs_whitelist_check(True)
-            self.run_state_absent()
-        elif state == 'present':
-            self.run_state_present()
-        elif state == 'up':
-            AnsibleUtil.kwargs_whitelist_check(True, 'wait')
-            self.run_state_up()
-        elif state == 'down':
-            AnsibleUtil.kwargs_whitelist_check(True)
-            self.run_state_down()
-        else:
-            AnsibleUtil.fail_json('invalid state "%s"' % (state))
+        self.run_prepare()
+        while AnsibleUtil.check_mode_next() != CheckMode.DONE:
+            for idx, connection in enumerate(AnsibleUtil.connections):
+                try:
+                    state = connection['state']
+                    if state == 'wait':
+                        AnsibleUtil.log_info(idx, "wait for %s seconds" % (connection['wait']))
+                        if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+                            import time
+                            time.sleep(connection['wait'])
+                    elif state == 'absent':
+                        self.run_state_absent(idx)
+                    elif state == 'present':
+                        self.run_state_present(idx)
+                    elif state == 'up':
+                        if 'type' in connection:
+                            self.run_state_present(idx)
+                        self.run_state_up(idx)
+                    elif state == 'down':
+                        self.run_state_down(idx)
+                    else:
+                        assert False
+                except Exception as e:
+                    AnsibleUtil.log_warn(idx, "failure: %s [[%s]]" % (e, traceback.format_exc()))
+                    raise
 
-    def run_state_absent(self):
-        AnsibleUtil.fail_json('state absent not implemented')
-
-    def run_state_present(self):
-        AnsibleUtil.fail_json('state present not implemented')
-
-    def run_state_up(self):
-        AnsibleUtil.fail_json('state up not implemented')
-
-    def run_state_down(self):
-        AnsibleUtil.fail_json('state down not implemented')
+    def run_prepare(self):
+        pass
 
 ###############################################################################
 
 class Cmd_nm(Cmd):
 
     def __init__(self):
-        self._nmcmd = None
+        self._nmutil = None
 
     @property
-    def nmcmd(self):
-        if self._nmcmd is None:
+    def nmutil(self):
+        if self._nmutil is None:
             try:
-                nmclient = Util.create_nm_client()
+                nmclient = Util.NM().Client.new(None)
             except Exception as e:
                 AnsibleUtil.fail_json('failure loading libnm library: %s' % (e))
-            self._nmcmd = NMCmd(nmclient)
-        return self._nmcmd
+            self._nmutil = NMUtil(nmclient)
+        return self._nmutil
 
-    def run_state_absent(self):
+    def run_prepare(self):
+        Cmd.run_prepare(self)
+        names = {}
+        for connection in AnsibleUtil.connections:
+            if connection['state'] in ['up', 'down', 'present', 'absent']:
+                name = connection['name']
+                if name in names:
+                    exists = names[name]['nm.exists']
+                    uuid = names[name]['nm.uuid']
+                else:
+                    c = Util.first(self.nmutil.connection_list(name = name))
+
+                    exists = (c is not None)
+                    if c is not None:
+                        uuid = c.get_uuid()
+                    else:
+                        uuid = Util.create_uuid()
+                    names[name] = {
+                        'nm.exists': exists,
+                        'nm.uuid': uuid,
+                    }
+                connection['nm.exists'] = exists
+                connection['nm.uuid'] = uuid
+
+    def run_state_absent(self, idx):
         changed = False
         seen = set()
+        name = AnsibleUtil.connections[idx]['name']
         while True:
-            connections = self.nmcmd.connection_list(name = AnsibleUtil.params['name'], black_list = seen)
+            connections = self.nmutil.connection_list(name = name, black_list = seen)
             if not connections:
-                AnsibleUtil.exit_json(changed)
-            if AnsibleUtil.check_mode:
-                AnsibleUtil.exit_json()
+                break
             c = connections[-1]
-            try:
-                self.nmcmd.connection_delete(c)
-            except Exception as e:
-                AnsibleUtil.fail_json('delete connection failed: %s' % (e))
-            changed = True
             seen.add(c)
-            Util.GMainLoop_iterate()
+            AnsibleUtil.run_results_changed(idx)
+            AnsibleUtil.log_info(idx, 'delete connection %s, %s' % (c.get_id(), c.get_uuid()))
+            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+                try:
+                    self.nmutil.connection_delete(c)
+                except MyError as e:
+                    AnsibleUtil.log_error(idx, 'delete connection failed: %s' % (e))
+        if not seen:
+            AnsibleUtil.log_info(idx, 'no connection "%s"' % (name))
 
-    def run_state_present(self):
-        connections = self.nmcmd.connection_list(name = AnsibleUtil.params['name'])
-        if not connections:
-            try:
-                self.nmcmd.connection_add(check_mode = AnsibleUtil.check_mode,
-                                          **AnsibleUtil.params)
-            except Exception as e:
-                AnsibleUtil.warn('exception: %s' % (traceback.format_exc()))
-                AnsibleUtil.fail_json('failure adding connection: %s' % (e))
-            AnsibleUtil.exit_json()
-
+    def run_state_present(self, idx):
+        connection = AnsibleUtil.connections[idx]
+        con_cur = Util.first(self.nmutil.connection_list(name = connection['name'], uuid = connection['nm.uuid']))
+        con_new = self.nmutil.connection_create(AnsibleUtil.connections, idx)
         changed = False
-        connection = connections[0]
-        try:
-            changed = self.nmcmd.connection_update(connection,
-                                                   check_mode = AnsibleUtil.check_mode,
-                                                   **AnsibleUtil.params)
-        except Exception as e:
-            AnsibleUtil.warn('exception: %s' % (traceback.format_exc()))
-            AnsibleUtil.fail_json('failure updating connection %s: %s' % (connection.get_id(), e))
-
-        seen = set([connection])
-        while True:
-            Util.GMainLoop_iterate()
-            connections = self.nmcmd.connection_list(name = AnsibleUtil.params['name'], black_list = seen)
-            if not connections:
-                AnsibleUtil.exit_json(changed)
-            if AnsibleUtil.check_mode:
-                AnsibleUtil.exit_json()
-            c = connections[-1]
-            try:
-                self.nmcmd.connection_delete(c)
-            except Exception as e:
-                AnsibleUtil.fail_json('delete duplicate connection failed: %s' % (e))
+        if con_cur is None:
+            AnsibleUtil.log_info(idx, 'add connection %s, %s' % (connection['name'], connection['nm.uuid']))
             changed = True
-            seen.add(c)
+            try:
+                if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+                    con_cur = self.nmutil.connection_add(con_new)
+            except MyError as e:
+                AnsibleUtil.log_error(idx, 'adding connection failed: %s' % (e))
+        elif not self.nmutil.connection_compare(con_cur, con_new, normalize_a = True):
+            changed = True
+            AnsibleUtil.log_info(idx, 'update connection %s, %s' % (con_cur.get_id(), con_cur.get_uuid()))
+            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+                try:
+                    self.nmutil.connection_update(con_cur, con_new)
+                except MyError as e:
+                    AnsibleUtil.log_error(idx, 'updating connection failed: %s' % (e))
+        else:
+            AnsibleUtil.log_info(idx, 'connection %s, %s already up to date' % (con_cur.get_id(), con_cur.get_uuid()))
 
-    def run_state_up(self):
-        if AnsibleUtil.params_wait != 0:
-            AnsibleUtil.warn('wait for activation is not yet implemented')
-        connections = self.nmcmd.connection_list(name = AnsibleUtil.params['name'])
-        if not connections:
-            AnsibleUtil.fail_json_check('failure to up connection %s: does not exist' % (AnsibleUtil.params['name']))
-        if AnsibleUtil.check_mode:
-            AnsibleUtil.exit_json()
-        active_connection = None
-        try:
-            active_connection = self.nmcmd.connection_activate (connections[0])
-        except Exception as e:
-            AnsibleUtil.fail_json('up connection failed: %s' % (e))
-        AnsibleUtil.exit_json()
-
-    def run_state_down(self):
-        if AnsibleUtil.params_wait != 0:
-            AnsibleUtil.warn('wait for activation is not yet implemented')
-        connections = self.nmcmd.connection_list(name = AnsibleUtil.params['name'])
-        if not connections:
-            AnsibleUtil.fail_json_check('failure to down connection %s: does not exist' % (AnsibleUtil.params['name']))
-        changed = False
         seen = set()
+        if con_cur is not None:
+            seen.add(con_cur)
+
         while True:
-            acons = self.nmcmd.active_connection_list(connections, black_list = seen)
-            if AnsibleUtil.check_mode or not acons:
-                AnsibleUtil.exit_json(changed)
-            ac = acons[0]
-            seen.add(ac)
-            del acons
-            try:
-                self.nmcmd.active_connection_deactivate(ac)
-            except Exception as e:
-                AnsibleUtil.fail_json('failure deactivating connection: %s' % (e))
+            connections = self.nmutil.connection_list(name = connection['name'], black_list = seen, black_list_uuid = [connection['nm.uuid']])
+            if not connections:
+                break
+            c = connections[-1]
+            AnsibleUtil.log_info(idx, 'delete duplicate connection %s, %s' % (c.get_id(), c.get_uuid()))
             changed = True
-            Util.GMainLoop_iterate()
+            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+                try:
+                   self.nmutil.connection_delete(c)
+                except MyError as e:
+                    AnsibleUtil.log_error(idx, 'delete duplicate connection failed: %s' % (e))
+            seen.add(c)
+
+        AnsibleUtil.run_results_changed(idx, changed)
+
+    def run_state_up(self, idx):
+        connection = AnsibleUtil.connections[idx]
+
+        if connection['wait'] != 0:
+            AnsibleUtil.log_warn(idx, 'wait for activation is not yet implemented')
+
+        con = Util.first(self.nmutil.connection_list(name = connection['name'], uuid = connection['nm.uuid']))
+        if not con:
+            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+                AnsibleUtil.log_error(idx, 'up connection %s, %s failed: no connection' % (connection['name'], connection['nm.uuid']))
+            else:
+                AnsibleUtil.log_info(idx, 'up connection %s, %s' % (connection['name'], connection['nm.uuid']))
+            return
+        AnsibleUtil.log_info(idx, 'up connection %s, %s' % (con.get_id(), con.get_uuid()))
+        if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+            try:
+                self.nmutil.connection_activate (con)
+            except MyError as e:
+                AnsibleUtil.log_error(idx, 'up connection failed: %s' % (e))
+
+        AnsibleUtil.run_results_changed(idx)
+
+    def run_state_down(self, idx):
+        connection = AnsibleUtil.connections[idx]
+
+        if connection['wait'] != 0:
+            AnsibleUtil.log_warn(idx, 'wait for activation is not yet implemented')
+
+        cons = self.nmutil.connection_list(name = connection['name'])
+        changed = False
+        if cons:
+            seen = set()
+            while True:
+                ac = Util.first(self.nmutil.active_connection_list(connections = cons, black_list = seen))
+                if ac is None:
+                    break
+                changed = True
+                seen.add(ac)
+                AnsibleUtil.log_info(idx, 'down connection %s: %s' % (connection['name'], ac.get_path()))
+                if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+                    try:
+                        self.nmutil.active_connection_deactivate(ac)
+                    except MyError as e:
+                        AnsibleUtil.log_error(idx, 'down connection failed: %s' % (e))
+                cons = self.nmutil.connection_list(name = connection['name'])
+
+        if not changed:
+            AnsibleUtil.log_info(idx, 'down connection %s failed: no connection' % (connection['name']))
+        AnsibleUtil.run_results_changed(idx, changed)
+
 
 ###############################################################################
 
 class Cmd_initscripts(Cmd):
 
-    @property
-    def name(self):
-        return AnsibleUtil.params['name']
-
-    def check_name(self, name = None):
+    def check_name(self, idx, name = None):
         if name is None:
-            name = self.name
+            name = AnsibleUtil.connections[idx]['name']
         try:
-            f = self.ifcfg_path(name)
-        except Exception as e:
-            AnsibleUtil.fail_json('invalid name %s for connection' % (name))
+            f = IfcfgUtil.ifcfg_path(name)
+        except MyError as e:
+            AnsibleUtil.log_error(idx, 'invalid name %s for connection' % (name))
+            return None
         return f
 
-    def ifcfg_paths(self, name = None, file_types = None):
-        if name is None:
-            name = self.name
-        return IfcfgUtil.ifcfg_paths(name, file_types)
+    def run_prepare(self):
+        pass
 
-    def ifcfg_path(self, name = None, file_type = None):
-        if name is None:
-            name = self.name
-        return IfcfgUtil.ifcfg_path(name, file_type)
-
-    def run_state_absent(self):
-        import os, errno
-        self.check_name()
-        paths = self.ifcfg_paths()
+    def run_state_absent(self, idx):
+        if not self.check_name(idx):
+            return
+        import os
+        name = AnsibleUtil.connections[idx]['name']
         changed = False
-        for path in paths:
-            if AnsibleUtil.check_mode:
-                if os.path.isfile(path):
-                    AnsibleUtil.exit_json()
-            else:
+        for path in IfcfgUtil.ifcfg_paths(name):
+            if not os.path.isfile(path):
+                continue
+            changed = True
+            AnsibleUtil.log_info(idx, 'delete ifcfg-rh file "%s"' % (path))
+            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
                 try:
-                    try:
-                        os.unlink(path)
-                        changed = True
-                    except OSError as e:
-                        if e.errno != errno.ENOENT:
-                            raise
+                    os.unlink(path)
                 except Exception as e:
-                    AnsibleUtil.fail_json('failure deleting ifcfg file %s: %s' % (path, e))
-        AnsibleUtil.exit_json(changed)
+                    AnsibleUtil.log_error(idx, 'delete ifcfg-rh file "%s" failed: %s' % (path, e))
 
-    def run_state_present(self):
-        self.check_name()
+        if not changed:
+            AnsibleUtil.log_info(idx, 'delete ifcfg-rh files for "%s" (no files present)' % (name))
+        AnsibleUtil.run_results_changed(idx, changed)
 
-        try:
-            ifcfg_all, dirty = IfcfgUtil.ifcfg_create(AnsibleUtil.check_mode, **AnsibleUtil.params)
-        except Exception as e:
-            AnsibleUtil.warn('exception: %s' % (traceback.format_exc()))
-            AnsibleUtil.fail_json('failure constructing ifcfg file: %s' % (e))
+    def run_state_present(self, idx):
+        if not self.check_name(idx):
+            return
 
-        old_content = IfcfgUtil.content_from_file(self.name)
+        connection = AnsibleUtil.connections[idx]
+        name = connection['name']
+
+        ifcfg_all = IfcfgUtil.ifcfg_create(AnsibleUtil.connections, idx,
+                                           lambda msg: AnsibleUtil.log_warn(idx, msg))
+
+        old_content = IfcfgUtil.content_from_file(name)
         new_content = IfcfgUtil.content_from_dict(ifcfg_all)
 
-        if not dirty and old_content == new_content:
-            AnsibleUtil.exit_json(False)
-        if AnsibleUtil.check_mode:
-            AnsibleUtil.exit_json()
+        if old_content == new_content:
+            AnsibleUtil.log_info(idx, 'ifcfg-rh profile "%s" already up to date' % (name))
+            return
 
-        try:
-            IfcfgUtil.content_to_file(self.name, new_content)
-        except Exception as e:
-            AnsibleUtil.warn('exception: %s' % (traceback.format_exc()))
-            AnsibleUtil.fail_json('writing ifcfg file failed: %s' % (e))
+        op = 'add' if (old_content['ifcfg'] is None) else 'update'
 
-        AnsibleUtil.exit_json()
+        AnsibleUtil.log_info(idx, '%s ifcfg-rh profile "%s"' % (op, name))
 
-    def _run_state_updown(self, cmd):
-        import os
-        import subprocess
-        self.check_name()
+        if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+            try:
+                IfcfgUtil.content_to_file(name, new_content)
+            except MyError as e:
+                AnsibleUtil.log_error(idx, '%s ifcfg-rh profile "%s" failed: %s' % (op, name, e))
 
-        if AnsibleUtil.params_wait != 0:
+        AnsibleUtil.run_results_changed(idx)
+
+    def _run_state_updown(self, idx, cmd):
+        if not self.check_name(idx):
+            return
+
+        connection = AnsibleUtil.connections[idx]
+        name = connection['name']
+
+        if connection['wait'] != 0:
             # initscripts don't support wait, they always block until the ifup/ifdown
             # command completes. Silently ignore the argument.
             pass
 
-        path = self.ifcfg_path()
+        import os
+
+        AnsibleUtil.log_info(idx, 'call `%s %s`' % (cmd, name))
+
+        path = IfcfgUtil.ifcfg_path(name)
         if not os.path.isfile(path):
-            AnsibleUtil.fail_json_check('ifcfg file "%s" does not exist' % (path))
-        if AnsibleUtil.check_mode:
-            AnsibleUtil.exit_json()
+            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+                AnsibleUtil.log_error(idx, 'ifcfg file "%s" does not exist' % (path))
+            else:
+                AnsibleUtil.log_info(idx, 'ifcfg file "%s" does not exist in check mode' % (path))
+        else:
+            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+                rc, out, err = AnsibleUtil.module.run_command([cmd, name], encoding=None)
+                AnsibleUtil.log_info(idx, 'call `%s %s`: rc=%d, out="%s", err="%s"' % (cmd, name, rc, out, err))
+                if rc != 0:
+                    AnsibleUtil.log_error(idx, 'call `%s %s` failed with exit status %d' % (cmd, name, rc))
 
-        rc, out, err = AnsibleUtil.module.run_command([cmd, self.name], encoding=None)
-        AnsibleUtil.exit_json(rc = rc, stdout = out, stderr = err)
+        AnsibleUtil.run_results_changed(idx)
 
-    def run_state_up(self):
-        self._run_state_updown('ifup')
 
-    def run_state_down(self):
-        self._run_state_updown('ifdown')
+    def run_state_up(self, idx):
+        self._run_state_updown(idx, 'ifup')
+
+    def run_state_down(self, idx):
+        self._run_state_updown(idx, 'ifdown')
 
 ###############################################################################
 
 if __name__ == '__main__':
-    AnsibleUtil.module
-    Cmd.create().run()
+    try:
+        Cmd.create().run()
+    except Exception as e:
+        AnsibleUtil.fail_json('fatal error: %s' % (e),
+                              warn_traceback = True)
+    AnsibleUtil.exit_json()
