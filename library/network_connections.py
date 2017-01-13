@@ -103,8 +103,24 @@ class Util:
         return gmainloop
 
     @classmethod
-    def GMainLoop_run(cls):
-        cls.GMainLoop().run()
+    def GMainLoop_run(cls, timeout = None):
+        if timeout is None:
+            cls.GMainLoop().run()
+            return True
+
+        GLib = cls.GLib()
+        result = []
+        loop = cls.GMainLoop()
+        def _timeout_cb(unused):
+            result.append(1)
+            loop.quit()
+            return False
+        timeout_id = GLib.timeout_add(int(timeout * 1000), _timeout_cb, None)
+        loop.run()
+        if result:
+            return False
+        GLib.source_remove(timeout_id)
+        return True
 
     @classmethod
     def GMainLoop_iterate(cls, may_block = False):
@@ -112,10 +128,22 @@ class Util:
 
     @classmethod
     def GMainLoop_iterate_all(cls):
-        r = False
+        c = 0
         while cls.GMainLoop_iterate():
-            r = True
-        return r
+            c += 1
+        return c
+
+    @classmethod
+    def create_cancellable(cls):
+        return cls.Gio().Cancellable.new()
+
+    @classmethod
+    def error_is_cancelled(cls, e):
+        GLib = cls.GLib()
+        if isinstance(e, GLib.GError):
+            if e.domain == 'g-io-error-quark' and e.code == cls.Gio().IOErrorEnum.CANCELLED:
+                return True
+        return False
 
     @staticmethod
     def ifname_valid(ifname):
@@ -864,7 +892,9 @@ class IfcfgUtil:
 
 class NMUtil:
 
-    def __init__(self, nmclient):
+    def __init__(self, nmclient = None):
+        if nmclient is None:
+            nmclient = Util.NM().Client.new(None)
         self.nmclient = nmclient
 
     def active_connection_list(self, connections = None, black_list = None, mainloop_iterate = True):
@@ -1030,26 +1060,30 @@ class NMUtil:
             raise MyError('created connection failed to normalize: %s' % (e))
         return con
 
-    def connection_add(self, con):
+    def connection_add(self, con, timeout = 5):
 
         def add_cb(client, result, cb_args):
             con = None
             try:
                 con = client.add_connection_finish(result)
             except Exception as e:
+                if Util.error_is_cancelled(e):
+                    return
                 cb_args['error'] = str(e)
             cb_args['con'] = con
             Util.GMainLoop().quit()
 
+        cancellable = Util.create_cancellable()
         cb_args = {}
-        self.nmclient.add_connection_async(con, True,
-                                           None, add_cb, cb_args)
-        Util.GMainLoop_run()
+        self.nmclient.add_connection_async(con, True, cancellable, add_cb, cb_args)
+        if not Util.GMainLoop_run(timeout):
+            cancellable.cancel()
+            raise MyError('failure to add connection: %s' % ('timeout'))
         if not cb_args.get('con', None):
             raise MyError('failure to add connection: %s' % (cb_args.get('error', 'unknown error')))
         return cb_args['con']
 
-    def connection_update(self, con, con_new):
+    def connection_update(self, con, con_new, timeout = 5):
         NM = Util.NM()
 
         con.replace_settings_from_connection(con_new)
@@ -1059,66 +1093,86 @@ class NMUtil:
             try:
                 success = connection.commit_changes_finish(result)
             except Exception as e:
+                if Util.error_is_cancelled(e):
+                    return
                 cb_args['error'] = str(e)
             cb_args['success'] = success
             Util.GMainLoop().quit()
 
+        cancellable = Util.create_cancellable()
         cb_args = {}
-        con.commit_changes_async(True, None, update_cb, cb_args)
-        Util.GMainLoop_run()
+        con.commit_changes_async(True, cancellable, update_cb, cb_args)
+        if not Util.GMainLoop_run(timeout):
+            cancellable.cancel()
+            raise MyError('failure to update connection: %s' % ('timeout'))
         if not cb_args.get('success', False):
             raise MyError('failure to update connection: %s' % (cb_args.get('error', 'unknown error')))
         return True
 
-    def connection_delete(self, connection):
+    def connection_delete(self, connection, timeout = 5):
 
         def delete_cb(connection, result, cb_args):
             success = False
             try:
                 success = connection.delete_finish(result)
             except Exception as e:
+                if Util.error_is_cancelled(e):
+                    return
                 cb_args['error'] = str(e)
             cb_args['success'] = success
             Util.GMainLoop().quit()
 
+        cancellable = Util.create_cancellable()
         cb_args = {}
-        connection.delete_async(None, delete_cb, cb_args)
-        Util.GMainLoop_run()
+        connection.delete_async(cancellable, delete_cb, cb_args)
+        if not Util.GMainLoop_run(timeout):
+            cancellable.cancel()
+            raise MyError('failure to delete connection: %s' % ('timeout'))
         if not cb_args.get('success', False):
             raise MyError('failure to delete connection: %s' % (cb_args.get('error', 'unknown error')))
 
-    def connection_activate(self, connection):
+    def connection_activate(self, connection, timeout = 5):
 
         def activate_cb(client, result, cb_args):
-            active_connection = False
+            active_connection = None
             try:
                 active_connection = client.activate_connection_finish(result)
             except Exception as e:
+                if Util.error_is_cancelled(e):
+                    return
                 cb_args['error'] = str(e)
             cb_args['active_connection'] = active_connection
             Util.GMainLoop().quit()
 
+        cancellable = Util.create_cancellable()
         cb_args = {}
-        self.nmclient.activate_connection_async(connection, None, None, None, activate_cb, cb_args)
-        Util.GMainLoop_run()
+        self.nmclient.activate_connection_async(connection, None, None, cancellable, activate_cb, cb_args)
+        if not Util.GMainLoop_run(timeout):
+            cancellable.cancel()
+            raise MyError('failure to activate connection: %s' % ('timeout'))
         if not cb_args.get('active_connection', None):
             raise MyError('failure to activate connection: %s' % (cb_args.get('error', 'unknown error')))
         return cb_args['active_connection']
 
-    def active_connection_deactivate(self, ac):
+    def active_connection_deactivate(self, ac, timeout = 5):
 
         def deactivate_cb(client, result, cb_args):
             success = False
             try:
                 success = client.deactivate_connection_finish(result)
             except Exception as e:
+                if Util.error_is_cancelled(e):
+                    return
                 cb_args['error'] = str(ex)
             cb_args['success'] = success
             Util.GMainLoop().quit()
 
+        cancellable = Util.create_cancellable()
         cb_args = {}
-        self.nmclient.deactivate_connection_async(ac, None, deactivate_cb, cb_args)
-        Util.GMainLoop_run()
+        self.nmclient.deactivate_connection_async(ac, cancellable, deactivate_cb, cb_args)
+        if not Util.GMainLoop_run(timeout):
+            cancellable.cancel()
+            raise MyError('failure to deactivate connection: %s' % (timeout))
         if not cb_args.get('success', False):
             raise MyError('failure to deactivate connection: %s' % (cb_args.get('error', 'unknown error')))
         return True
