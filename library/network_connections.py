@@ -460,7 +460,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidatorStr ('mac'),
                 ArgValidatorStr ('parent'),
                 ArgValidatorInt ('vlan_id', val_min = 0, val_max = 4095, default_value = None),
-                ArgValidatorStr ('on_error', enum_values = ['continue', 'fail'], default_value = 'fail'),
+                ArgValidatorBool('ignore_errors', default_value = None),
                 ArgValidator_DictIP(),
             ],
             default_value = dict,
@@ -481,9 +481,9 @@ class ArgValidator_DictConnection(ArgValidatorDict):
             if result['state'] == 'present':
                 VALID_FIELDS.remove('wait')
         elif result['state'] in ['up', 'down']:
-            VALID_FIELDS = ['name', 'state', 'wait', 'on_error']
+            VALID_FIELDS = ['name', 'state', 'wait', 'ignore_errors']
         elif result['state'] == 'absent':
-            VALID_FIELDS = ['name', 'state', 'on_error']
+            VALID_FIELDS = ['name', 'state', 'ignore_errors']
         elif result['state'] == 'wait':
             VALID_FIELDS = ['state', 'wait']
         else:
@@ -1182,8 +1182,9 @@ class NMUtil:
 class _AnsibleUtil:
 
     ARGS = {
-        'provider':       { 'required': True,  'default': None, 'type': 'str' },
-        'connections':    { 'required': False, 'default': None, 'type': 'list' },
+        'ignore_errors':  { 'required': False, 'default': False, 'type': 'str' },
+        'provider':       { 'required': True,  'default': None,  'type': 'str' },
+        'connections':    { 'required': False, 'default': None,  'type': 'list' },
     }
 
     ARGS_CONNECTIONS = ArgValidator_ListConnections()
@@ -1283,8 +1284,17 @@ class _AnsibleUtil:
 
     def log(self, idx, severity, msg, warn_traceback = False):
         self.run_results[idx]['log'].append((severity, msg))
-        if severity == LogLevel.ERROR and self.connections[idx]['on_error'] != 'continue':
-            self.fail_json('error: %s' % (msg), warn_traceback = warn_traceback)
+        if severity == LogLevel.ERROR:
+            # ignore_errors can be specified per profile. In absense of a
+            # per-profile setting, a global parameter is consulted.
+            ignore_errors = self.connections[idx]['ignore_errors']
+            if ignore_errors is None:
+                try:
+                    ignore_errors = Util.boolean(self.params['ignore_errors'])
+                except:
+                    ignore_errors = None
+            if not ignore_errors:
+                self.fail_json('error: %s' % (msg), warn_traceback = warn_traceback)
 
     def _complete_kwargs(self, kwargs, traceback_msg = None):
         if 'warnings' in kwargs:

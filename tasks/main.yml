@@ -15,6 +15,7 @@
 - name: Configure networking connection profiles
   network_connections:
       provider:       "{{ network.provider    | default(network_provider) | mandatory }}"
+      ignore_errors:  "{{ network.ignore_errors | default(omit) }} "
       connections:    "{{ network.connections | default([]) }}"
 
 - name: Re-test connectivity

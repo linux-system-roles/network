@@ -130,8 +130,7 @@ class TestValidator(unittest.TestCase):
                     'mac': None,
                     'master': None,
                     'vlan_id': None,
-                    'on_error':
-                    'fail',
+                    'ignore_errors': None,
                     'interface_name': None,
                     'slave_type': None,
                 },
@@ -139,7 +138,7 @@ class TestValidator(unittest.TestCase):
                     'name': '5',
                     'state': 'up',
                     'wait': 90,
-                    'on_error': 'fail',
+                    'ignore_errors': None,
                 }
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -171,8 +170,7 @@ class TestValidator(unittest.TestCase):
                     'mac': None,
                     'master': None,
                     'vlan_id': None,
-                    'on_error':
-                    'fail',
+                    'ignore_errors': None,
                     'interface_name': None,
                     'slave_type': None,
                     'wait': 90,
@@ -194,7 +192,7 @@ class TestValidator(unittest.TestCase):
                 {
                     'name': '5',
                     'state': 'absent',
-                    'on_error': 'fail',
+                    'ignore_errors': None,
                 }
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -230,7 +228,7 @@ class TestValidator(unittest.TestCase):
                     'master': None,
                     'name': '5',
                     'parent': None,
-                    'on_error': 'fail',
+                    'ignore_errors': None,
                     'slave_type': None,
                     'state': 'present',
                     'type': 'ethernet',
