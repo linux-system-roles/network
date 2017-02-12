@@ -132,6 +132,7 @@ class TestValidator(unittest.TestCase):
                     'vlan_id': None,
                     'ignore_errors': None,
                     'interface_name': None,
+                    'check_iface_exists': True,
                     'slave_type': None,
                 },
                 {
@@ -172,6 +173,7 @@ class TestValidator(unittest.TestCase):
                     'vlan_id': None,
                     'ignore_errors': None,
                     'interface_name': None,
+                    'check_iface_exists': True,
                     'slave_type': None,
                     'wait': 90,
                 },
@@ -226,6 +228,7 @@ class TestValidator(unittest.TestCase):
                     },
                     'mac': 'aa:bb:cc',
                     'master': None,
+                    'check_iface_exists': True,
                     'name': '5',
                     'parent': None,
                     'ignore_errors': None,

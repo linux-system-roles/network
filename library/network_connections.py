@@ -357,6 +357,18 @@ class SysUtil:
             cls._link_infos = l
         return l
 
+    @classmethod
+    def link_info_find(cls, refresh=False, mac = None, ifname = None):
+        if mac is not None:
+            mac = Util.mac_norm(mac)
+        for li in cls.link_infos(refresh).values():
+            if mac is not None and mac not in [li.get('perm-address', None), li.get('address', None)]:
+                continue
+            if ifname is not None and ifname != li.get('ifname', None):
+                continue
+            return li
+        return None
+
 ###############################################################################
 
 class ArgUtil:
@@ -606,6 +618,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidatorStr ('master'),
                 ArgValidatorStr ('interface_name'),
                 ArgValidatorMac ('mac'),
+                ArgValidatorBool('check_iface_exists', default_value = True),
                 ArgValidatorStr ('parent'),
                 ArgValidatorInt ('vlan_id', val_min = 0, val_max = 4095, default_value = None),
                 ArgValidatorBool('ignore_errors', default_value = None),
@@ -1521,7 +1534,26 @@ class Cmd:
                     raise
 
     def run_prepare(self):
-        pass
+        for idx, connection in enumerate(AnsibleUtil.connections):
+            if 'type' in connection and connection['check_iface_exists']:
+                # when the profile is tied to a certain interface via 'interface_name' or 'mac',
+                # check that such an interface exists.
+                #
+                # This check has many flaws, as we don't check whether the existing
+                # interface has the right device type. Also, there is some ambiguity
+                # between the current MAC address and the permanent MAC address.
+                li_mac = None
+                li_ifname = None
+                if connection['mac']:
+                    li_mac = SysUtil.link_info_find(mac = connection['mac'])
+                    if not li_mac:
+                        AnsibleUtil.log_error(idx, 'profile specifies mac "%s" but not such interface exists' % (connection['mac']))
+                if connection['interface_name'] and connection['type'] == 'ethernet':
+                    li_ifname = SysUtil.link_info_find(ifname = connection['interface_name'])
+                    if not li_ifname:
+                        AnsibleUtil.log_error(idx, 'profile specifies interface_name "%s" but not such interface exists' % (connection['interface_name']))
+                if li_mac and li_ifname and li_mac != li_ifname:
+                    AnsibleUtil.log_error(idx, 'profile specifies interface_name "%s" and mac "%s" but not such interface exists' % (connection['interface_name'], connection['mac']))
 
 ###############################################################################
 
@@ -1692,9 +1724,6 @@ class Cmd_initscripts(Cmd):
             AnsibleUtil.log_error(idx, 'invalid name %s for connection' % (name))
             return None
         return f
-
-    def run_prepare(self):
-        pass
 
     def run_state_absent(self, idx):
         if not self.check_name(idx):
