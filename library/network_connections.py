@@ -18,6 +18,7 @@ options: Documentation needs to be written. Note that the network_connections mo
 import socket
 import sys
 import traceback
+import os
 
 ###############################################################################
 
@@ -64,7 +65,7 @@ class Util:
     def check_output(argv, lang = None):
         # subprocess.check_output is python 2.7.
         with open('/dev/null', 'wb') as DEVNULL:
-            import subprocess, os
+            import subprocess
             ev = os.environ.copy()
             ev['LANG'] = lang if lang is not None else 'C'
             p = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=DEVNULL, env=ev)
@@ -317,7 +318,6 @@ class SysUtil:
 
     @staticmethod
     def _link_infos_fetch():
-        import os
         links = {}
         for ifname in os.listdir('/sys/class/net/'):
             ifindex = SysUtil._link_read_ifindex(ifname)
@@ -389,6 +389,21 @@ class ArgUtil:
                 assert connection['state'] in ['up', 'present']
                 c = connection
         return c
+
+    @staticmethod
+    def connection_get_non_absent_names(connections):
+        # @idx is the index with state['absent']. This will
+        # return the names of all explicitly mentioned profiles.
+        # That is, the names of profiles that should not be deleted.
+        l = set()
+        for connection in connections:
+            if 'name' not in connection:
+                continue
+            if not connection['name']:
+                continue
+            l.add(connection['name'])
+        return l
+
 
 class ArgValidator:
     MISSING = object()
@@ -656,10 +671,14 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                raise ValidationError(name + '.' + k, 'property is not allowed for state "%s"' % (result['state']))
 
         if result['state'] != 'wait':
-            if 'name' not in result:
-                raise ValidationError(name, 'missing "name"')
-            if not result['name']:
+            if 'name' in result and not result['name']:
                 raise ValidationError(name + '.name', 'empty "name" is invalid')
+            if result['state'] == 'absent':
+                if 'name' not in result:
+                    result['name'] = '' # set to empty string to mean *absent all others*
+            else:
+                if 'name' not in result:
+                    raise ValidationError(name, 'missing "name"')
 
         if result['state'] == 'wait':
             if result.get('wait', -1) == -1:
@@ -1034,7 +1053,6 @@ class IfcfgUtil:
 
     @classmethod
     def content_to_file(cls, name, content, file_type = None):
-        import os
         for file_type in cls._file_types(file_type):
             path = cls.ifcfg_path(name, file_type)
             h = content[file_type]
@@ -1070,7 +1088,7 @@ class NMUtil:
         active_cons = list(active_cons)
         return active_cons;
 
-    def connection_list(self, name = None, uuid = None, black_list = None, black_list_uuid = None, mainloop_iterate = True):
+    def connection_list(self, name = None, uuid = None, black_list = None, black_list_names = None, black_list_uuids = None, mainloop_iterate = True):
         if mainloop_iterate:
             Util.GMainLoop_iterate_all()
         cons = self.nmclient.get_connections()
@@ -1081,8 +1099,10 @@ class NMUtil:
 
         if black_list:
             cons = [c for c in cons if c not in black_list]
-        if black_list_uuid:
-            cons = [c for c in cons if c.get_uuid() not in black_list_uuid]
+        if black_list_uuids:
+            cons = [c for c in cons if c.get_uuid() not in black_list_uuids]
+        if black_list_names:
+            cons = [c for c in cons if c.get_id() not in black_list_names]
 
         cons = list(cons)
         def _cmp(a, b):
@@ -1576,32 +1596,40 @@ class Cmd_nm(Cmd):
         Cmd.run_prepare(self)
         names = {}
         for connection in AnsibleUtil.connections:
-            if connection['state'] in ['up', 'down', 'present', 'absent']:
-                name = connection['name']
-                if name in names:
-                    exists = names[name]['nm.exists']
-                    uuid = names[name]['nm.uuid']
-                else:
-                    c = Util.first(self.nmutil.connection_list(name = name))
+            if connection['state'] not in ['up', 'down', 'present', 'absent']:
+                continue
+            name = connection['name']
+            if not name:
+                assert(connection['state'] == 'absent')
+                continue;
+            if name in names:
+                exists = names[name]['nm.exists']
+                uuid = names[name]['nm.uuid']
+            else:
+                c = Util.first(self.nmutil.connection_list(name = name))
 
-                    exists = (c is not None)
-                    if c is not None:
-                        uuid = c.get_uuid()
-                    else:
-                        uuid = Util.create_uuid()
-                    names[name] = {
-                        'nm.exists': exists,
-                        'nm.uuid': uuid,
-                    }
-                connection['nm.exists'] = exists
-                connection['nm.uuid'] = uuid
+                exists = (c is not None)
+                if c is not None:
+                    uuid = c.get_uuid()
+                else:
+                    uuid = Util.create_uuid()
+                names[name] = {
+                    'nm.exists': exists,
+                    'nm.uuid': uuid,
+                }
+            connection['nm.exists'] = exists
+            connection['nm.uuid'] = uuid
 
     def run_state_absent(self, idx):
         changed = False
         seen = set()
         name = AnsibleUtil.connections[idx]['name']
+        black_list_names = None
+        if not name:
+            name = None
+            black_list_names = ArgUtil.connection_get_non_absent_names(AnsibleUtil.connections)
         while True:
-            connections = self.nmutil.connection_list(name = name, black_list = seen)
+            connections = self.nmutil.connection_list(name = name, black_list_names = black_list_names, black_list = seen)
             if not connections:
                 break
             c = connections[-1]
@@ -1645,7 +1673,7 @@ class Cmd_nm(Cmd):
             seen.add(con_cur)
 
         while True:
-            connections = self.nmutil.connection_list(name = connection['name'], black_list = seen, black_list_uuid = [connection['nm.uuid']])
+            connections = self.nmutil.connection_list(name = connection['name'], black_list = seen, black_list_uuids = [connection['nm.uuid']])
             if not connections:
                 break
             c = connections[-1]
@@ -1726,24 +1754,39 @@ class Cmd_initscripts(Cmd):
         return f
 
     def run_state_absent(self, idx):
-        if not self.check_name(idx):
-            return
-        import os
-        name = AnsibleUtil.connections[idx]['name']
         changed = False
-        for path in IfcfgUtil.ifcfg_paths(name):
-            if not os.path.isfile(path):
-                continue
-            changed = True
-            AnsibleUtil.log_info(idx, 'delete ifcfg-rh file "%s"' % (path))
-            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
-                try:
-                    os.unlink(path)
-                except Exception as e:
-                    AnsibleUtil.log_error(idx, 'delete ifcfg-rh file "%s" failed: %s' % (path, e))
+        n = AnsibleUtil.connections[idx]['name']
+        name = n
+        if not name:
+            names = []
+            black_list_names = ArgUtil.connection_get_non_absent_names(AnsibleUtil.connections)
+            for f in os.listdir('/etc/sysconfig/network-scripts'):
+                if not f.startswith('ifcfg-'):
+                    continue
+                name = f[6:]
+                if name in black_list_names:
+                    continue
+                if name == 'lo':
+                    continue
+                names.append(name)
+        else:
+            if not self.check_name(idx):
+                return
+            names = [name]
+        for name in names:
+            for path in IfcfgUtil.ifcfg_paths(name):
+                if not os.path.isfile(path):
+                    continue
+                changed = True
+                AnsibleUtil.log_info(idx, 'delete ifcfg-rh file "%s"' % (path))
+                if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+                    try:
+                        os.unlink(path)
+                    except Exception as e:
+                        AnsibleUtil.log_error(idx, 'delete ifcfg-rh file "%s" failed: %s' % (path, e))
 
         if not changed:
-            AnsibleUtil.log_info(idx, 'delete ifcfg-rh files for "%s" (no files present)' % (name))
+            AnsibleUtil.log_info(idx, 'delete ifcfg-rh files for %s (no files present)' % ('"'+n+'"' if n else '*'))
         AnsibleUtil.run_results_changed(idx, changed)
 
     def run_state_present(self, idx):
@@ -1786,8 +1829,6 @@ class Cmd_initscripts(Cmd):
             # initscripts don't support wait, they always block until the ifup/ifdown
             # command completes. Silently ignore the argument.
             pass
-
-        import os
 
         AnsibleUtil.log_info(idx, 'call `%s %s`' % (cmd, name))
 
