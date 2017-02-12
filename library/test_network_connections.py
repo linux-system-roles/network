@@ -224,7 +224,7 @@ class TestValidator(unittest.TestCase):
                         'route_metric4': None,
                         'route_metric6': None,
                     },
-                    'mac': None,
+                    'mac': 'aa:bb:cc',
                     'master': None,
                     'name': '5',
                     'parent': None,
@@ -239,9 +239,13 @@ class TestValidator(unittest.TestCase):
                 {
                     'name': '5',
                     'type': 'ethernet',
+                    'mac': 'AA:bb:cC',
                 }
             ]),
         )
+
+        with self.assertRaises(n.ValidationError):
+            n.AnsibleUtil.ARGS_CONNECTIONS.validate([ { 'name': 'b', 'type': 'ethernet', 'mac': 'aa:b' } ])
 
 
 if __name__ == '__main__':
