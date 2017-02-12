@@ -487,7 +487,7 @@ class ArgValidatorIP(ArgValidatorStr):
             raise ValidationError(name, 'value "%s" is not a valid IP%s address' % (value, Util.addr_family_to_v(self.family)))
         if self.plain_address:
             return addr
-        return { "family": family, "address": addr }
+        return { 'is_v4': family == socket.AF_INET, "family": family, "address": addr }
 
 class ArgValidatorMac(ArgValidatorStr):
     def __init__(self, name, force_len = None, required = False, default_value = None):
@@ -584,6 +584,10 @@ class ArgValidator_DictIP(ArgValidatorDict):
                     nested = ArgValidatorIPAddr('address[?]'),
                     default_value = list,
                 ),
+                ArgValidatorList('dns',
+                    nested = ArgValidatorIP('dns[?]'),
+                    default_value = list,
+                ),
             ],
             default_value = lambda: {
                 'ip_is_present': False,
@@ -595,6 +599,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 'gateway6': None,
                 'route_metric6': None,
                 'address': [],
+                'dns': [],
             },
             all_missing_during_validate = False,
         )
@@ -946,6 +951,9 @@ class IfcfgUtil:
             if ip['gateway4'] is not None:
                 ifcfg['GATEWAY'] = ip['gateway4']
 
+            for idx, dns in enumerate(ip['dns']):
+                ifcfg['DNS' + str(idx+1)] = dns['address']
+
             if ip['auto6']:
                 ifcfg['IPV6INIT'] = 'yes'
                 ifcfg['IPV6_AUTOCONF'] = 'yes'
@@ -1218,6 +1226,9 @@ class NMUtil:
                 s_ip4.set_property(NM.SETTING_IP_CONFIG_GATEWAY, ip['gateway4'])
             if ip['route_metric4'] is not None and ip['route_metric4'] >= 0:
                 s_ip4.set_property(NM.SETTING_IP_CONFIG_ROUTE_METRIC, ip['route_metric4'])
+            for d in ip['dns']:
+                if d['is_v4']:
+                    s_ip4.add_dns(d['address'])
 
             if ip['auto6']:
                 s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, 'auto')
@@ -1231,6 +1242,9 @@ class NMUtil:
                 s_ip6.set_property(NM.SETTING_IP_CONFIG_GATEWAY, ip['gateway6'])
             if ip['route_metric6'] is not None and ip['route_metric6'] >= 0:
                 s_ip6.set_property(NM.SETTING_IP_CONFIG_ROUTE_METRIC, ip['route_metric6'])
+            for d in ip['dns']:
+                if not d['is_v4']:
+                    s_ip4.add_dns(d['address'])
 
             con.add_setting(s_ip4)
             con.add_setting(s_ip6)
