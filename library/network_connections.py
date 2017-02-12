@@ -1082,7 +1082,7 @@ class NMUtil:
         if black_list:
             cons = [c for c in cons if c not in black_list]
         if black_list_uuid:
-            cons = [c for c in cons if c.get_uuid() not in black_list]
+            cons = [c for c in cons if c.get_uuid() not in black_list_uuid]
 
         cons = list(cons)
         def _cmp(a, b):
