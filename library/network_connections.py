@@ -580,7 +580,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 ArgValidatorBool('dhcp4_send_hostname', default_value = None),
                 ArgValidatorIP  ('gateway4', family = socket.AF_INET),
                 ArgValidatorInt ('route_metric4', val_min = -1, val_max = 0xFFFFFFFF, default_value = None),
-                ArgValidatorBool('auto6'),
+                ArgValidatorBool('auto6', default_value = None),
                 ArgValidatorIP  ('gateway6', family = socket.AF_INET6),
                 ArgValidatorInt ('route_metric6', val_min = -1, val_max = 0xFFFFFFFF, default_value = None),
                 ArgValidatorList('address',
