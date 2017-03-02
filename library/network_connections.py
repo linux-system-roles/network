@@ -56,9 +56,8 @@ class Util:
     @staticmethod
     def first(iterable, default = None, pred = None):
         for v in iterable:
-            if pred is not None and pred(v):
-                continue
-            return v
+            if pred is None or pred(v):
+                return v
         return default
 
     @staticmethod
