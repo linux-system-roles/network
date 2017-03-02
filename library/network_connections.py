@@ -1247,7 +1247,7 @@ class NMUtil:
                 s_ip6.set_property(NM.SETTING_IP_CONFIG_ROUTE_METRIC, ip['route_metric6'])
             for d in ip['dns']:
                 if not d['is_v4']:
-                    s_ip4.add_dns(d['address'])
+                    s_ip6.add_dns(d['address'])
 
             con.add_setting(s_ip4)
             con.add_setting(s_ip6)
