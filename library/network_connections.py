@@ -428,15 +428,18 @@ class ArgValidator:
         return result
 
 class ArgValidatorStr(ArgValidator):
-    def __init__(self, name, required = False, default_value = None, enum_values = None):
+    def __init__(self, name, required = False, default_value = None, enum_values = None, allow_empty = True):
         ArgValidator.__init__(self, name, required, default_value)
         self.enum_values = enum_values
+        self.allow_empty = allow_empty
     def _validate(self, value, name):
         if not isinstance(value, Util.STRING_TYPE):
             raise ValidationError(name, 'must be a string but is "%s"' % (value))
         v = str(value)
         if self.enum_values is not None and v not in self.enum_values:
             raise ValidationError(name, 'is "%s" but must be one of "%s"' % (value, '" "'.join(sorted(self.enum_values))))
+        if not self.allow_empty and not v:
+            raise ValidationError(name, 'cannot be empty')
         return v
 
 class ArgValidatorInt(ArgValidator):
