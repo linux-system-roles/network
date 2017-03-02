@@ -591,6 +591,10 @@ class ArgValidator_DictIP(ArgValidatorDict):
                     nested = ArgValidatorIP('dns[?]'),
                     default_value = list,
                 ),
+                ArgValidatorList('dns_search',
+                    nested = ArgValidatorStr('dns_search[?]', allow_empty = False),
+                    default_value = list,
+                ),
             ],
             default_value = lambda: {
                 'ip_is_present': False,
@@ -603,6 +607,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 'route_metric6': None,
                 'address': [],
                 'dns': [],
+                'dns_search': [],
             },
             all_missing_during_validate = False,
         )
@@ -956,6 +961,8 @@ class IfcfgUtil:
 
             for idx, dns in enumerate(ip['dns']):
                 ifcfg['DNS' + str(idx+1)] = dns['address']
+            if ip['dns_search']:
+                ifcfg['DOMAIN'] = ' '.join(ip['dns_search'])
 
             if ip['auto6']:
                 ifcfg['IPV6INIT'] = 'yes'
@@ -1232,6 +1239,8 @@ class NMUtil:
             for d in ip['dns']:
                 if d['is_v4']:
                     s_ip4.add_dns(d['address'])
+            for s in ip['dns_search']:
+                s_ip4.add_dns_search(s)
 
             if ip['auto6']:
                 s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, 'auto')

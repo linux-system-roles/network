@@ -127,6 +127,7 @@ class TestValidator(unittest.TestCase):
                         'ip_is_present': False,
                         'dhcp4_send_hostname': None,
                         'dns': [],
+                        'dns_search': [],
                     },
                     'mac': None,
                     'master': None,
@@ -166,6 +167,7 @@ class TestValidator(unittest.TestCase):
                         'dhcp4': True,
                         'address': [],
                         'dns': [],
+                        'dns_search': [],
                         'route_metric6': None,
                         'ip_is_present': False,
                         'dhcp4_send_hostname': None,
@@ -228,6 +230,7 @@ class TestValidator(unittest.TestCase):
                         'route_metric4': None,
                         'route_metric6': None,
                         'dns': [],
+                        'dns_search': [],
                     },
                     'mac': 'aa:bb:cc',
                     'master': None,
@@ -249,6 +252,49 @@ class TestValidator(unittest.TestCase):
                 }
             ]),
         )
+
+        self.assertEqual(
+            [
+                {
+                    'name': '5',
+                    'state': 'up',
+                    'type': 'ethernet',
+                    'autoconnect': True,
+                    'parent': None,
+                    'ip': {
+                        'gateway6': None,
+                        'gateway4': None,
+                        'route_metric4': None,
+                        'auto6': False,
+                        'dhcp4': True,
+                        'address': [],
+                        'dns': [],
+                        'dns_search': [ 'aa', 'bb' ],
+                        'route_metric6': None,
+                        'ip_is_present': True,
+                        'dhcp4_send_hostname': False,
+                    },
+                    'mac': None,
+                    'master': None,
+                    'vlan_id': None,
+                    'ignore_errors': None,
+                    'interface_name': None,
+                    'check_iface_exists': True,
+                    'slave_type': None,
+                    'wait': 90,
+                },
+            ],
+            n.AnsibleUtil.ARGS_CONNECTIONS.validate([
+                { 'name': '5',
+                  'state': 'up',
+                  'type': 'ethernet',
+                  'ip': {
+                      'dns_search': [ 'aa', 'bb' ],
+                  },
+                },
+            ]),
+        )
+
 
         with self.assertRaises(n.ValidationError):
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([ { 'name': 'b', 'type': 'ethernet', 'mac': 'aa:b' } ])
