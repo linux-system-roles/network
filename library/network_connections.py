@@ -619,9 +619,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
             result['dhcp4'] = result['dhcp4_send_hostname'] is not None or not any([a for a in result['address'] if a['is_v4']])
         if result['auto6'] is None:
             result['auto6'] = not any([a for a in result['address'] if not a['is_v4']])
-        if result['dhcp4_send_hostname'] is None:
-            result['dhcp4_send_hostname'] = False
-        else:
+        if result['dhcp4_send_hostname'] is not None:
             if not result['dhcp4']:
                 raise ValidationError(name, '"dhcp4_send_hostname" is only valid if "dhcp4" is enabled')
         return result

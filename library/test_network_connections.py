@@ -272,7 +272,7 @@ class TestValidator(unittest.TestCase):
                         'dns_search': [ 'aa', 'bb' ],
                         'route_metric6': None,
                         'ip_is_present': True,
-                        'dhcp4_send_hostname': False,
+                        'dhcp4_send_hostname': None,
                     },
                     'mac': None,
                     'master': None,
