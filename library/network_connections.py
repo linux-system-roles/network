@@ -23,6 +23,7 @@ import os
 ###############################################################################
 
 class CheckMode:
+    PREPARE  = 'prepare'
     DRY_RUN  = 'dry-run'
     PRE_RUN  = 'pre-run'
     REAL_RUN = 'real-run'
@@ -1398,16 +1399,17 @@ class _AnsibleUtil:
         self._module = None
         self._connections = None
         self._run_results = None
-        self._check_mode = None
+        self._run_results_prepare = None
+        self._check_mode = CheckMode.PREPARE
 
     @property
     def check_mode(self):
-        if self._check_mode == None:
-            raise MyError('check_mode is not initialized')
         return self._check_mode
 
     def check_mode_next(self):
-        if self._check_mode == None:
+        if self._check_mode == CheckMode.PREPARE:
+            self._run_results_prepare = self._run_results
+            self._run_results = None
             if self.module.check_mode:
                 self._check_mode = CheckMode.DRY_RUN
             else:
@@ -1481,15 +1483,21 @@ class _AnsibleUtil:
     def log_warn(self, idx, msg):
         self.log(idx, LogLevel.WARN, msg)
 
-    def log_error(self, idx, msg, warn_traceback = False):
-        self.log(idx, LogLevel.ERROR, msg, warn_traceback = warn_traceback)
+    def log_error(self, idx, msg, warn_traceback = False, force_fail = False):
+        self.log(idx, LogLevel.ERROR, msg, warn_traceback = warn_traceback, force_fail = force_fail)
 
-    def log(self, idx, severity, msg, warn_traceback = False):
+    def log_fatal(self, idx, msg, warn_traceback = False):
+        self.log(idx, LogLevel.ERROR, msg, warn_traceback = warn_traceback, force_fail = True)
+
+    def log(self, idx, severity, msg, warn_traceback = False, force_fail = False):
         self.run_results[idx]['log'].append((severity, msg))
         if severity == LogLevel.ERROR:
             # ignore_errors can be specified per profile. In absense of a
             # per-profile setting, a global parameter is consulted.
-            ignore_errors = self.connections[idx]['ignore_errors']
+            if force_fail:
+                ignore_errors = False
+            else:
+                ignore_errors = self.connections[idx]['ignore_errors']
             if ignore_errors is None:
                 try:
                     ignore_errors = Util.boolean(self.params['ignore_errors'])
@@ -1498,19 +1506,25 @@ class _AnsibleUtil:
             if not ignore_errors:
                 self.fail_json('error: %s' % (msg), warn_traceback = warn_traceback)
 
+    def _complete_kwargs_loglines(self, rr, idx):
+        c = self.connections[idx]
+        prefix = 'state:%s' % (c['state'])
+        if c['state'] != 'wait':
+            prefix = prefix + (', "%s"' % (c['name']))
+        for r in rr['log']:
+            yield '%s #%s, %s: %s' % (LogLevel.fmt(r[0]), idx, prefix, r[1])
+
     def _complete_kwargs(self, kwargs, traceback_msg = None):
         if 'warnings' in kwargs:
             logs = list(kwargs['warnings'])
         else:
             logs = []
+        if self._run_results_prepare is not None:
+            for idx, rr in enumerate(self._run_results_prepare):
+                logs.extend(self._complete_kwargs_loglines(rr, idx))
         if self._run_results is not None:
-            for idx, rr in enumerate(self.run_results):
-                c = self.connections[idx]
-                prefix = 'state:%s' % (c['state'])
-                if c['state'] != 'wait':
-                    prefix = prefix + (', "%s"' % (c['name']))
-                for r in rr['log']:
-                    logs.append('%s #%s, %s: %s' % (LogLevel.fmt(r[0]), idx, prefix, r[1]))
+            for idx, rr in enumerate(self._run_results):
+                logs.extend(self._complete_kwargs_loglines(rr, idx))
         if traceback_msg is not None:
             logs.append(traceback_msg)
         kwargs['warnings'] = logs
@@ -1588,13 +1602,13 @@ class Cmd:
                 if connection['mac']:
                     li_mac = SysUtil.link_info_find(mac = connection['mac'])
                     if not li_mac:
-                        AnsibleUtil.log_error(idx, 'profile specifies mac "%s" but not such interface exists' % (connection['mac']))
+                        AnsibleUtil.log_fatal(idx, 'profile specifies mac "%s" but not such interface exists' % (connection['mac']))
                 if connection['interface_name'] and connection['type'] == 'ethernet':
                     li_ifname = SysUtil.link_info_find(ifname = connection['interface_name'])
                     if not li_ifname:
-                        AnsibleUtil.log_error(idx, 'profile specifies interface_name "%s" but not such interface exists' % (connection['interface_name']))
+                        AnsibleUtil.log_fatal(idx, 'profile specifies interface_name "%s" but not such interface exists' % (connection['interface_name']))
                 if li_mac and li_ifname and li_mac != li_ifname:
-                    AnsibleUtil.log_error(idx, 'profile specifies interface_name "%s" and mac "%s" but not such interface exists' % (connection['interface_name'], connection['mac']))
+                    AnsibleUtil.log_fatal(idx, 'profile specifies interface_name "%s" and mac "%s" but not such interface exists' % (connection['interface_name'], connection['mac']))
 
 ###############################################################################
 
