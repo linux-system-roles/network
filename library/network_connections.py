@@ -347,7 +347,7 @@ class SysUtil:
                     l = SysUtil._link_infos_fetch()
                     if l != b:
                         b = l
-                        raise Exception("cannot read stable link-infos. They keep changing")
+                        raise Exception('cannot read stable link-infos. They keep changing')
                 except:
                     if try_count < 50:
                         raise
@@ -374,7 +374,7 @@ class ArgUtil:
     @staticmethod
     def connection_find_by_name(name, connections, n_connections = None):
         if not name:
-            raise ValueError("missing name argument")
+            raise ValueError('missing name argument')
         c = None
         for idx, connection in enumerate(connections):
             if n_connections is not None and idx >= n_connections:
@@ -489,7 +489,7 @@ class ArgValidatorIP(ArgValidatorStr):
             raise ValidationError(name, 'value "%s" is not a valid IP%s address' % (value, Util.addr_family_to_v(self.family)))
         if self.plain_address:
             return addr
-        return { 'is_v4': family == socket.AF_INET, "family": family, "address": addr }
+        return { 'is_v4': family == socket.AF_INET, 'family': family, 'address': addr }
 
 class ArgValidatorMac(ArgValidatorStr):
     def __init__(self, name, force_len = None, required = False, default_value = None):
@@ -849,17 +849,17 @@ class IfcfgUtil:
 
         if any([ord(c) < ord(' ') for c in value]):
             # needs ansic escaping due to ANSI control caracters (newline)
-            s = "$'"
+            s = '$\''
             for c in value:
                 if ord(c) < ord(c):
                     s += '\\' + str(ord(c))
-                elif c == '\\' or c == "'":
+                elif c == '\\' or c == '\'':
                     s += '\\' + c
                 else:
                     # non-unicode chars are fine too to take literally
                     # as utf8
                     s += c
-            s += "'"
+            s += '\''
         else:
             # double quoting
             s = '"'
@@ -1556,7 +1556,7 @@ class Cmd:
                 try:
                     state = connection['state']
                     if state == 'wait':
-                        AnsibleUtil.log_info(idx, "wait for %s seconds" % (connection['wait']))
+                        AnsibleUtil.log_info(idx, 'wait for %s seconds' % (connection['wait']))
                         if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
                             import time
                             time.sleep(connection['wait'])
@@ -1573,7 +1573,7 @@ class Cmd:
                     else:
                         assert False
                 except Exception as e:
-                    AnsibleUtil.log_warn(idx, "failure: %s [[%s]]" % (e, traceback.format_exc()))
+                    AnsibleUtil.log_warn(idx, 'failure: %s [[%s]]' % (e, traceback.format_exc()))
                     raise
 
     def run_prepare(self):
