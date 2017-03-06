@@ -427,7 +427,7 @@ class ArgValidator:
         return result
 
 class ArgValidatorStr(ArgValidator):
-    def __init__(self, name, required = False, default_value = None, enum_values = None, allow_empty = True):
+    def __init__(self, name, required = False, default_value = None, enum_values = None, allow_empty = False):
         ArgValidator.__init__(self, name, required, default_value)
         self.enum_values = enum_values
         self.allow_empty = allow_empty
@@ -591,7 +591,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
                     default_value = list,
                 ),
                 ArgValidatorList('dns_search',
-                    nested = ArgValidatorStr('dns_search[?]', allow_empty = False),
+                    nested = ArgValidatorStr('dns_search[?]'),
                     default_value = list,
                 ),
             ],
@@ -681,8 +681,6 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                raise ValidationError(name + '.' + k, 'property is not allowed for state "%s"' % (result['state']))
 
         if result['state'] != 'wait':
-            if 'name' in result and not result['name']:
-                raise ValidationError(name + '.name', 'empty "name" is invalid')
             if result['state'] == 'absent':
                 if 'name' not in result:
                     result['name'] = '' # set to empty string to mean *absent all others*
