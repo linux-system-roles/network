@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Run integration tests on semaphoreci.com.
+
+set -xeuf -o pipefail
+
+prepare() {
+  # install qemu because its post install script sets up /dev/kvm
+  sudo apt-get update
+  sudo apt-get install -q -y qemu-system-x86
+  sudo chmod a+rw /dev/kvm
+}
+
+run() {
+  docker-cache restore
+
+  CACHEDIR=$SEMAPHORE_CACHE_DIR ./run-tests.sh | tee
+
+  docker-cache snapshot
+}
+
+"$@"
