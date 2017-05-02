@@ -10,32 +10,31 @@ import network_connections as n
 
 class TestValidator(unittest.TestCase):
 
+    def assertValidationError(self, v, value):
+        self.assertRaises(n.ValidationError,
+                          v.validate,
+                          value)
+
     def test_validate_str(self):
 
         v = n.ArgValidatorStr('state')
         self.assertEqual('a', v.validate('a'))
-        with self.assertRaises(n.ValidationError):
-            v.validate(1)
-        with self.assertRaises(n.ValidationError):
-            v.validate(None)
+        self.assertValidationError(v, 1);
+        self.assertValidationError(v, None);
 
         v = n.ArgValidatorStr('state', required = True)
-        with self.assertRaises(n.ValidationError):
-            v.validate(None)
+        self.assertValidationError(v, None)
 
     def test_validate_int(self):
 
         v = n.ArgValidatorInt('state', default_value = None)
         self.assertEqual(1, v.validate(1))
         self.assertEqual(1, v.validate("1"))
-        with self.assertRaises(n.ValidationError):
-            v.validate(None)
-        with self.assertRaises(n.ValidationError):
-            v.validate("1a")
+        self.assertValidationError(v, None)
+        self.assertValidationError(v, "1a")
 
         v = n.ArgValidatorInt('state', required = True)
-        with self.assertRaises(n.ValidationError):
-            v.validate(None)
+        self.assertValidationError(v, None)
 
     def test_validate_bool(self):
 
@@ -46,14 +45,11 @@ class TestValidator(unittest.TestCase):
         self.assertEqual(False, v.validate(False))
         self.assertEqual(False, v.validate("False"))
         self.assertEqual(False, v.validate(0))
-        with self.assertRaises(n.ValidationError):
-            v.validate(2)
+        self.assertValidationError(v, 2)
 
-        with self.assertRaises(n.ValidationError):
-            v.validate(None)
+        self.assertValidationError(v, None)
         v = n.ArgValidatorBool('state', required = True)
-        with self.assertRaises(n.ValidationError):
-            v.validate(None)
+        self.assertValidationError(v, None)
 
     def test_validate_dict(self):
 
@@ -85,8 +81,7 @@ class TestValidator(unittest.TestCase):
                 'l': '6',
             })
         )
-        with self.assertRaises(n.ValidationError):
-            v.validate({ 'k': 1 })
+        self.assertValidationError(v, { 'k': 1 })
 
     def test_validate_list(self):
 
@@ -98,8 +93,7 @@ class TestValidator(unittest.TestCase):
             [ 1, 5 ],
             v.validate([ '1', 5 ])
         )
-        with self.assertRaises(n.ValidationError):
-            v.validate([1, 's'])
+        self.assertValidationError(v, [1, 's'])
 
     def test_1(self):
 
@@ -190,8 +184,8 @@ class TestValidator(unittest.TestCase):
             ]),
         )
 
-        with self.assertRaises(n.ValidationError):
-            n.AnsibleUtil.ARGS_CONNECTIONS.validate([ { 'name': 'a', 'autoconnect': True }])
+        self.assertValidationError(n.AnsibleUtil.ARGS_CONNECTIONS,
+                                   [ { 'name': 'a', 'autoconnect': True }])
 
         self.assertEqual(
             [
@@ -209,10 +203,10 @@ class TestValidator(unittest.TestCase):
             ]),
         )
 
-        with self.assertRaises(n.ValidationError):
-            n.AnsibleUtil.ARGS_CONNECTIONS.validate([ { } ])
-        with self.assertRaises(n.ValidationError):
-            n.AnsibleUtil.ARGS_CONNECTIONS.validate([ { 'name': 'b', 'xxx': 5 } ])
+        self.assertValidationError(n.AnsibleUtil.ARGS_CONNECTIONS,
+                                   [ { } ])
+        self.assertValidationError(n.AnsibleUtil.ARGS_CONNECTIONS,
+                                   [ { 'name': 'b', 'xxx': 5 } ])
 
         self.assertEqual(
             [
@@ -376,8 +370,8 @@ class TestValidator(unittest.TestCase):
         )
 
 
-        with self.assertRaises(n.ValidationError):
-            n.AnsibleUtil.ARGS_CONNECTIONS.validate([ { 'name': 'b', 'type': 'ethernet', 'mac': 'aa:b' } ])
+        self.assertValidationError(n.AnsibleUtil.ARGS_CONNECTIONS,
+                                   [ { 'name': 'b', 'type': 'ethernet', 'mac': 'aa:b' } ])
 
 
 if __name__ == '__main__':
