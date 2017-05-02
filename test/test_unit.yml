@@ -1,0 +1,34 @@
+---
+- hosts: all
+  name: execute python unit tests
+  tasks:
+    - copy:
+        src: /role/library/network_connections.py
+        dest: /tmp/test-unit-1/
+
+    - copy:
+        src: /role/library/test_network_connections.py
+        dest: /tmp/test-unit-1/
+
+
+    - package:
+        name: python2
+        state: present
+      ignore_errors: true
+      register: python2_available
+
+    - command: python2 /tmp/test-unit-1/test_network_connections.py
+      when: python2_available | succeeded
+
+
+    - package:
+        name: python3
+        state: present
+      ignore_errors: true
+      register: python3_available
+
+    - command: python3 /tmp/test-unit-1/test_network_connections.py
+      when: python3_available | succeeded
+
+
+    - command: python /tmp/test-unit-1/test_network_connections.py
