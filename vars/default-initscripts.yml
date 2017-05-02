@@ -1,0 +1,2 @@
+network_service_name: network
+network_provider_default: initscripts

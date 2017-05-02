@@ -1,3 +1,4 @@
 network_service_name: NetworkManager
 network_packages:
   - NetworkManager
+network_provider_default: nm
