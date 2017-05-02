@@ -218,15 +218,16 @@ class Util:
 
     @staticmethod
     def boolean(arg):
-        import ansible.module_utils.basic as basic
+        BOOLEANS_TRUE = ['y', 'yes', 'on', '1', 'true', 1, True]
+        BOOLEANS_FALSE = ['n', 'no', 'off', '0', 'false', 0, False]
 
         if arg is None or isinstance(arg, bool):
             return arg
         if isinstance(arg, Util.STRING_TYPE):
             arg = arg.lower()
-        if arg in basic.BOOLEANS_TRUE:
+        if arg in BOOLEANS_TRUE:
             return True
-        elif arg in basic.BOOLEANS_FALSE:
+        elif arg in BOOLEANS_FALSE:
             return False
         else:
             raise MyError('value "%s" is not a boolean' % (arg))
@@ -1393,9 +1394,6 @@ class _AnsibleUtil:
     ARGS_CONNECTIONS = ArgValidator_ListConnections()
 
     def __init__(self):
-        from ansible.module_utils.basic import AnsibleModule
-
-        self.AnsibleModule = AnsibleModule
         self._module = None
         self._connections = None
         self._run_results = None
@@ -1428,7 +1426,8 @@ class _AnsibleUtil:
     def module(self):
         module = self._module
         if module is None:
-            module = self.AnsibleModule(
+            from ansible.module_utils.basic import AnsibleModule
+            module = AnsibleModule(
                 argument_spec = self.ARGS,
                 supports_check_mode = True,
             )
