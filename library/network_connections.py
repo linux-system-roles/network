@@ -321,9 +321,13 @@ class SysUtil:
     def _link_infos_fetch():
         links = {}
         for ifname in os.listdir('/sys/class/net/'):
-            ifindex = SysUtil._link_read_ifindex(ifname)
+            if not os.path.islink('/sys/class/net/' + ifname):
+                # /sys/class/net may contain certain entries that are not
+                # interface names, like 'bonding_master'. Skip over files
+                # that are not links.
+                continue
             links[ifname] = {
-                'ifindex': ifindex,
+                'ifindex': SysUtil._link_read_ifindex(ifname),
                 'ifname': ifname,
                 'address': SysUtil._link_read_address(ifname),
                 'perm-address': SysUtil._link_read_permaddress(ifname),
@@ -359,7 +363,7 @@ class SysUtil:
         return l
 
     @classmethod
-    def link_info_find(cls, refresh=False, mac = None, ifname = None):
+    def link_info_find(cls, refresh = False, mac = None, ifname = None):
         if mac is not None:
             mac = Util.mac_norm(mac)
         for li in cls.link_infos(refresh).values():
@@ -1601,13 +1605,13 @@ class Cmd:
                 if connection['mac']:
                     li_mac = SysUtil.link_info_find(mac = connection['mac'])
                     if not li_mac:
-                        AnsibleUtil.log_fatal(idx, 'profile specifies mac "%s" but not such interface exists' % (connection['mac']))
+                        AnsibleUtil.log_fatal(idx, 'profile specifies mac "%s" but no such interface exists' % (connection['mac']))
                 if connection['interface_name'] and connection['type'] == 'ethernet':
                     li_ifname = SysUtil.link_info_find(ifname = connection['interface_name'])
                     if not li_ifname:
-                        AnsibleUtil.log_fatal(idx, 'profile specifies interface_name "%s" but not such interface exists' % (connection['interface_name']))
+                        AnsibleUtil.log_fatal(idx, 'profile specifies interface_name "%s" but no such interface exists' % (connection['interface_name']))
                 if li_mac and li_ifname and li_mac != li_ifname:
-                    AnsibleUtil.log_fatal(idx, 'profile specifies interface_name "%s" and mac "%s" but not such interface exists' % (connection['interface_name'], connection['mac']))
+                    AnsibleUtil.log_fatal(idx, 'profile specifies interface_name "%s" and mac "%s" but no such interface exists' % (connection['interface_name'], connection['mac']))
 
 ###############################################################################
 
