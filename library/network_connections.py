@@ -85,10 +85,11 @@ class Util:
         if n is None:
             import gi
             gi.require_version('NM', '1.0')
-            from gi.repository import NM, GLib, Gio
+            from gi.repository import NM, GLib, Gio, GObject
             cls._NM = NM
             cls._GLib = GLib
             cls._Gio = Gio
+            cls._GObject = GObject
             n = NM
             import uuid
             cls._uuid = uuid
@@ -103,6 +104,11 @@ class Util:
     def Gio(cls):
         cls.NM()
         return cls._Gio
+
+    @classmethod
+    def GObject(cls):
+        cls.NM()
+        return cls._GObject
 
     @classmethod
     def Timestamp(cls):
@@ -1090,6 +1096,16 @@ class NMUtil:
             nmclient = Util.NM().Client.new(None)
         self.nmclient = nmclient
 
+    def device_is_master_type(self, dev):
+        if dev:
+            NM = Util.NM()
+            GObject = Util.GObject()
+            if     GObject.type_is_a(dev, NM.DeviceBond) \
+                or GObject.type_is_a(dev, NM.DeviceBridge) \
+                or GObject.type_is_a(dev, NM.DeviceTeam):
+                return True
+        return False
+
     def active_connection_list(self, connections = None, black_list = None, mainloop_iterate = True):
         if mainloop_iterate:
             Util.GMainLoop_iterate_all()
@@ -1263,7 +1279,7 @@ class NMUtil:
             raise MyError('created connection failed to normalize: %s' % (e))
         return con
 
-    def connection_add(self, con, timeout = 5):
+    def connection_add(self, con, timeout = 10):
 
         def add_cb(client, result, cb_args):
             con = None
@@ -1286,9 +1302,7 @@ class NMUtil:
             raise MyError('failure to add connection: %s' % (cb_args.get('error', 'unknown error')))
         return cb_args['con']
 
-    def connection_update(self, con, con_new, timeout = 5):
-        NM = Util.NM()
-
+    def connection_update(self, con, con_new, timeout = 10):
         con.replace_settings_from_connection(con_new)
 
         def update_cb(connection, result, cb_args):
@@ -1312,7 +1326,7 @@ class NMUtil:
             raise MyError('failure to update connection: %s' % (cb_args.get('error', 'unknown error')))
         return True
 
-    def connection_delete(self, connection, timeout = 5):
+    def connection_delete(self, connection, timeout = 10):
 
         def delete_cb(connection, result, cb_args):
             success = False
@@ -1334,7 +1348,7 @@ class NMUtil:
         if not cb_args.get('success', False):
             raise MyError('failure to delete connection: %s' % (cb_args.get('error', 'unknown error')))
 
-    def connection_activate(self, connection, timeout = 5):
+    def connection_activate(self, connection, timeout = 15, wait_time = None):
 
         def activate_cb(client, result, cb_args):
             active_connection = None
@@ -1355,9 +1369,85 @@ class NMUtil:
             raise MyError('failure to activate connection: %s' % ('timeout'))
         if not cb_args.get('active_connection', None):
             raise MyError('failure to activate connection: %s' % (cb_args.get('error', 'unknown error')))
-        return cb_args['active_connection']
 
-    def active_connection_deactivate(self, ac, timeout = 5):
+        ac = cb_args['active_connection']
+        self.connection_activate_wait(ac, wait_time)
+        return ac
+
+    def connection_activate_wait(self, ac, wait_time):
+
+        if not wait_time:
+            return
+
+        NM = Util.NM()
+
+        state = ac.get_state()
+        if state == NM.ActiveConnectionState.ACTIVATED:
+            return
+        if state != NM.ActiveConnectionState.ACTIVATING:
+            raise MyError('activation is in unexpected state "%s"' % (state))
+
+        def check_activated(ac, dev):
+            ac_state = ac.get_state()
+            ac_reason = ac.get_state_reason()
+            if dev:
+                dev_state = dev.get_state()
+
+            if ac_state == NM.ActiveConnectionState.ACTIVATING:
+                if      self.device_is_master_type(dev) \
+                    and dev_state >= NM.DeviceState.IP_CONFIG \
+                    and dev_state <= NM.DeviceState.ACTIVATED:
+                    # master connections qualify as activated once they reach IP-Config state.
+                    # That is because they may wait for slave devices to attach
+                    return True, None
+                # fall through
+            elif ac_state == NM.ActiveConnectionState.ACTIVATED:
+                return True, None
+            elif ac_state == NM.ActiveConnectionState.DEACTIVATED:
+                if     not dev \
+                    or ac_reason != NM.ActiveConnectionStateReason.DEVICE_DISCONNECTED \
+                    or dev.get_active_connection() is not ac:
+                    return True, (ac_reason.value_nick or 'unknown reason')
+                # the state of the active connection is not very helpful.
+                # see if the device-state is better.
+                if dev_state <= NM.DeviceState.DISCONNECTED or dev_state > NM.DeviceState.DEACTIVATING:
+                    return True, (dev.get_state_reason().value_nick or ac_reason.value_nick or 'unknown reason')
+                # fall through, wait longer for a better state reason.
+
+            # wait longer.
+            return False, None
+
+        dev = Util.first(ac.get_devices())
+
+        complete, failure_reason = check_activated(ac, dev)
+
+        if not complete:
+
+            cb_out = []
+            def check_activated_cb():
+                complete, failure_reason = check_activated(ac, dev)
+                if complete:
+                    cb_out.append(failure_reason)
+                    Util.GMainLoop().quit()
+
+            ac_id = ac.connect('state-changed', lambda source, state, reason: check_activated_cb())
+            if dev:
+                dev_id = dev.connect('notify::state', lambda source, pspec: check_activated_cb())
+
+            try:
+                if not Util.GMainLoop_run(wait_time):
+                    raise MyError('connection not fully activated after timeout')
+            finally:
+                if dev:
+                    dev.handler_disconnect(dev_id)
+                ac.handler_disconnect(ac_id)
+
+            failure_reason = cb_out[0]
+
+        if failure_reason:
+            raise MyError('connection not activated: %s' % (failure_reason))
+
+    def active_connection_deactivate(self, ac, timeout = 10, wait_time = None):
 
         def deactivate_cb(client, result, cb_args):
             success = False
@@ -1378,7 +1468,34 @@ class NMUtil:
             raise MyError('failure to deactivate connection: %s' % (timeout))
         if not cb_args.get('success', False):
             raise MyError('failure to deactivate connection: %s' % (cb_args.get('error', 'unknown error')))
+
+        self.active_connection_deactivate_wait(ac, wait_time)
         return True
+
+    def active_connection_deactivate_wait(self, ac, wait_time):
+
+        if not wait_time:
+            return
+
+        NM = Util.NM()
+
+        def check_deactivated(ac):
+            return ac.get_state() >= NM.ActiveConnectionState.DEACTIVATED
+
+        if not check_deactivated(ac):
+
+            def check_deactivated_cb():
+                if check_deactivated(ac):
+                    Util.GMainLoop().quit()
+
+            ac_id = ac.connect('notify::state', lambda source, pspec: check_deactivated_cb())
+
+            try:
+                if not Util.GMainLoop_run(wait_time):
+                    raise MyError('connection not fully deactivated after timeout')
+            finally:
+                ac.handler_disconnect(ac_id)
+
 
 ###############################################################################
 
@@ -1727,13 +1844,6 @@ class Cmd_nm(Cmd):
     def run_state_up(self, idx):
         connection = AnsibleUtil.connections[idx]
 
-        w = connection['wait']
-        if w is None:
-            w = 90
-        else:
-            # TODO
-            AnsibleUtil.log_warn(idx, 'wait for activation is not yet implemented')
-
         con = Util.first(self.nmutil.connection_list(name = connection['name'], uuid = connection['nm.uuid']))
         if not con:
             if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
@@ -1744,21 +1854,23 @@ class Cmd_nm(Cmd):
         AnsibleUtil.log_info(idx, 'up connection %s, %s' % (con.get_id(), con.get_uuid()))
         if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
             try:
-                self.nmutil.connection_activate (con)
+                ac = self.nmutil.connection_activate (con)
             except MyError as e:
                 AnsibleUtil.log_error(idx, 'up connection failed: %s' % (e))
+
+            wait_time = connection['wait']
+            if wait_time is None:
+                wait_time = 90
+
+            try:
+                self.nmutil.connection_activate_wait(ac, wait_time)
+            except MyError as e:
+                AnsibleUtil.log_error(idx, 'up connection failed while waiting: %s' % (e))
 
         AnsibleUtil.run_results_changed(idx)
 
     def run_state_down(self, idx):
         connection = AnsibleUtil.connections[idx]
-
-        w = connection['wait']
-        if w is None:
-            w = 10
-        else:
-            # TODO
-            AnsibleUtil.log_warn(idx, 'wait for activation is not yet implemented')
 
         cons = self.nmutil.connection_list(name = connection['name'])
         changed = False
@@ -1776,6 +1888,16 @@ class Cmd_nm(Cmd):
                         self.nmutil.active_connection_deactivate(ac)
                     except MyError as e:
                         AnsibleUtil.log_error(idx, 'down connection failed: %s' % (e))
+
+                    wait_time = connection['wait']
+                    if wait_time is None:
+                        wait_time = 10
+
+                    try:
+                        self.nmutil.active_connection_deactivate_wait(ac, wait_time)
+                    except MyError as e:
+                        AnsibleUtil.log_error(idx, 'down connection failed while waiting: %s' % (e))
+
                 cons = self.nmutil.connection_list(name = connection['name'])
 
         if not changed:
