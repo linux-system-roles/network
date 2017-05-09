@@ -1,3 +1,2 @@
 network_provider: "{{ network_provider_default }}"
-network:
-  connections: []
+network_connections: []

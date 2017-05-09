@@ -1,5 +1,5 @@
-ansible-network-role
-====================
+linux-system-roles/network
+==========================
 
 _WARNING: This role can be dangerous to use. If you lose network connectivity
 to your target host by incorrectly configuring your networking, you may be
@@ -112,8 +112,8 @@ after disabling the NetworkManager service.
 Variables
 ---------
 
-The role is configured via the `network` dictionary variable per host.
-The connection profiles are configured as `network.connections`, which
+The role is configured via variables with a `network_` name prefix.
+The connection profiles are configured as `network_connections`, which
 is a list of dictionaries that have a `name`.
 
 ### `name`
@@ -139,10 +139,9 @@ for NetworkManager, a connection can only be active at one device at a time.
 #### Example
 
 ```yaml
-network:
-  connections:
-    - name: "eth0"
-      state: "absent"
+network_connections:
+  - name: "eth0"
+    state: "absent"
 ```
 
 Above example ensures the absence of a connection profile. If a profile with `name` `eth0`
@@ -170,15 +169,14 @@ in which case the default is `present`.
 #### Example
 
 ```yaml
-network:
-  connections:
-    - name: "eth0"
-      #state: present        # default, as a type is present
-      type: "ethernet"
-      autoconnect: yes
-      mac: "d6:06:b9:56:12:5d"
-      ip:
-        dhcp4: yes
+network_connections:
+  - name: "eth0"
+    #state: present        # default, as a type is present
+    type: "ethernet"
+    autoconnect: yes
+    mac: "d6:06:b9:56:12:5d"
+    ip:
+      dhcp4: yes
 ```
 
 Above example creates a new connection profile or ensures that it is present
@@ -240,11 +238,10 @@ name `interface_name`, which may or may not be the same.
 #### Example
 
 ```yaml
-network:
-  connections:
-    - name: "eth0"
-      #state: up        # implicit default, as there is no type specified
-      wait: 0
+network_connections:
+  - name: "eth0"
+    #state: up        # implicit default, as there is no type specified
+    wait: 0
 ```
 
 The above example defaults to `state=up` and requires an existing profile to activate.
@@ -272,11 +269,10 @@ changes the system.
 #### Example
 
 ```yaml
-network:
-  connections:
-    - name: eth0
-      state: down
-      wait: 0
+network_connections:
+  - name: eth0
+    state: down
+    wait: 0
 ```
 
 Another `state` is `down`.
@@ -296,15 +292,14 @@ For NetworkManager, a `wait` argument is supported like for `up` state.
 #### Example
 
 ```yaml
-network:
-  connections:
-    - name: "Wired0"
-      type: "ethernet"
-      interface_name: "eth0"
-      ip:
-        dhcp4: yes
+network_connections:
+  - name: "Wired0"
+    type: "ethernet"
+    interface_name: "eth0"
+    ip:
+      dhcp4: yes
 
-    - name: "Wired0"
+  - name: "Wired0"
 ```
 
 As said, the `name` identifies a unique profile. However, you can refer to the same
@@ -316,24 +311,23 @@ activate it within the same play.
 The IP configuration supports the following options:
 
 ```yaml
-network:
-  connections:
-    - name: "eth0"
-      type: "ethernet"
-      ip:
-        route_metric4: 100
-        dhcp4: no
-        #dhcp4_send_hostname: no
-        gateway4: 192.168.5.1
+network_connections:
+  - name: "eth0"
+    type: "ethernet"
+    ip:
+      route_metric4: 100
+      dhcp4: no
+      #dhcp4_send_hostname: no
+      gateway4: 192.168.5.1
 
-        route_metric6: -1
-        auto6: no
-        gateway6: fc00::1
+      route_metric6: -1
+      auto6: no
+      gateway6: fc00::1
 
-        address:
-          - 192.168.5.3/24
-          - 10.0.10.3/16
-          - fc00::80/7
+      address:
+        - 192.168.5.3/24
+        - 10.0.10.3/16
+        - fc00::80/7
 ```
 
 Manual addressing can be specified via a list of addresses and prefixes `address`.
@@ -360,11 +354,10 @@ Slaves to bridge/bond/team devices cannot specify `ip` settings.
 Device types like `bridge`, `bond`, `team` work similar:
 
 ```yaml
-network:
-  connections:
-    - name: "br0"
-      type: bridge
-      #interface_name: br0    # defaults to the connection name
+network_connections:
+  - name: "br0"
+    type: bridge
+    #interface_name: br0    # defaults to the connection name
 ```
 
 Note that `team` is not supported on RHEL6 kernels.
@@ -373,25 +366,24 @@ For slaves of these virtual types, the special properites `slave_type` and
 `master` must be set. Also note that slaves cannot have `ip` settings.
 
 ```yaml
-network:
-  connections:
-    - name: br0
-      type: bridge
-      ip:
-        dhcp4: no
-        auto6: no
+network_connections:
+  - name: br0
+    type: bridge
+    ip:
+      dhcp4: no
+      auto6: no
 
-    - name: br0-bond0
-      type: bond
-      interface_name: bond0
-      master: br0
-      slave_type: bridge
+  - name: br0-bond0
+    type: bond
+    interface_name: bond0
+    master: br0
+    slave_type: bridge
 
-    - name: br0-bond0-eth1
-      type: ethernet
-      interface_name: eth1
-      master: br0-bond0
-      slave_type: bond
+  - name: br0-bond0-eth1
+    type: ethernet
+    interface_name: eth1
+    master: br0-bond0
+    slave_type: bond
 ```
 
 Note that the `master` refers to the `name` of a profile in the ansible
@@ -415,42 +407,40 @@ signal success but the actual play run fails.
 VLANs work too:
 
 ```yaml
-network:
-  connections:
-    - name: eth1-profile
-      autoconnet: no
-      type: ethernet
-      interface_name: eth1
-      ip:
-        dhcp4: no
-        auto6: no
+network_connections:
+  - name: eth1-profile
+    autoconnet: no
+    type: ethernet
+    interface_name: eth1
+    ip:
+      dhcp4: no
+      auto6: no
 
-    - name: eth1.6
-      autoconnect: no
-      type: vlan
-      parent: eth1-profile
-      vlan_id: 6
-      ip:
-        address:
-          - 192.168.10.5/24
-        auto6: no
+  - name: eth1.6
+    autoconnect: no
+    type: vlan
+    parent: eth1-profile
+    vlan_id: 6
+    ip:
+      address:
+        - 192.168.10.5/24
+      auto6: no
 ```
 
 Like for `master`, the `parent` references the connection profile in the ansible
 role.
 
-### `provider`
+### `network_provider`
 
 Whether to use `nm` or `initscripts` is detected based on the distribution.
-It can be however be explicitly set via `network.provider` or `network_provider` variables.
+It can be however be explicitly set via `network_.provider` variable.
 
 #### Example
 
 ```yaml
-network:
-  provider: nm
-  connections:
-    - name: "eth0"
-      #...
+network_provider: nm
+network_connections:
+  - name: "eth0"
+    #...
 ```
 
