@@ -13,15 +13,15 @@
 
 - name: Enable network service
   service:
-    name: "{{ network_service_name }}"
-    state: started
-    enabled: yes
+      name: "{{ network_service_name }}"
+      state: started
+      enabled: yes
 
 - name: Configure networking connection profiles
   network_connections:
-      provider:       "{{ network.provider    | default(network_provider) | mandatory }}"
-      ignore_errors:  "{{ network.ignore_errors | default(omit) }} "
-      connections:    "{{ network.connections | default([]) }}"
+      provider:       "{{ network_provider      | mandatory }}"
+      ignore_errors:  "{{ network_ignore_errors | default(omit) }}"
+      connections:    "{{ network_connections   | default([]) }}"
 
 - name: Re-test connectivity
   ping:
