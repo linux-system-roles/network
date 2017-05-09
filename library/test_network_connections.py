@@ -134,7 +134,7 @@ class TestValidator(unittest.TestCase):
                 {
                     'name': '5',
                     'state': 'up',
-                    'wait': 90,
+                    'wait': None,
                     'ignore_errors': None,
                 }
             ],
@@ -173,7 +173,7 @@ class TestValidator(unittest.TestCase):
                     'interface_name': None,
                     'check_iface_exists': True,
                     'slave_type': None,
-                    'wait': 90,
+                    'wait': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -275,7 +275,7 @@ class TestValidator(unittest.TestCase):
                     'interface_name': None,
                     'check_iface_exists': True,
                     'slave_type': None,
-                    'wait': 90,
+                    'wait': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -314,7 +314,7 @@ class TestValidator(unittest.TestCase):
                     'interface_name': None,
                     'check_iface_exists': True,
                     'slave_type': None,
-                    'wait': 90,
+                    'wait': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -355,7 +355,7 @@ class TestValidator(unittest.TestCase):
                     'interface_name': None,
                     'check_iface_exists': True,
                     'slave_type': None,
-                    'wait': 90,
+                    'wait': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
