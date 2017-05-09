@@ -642,7 +642,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
             nested = [
                 ArgValidatorStr ('name'),
                 ArgValidatorStr ('state', enum_values = ArgValidator_DictConnection.VALID_STATES),
-                ArgValidatorInt ('wait', val_min = -1, val_max = 1200),
+                ArgValidatorInt ('wait', val_min = 0, val_max = 3600),
                 ArgValidatorStr ('type', enum_values = ArgValidator_DictConnection.VALID_TYPES),
                 ArgValidatorBool('autoconnect', default_value = True),
                 ArgValidatorStr ('slave_type', enum_values = ArgValidator_DictConnection.VALID_SLAVE_TYPES),
@@ -694,14 +694,9 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 if 'name' not in result:
                     raise ValidationError(name, 'missing "name"')
 
-        if result['state'] == 'wait':
-            if result.get('wait', -1) == -1:
-                result['wait'] = 10
-            elif result['wait'] == 0:
-                raise ValidationError(name + '.wait', 'the "wait" value for state "wait" must be positive')
-        elif result['state'] in ['up', 'down']:
-            if result.get('wait', -1) == -1:
-                result['wait'] = 90
+        if result['state'] in [ 'wait', 'up', 'down' ]:
+            if 'wait' not in result:
+                result['wait'] = None
         else:
             if 'wait' in result:
                 raise ValidationError(name + '.wait', '"wait" is not allowed for state "%s"' % (result['state']))
@@ -1571,10 +1566,13 @@ class Cmd:
                 try:
                     state = connection['state']
                     if state == 'wait':
-                        AnsibleUtil.log_info(idx, 'wait for %s seconds' % (connection['wait']))
+                        w = connection['wait']
+                        if w is None:
+                            w = 10
+                        AnsibleUtil.log_info(idx, 'wait for %s seconds' % (w))
                         if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
                             import time
-                            time.sleep(connection['wait'])
+                            time.sleep(w)
                     elif state == 'absent':
                         self.run_state_absent(idx)
                     elif state == 'present':
@@ -1729,7 +1727,11 @@ class Cmd_nm(Cmd):
     def run_state_up(self, idx):
         connection = AnsibleUtil.connections[idx]
 
-        if connection['wait'] != 0:
+        w = connection['wait']
+        if w is None:
+            w = 90
+        else:
+            # TODO
             AnsibleUtil.log_warn(idx, 'wait for activation is not yet implemented')
 
         con = Util.first(self.nmutil.connection_list(name = connection['name'], uuid = connection['nm.uuid']))
@@ -1751,7 +1753,11 @@ class Cmd_nm(Cmd):
     def run_state_down(self, idx):
         connection = AnsibleUtil.connections[idx]
 
-        if connection['wait'] != 0:
+        w = connection['wait']
+        if w is None:
+            w = 10
+        else:
+            # TODO
             AnsibleUtil.log_warn(idx, 'wait for activation is not yet implemented')
 
         cons = self.nmutil.connection_list(name = connection['name'])
@@ -1863,7 +1869,7 @@ class Cmd_initscripts(Cmd):
         connection = AnsibleUtil.connections[idx]
         name = connection['name']
 
-        if connection['wait'] != 0:
+        if connection['wait'] is not None:
             # initscripts don't support wait, they always block until the ifup/ifdown
             # command completes. Silently ignore the argument.
             pass
