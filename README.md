@@ -1,11 +1,6 @@
 linux-system-roles/network
 ==========================
 
-_WARNING: This role can be dangerous to use. If you lose network connectivity
-to your target host by incorrectly configuring your networking, you may be
-unable to recover without physical access to the machine. Try also the `--check`
-ansible option for a dry-run._
-
 This role enables users to configure network on target machines.
 The role can be used to configure:
 
@@ -28,9 +23,9 @@ on Fedora/RHEL.
 
 For each host a list of networking profiles can be configure via the `network` variable.
 
-- For NetworkManager, profiles correspond to connection profiles as handled by NetworkManager.
-
 - For initscripts, profiles correspond to ifcfg files in `/etc/sysconfig/network-scripts/ifcfg-*`.
+
+- For NetworkManager, profiles correspond to connection profiles as handled by NetworkManager.  Fedora and RHEL use the `rh-plugin` for NetworkManager which also writes configuration files to `/etc/sysconfig/network-scripts/ifcfg-*` for compatibility.
 
 Note that the role primarily operates on networking profiles (connections) and
 not on devices. For example, in the role you would not configure the current IP address
@@ -38,76 +33,7 @@ of an interface. Instead, you create a profile with a certain IP configuration a
 optionally activate the profile on a device. Which means, to apply the configuration
 to the actual networking interface.
 
-Limitations
------------
 
-### Configure over the Network
-
-Ansible usually works via the network, for example via SSH. This role doesn't answer
-how to bootstrap networking configuration. One option may be [ansible-pull](https://docs.ansible.com/ansible/playbooks_intro.html#ansible-pull).
-Another to initially auto-configure the host during installation (ISO based, kickstart, etc.),
-so that the host is connected to a management LAN or VLAN. It strongly depends on your environment.
-
-- For initscripts provider, deploying a profile merely means to create the ifcfg
-  files. Nothing happening automatically until the play issues `ifup` or `ifdown`
-  via the `up` or `down` [states](#state) -- unless of course, there are other
-  components that watch the ifcfg files and react on changes.
-
-- For NetworkManager, modifying a connection with autoconnect enabled
-  may result in the activation of the new profile on a previously disconnected
-  interface. Also, deleting a NetworkManager connection that is currently active
-  will tear down the interface. Therefore, the order of the steps may matter
-  and or careful handling of [autoconnect](#autoconnect) property may be necessary.
-  This should be improved in NetworkManager RFE [rh#1401515](https://bugzilla.redhat.com/show_bug.cgi?id=1401515).
-
-- It seems difficult to change networking of the target host in a way that breaks the current
-  SSH connection of ansible. If you want to do that, ansible-pull might be a solution.
-  Alternatively, a combination of `async`/`poll` with changing the `ansible_host` midway
-  of the play.  
-  **TODO** The current role doesn't yet support to easily split the
-  play in a pre-configure step, and a second step to activate the new configuration.
-
-In general, to successfully run the play, one must understand which configuration is
-active in the first place and then carefully configure a sequence of steps to change to
-the new configuration. Don't cut off the branch on which you are sitting. The actual
-solution depends strongly on your environment.
-
-### If something goes wrong
-
-When something goes wrong while configuring the networking remotely, you might need
-to get phyisical access to the machine to recover.
-
-- **TODO** NetworkManager supports a [checkpoint/rollback](https://developer.gnome.org/NetworkManager/stable/gdbus-org.freedesktop.NetworkManager.html#gdbus-method-org-freedesktop-NetworkManager.CheckpointCreate)
-  feature. At the beginning of the play we could create a checkpoint and if we lose connectivity
-  due to an error, NetworkManager would automatically rollback after timeout.
-  The limitations is that this would only work with NetworkManager, and it's not
-  clear that rollback will result in a working configuration either.
-
-#### Invalid and Wrong Configuration
-
-The role will reject invalid configurations, so it is a good idea to test the role
-with `--check` first. There is no protection against wrong (but valid) configuration.
-Double-check your configuration before applying it.
-
-### Compatibility
-
-The role supports the same configuration scheme for both providers. That means, you can
-use the same playbook with NetworkManager and initscripts. Note however, that not every
-option is handled exactly the same by every provider. Do a test run first with `--check`.
-
-It is also not supported to create a configuration for one provider, and expect another
-provider to handle them. For example, creating proviles with `initscripts` provider
-and later enabling NetworkManager is not guaranteed to work automatically. Possibly
-you have to adjust the configuration so that it can be used by another provider.
-
-For example what will work is to configure a RHEL6 host with initscripts and upgrade to
-RHEL7 while continuing to use initscripts on RHEL7. What is not guaranteed to work
-it to upgrade to RHEL7, disable initscripts and expect NetworkManager to take over
-the configuration automatically.
-
-Depending on NetworkManager's configuration, connections may be stored as ifcfg files
-as well, but again it is not guaranteed that plain initscripts can handle these ifcfg files
-after disabling the NetworkManager service.
 
 Variables
 ---------
@@ -341,7 +267,7 @@ Note that `dhcp4_send_hostname` is only supported by the `nm` provider and trans
 to [`ipv4.dhcp-send-hostname`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv4.dhcp-send-hostname)
 property.
 
-- For NetworkManager, `route_metric4` and `route_metric6` corresponds to the 
+- For NetworkManager, `route_metric4` and `route_metric6` corresponds to the
 [`ipv4.route-metric`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv4.route-metric) and
 [`ipv6.route-metric`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv6.route-metric)
  properties, respectively. If specified, it determines the route metric
@@ -444,3 +370,73 @@ network_connections:
     #...
 ```
 
+Limitations
+-----------
+
+### Configure over the Network
+
+Ansible usually works via the network, for example via SSH. This role doesn't answer
+how to bootstrap networking configuration. One option may be [ansible-pull](https://docs.ansible.com/ansible/playbooks_intro.html#ansible-pull).
+Another to initially auto-configure the host during installation (ISO based, kickstart, etc.),
+so that the host is connected to a management LAN or VLAN. It strongly depends on your environment.
+
+- For initscripts provider, deploying a profile merely means to create the ifcfg
+  files. Nothing happening automatically until the play issues `ifup` or `ifdown`
+  via the `up` or `down` [states](#state) -- unless of course, there are other
+  components that watch the ifcfg files and react on changes.
+
+- For NetworkManager, modifying a connection with autoconnect enabled
+  may result in the activation of the new profile on a previously disconnected
+  interface. Also, deleting a NetworkManager connection that is currently active
+  will tear down the interface. Therefore, the order of the steps may matter
+  and or careful handling of [autoconnect](#autoconnect) property may be necessary.
+  This should be improved in NetworkManager RFE [rh#1401515](https://bugzilla.redhat.com/show_bug.cgi?id=1401515).
+
+- It seems difficult to change networking of the target host in a way that breaks the current
+  SSH connection of ansible. If you want to do that, ansible-pull might be a solution.
+  Alternatively, a combination of `async`/`poll` with changing the `ansible_host` midway
+  of the play.  
+  **TODO** The current role doesn't yet support to easily split the
+  play in a pre-configure step, and a second step to activate the new configuration.
+
+In general, to successfully run the play, one must understand which configuration is
+active in the first place and then carefully configure a sequence of steps to change to
+the new configuration. Don't cut off the branch on which you are sitting. The actual
+solution depends strongly on your environment.
+
+### If something goes wrong
+
+When something goes wrong while configuring the networking remotely, you might need
+to get phyisical access to the machine to recover.
+
+- **TODO** NetworkManager supports a [checkpoint/rollback](https://developer.gnome.org/NetworkManager/stable/gdbus-org.freedesktop.NetworkManager.html#gdbus-method-org-freedesktop-NetworkManager.CheckpointCreate)
+  feature. At the beginning of the play we could create a checkpoint and if we lose connectivity
+  due to an error, NetworkManager would automatically rollback after timeout.
+  The limitations is that this would only work with NetworkManager, and it's not
+  clear that rollback will result in a working configuration either.
+
+#### Invalid and Wrong Configuration
+
+The role will reject invalid configurations, so it is a good idea to test the role
+with `--check` first. There is no protection against wrong (but valid) configuration.
+Double-check your configuration before applying it.
+
+### Compatibility
+
+The role supports the same configuration scheme for both providers. That means, you can
+use the same playbook with NetworkManager and initscripts. Note however, that not every
+option is handled exactly the same by every provider. Do a test run first with `--check`.
+
+It is also not supported to create a configuration for one provider, and expect another
+provider to handle them. For example, creating proviles with `initscripts` provider
+and later enabling NetworkManager is not guaranteed to work automatically. Possibly
+you have to adjust the configuration so that it can be used by another provider.
+
+For example what will work is to configure a RHEL6 host with initscripts and upgrade to
+RHEL7 while continuing to use initscripts on RHEL7. What is not guaranteed to work
+it to upgrade to RHEL7, disable initscripts and expect NetworkManager to take over
+the configuration automatically.
+
+Depending on NetworkManager's configuration, connections may be stored as ifcfg files
+as well, but again it is not guaranteed that plain initscripts can handle these ifcfg files
+after disabling the NetworkManager service.
