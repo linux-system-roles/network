@@ -655,7 +655,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
             nested = [
                 ArgValidatorStr ('name'),
                 ArgValidatorStr ('state', enum_values = ArgValidator_DictConnection.VALID_STATES),
-                ArgValidatorNum ('wait', val_min = 0, val_max = 3600),
+                ArgValidatorNum ('wait', val_min = 0, val_max = 3600, numeric_type = float),
                 ArgValidatorStr ('type', enum_values = ArgValidator_DictConnection.VALID_TYPES),
                 ArgValidatorBool('autoconnect', default_value = True),
                 ArgValidatorStr ('slave_type', enum_values = ArgValidator_DictConnection.VALID_SLAVE_TYPES),
