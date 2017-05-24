@@ -453,18 +453,25 @@ class ArgValidatorStr(ArgValidator):
             raise ValidationError(name, 'cannot be empty')
         return v
 
-class ArgValidatorInt(ArgValidator):
-    def __init__(self, name, required = False, val_min = None, val_max = None, default_value = 0):
-        ArgValidator.__init__(self, name, required, default_value)
+class ArgValidatorNum(ArgValidator):
+    def __init__(self, name, required = False, val_min = None, val_max = None,
+                 default_value = ArgValidator.MISSING,
+                 numeric_type = int):
+        ArgValidator.__init__(self, name, required, \
+                              numeric_type(0) if default_value is ArgValidator.MISSING else default_value)
         self.val_min = val_min
         self.val_max = val_max
+        self.numeric_type = numeric_type
     def _validate(self, value, name):
         v = None
         try:
-            if isinstance(value, int):
+            if isinstance(value, self.numeric_type):
                 v = value
-            if isinstance(value, Util.STRING_TYPE):
-                v = int(value)
+            else:
+                v2 = self.numeric_type(value)
+                if     isinstance(value, Util.STRING_TYPE) \
+                    or v2 == value:
+                    v = v2
         except:
             pass
         if v is None:
@@ -590,10 +597,10 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 ArgValidatorBool('dhcp4', default_value = None),
                 ArgValidatorBool('dhcp4_send_hostname', default_value = None),
                 ArgValidatorIP  ('gateway4', family = socket.AF_INET),
-                ArgValidatorInt ('route_metric4', val_min = -1, val_max = 0xFFFFFFFF, default_value = None),
+                ArgValidatorNum ('route_metric4', val_min = -1, val_max = 0xFFFFFFFF, default_value = None),
                 ArgValidatorBool('auto6', default_value = None),
                 ArgValidatorIP  ('gateway6', family = socket.AF_INET6),
-                ArgValidatorInt ('route_metric6', val_min = -1, val_max = 0xFFFFFFFF, default_value = None),
+                ArgValidatorNum ('route_metric6', val_min = -1, val_max = 0xFFFFFFFF, default_value = None),
                 ArgValidatorList('address',
                     nested = ArgValidatorIPAddr('address[?]'),
                     default_value = list,
@@ -648,7 +655,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
             nested = [
                 ArgValidatorStr ('name'),
                 ArgValidatorStr ('state', enum_values = ArgValidator_DictConnection.VALID_STATES),
-                ArgValidatorInt ('wait', val_min = 0, val_max = 3600),
+                ArgValidatorNum ('wait', val_min = 0, val_max = 3600),
                 ArgValidatorStr ('type', enum_values = ArgValidator_DictConnection.VALID_TYPES),
                 ArgValidatorBool('autoconnect', default_value = True),
                 ArgValidatorStr ('slave_type', enum_values = ArgValidator_DictConnection.VALID_SLAVE_TYPES),
@@ -657,7 +664,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidatorMac ('mac'),
                 ArgValidatorBool('check_iface_exists', default_value = True),
                 ArgValidatorStr ('parent'),
-                ArgValidatorInt ('vlan_id', val_min = 0, val_max = 4095, default_value = None),
+                ArgValidatorNum ('vlan_id', val_min = 0, val_max = 4095, default_value = None),
                 ArgValidatorBool('ignore_errors', default_value = None),
                 ArgValidator_DictIP(),
             ],
