@@ -1371,7 +1371,7 @@ class NMUtil:
             except Exception as e:
                 if Util.error_is_cancelled(e):
                     return
-                cb_args['error'] = str(ex)
+                cb_args['error'] = str(e)
             cb_args['success'] = success
             Util.GMainLoop().quit()
 
