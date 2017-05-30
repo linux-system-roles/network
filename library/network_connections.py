@@ -1103,6 +1103,13 @@ class NMUtil:
             nmclient = Util.NM().Client.new(None)
         self.nmclient = nmclient
 
+    def connection_ensure_setting(self, connection, setting_type):
+        setting = connection.get_setting(setting_type)
+        if not setting:
+            setting = setting_type.new()
+            connection.add_setting(setting)
+        return setting
+
     def device_is_master_type(self, dev):
         if dev:
             NM = Util.NM()
@@ -1197,8 +1204,7 @@ class NMUtil:
         connection = connections[idx]
 
         con = NM.SimpleConnection.new()
-        s_con = NM.SettingConnection.new()
-        con.add_setting(s_con)
+        s_con = self.connection_ensure_setting(con, NM.SettingConnection)
 
         s_con.set_property(NM.SETTING_CONNECTION_ID, connection['name'])
         s_con.set_property(NM.SETTING_CONNECTION_UUID, connection['nm.uuid'])
@@ -1207,21 +1213,18 @@ class NMUtil:
 
         if connection['type'] == 'ethernet':
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, '802-3-ethernet')
-            s_wired = NM.SettingWired.new()
-            con.add_setting(s_wired)
+            s_wired = self.connection_ensure_setting(con, NM.SettingWired)
             s_wired.set_property(NM.SETTING_WIRED_MAC_ADDRESS, connection['mac'])
         elif connection['type'] == 'bridge':
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, 'bridge')
-            s_bridge = NM.SettingBridge.new()
-            con.add_setting(s_bridge)
+            s_bridge = self.connection_ensure_setting(con, NM.SettingBridge)
             s_bridge.set_property(NM.SETTING_BRIDGE_STP, False)
         elif connection['type'] == 'bond':
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, 'bond')
         elif connection['type'] == 'team':
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, 'team')
         elif connection['type'] == 'vlan':
-            s_vlan = NM.SettingVlan.new()
-            con.add_setting(s_vlan)
+            s_vlan = self.connection_ensure_setting(con, NM.SettingVlan)
             s_vlan.set_property(NM.SETTING_VLAN_ID, int(connection['vlan_id']))
             s_vlan.set_property(NM.SETTING_VLAN_PARENT, self._connection_find_master_uuid(connection['parent'], connections, idx))
         else:
@@ -1233,8 +1236,8 @@ class NMUtil:
         else:
             ip = connection['ip']
 
-            s_ip4 = NM.SettingIP4Config.new()
-            s_ip6 = NM.SettingIP6Config.new()
+            s_ip4 = self.connection_ensure_setting(con, NM.SettingIP4Config)
+            s_ip6 = self.connection_ensure_setting(con, NM.SettingIP6Config)
 
             s_ip4.set_property(NM.SETTING_IP_CONFIG_METHOD, 'auto')
             s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, 'auto')
@@ -1276,9 +1279,6 @@ class NMUtil:
             for d in ip['dns']:
                 if not d['is_v4']:
                     s_ip6.add_dns(d['address'])
-
-            con.add_setting(s_ip4)
-            con.add_setting(s_ip6)
 
         try:
             con.normalize()

@@ -8,6 +8,23 @@ sys.path.insert(1, os.path.dirname(os.path.abspath(__file__)))
 
 import network_connections as n
 
+try:
+    my_test_skipIf = unittest.skipIf
+except AttributeError:
+    # python 2.6 workaround
+    def my_test_skipIf(condition, reason):
+        if condition:
+            return lambda x: None
+        else:
+            return lambda x: x
+
+try:
+    nmutil = n.NMUtil()
+except:
+    # NMUtil is not supported, for example on RHEL 6 or without
+    # pygobject.
+    nmutil = None
+
 class TestValidator(unittest.TestCase):
 
     def assertValidationError(self, v, value):
@@ -106,6 +123,8 @@ class TestValidator(unittest.TestCase):
         self.assertValidationError(v, [1, 's'])
 
     def test_1(self):
+
+        self.maxDiff = None
 
         self.assertEqual(
             [],
@@ -383,6 +402,26 @@ class TestValidator(unittest.TestCase):
         self.assertValidationError(n.AnsibleUtil.ARGS_CONNECTIONS,
                                    [ { 'name': 'b', 'type': 'ethernet', 'mac': 'aa:b' } ])
 
+@my_test_skipIf(nmutil is None, 'no support for NM (libnm via pygobject)')
+class TestNM(unittest.TestCase):
+
+    def test_connection_ensure_setting(self):
+
+        NM = n.Util.NM()
+        GObject = n.Util.GObject()
+
+        con = NM.SimpleConnection.new()
+        self.assertIsNotNone(con)
+        self.assertTrue(GObject.type_is_a(con, NM.Connection))
+
+        s = nmutil.connection_ensure_setting(con, NM.SettingWired)
+        self.assertIsNotNone(s)
+        self.assertTrue(GObject.type_is_a(s, NM.SettingWired))
+
+        s2 = nmutil.connection_ensure_setting(con, NM.SettingWired)
+        self.assertIsNotNone(s2)
+        self.assertIs(s, s2)
+        self.assertTrue(GObject.type_is_a(s, NM.SettingWired))
 
 if __name__ == '__main__':
     unittest.main()
