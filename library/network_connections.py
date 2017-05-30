@@ -664,7 +664,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidatorMac ('mac'),
                 ArgValidatorBool('check_iface_exists', default_value = True),
                 ArgValidatorStr ('parent'),
-                ArgValidatorNum ('vlan_id', val_min = 0, val_max = 4095, default_value = None),
+                ArgValidatorNum ('vlan_id', val_min = 0, val_max = 4094, default_value = None),
                 ArgValidatorBool('ignore_errors', default_value = None),
                 ArgValidator_DictIP(),
             ],
@@ -932,7 +932,7 @@ class IfcfgUtil:
             ifcfg['VLAN'] = 'yes'
             ifcfg['TYPE'] = 'Vlan'
             ifcfg['PHYSDEV'] = cls._connection_find_master(connection['parent'], connections, idx)
-            ifcfg['VID'] = connection['vlan_id']
+            ifcfg['VID'] = str(connection['vlan_id'])
         else:
             raise MyError('unsupported type %s' % (connection['type']))
 
@@ -1225,7 +1225,7 @@ class NMUtil:
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, 'team')
         elif connection['type'] == 'vlan':
             s_vlan = self.connection_ensure_setting(con, NM.SettingVlan)
-            s_vlan.set_property(NM.SETTING_VLAN_ID, int(connection['vlan_id']))
+            s_vlan.set_property(NM.SETTING_VLAN_ID, connection['vlan_id'])
             s_vlan.set_property(NM.SETTING_VLAN_PARENT, self._connection_find_master_uuid(connection['parent'], connections, idx))
         else:
             raise MyError('unsupported type %s' % (connection['type']))
