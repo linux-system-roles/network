@@ -27,13 +27,23 @@ class TestValidator(unittest.TestCase):
 
     def test_validate_int(self):
 
-        v = n.ArgValidatorInt('state', default_value = None)
+        v = n.ArgValidatorNum('state', default_value = None, numeric_type = float)
         self.assertEqual(1, v.validate(1))
-        self.assertEqual(1, v.validate("1"))
+        self.assertEqual(1.5, v.validate(1.5))
+        self.assertEqual(1.5, v.validate("1.5"))
         self.assertValidationError(v, None)
         self.assertValidationError(v, "1a")
 
-        v = n.ArgValidatorInt('state', required = True)
+        v = n.ArgValidatorNum('state', default_value = None)
+        self.assertEqual(1, v.validate(1))
+        self.assertEqual(1, v.validate(1.0))
+        self.assertEqual(1, v.validate("1"))
+        self.assertValidationError(v, None)
+        self.assertValidationError(v, None)
+        self.assertValidationError(v, 1.5)
+        self.assertValidationError(v, "1.5")
+
+        v = n.ArgValidatorNum('state', required = True)
         self.assertValidationError(v, None)
 
     def test_validate_bool(self):
@@ -56,7 +66,7 @@ class TestValidator(unittest.TestCase):
         v = n.ArgValidatorDict(
             'dict',
             nested = [
-                n.ArgValidatorInt('i', required = True),
+                n.ArgValidatorNum('i', required = True),
                 n.ArgValidatorStr('s', required = False, default_value = 's_default'),
                 n.ArgValidatorStr('l', required = False, default_value = n.ArgValidator.MISSING),
             ])
@@ -87,7 +97,7 @@ class TestValidator(unittest.TestCase):
 
         v = n.ArgValidatorList(
             'list',
-            nested = n.ArgValidatorInt('i')
+            nested = n.ArgValidatorNum('i')
         )
         self.assertEqual(
             [ 1, 5 ],
@@ -134,7 +144,7 @@ class TestValidator(unittest.TestCase):
                 {
                     'name': '5',
                     'state': 'up',
-                    'wait': 90,
+                    'wait': None,
                     'ignore_errors': None,
                 }
             ],
@@ -173,7 +183,7 @@ class TestValidator(unittest.TestCase):
                     'interface_name': None,
                     'check_iface_exists': True,
                     'slave_type': None,
-                    'wait': 90,
+                    'wait': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -275,7 +285,7 @@ class TestValidator(unittest.TestCase):
                     'interface_name': None,
                     'check_iface_exists': True,
                     'slave_type': None,
-                    'wait': 90,
+                    'wait': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -314,7 +324,7 @@ class TestValidator(unittest.TestCase):
                     'interface_name': None,
                     'check_iface_exists': True,
                     'slave_type': None,
-                    'wait': 90,
+                    'wait': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -355,7 +365,7 @@ class TestValidator(unittest.TestCase):
                     'interface_name': None,
                     'check_iface_exists': True,
                     'slave_type': None,
-                    'wait': 90,
+                    'wait': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
