@@ -662,6 +662,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidatorStr ('master'),
                 ArgValidatorStr ('interface_name'),
                 ArgValidatorMac ('mac'),
+                ArgValidatorNum ('mtu', val_min = 0, val_max = 0xFFFFFFFF, default_value = None),
                 ArgValidatorBool('check_iface_exists', default_value = True),
                 ArgValidatorStr ('parent'),
                 ArgValidatorNum ('vlan_id', val_min = 0, val_max = 4094, default_value = None),
@@ -935,6 +936,9 @@ class IfcfgUtil:
             ifcfg['VID'] = str(connection['vlan_id'])
         else:
             raise MyError('unsupported type %s' % (connection['type']))
+
+        if connection['mtu']:
+            ifcfg['MTU'] = str(connection['mtu'])
 
         if connection['slave_type'] is not None:
             m = cls._connection_find_master(connection['master'], connections, idx)
@@ -1229,6 +1233,10 @@ class NMUtil:
             s_vlan.set_property(NM.SETTING_VLAN_PARENT, self._connection_find_master_uuid(connection['parent'], connections, idx))
         else:
             raise MyError('unsupported type %s' % (connection['type']))
+
+        if connection['mtu']:
+            s_wired = self.connection_ensure_setting(con, NM.SettingWired)
+            s_wired.set_property(NM.SETTING_WIRED_MTU, connection['mtu'])
 
         if connection['slave_type'] is not None:
             s_con.set_property(NM.SETTING_CONNECTION_SLAVE_TYPE, connection['slave_type'])
