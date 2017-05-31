@@ -147,7 +147,6 @@ class TestValidator(unittest.TestCase):
                         'dhcp4': True,
                         'address': [],
                         'route_metric6': None,
-                        'ip_is_present': False,
                         'dhcp4_send_hostname': None,
                         'dns': [],
                         'dns_search': [],
@@ -193,7 +192,6 @@ class TestValidator(unittest.TestCase):
                         'dns': [],
                         'dns_search': [],
                         'route_metric6': None,
-                        'ip_is_present': False,
                         'dhcp4_send_hostname': None,
                     },
                     'mac': None,
@@ -241,7 +239,6 @@ class TestValidator(unittest.TestCase):
                     'name': 'prod1',
                     'parent': None,
                     'ip': {
-                        'ip_is_present': True,
                         'dhcp4': False,
                         'route_metric6': None,
                         'route_metric4': None,
@@ -295,7 +292,6 @@ class TestValidator(unittest.TestCase):
                     'name': 'prod1',
                     'parent': None,
                     'ip': {
-                        'ip_is_present': False,
                         'dhcp4': True,
                         'auto6': True,
                         'address': [],
@@ -324,7 +320,6 @@ class TestValidator(unittest.TestCase):
                     'name': 'prod.100',
                     'parent': 'prod1',
                     'ip': {
-                        'ip_is_present': True,
                         'dhcp4': False,
                         'route_metric6': None,
                         'route_metric4': None,
@@ -385,7 +380,6 @@ class TestValidator(unittest.TestCase):
                     'name': 'prod2',
                     'parent': None,
                     'ip': {
-                        'ip_is_present': True,
                         'dhcp4': False,
                         'route_metric6': None,
                         'route_metric4': None,
@@ -414,7 +408,6 @@ class TestValidator(unittest.TestCase):
                     'name': 'prod2-slave1',
                     'parent': None,
                     'ip': {
-                        'ip_is_present': False,
                         'dhcp4': True,
                         'auto6': True,
                         'address': [],
@@ -467,7 +460,6 @@ class TestValidator(unittest.TestCase):
                     'name': 'bond1',
                     'parent': None,
                     'ip': {
-                        'ip_is_present': False,
                         'dhcp4': True,
                         'route_metric6': None,
                         'route_metric4': None,
@@ -490,7 +482,6 @@ class TestValidator(unittest.TestCase):
                     'type': 'bond',
                     'slave_type': None,
                     'bond': {
-                        'bond_is_present': False,
                         'mode': 'balance-rr',
                         'miimon': None,
                     },
@@ -513,7 +504,6 @@ class TestValidator(unittest.TestCase):
                     'name': 'bond1',
                     'parent': None,
                     'ip': {
-                        'ip_is_present': False,
                         'dhcp4': True,
                         'route_metric6': None,
                         'route_metric4': None,
@@ -536,7 +526,6 @@ class TestValidator(unittest.TestCase):
                     'type': 'bond',
                     'slave_type': None,
                     'bond': {
-                        'bond_is_present': True,
                         'mode': 'active-backup',
                         'miimon': None,
                     },
@@ -572,7 +561,6 @@ class TestValidator(unittest.TestCase):
                         'dhcp4_send_hostname': None,
                         'gateway4': None,
                         'gateway6': None,
-                        'ip_is_present': False,
                         'route_metric4': None,
                         'route_metric6': None,
                         'dns': [],
@@ -618,7 +606,6 @@ class TestValidator(unittest.TestCase):
                         'dns': [],
                         'dns_search': [ ],
                         'route_metric6': None,
-                        'ip_is_present': False,
                         'dhcp4_send_hostname': None,
                     },
                     'mac': None,
@@ -658,7 +645,6 @@ class TestValidator(unittest.TestCase):
                         'dns': [],
                         'dns_search': [ ],
                         'route_metric6': None,
-                        'ip_is_present': True,
                         'dhcp4_send_hostname': None,
                     },
                     'mac': None,
@@ -700,7 +686,6 @@ class TestValidator(unittest.TestCase):
                         'dns': [],
                         'dns_search': [ 'aa', 'bb' ],
                         'route_metric6': None,
-                        'ip_is_present': True,
                         'dhcp4_send_hostname': None,
                     },
                     'mac': None,

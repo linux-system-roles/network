@@ -621,7 +621,6 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 ),
             ],
             default_value = lambda: {
-                'ip_is_present': False,
                 'dhcp4': True,
                 'dhcp4_send_hostname': None,
                 'gateway4': None,
@@ -636,8 +635,6 @@ class ArgValidator_DictIP(ArgValidatorDict):
         )
 
     def _validate_post(self, value, name, result):
-        if 'ip_is_present' not in result:
-            result['ip_is_present'] = True
         if result['dhcp4'] is None:
             result['dhcp4'] = result['dhcp4_send_hostname'] is not None or not any([a for a in result['address'] if a['is_v4']])
         if result['auto6'] is None:
@@ -661,14 +658,8 @@ class ArgValidator_DictBond(ArgValidatorDict):
             default_value = ArgValidator.MISSING,
         )
 
-    def _validate_post(self, value, name, result):
-        if 'bond_is_present' not in result:
-            result['bond_is_present'] = True
-        return result
-
     def get_default_bond(self):
         return {
-            'bond_is_present': False,
             'mode': ArgValidator_DictBond.VALID_MODES[0],
             'miimon': None,
         }
