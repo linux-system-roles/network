@@ -599,7 +599,6 @@ class ArgValidator_DictIP(ArgValidatorDict):
     def __init__(self):
         ArgValidatorDict.__init__(self,
             name = 'ip',
-            required = False,
             nested = [
                 ArgValidatorBool('dhcp4', default_value = None),
                 ArgValidatorBool('dhcp4_send_hostname', default_value = None),
@@ -634,7 +633,6 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 'dns': [],
                 'dns_search': [],
             },
-            all_missing_during_validate = False,
         )
 
     def _validate_post(self, value, name, result):
@@ -649,6 +647,33 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 raise ValidationError(name, '"dhcp4_send_hostname" is only valid if "dhcp4" is enabled')
         return result
 
+class ArgValidator_DictBond(ArgValidatorDict):
+
+    VALID_MODES = [ 'balance-rr', 'active-backup', 'balance-xor', 'broadcast', '802.3ad', 'balance-tlb', 'balance-alb']
+
+    def __init__(self):
+        ArgValidatorDict.__init__(self,
+            name = 'bond',
+            nested = [
+                ArgValidatorStr ('mode', enum_values = ArgValidator_DictBond.VALID_MODES),
+                ArgValidatorNum ('miimon', val_min = 0, val_max = 1000000, default_value = None),
+            ],
+            default_value = ArgValidator.MISSING,
+        )
+
+    def _validate_post(self, value, name, result):
+        if 'bond_is_present' not in result:
+            result['bond_is_present'] = True
+        return result
+
+    def get_default_bond(self):
+        return {
+            'bond_is_present': False,
+            'mode': ArgValidator_DictBond.VALID_MODES[0],
+            'miimon': None,
+        }
+
+
 class ArgValidator_DictConnection(ArgValidatorDict):
 
     VALID_STATES = ['up', 'down', 'present', 'absent', 'wait']
@@ -658,7 +683,6 @@ class ArgValidator_DictConnection(ArgValidatorDict):
     def __init__(self):
         ArgValidatorDict.__init__(self,
             name = 'connections[?]',
-            required = False,
             nested = [
                 ArgValidatorStr ('name'),
                 ArgValidatorStr ('state', enum_values = ArgValidator_DictConnection.VALID_STATES),
@@ -675,6 +699,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidatorNum ('vlan_id', val_min = 0, val_max = 4094, default_value = None),
                 ArgValidatorBool('ignore_errors', default_value = None),
                 ArgValidator_DictIP(),
+                ArgValidator_DictBond(),
             ],
             default_value = dict,
             all_missing_during_validate = True,
@@ -768,6 +793,13 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                     raise ValidationError(name + '.vlan_id', '"vlan_id" is only allowed for "type" "vlan"')
                 if 'parent' in result:
                     raise ValidationError(name + '.parent', '"parent" is only allowed for "type" "vlan"')
+
+            if result['type'] == 'bond':
+                if 'bond' not in result:
+                    result['bond'] = self.nested['bond'].get_default_bond()
+            else:
+                if 'bond' in result:
+                    raise ValidationError(name + '.bond', '"bond" settings are not allowed for "type" "%s"' % (result['type']))
 
         for k in VALID_FIELDS:
             if k in result:
@@ -941,7 +973,10 @@ class IfcfgUtil:
         elif connection['type'] == 'bond':
             ifcfg['TYPE'] = 'Bond'
             ifcfg['BONDING_MASTER'] = 'yes'
-            ifcfg['BONDING_OPTS'] = 'mode=balance-rr'
+            opts = [ 'mode=%s' % (connection['bond']['mode']) ]
+            if connection['bond']['miimon'] is not None:
+                opts.append(' miimon=%s' % (connection['bond']['miimon']))
+            ifcfg['BONDING_OPTS'] = ' '.join(opts)
         elif connection['type'] == 'team':
             ifcfg['DEVICETYPE'] = 'Team'
         elif connection['type'] == 'vlan':
@@ -1240,6 +1275,10 @@ class NMUtil:
             s_bridge.set_property(NM.SETTING_BRIDGE_STP, False)
         elif connection['type'] == 'bond':
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, 'bond')
+            s_bond = self.connection_ensure_setting(con, NM.SettingBond)
+            s_bond.add_option('mode', connection['bond']['mode'])
+            if connection['bond']['miimon'] is not None:
+                s_bond.add_option('miimon', str(connection['bond']['miimon']))
         elif connection['type'] == 'team':
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, 'team')
         elif connection['type'] == 'vlan':

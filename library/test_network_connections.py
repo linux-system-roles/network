@@ -460,6 +460,101 @@ class TestValidator(unittest.TestCase):
             ]),
         )
 
+        self.assertEqual(
+            [
+                {
+                    'autoconnect': True,
+                    'name': 'bond1',
+                    'parent': None,
+                    'ip': {
+                        'ip_is_present': False,
+                        'dhcp4': True,
+                        'route_metric6': None,
+                        'route_metric4': None,
+                        'dns_search': [],
+                        'dhcp4_send_hostname': None,
+                        'gateway6': None,
+                        'gateway4': None,
+                        'auto6': True,
+                        'dns': [],
+                        'address': []
+                    },
+                    'mac': None,
+                    'mtu': None,
+                    'check_iface_exists': True,
+                    'state': 'up',
+                    'master': None,
+                    'vlan_id': None,
+                    'ignore_errors': None,
+                    'interface_name': 'bond1',
+                    'type': 'bond',
+                    'slave_type': None,
+                    'bond': {
+                        'bond_is_present': False,
+                        'mode': 'balance-rr',
+                        'miimon': None,
+                    },
+                    'wait': None
+                },
+            ],
+            n.AnsibleUtil.ARGS_CONNECTIONS.validate([
+                {
+                    'name': 'bond1',
+                    'state': 'up',
+                    'type': 'bond',
+                },
+            ]),
+        )
+
+        self.assertEqual(
+            [
+                {
+                    'autoconnect': True,
+                    'name': 'bond1',
+                    'parent': None,
+                    'ip': {
+                        'ip_is_present': False,
+                        'dhcp4': True,
+                        'route_metric6': None,
+                        'route_metric4': None,
+                        'dns_search': [],
+                        'dhcp4_send_hostname': None,
+                        'gateway6': None,
+                        'gateway4': None,
+                        'auto6': True,
+                        'dns': [],
+                        'address': []
+                    },
+                    'mac': None,
+                    'mtu': None,
+                    'check_iface_exists': True,
+                    'state': 'up',
+                    'master': None,
+                    'vlan_id': None,
+                    'ignore_errors': None,
+                    'interface_name': 'bond1',
+                    'type': 'bond',
+                    'slave_type': None,
+                    'bond': {
+                        'bond_is_present': True,
+                        'mode': 'active-backup',
+                        'miimon': None,
+                    },
+                    'wait': None
+                },
+            ],
+            n.AnsibleUtil.ARGS_CONNECTIONS.validate([
+                {
+                    'name': 'bond1',
+                    'state': 'up',
+                    'type': 'bond',
+                    'bond': {
+                        'mode': 'active-backup',
+                    },
+                },
+            ]),
+        )
+
         self.assertValidationError(n.AnsibleUtil.ARGS_CONNECTIONS,
                                    [ { } ])
         self.assertValidationError(n.AnsibleUtil.ARGS_CONNECTIONS,

@@ -11,6 +11,9 @@
         ip:
           dhcp4: no
           auto6: no
+        bond:
+          mode: active-backup
+          miimon: 110
 
       # enslave an ethernet to the bond
       - name: prod2-slave1
