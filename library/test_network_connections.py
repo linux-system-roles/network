@@ -378,6 +378,88 @@ class TestValidator(unittest.TestCase):
             ]),
         )
 
+        self.assertEqual(
+            [
+                {
+                    'autoconnect': True,
+                    'name': 'prod2',
+                    'parent': None,
+                    'ip': {
+                        'ip_is_present': True,
+                        'dhcp4': False,
+                        'route_metric6': None,
+                        'route_metric4': None,
+                        'dns_search': [],
+                        'dhcp4_send_hostname': None,
+                        'gateway6': None,
+                        'gateway4': None,
+                        'auto6': False,
+                        'dns': [],
+                        'address': []
+                    },
+                    'mac': None,
+                    'mtu': None,
+                    'check_iface_exists': True,
+                    'state': 'up',
+                    'master': None,
+                    'vlan_id': None,
+                    'ignore_errors': None,
+                    'interface_name': 'bridge2',
+                    'type': 'bridge',
+                    'slave_type': None,
+                    'wait': None
+                },
+                {
+                    'autoconnect': True,
+                    'name': 'prod2-slave1',
+                    'parent': None,
+                    'ip': {
+                        'ip_is_present': False,
+                        'dhcp4': True,
+                        'auto6': True,
+                        'address': [],
+                        'route_metric6': None,
+                        'route_metric4': None,
+                        'dns_search': [],
+                        'dhcp4_send_hostname': None,
+                        'gateway6': None,
+                        'gateway4': None,
+                        'dns': []
+                    },
+                    'mac': None,
+                    'mtu': None,
+                    'check_iface_exists': True,
+                    'state': 'up',
+                    'master': 'prod2',
+                    'vlan_id': None,
+                    'ignore_errors': None,
+                    'interface_name': 'eth1',
+                    'type': 'ethernet',
+                    'slave_type': 'bridge',
+                    'wait': None
+                }
+            ],
+            n.AnsibleUtil.ARGS_CONNECTIONS.validate([
+                {
+                    'name': 'prod2',
+                    'state': 'up',
+                    'type': 'bridge',
+                    'interface_name': 'bridge2',
+                    'ip': {
+                      'dhcp4': False,
+                      'auto6': False,
+                    },
+                },
+                {
+                    'name': 'prod2-slave1',
+                    'state': 'up',
+                    'type': 'ethernet',
+                    'interface_name': 'eth1',
+                    'master': 'prod2',
+                }
+            ]),
+        )
+
         self.assertValidationError(n.AnsibleUtil.ARGS_CONNECTIONS,
                                    [ { } ])
         self.assertValidationError(n.AnsibleUtil.ARGS_CONNECTIONS,

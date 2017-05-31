@@ -727,20 +727,20 @@ class ArgValidator_DictConnection(ArgValidatorDict):
 
         if 'type' in result:
 
-            if 'slave_type' in result:
-                if 'master' not in result:
-                    raise ValidationError(name + '.slave_type', '"slave_type" requires a "master" property')
+            if 'master' in result:
+                if 'slave_type' not in result:
+                    result['slave_type'] = None
                 if result['master'] == result['name']:
                     raise ValidationError(name + '.master', '"master" cannot refer to itself')
             else:
-                if 'master' in result:
-                    raise ValidationError(name + '.master', '"master" requires a "slave_type" property')
+                if 'slave_type' in result:
+                    raise ValidationError(name + '.slave_type', '"slave_type" requires a "master" property')
 
             if 'ip' in result:
-                if 'slave_type' in result:
-                    raise ValidationError(name + '.ip', 'a "slave_type" cannot have an "ip" property')
+                if 'master' in result:
+                    raise ValidationError(name + '.ip', 'a slave cannot have an "ip" property')
             else:
-                if 'slave_type' not in result:
+                if 'master' not in result:
                     result['ip'] = self.nested['ip'].get_default_value()
 
             if 'mac' in result:
@@ -796,8 +796,15 @@ class ArgValidator_ListConnections(ArgValidatorList):
                     raise ValidationError(name + '[' + str(idx) + '].name', 'references non-existing connection "%s"' % (connection['name']))
             if 'type' in connection:
                 if connection['master']:
-                    if not ArgUtil.connection_find_by_name(connection['master'], result, idx):
+                    c = ArgUtil.connection_find_by_name(connection['master'], result, idx)
+                    if not c:
                         raise ValidationError(name + '[' + str(idx) + '].master', 'references non-existing "master" connection "%s"' % (connection['master']))
+                    if c['type'] not in ArgValidator_DictConnection.VALID_SLAVE_TYPES:
+                        raise ValidationError(name + '[' + str(idx) + '].master', 'references "master" connection "%s" which is not a master type by "%s"' % (connection['master'], c['type']))
+                    if connection['slave_type'] is None:
+                        connection['slave_type'] = c['type']
+                    elif connection['slave_type'] != c['type']:
+                        raise ValidationError(name + '[' + str(idx) + '].master', 'references "master" connection "%s" which is of type "%s" instead of slave_type "%s"' % (connection['master'], c['type'], connection['slave_type']))
                 if connection['parent']:
                     if not ArgUtil.connection_find_by_name(connection['parent'], result, idx):
                         raise ValidationError(name + '[' + str(idx) + '].parent', 'references non-existing "parent" connection "%s"' % (connection['parent']))
@@ -947,7 +954,7 @@ class IfcfgUtil:
         if connection['mtu']:
             ifcfg['MTU'] = str(connection['mtu'])
 
-        if connection['slave_type'] is not None:
+        if connection['master'] is not None:
             m = cls._connection_find_master(connection['master'], connections, idx)
             if connection['slave_type'] == 'bridge':
                 ifcfg['BRIDGE'] = m
@@ -1245,7 +1252,7 @@ class NMUtil:
             s_wired = self.connection_ensure_setting(con, NM.SettingWired)
             s_wired.set_property(NM.SETTING_WIRED_MTU, connection['mtu'])
 
-        if connection['slave_type'] is not None:
+        if connection['master'] is not None:
             s_con.set_property(NM.SETTING_CONNECTION_SLAVE_TYPE, connection['slave_type'])
             s_con.set_property(NM.SETTING_CONNECTION_MASTER, self._connection_find_master_uuid(connection['master'], connections, idx))
         else:
