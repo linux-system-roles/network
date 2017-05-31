@@ -941,6 +941,7 @@ class IfcfgUtil:
         elif connection['type'] == 'bond':
             ifcfg['TYPE'] = 'Bond'
             ifcfg['BONDING_MASTER'] = 'yes'
+            ifcfg['BONDING_OPTS'] = 'mode=balance-rr'
         elif connection['type'] == 'team':
             ifcfg['DEVICETYPE'] = 'Team'
         elif connection['type'] == 'vlan':
