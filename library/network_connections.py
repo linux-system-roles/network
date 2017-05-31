@@ -579,6 +579,13 @@ class ArgValidatorList(ArgValidator):
     def construct_name(self, name):
         return ('' if n is None else n) + name
     def _validate(self, value, name):
+
+        if isinstance(value, Util.STRING_TYPE):
+            # we expect a list. However, for convenience allow to
+            # specify a string, separated by space. Escaping is
+            # not supported. If you need that, define a proper list.
+            value = [s for s in value.split(' ') if s]
+
         result = []
         for (idx, v) in enumerate(value):
             try:
