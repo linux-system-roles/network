@@ -1,0 +1,4 @@
+# an inventory for the examples.
+[network-test]
+v-rhel6 ansible_user=root network_iphost=196 network_mac1=52:54:00:44:9f:ba network_interface_name1=eth0 network_interface_name2=eth1
+v-rhel7 ansible_user=root network_iphost=97  network_mac1=52:54:00:05:f5:b3 network_interface_name1=eth0 network_interface_name2=eth1

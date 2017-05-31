@@ -1,0 +1,27 @@
+---
+- hosts: network-test
+  vars:
+    network_connections:
+
+      # Create a profile for the underlying device of the VLAN.
+      - name: prod2
+        type: ethernet
+        autoconnect: no
+        interface_name: "{{ network_interface_name2 }}"
+        ip:
+          dhcp4: no
+          auto6: no
+
+      # on top of it, create a VLAN with ID 100 and static
+      # addressing
+      - name: prod2.100
+        state: up
+        type: vlan
+        parent: prod2
+        vlan_id: 100
+        ip:
+          address:
+            - "192.168.174.{{ network_iphost }}/24"
+
+  roles:
+    - network

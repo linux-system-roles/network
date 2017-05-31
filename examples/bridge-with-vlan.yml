@@ -1,0 +1,35 @@
+---
+- hosts: network-test
+  vars:
+    network_connections:
+
+      # Create a bridge profile, which is the parent of VLAN.
+      - name: prod2
+        state: up
+        type: bridge
+        interface_name: bridge2
+        ip:
+          dhcp4: no
+          auto6: no
+
+      # enslave an ethernet to the bridge
+      - name: prod2-slave1
+        state: up
+        type: ethernet
+        interface_name: "{{ network_interface_name2 }}"
+        master: prod2
+        slave_type: bridge
+
+      # on top of it, create a VLAN with ID 100 and static
+      # addressing
+      - name: prod2.100
+        state: up
+        type: vlan
+        parent: prod2
+        vlan_id: 100
+        ip:
+          address:
+            - "192.168.174.{{ network_iphost }}/24"
+
+  roles:
+    - network
