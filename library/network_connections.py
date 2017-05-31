@@ -1372,29 +1372,45 @@ class NMUtil:
 
     def connection_activate(self, connection, timeout = 15, wait_time = None):
 
-        def activate_cb(client, result, cb_args):
-            active_connection = None
-            try:
-                active_connection = client.activate_connection_finish(result)
-            except Exception as e:
-                if Util.error_is_cancelled(e):
-                    return
-                cb_args['error'] = str(e)
-            cb_args['active_connection'] = active_connection
-            Util.GMainLoop().quit()
+        already_retried = False;
 
-        cancellable = Util.create_cancellable()
-        cb_args = {}
-        self.nmclient.activate_connection_async(connection, None, None, cancellable, activate_cb, cb_args)
-        if not Util.GMainLoop_run(timeout):
-            cancellable.cancel()
-            raise MyError('failure to activate connection: %s' % ('timeout'))
-        if not cb_args.get('active_connection', None):
-            raise MyError('failure to activate connection: %s' % (cb_args.get('error', 'unknown error')))
+        while True:
 
-        ac = cb_args['active_connection']
-        self.connection_activate_wait(ac, wait_time)
-        return ac
+            def activate_cb(client, result, cb_args):
+                active_connection = None
+                try:
+                    active_connection = client.activate_connection_finish(result)
+                except Exception as e:
+                    if Util.error_is_cancelled(e):
+                        return
+                    cb_args['error'] = str(e)
+                cb_args['active_connection'] = active_connection
+                Util.GMainLoop().quit()
+
+            cancellable = Util.create_cancellable()
+            cb_args = {}
+            self.nmclient.activate_connection_async(connection, None, None, cancellable, activate_cb, cb_args)
+            if not Util.GMainLoop_run(timeout):
+                cancellable.cancel()
+                raise MyError('failure to activate connection: %s' % ('timeout'))
+
+            if cb_args.get('active_connection', None):
+                ac = cb_args['active_connection']
+                self.connection_activate_wait(ac, wait_time)
+                return ac
+
+            # there is a bug in NetworkManager, that the connection might already be in the process
+            # of activating. In that case, NM would reject the activation request with
+            # "Connection '$PROFILE' is not available on the device $DEV at this time."
+            #
+            # Try to work around it by waiting a bit and retrying.
+            if already_retried:
+                raise MyError('failure to activate connection: %s' % (cb_args.get('error', 'unknown error')))
+
+            already_retried = True
+            import time
+            time.sleep(1)
+
 
     def connection_activate_wait(self, ac, wait_time):
 
