@@ -100,7 +100,7 @@ network_connections:
     #state: present        # default, as a type is present
     type: "ethernet"
     autoconnect: yes
-    mac: "d6:06:b9:56:12:5d"
+    mac: "00:00:5e:00:53:5d"
     ip:
       dhcp4: yes
 ```
