@@ -159,6 +159,8 @@ class TestValidator(unittest.TestCase):
                     'interface_name': None,
                     'check_iface_exists': True,
                     'slave_type': None,
+                    'infiniband_p_key': None,
+                    'infiniband_transport_mode': None,
                 },
                 {
                     'name': '5',
@@ -203,6 +205,8 @@ class TestValidator(unittest.TestCase):
                     'check_iface_exists': True,
                     'slave_type': None,
                     'wait': None,
+                    'infiniband_p_key': None,
+                    'infiniband_transport_mode': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -267,7 +271,9 @@ class TestValidator(unittest.TestCase):
                     'interface_name': None,
                     'type': 'ethernet',
                     'slave_type': None,
-                    'wait': None
+                    'wait': None,
+                    'infiniband_p_key': None,
+                    'infiniband_transport_mode': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -313,7 +319,9 @@ class TestValidator(unittest.TestCase):
                     'interface_name': None,
                     'type': 'ethernet',
                     'slave_type': None,
-                    'wait': None
+                    'wait': None,
+                    'infiniband_p_key': None,
+                    'infiniband_transport_mode': None,
                 },
                 {
                     'autoconnect': True,
@@ -348,7 +356,9 @@ class TestValidator(unittest.TestCase):
                     'interface_name': 'prod.100',
                     'type': 'vlan',
                     'vlan_id': 100,
-                    'wait': None
+                    'wait': None,
+                    'infiniband_p_key': None,
+                    'infiniband_transport_mode': None,
                 }
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -401,7 +411,9 @@ class TestValidator(unittest.TestCase):
                     'interface_name': 'bridge2',
                     'type': 'bridge',
                     'slave_type': None,
-                    'wait': None
+                    'wait': None,
+                    'infiniband_p_key': None,
+                    'infiniband_transport_mode': None,
                 },
                 {
                     'autoconnect': True,
@@ -429,7 +441,9 @@ class TestValidator(unittest.TestCase):
                     'interface_name': 'eth1',
                     'type': 'ethernet',
                     'slave_type': 'bridge',
-                    'wait': None
+                    'wait': None,
+                    'infiniband_p_key': None,
+                    'infiniband_transport_mode': None,
                 }
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -485,7 +499,9 @@ class TestValidator(unittest.TestCase):
                         'mode': 'balance-rr',
                         'miimon': None,
                     },
-                    'wait': None
+                    'wait': None,
+                    'infiniband_p_key': None,
+                    'infiniband_transport_mode': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -529,7 +545,9 @@ class TestValidator(unittest.TestCase):
                         'mode': 'active-backup',
                         'miimon': None,
                     },
-                    'wait': None
+                    'wait': None,
+                    'infiniband_p_key': None,
+                    'infiniband_transport_mode': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -566,7 +584,7 @@ class TestValidator(unittest.TestCase):
                         'dns': [],
                         'dns_search': [],
                     },
-                    'mac': 'aa:bb:cc',
+                    'mac': 'aa:bb:cc:dd:ee:ff',
                     'mtu': None,
                     'master': None,
                     'check_iface_exists': True,
@@ -577,13 +595,15 @@ class TestValidator(unittest.TestCase):
                     'state': 'present',
                     'type': 'ethernet',
                     'vlan_id': None,
+                    'infiniband_p_key': None,
+                    'infiniband_transport_mode': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
                 {
                     'name': '5',
                     'type': 'ethernet',
-                    'mac': 'AA:bb:cC',
+                    'mac': 'AA:bb:cC:DD:ee:FF',
                 }
             ]),
         )
@@ -617,6 +637,8 @@ class TestValidator(unittest.TestCase):
                     'check_iface_exists': True,
                     'slave_type': None,
                     'wait': None,
+                    'infiniband_p_key': None,
+                    'infiniband_transport_mode': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -656,6 +678,8 @@ class TestValidator(unittest.TestCase):
                     'check_iface_exists': True,
                     'slave_type': None,
                     'wait': None,
+                    'infiniband_p_key': None,
+                    'infiniband_transport_mode': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -697,6 +721,8 @@ class TestValidator(unittest.TestCase):
                     'check_iface_exists': True,
                     'slave_type': None,
                     'wait': None,
+                    'infiniband_p_key': None,
+                    'infiniband_transport_mode': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([

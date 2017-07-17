@@ -1,0 +1,24 @@
+---
+- hosts: network-test
+  vars:
+    network_connections:
+
+      - name: ib0
+        type: infiniband
+        interface_name: ib0
+
+      # Create a simple infiniband profile
+      - name: ib0-10
+        interface_name: ib0.000a
+        type: infiniband
+        autoconnect: yes
+        infiniband_p_key: 10
+        parent: ib0
+        ip:
+          dhcp4: no
+          auto6: no
+          address:
+            - 10.0.0.5/30
+
+  roles:
+    - network

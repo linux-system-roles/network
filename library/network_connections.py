@@ -690,7 +690,7 @@ class ArgValidator_DictBond(ArgValidatorDict):
 class ArgValidator_DictConnection(ArgValidatorDict):
 
     VALID_STATES = ['up', 'down', 'present', 'absent', 'wait']
-    VALID_TYPES = [ 'ethernet', 'bridge', 'team', 'bond', 'vlan' ]
+    VALID_TYPES = [ 'ethernet', 'infiniband', 'bridge', 'team', 'bond', 'vlan' ]
     VALID_SLAVE_TYPES = [ 'bridge', 'bond', 'team' ]
 
     def __init__(self):
@@ -711,6 +711,8 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidatorStr ('parent'),
                 ArgValidatorNum ('vlan_id', val_min = 0, val_max = 4094, default_value = None),
                 ArgValidatorBool('ignore_errors', default_value = None),
+                ArgValidatorStr ('infiniband_transport_mode', enum_values = ['datagram', 'connected']),
+                ArgValidatorNum ('infiniband_p_key', val_min = -1, val_max = 0xFFFF, default_value = None),
                 ArgValidator_DictIP(),
                 ArgValidator_DictBond(),
             ],
@@ -782,8 +784,26 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                     result['ip'] = self.nested['ip'].get_default_value()
 
             if 'mac' in result:
-                if result['type'] != 'ethernet':
-                    raise ValidationError(name + '.mac', 'a "mac" address is only allowed for type "ethernet"')
+                if result['type'] not in [ 'ethernet', 'infiniband' ]:
+                    raise ValidationError(name + '.mac', 'a "mac" address is only allowed for type "ethernet" or "infiniband"')
+                l = len(Util.mac_aton(result['mac']))
+                if result['type'] == 'ethernet' and l != 6:
+                    raise ValidationError(name + '.mac', 'a "mac" address for type ethernet requires 6 octets but is "%s"' % result['mac'])
+                if result['type'] == 'infiniband' and l != 20:
+                    raise ValidationError(name + '.mac', 'a "mac" address for type ethernet requires 20 octets but is "%s"' % result['mac'])
+
+            if 'infiniband_transport_mode' in result:
+                if result['type'] != 'infiniband':
+                    raise ValidationError(name + '.infiniband_transport_mode', 'a "infiniband_transport_mode" property is only allowed for type "infiniband"')
+            elif result['type'] == 'infiniband':
+                result['infiniband_transport_mode'] = 'datagram'
+
+            if 'infiniband_p_key' in result:
+                if result['type'] != 'infiniband':
+                    raise ValidationError(name + '.infiniband_p_key', 'a "infiniband_p_key" property is only allowed for type "infiniband"')
+                if 'mac' not in result and \
+                   'parent' not in result:
+                    raise ValidationError(name + '.infiniband_p_key', 'a infiniband device with "infiniband_p_key" property also needs "mac" or "parent" property')
 
             if 'interface_name' in result:
                 if not Util.ifname_valid(result['interface_name']):
@@ -799,13 +819,15 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                     raise ValidationError(name + '.vlan_id', 'missing "vlan_id" for "type" "vlan"')
                 if 'parent' not in result:
                     raise ValidationError(name + '.parent', 'missing "parent" for "type" "vlan"')
-                if result['parent'] == result['name']:
-                    raise ValidationError(name + '.parent', '"parent" cannot refer to itself')
             else:
                 if 'vlan_id' in result:
                     raise ValidationError(name + '.vlan_id', '"vlan_id" is only allowed for "type" "vlan"')
-                if 'parent' in result:
-                    raise ValidationError(name + '.parent', '"parent" is only allowed for "type" "vlan"')
+
+            if 'parent' in result:
+                if result['type'] not in ['vlan', 'infiniband']:
+                    raise ValidationError(name + '.parent', '"parent" is only allowed for type "vlan" or "infiniband"')
+                if result['parent'] == result['name']:
+                    raise ValidationError(name + '.parent', '"parent" cannot refer to itself')
 
             if result['type'] == 'bond':
                 if 'bond' not in result:
@@ -972,6 +994,15 @@ class IfcfgUtil:
         if connection['type'] == 'ethernet':
             ifcfg['TYPE'] = 'Ethernet'
             ifcfg['HWADDR'] = connection['mac']
+        elif connection['type'] == 'infiniband':
+            ifcfg['TYPE'] = 'InfiniBand'
+            ifcfg['HWADDR'] = connection['mac']
+            ifcfg['CONNECTED_MODE'] = 'yes' if (connection['infiniband_transport_mode'] == 'connected') else 'no'
+            if connection['infiniband_p_key'] not in [ None, -1 ]:
+                ifcfg['PKEY'] = 'yes'
+                ifcfg['PKEY_ID'] = str(connection['infiniband_p_key'])
+                if connection['parent']:
+                    ifcfg['PHYSDEV'] = ArgUtil.connection_find_master(connection['parent'], connections, idx)
         elif connection['type'] == 'bridge':
             ifcfg['TYPE'] = 'Bridge'
         elif connection['type'] == 'bond':
@@ -1265,6 +1296,15 @@ class NMUtil:
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, '802-3-ethernet')
             s_wired = self.connection_ensure_setting(con, NM.SettingWired)
             s_wired.set_property(NM.SETTING_WIRED_MAC_ADDRESS, connection['mac'])
+        elif connection['type'] == 'infiniband':
+            s_con.set_property(NM.SETTING_CONNECTION_TYPE, 'infiniband')
+            s_infiniband = self.connection_ensure_setting(con, NM.SettingInfiniband)
+            s_infiniband.set_property(NM.SETTING_INFINIBAND_MAC_ADDRESS, connection['mac'])
+            s_infiniband.set_property(NM.SETTING_INFINIBAND_TRANSPORT_MODE, connection['infiniband_transport_mode'])
+            if connection['infiniband_p_key'] not in [ None, -1 ]:
+                s_infiniband.set_property(NM.SETTING_INFINIBAND_P_KEY, connection['infiniband_p_key'])
+                if connection['parent']:
+                    s_infiniband.set_property(NM.SETTING_INFINIBAND_PARENT, ArgUtil.connection_find_master(connection['parent'], connections, idx))
         elif connection['type'] == 'bridge':
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, 'bridge')
             s_bridge = self.connection_ensure_setting(con, NM.SettingBridge)
@@ -1285,8 +1325,12 @@ class NMUtil:
             raise MyError('unsupported type %s' % (connection['type']))
 
         if connection['mtu']:
-            s_wired = self.connection_ensure_setting(con, NM.SettingWired)
-            s_wired.set_property(NM.SETTING_WIRED_MTU, connection['mtu'])
+            if connection['type'] == 'infiniband':
+                s_infiniband = self.connection_ensure_setting(con, NM.SettingInfiniband)
+                s_infiniband.set_property(NM.SETTING_INFINIBAND_MTU, connection['mtu'])
+            else:
+                s_wired = self.connection_ensure_setting(con, NM.SettingWired)
+                s_wired.set_property(NM.SETTING_WIRED_MTU, connection['mtu'])
 
         if connection['master'] is not None:
             s_con.set_property(NM.SETTING_CONNECTION_SLAVE_TYPE, connection['slave_type'])
@@ -1802,10 +1846,14 @@ class Cmd:
                     li_mac = SysUtil.link_info_find(mac = connection['mac'])
                     if not li_mac:
                         AnsibleUtil.log_fatal(idx, 'profile specifies mac "%s" but no such interface exists' % (connection['mac']))
-                if connection['interface_name'] and connection['type'] == 'ethernet':
+                if connection['interface_name']:
                     li_ifname = SysUtil.link_info_find(ifname = connection['interface_name'])
                     if not li_ifname:
-                        AnsibleUtil.log_fatal(idx, 'profile specifies interface_name "%s" but no such interface exists' % (connection['interface_name']))
+                        if connection['type'] == 'ethernet':
+                            AnsibleUtil.log_fatal(idx, 'profile specifies interface_name "%s" but no such interface exists' % (connection['interface_name']))
+                        elif connection['type'] == 'infiniband':
+                            if connection['infiniband_p_key'] in [None, -1]:
+                                AnsibleUtil.log_fatal(idx, 'profile specifies interface_name "%s" but no such infiniband interface exists' % (connection['interface_name']))
                 if li_mac and li_ifname and li_mac != li_ifname:
                     AnsibleUtil.log_fatal(idx, 'profile specifies interface_name "%s" and mac "%s" but no such interface exists' % (connection['interface_name'], connection['mac']))
 
