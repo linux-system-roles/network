@@ -316,7 +316,10 @@ class SysUtil:
 
     @staticmethod
     def _link_read_permaddress(ifname):
-        out = Util.check_output(['ethtool', '-P', ifname])
+        try:
+            out = Util.check_output(['ethtool', '-P', ifname])
+        except MyError as e:
+            return None
         import re
         m = re.match('^Permanent address: ([0-9A-Fa-f:]*)\n$', out)
         if not m:
