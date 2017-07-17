@@ -405,6 +405,25 @@ class ArgUtil:
         return c
 
     @staticmethod
+    def connection_find_master(name, connections, n_connections = None):
+        c = ArgUtil.connection_find_by_name(name, connections, n_connections)
+        if not c:
+            raise MyError('invalid master/parent "%s"' % (name))
+        if c['interface_name'] is None:
+            raise MyError('invalid master/parent "%s" which needs an "interface_name"' % (name))
+        if not Util.ifname_valid(c['interface_name']):
+            raise MyError('invalid master/parent "%s" which has not a valid "interface_name" ("%s")' % (name, c['interface_name']))
+        return c['interface_name']
+
+    @staticmethod
+    def connection_find_master_uuid(name, connections, n_connections = None):
+        c = ArgUtil.connection_find_by_name(name, connections, n_connections)
+        if not c:
+            raise MyError('invalid master/parent "%s"' % (name))
+        assert c.get('nm.uuid', None)
+        return c['nm.uuid']
+
+    @staticmethod
     def connection_get_non_absent_names(connections):
         # @idx is the index with state['absent']. This will
         # return the names of all explicitly mentioned profiles.
@@ -927,15 +946,6 @@ class IfcfgUtil:
         return s
 
     @classmethod
-    def _connection_find_master(cls, name, connections, n_connections = None):
-        c = ArgUtil.connection_find_by_name(name, connections, n_connections)
-        if not c:
-            raise MyError('invalid master/parent "%s"' % (name))
-        if not Util.ifname_valid(c['interface_name']):
-            raise MyError('invalid master/parent "%s" which has not a valid interface name ("%s")' % (name, c['interface_name']))
-        return c['interface_name']
-
-    @classmethod
     def ifcfg_create(cls, connections, idx, warn_fcn):
         connection = connections[idx]
         ip = connection['ip']
@@ -976,7 +986,7 @@ class IfcfgUtil:
         elif connection['type'] == 'vlan':
             ifcfg['VLAN'] = 'yes'
             ifcfg['TYPE'] = 'Vlan'
-            ifcfg['PHYSDEV'] = cls._connection_find_master(connection['parent'], connections, idx)
+            ifcfg['PHYSDEV'] = ArgUtil.connection_find_master(connection['parent'], connections, idx)
             ifcfg['VID'] = str(connection['vlan_id'])
         else:
             raise MyError('unsupported type %s' % (connection['type']))
@@ -985,7 +995,7 @@ class IfcfgUtil:
             ifcfg['MTU'] = str(connection['mtu'])
 
         if connection['master'] is not None:
-            m = cls._connection_find_master(connection['master'], connections, idx)
+            m = ArgUtil.connection_find_master(connection['master'], connections, idx)
             if connection['slave_type'] == 'bridge':
                 ifcfg['BRIDGE'] = m
             elif connection['slave_type'] == 'bond':
@@ -1238,14 +1248,6 @@ class NMUtil:
 
         return not(not(con_a.compare (con_b, compare_flags)))
 
-    @staticmethod
-    def _connection_find_master_uuid(name, connections, n_connections = None):
-        c = ArgUtil.connection_find_by_name(name, connections, n_connections)
-        if not c:
-            raise MyError('invalid master/parent "%s"' % (name))
-        assert c.get('nm.uuid', None)
-        return c['nm.uuid']
-
     def connection_create(self, connections, idx):
         NM = Util.NM()
 
@@ -1278,7 +1280,7 @@ class NMUtil:
         elif connection['type'] == 'vlan':
             s_vlan = self.connection_ensure_setting(con, NM.SettingVlan)
             s_vlan.set_property(NM.SETTING_VLAN_ID, connection['vlan_id'])
-            s_vlan.set_property(NM.SETTING_VLAN_PARENT, self._connection_find_master_uuid(connection['parent'], connections, idx))
+            s_vlan.set_property(NM.SETTING_VLAN_PARENT, ArgUtil.connection_find_master_uuid(connection['parent'], connections, idx))
         else:
             raise MyError('unsupported type %s' % (connection['type']))
 
@@ -1288,7 +1290,7 @@ class NMUtil:
 
         if connection['master'] is not None:
             s_con.set_property(NM.SETTING_CONNECTION_SLAVE_TYPE, connection['slave_type'])
-            s_con.set_property(NM.SETTING_CONNECTION_MASTER, self._connection_find_master_uuid(connection['master'], connections, idx))
+            s_con.set_property(NM.SETTING_CONNECTION_MASTER, ArgUtil.connection_find_master_uuid(connection['master'], connections, idx))
         else:
             ip = connection['ip']
 
