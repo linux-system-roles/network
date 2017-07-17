@@ -248,12 +248,12 @@ network_connections:
 
       route_metric6: -1
       auto6: no
-      gateway6: fc00::1
+      gateway6: 2001:db8::1
 
       address:
         - 192.168.5.3/24
         - 10.0.10.3/16
-        - fc00::80/7
+        - 2001:db8::80/7
 ```
 
 Manual addressing can be specified via a list of addresses and prefixes `address`.
