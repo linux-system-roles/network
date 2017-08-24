@@ -1433,6 +1433,8 @@ class NMUtil:
 
     def connection_delete(self, connection, timeout = 10):
 
+        c_uuid = connection.get_uuid()
+
         def delete_cb(connection, result, cb_args):
             success = False
             try:
@@ -1452,6 +1454,22 @@ class NMUtil:
             raise MyError('failure to delete connection: %s' % ('timeout'))
         if not cb_args.get('success', False):
             raise MyError('failure to delete connection: %s' % (cb_args.get('error', 'unknown error')))
+
+        # workaround libnm oddity. The connection may not yet be gone if the
+        # connection was active and is deactivating. Wait.
+        wait_count = 0
+        while True:
+            connections = self.connection_list(uuid = c_uuid)
+            if not connections:
+                return
+            wait_count += 1
+            if wait_count > 10:
+                break;
+            import time
+            time.sleep(1)
+            Util.GMainLoop_iterate_all()
+
+        raise MyError('connection %s was supposedly deleted successfully, but it\'s still here' % (c_uuid))
 
     def connection_activate(self, connection, timeout = 15, wait_time = None):
 
