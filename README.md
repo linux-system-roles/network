@@ -251,8 +251,8 @@ network_connections:
       gateway6: 2001:db8::1
 
       address:
-        - 192.168.5.3/24
-        - 10.0.10.3/16
+        - 192.0.2.3/24
+        - 198.51.100.3/26
         - 2001:db8::80/7
 ```
 
@@ -349,7 +349,7 @@ network_connections:
     vlan_id: 6
     ip:
       address:
-        - 192.168.10.5/24
+        - 192.0.2.5/24
       auto6: no
 ```
 
