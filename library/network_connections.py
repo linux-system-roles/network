@@ -1750,19 +1750,23 @@ class _AnsibleUtil:
         if c['state'] != 'wait':
             prefix = prefix + (', "%s"' % (c['name']))
         for r in rr['log']:
-            yield '[%03d] %s #%s, %s: %s' % (r[2], LogLevel.fmt(r[0]), idx, prefix, r[1])
+            yield (r[2], '[%03d] %s #%s, %s: %s' % (r[2], LogLevel.fmt(r[0]), idx, prefix, r[1]))
 
     def _complete_kwargs(self, kwargs, traceback_msg = None):
         if 'warnings' in kwargs:
             logs = list(kwargs['warnings'])
         else:
             logs = []
+
+        l = []
         if self._run_results_prepare is not None:
             for idx, rr in enumerate(self._run_results_prepare):
-                logs.extend(self._complete_kwargs_loglines(rr, idx))
+                l.extend(self._complete_kwargs_loglines(rr, idx))
         if self._run_results is not None:
             for idx, rr in enumerate(self._run_results):
-                logs.extend(self._complete_kwargs_loglines(rr, idx))
+                l.extend(self._complete_kwargs_loglines(rr, idx))
+        l.sort(key = lambda x: x[0])
+        logs.extend([x[1] for x in l])
         if traceback_msg is not None:
             logs.append(traceback_msg)
         kwargs['warnings'] = logs
