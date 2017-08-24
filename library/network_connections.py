@@ -1209,9 +1209,7 @@ class NMUtil:
                 return True
         return False
 
-    def active_connection_list(self, connections = None, black_list = None, mainloop_iterate = True):
-        if mainloop_iterate:
-            Util.GMainLoop_iterate_all()
+    def active_connection_list(self, connections = None, black_list = None):
         active_cons = self.nmclient.get_active_connections()
         if connections:
             connections = set(connections)
@@ -1221,9 +1219,7 @@ class NMUtil:
         active_cons = list(active_cons)
         return active_cons;
 
-    def connection_list(self, name = None, uuid = None, black_list = None, black_list_names = None, black_list_uuids = None, mainloop_iterate = True):
-        if mainloop_iterate:
-            Util.GMainLoop_iterate_all()
+    def connection_list(self, name = None, uuid = None, black_list = None, black_list_names = None, black_list_uuids = None):
         cons = self.nmclient.get_connections()
         if name is not None:
             cons = [c for c in cons if c.get_id() == name]
@@ -1437,6 +1433,8 @@ class NMUtil:
 
     def connection_delete(self, connection, timeout = 10):
 
+        c_uuid = connection.get_uuid()
+
         def delete_cb(connection, result, cb_args):
             success = False
             try:
@@ -1456,6 +1454,22 @@ class NMUtil:
             raise MyError('failure to delete connection: %s' % ('timeout'))
         if not cb_args.get('success', False):
             raise MyError('failure to delete connection: %s' % (cb_args.get('error', 'unknown error')))
+
+        # workaround libnm oddity. The connection may not yet be gone if the
+        # connection was active and is deactivating. Wait.
+        wait_count = 0
+        while True:
+            connections = self.connection_list(uuid = c_uuid)
+            if not connections:
+                return
+            wait_count += 1
+            if wait_count > 10:
+                break;
+            import time
+            time.sleep(1)
+            Util.GMainLoop_iterate_all()
+
+        raise MyError('connection %s was supposedly deleted successfully, but it\'s still here' % (c_uuid))
 
     def connection_activate(self, connection, timeout = 15, wait_time = None):
 
@@ -1640,6 +1654,7 @@ class _AnsibleUtil:
         self._run_results = None
         self._run_results_prepare = None
         self._check_mode = CheckMode.PREPARE
+        self._log_idx = 0
 
     @property
     def check_mode(self):
@@ -1696,7 +1711,7 @@ class _AnsibleUtil:
         c = self._run_results
         if c is None:
             c = []
-            for cc in self.connections:
+            for cc in range(0, len(self.connections) + 1):
                 c.append({
                     'changed': False,
                     'log': [],
@@ -1706,11 +1721,13 @@ class _AnsibleUtil:
         return c
 
     def run_results_changed(self, idx, changed = None):
+        assert(idx >= 0 and idx < len(self.run_results) - 1)
         if changed is None:
             changed = True
         self.run_results[idx]['changed'] = bool(changed)
 
     def run_results_rc(self, idx, rc, msg):
+        assert(idx >= 0 and idx < len(self.run_results) - 1)
         self.run_results[idx]['rc'].append((rc, msg))
         self.log(idx, LogLevel.INFO, 'command: %s (rc=%s)' % (msg, rc))
 
@@ -1730,7 +1747,12 @@ class _AnsibleUtil:
         self.log(idx, LogLevel.ERROR, msg, warn_traceback = warn_traceback, force_fail = True)
 
     def log(self, idx, severity, msg, warn_traceback = False, force_fail = False):
-        self.run_results[idx]['log'].append((severity, msg))
+        self._log_idx += 1
+        if idx == -1:
+            idx = len(self.run_results) - 1
+        else:
+            assert(idx >= 0 and idx < len(self.run_results) - 1)
+        self.run_results[idx]['log'].append((severity, msg, self._log_idx))
         if severity == LogLevel.ERROR:
             # ignore_errors can be specified per profile. In absense of a
             # per-profile setting, a global parameter is consulted.
@@ -1747,24 +1769,31 @@ class _AnsibleUtil:
                 self.fail_json('error: %s' % (msg), warn_traceback = warn_traceback)
 
     def _complete_kwargs_loglines(self, rr, idx):
-        c = self.connections[idx]
-        prefix = 'state:%s' % (c['state'])
-        if c['state'] != 'wait':
-            prefix = prefix + (', "%s"' % (c['name']))
+        if idx == len(self.connections):
+            prefix = '#'
+        else:
+            c = self.connections[idx]
+            prefix = '#%s, state:%s' % (idx, c['state'])
+            if c['state'] != 'wait':
+                prefix = prefix + (', "%s"' % (c['name']))
         for r in rr['log']:
-            yield '%s #%s, %s: %s' % (LogLevel.fmt(r[0]), idx, prefix, r[1])
+            yield (r[2], '[%03d] %s %s: %s' % (r[2], LogLevel.fmt(r[0]), prefix, r[1]))
 
     def _complete_kwargs(self, kwargs, traceback_msg = None):
         if 'warnings' in kwargs:
             logs = list(kwargs['warnings'])
         else:
             logs = []
+
+        l = []
         if self._run_results_prepare is not None:
             for idx, rr in enumerate(self._run_results_prepare):
-                logs.extend(self._complete_kwargs_loglines(rr, idx))
+                l.extend(self._complete_kwargs_loglines(rr, idx))
         if self._run_results is not None:
             for idx, rr in enumerate(self._run_results):
-                logs.extend(self._complete_kwargs_loglines(rr, idx))
+                l.extend(self._complete_kwargs_loglines(rr, idx))
+        l.sort(key = lambda x: x[0])
+        logs.extend([x[1] for x in l])
         if traceback_msg is not None:
             logs.append(traceback_msg)
         kwargs['warnings'] = logs
