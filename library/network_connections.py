@@ -1209,9 +1209,7 @@ class NMUtil:
                 return True
         return False
 
-    def active_connection_list(self, connections = None, black_list = None, mainloop_iterate = True):
-        if mainloop_iterate:
-            Util.GMainLoop_iterate_all()
+    def active_connection_list(self, connections = None, black_list = None):
         active_cons = self.nmclient.get_active_connections()
         if connections:
             connections = set(connections)
@@ -1221,9 +1219,7 @@ class NMUtil:
         active_cons = list(active_cons)
         return active_cons;
 
-    def connection_list(self, name = None, uuid = None, black_list = None, black_list_names = None, black_list_uuids = None, mainloop_iterate = True):
-        if mainloop_iterate:
-            Util.GMainLoop_iterate_all()
+    def connection_list(self, name = None, uuid = None, black_list = None, black_list_names = None, black_list_uuids = None):
         cons = self.nmclient.get_connections()
         if name is not None:
             cons = [c for c in cons if c.get_id() == name]
