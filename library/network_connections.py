@@ -1636,6 +1636,7 @@ class _AnsibleUtil:
         self._run_results = None
         self._run_results_prepare = None
         self._check_mode = CheckMode.PREPARE
+        self._log_idx = 0
 
     @property
     def check_mode(self):
@@ -1726,7 +1727,8 @@ class _AnsibleUtil:
         self.log(idx, LogLevel.ERROR, msg, warn_traceback = warn_traceback, force_fail = True)
 
     def log(self, idx, severity, msg, warn_traceback = False, force_fail = False):
-        self.run_results[idx]['log'].append((severity, msg))
+        self._log_idx += 1
+        self.run_results[idx]['log'].append((severity, msg, self._log_idx))
         if severity == LogLevel.ERROR:
             # ignore_errors can be specified per profile. In absense of a
             # per-profile setting, a global parameter is consulted.
@@ -1748,7 +1750,7 @@ class _AnsibleUtil:
         if c['state'] != 'wait':
             prefix = prefix + (', "%s"' % (c['name']))
         for r in rr['log']:
-            yield '%s #%s, %s: %s' % (LogLevel.fmt(r[0]), idx, prefix, r[1])
+            yield '[%03d] %s #%s, %s: %s' % (r[2], LogLevel.fmt(r[0]), idx, prefix, r[1])
 
     def _complete_kwargs(self, kwargs, traceback_msg = None):
         if 'warnings' in kwargs:
