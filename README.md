@@ -244,7 +244,7 @@ network_connections:
       route_metric4: 100
       dhcp4: no
       #dhcp4_send_hostname: no
-      gateway4: 192.168.5.1
+      gateway4: 192.0.2.1
 
       route_metric6: -1
       auto6: no
