@@ -1528,7 +1528,14 @@ class NMUtil:
 
         def check_activated(ac, dev):
             ac_state = ac.get_state()
-            ac_reason = ac.get_state_reason()
+
+            # the state reason was for active-connection was introduced in NM 1.8 API.
+            # Work around for older library version.
+            try:
+                ac_reason = ac.get_state_reason()
+            except AttributeError as e:
+                ac_reason = None
+
             if dev:
                 dev_state = dev.get_state()
 
@@ -1544,13 +1551,14 @@ class NMUtil:
                 return True, None
             elif ac_state == NM.ActiveConnectionState.DEACTIVATED:
                 if     not dev \
-                    or ac_reason != NM.ActiveConnectionStateReason.DEVICE_DISCONNECTED \
+                    or (    ac_reason is not None \
+                        and ac_reason != NM.ActiveConnectionStateReason.DEVICE_DISCONNECTED) \
                     or dev.get_active_connection() is not ac:
-                    return True, (ac_reason.value_nick or 'unknown reason')
+                    return True, ((ac_reason.value_nick if ac_reason else None) or 'unknown reason')
                 # the state of the active connection is not very helpful.
                 # see if the device-state is better.
                 if dev_state <= NM.DeviceState.DISCONNECTED or dev_state > NM.DeviceState.DEACTIVATING:
-                    return True, (dev.get_state_reason().value_nick or ac_reason.value_nick or 'unknown reason')
+                    return True, (dev.get_state_reason().value_nick or (ac_reason.value_nick if ac_reason else None) or 'unknown reason')
                 # fall through, wait longer for a better state reason.
 
             # wait longer.
@@ -1569,7 +1577,11 @@ class NMUtil:
                     cb_out.append(failure_reason)
                     Util.GMainLoop().quit()
 
-            ac_id = ac.connect('state-changed', lambda source, state, reason: check_activated_cb())
+            try:
+                # 'state-changed' signal is 1.8 API. Workaround for older libnm API version
+                ac_id = ac.connect('state-changed', lambda source, state, reason: check_activated_cb())
+            except:
+                ac_id = None
             if dev:
                 dev_id = dev.connect('notify::state', lambda source, pspec: check_activated_cb())
 
@@ -1579,7 +1591,8 @@ class NMUtil:
             finally:
                 if dev:
                     dev.handler_disconnect(dev_id)
-                ac.handler_disconnect(ac_id)
+                if ac_id is not None:
+                    ac.handler_disconnect(ac_id)
 
             failure_reason = cb_out[0]
 
