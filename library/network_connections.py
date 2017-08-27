@@ -1707,6 +1707,15 @@ class _AnsibleUtil:
     def params(self):
         return self.module.params
 
+    def params_ignore_errors(self, connection, default_value = None):
+        v = connection['ignore_errors']
+        if v is None:
+            try:
+                v = Util.boolean(self.params['ignore_errors'])
+            except:
+                v = default_value
+        return v
+
     @property
     def connections(self):
         c = self._connections
@@ -1767,18 +1776,8 @@ class _AnsibleUtil:
             assert(idx >= 0 and idx < len(self.run_results) - 1)
         self.run_results[idx]['log'].append((severity, msg, self._log_idx))
         if severity == LogLevel.ERROR:
-            # ignore_errors can be specified per profile. In absense of a
-            # per-profile setting, a global parameter is consulted.
-            if force_fail:
-                ignore_errors = False
-            else:
-                ignore_errors = self.connections[idx]['ignore_errors']
-            if ignore_errors is None:
-                try:
-                    ignore_errors = Util.boolean(self.params['ignore_errors'])
-                except:
-                    ignore_errors = None
-            if not ignore_errors:
+            if    force_fail \
+               or not self.params_ignore_errors(self.connections[idx], False):
                 self.fail_json('error: %s' % (msg), warn_traceback = warn_traceback)
 
     def _complete_kwargs_loglines(self, rr, idx):
