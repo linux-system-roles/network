@@ -860,7 +860,7 @@ class ArgValidator_ListConnections(ArgValidatorList):
                 if connection['state'] == 'up' and 'type' in connection:
                     pass
                 elif not ArgUtil.connection_find_by_name(connection['name'], result, idx):
-                    raise ValidationError(name + '[' + str(idx) + '].name', 'references non-existing connection "%s"' % (connection['name']))
+                    raise ValidationError(name + '[' + str(idx) + '].name', 'state "%s" references non-existing connection "%s"' % (connection['state'], connection['name']))
             if 'type' in connection:
                 if connection['master']:
                     c = ArgUtil.connection_find_by_name(connection['master'], result, idx)
@@ -1702,7 +1702,7 @@ class _AnsibleUtil:
                 c = self.ARGS_CONNECTIONS.validate(self.params['connections'])
             except ValidationError as e:
                 self.fail_json('configuration error: %s' % (e),
-                               warn_traceback = True)
+                               warn_traceback = False)
             self._connections = c
         return c
 
