@@ -699,6 +699,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
             nested = [
                 ArgValidatorStr ('name'),
                 ArgValidatorStr ('state', enum_values = ArgValidator_DictConnection.VALID_STATES),
+                ArgValidatorBool('force_state_change', default_value = None),
                 ArgValidatorNum ('wait', val_min = 0, val_max = 3600, numeric_type = float),
                 ArgValidatorStr ('type', enum_values = ArgValidator_DictConnection.VALID_TYPES),
                 ArgValidatorBool('autoconnect', default_value = True),
@@ -733,8 +734,9 @@ class ArgValidator_DictConnection(ArgValidatorDict):
             VALID_FIELDS = list(self.nested.keys())
             if result['state'] == 'present':
                 VALID_FIELDS.remove('wait')
+                VALID_FIELDS.remove('force_state_change')
         elif result['state'] in ['up', 'down']:
-            VALID_FIELDS = ['name', 'state', 'wait', 'ignore_errors']
+            VALID_FIELDS = ['name', 'state', 'wait', 'ignore_errors', 'force_state_change']
         elif result['state'] == 'absent':
             VALID_FIELDS = ['name', 'state', 'ignore_errors']
         elif result['state'] == 'wait':
@@ -860,7 +862,7 @@ class ArgValidator_ListConnections(ArgValidatorList):
                 if connection['state'] == 'up' and 'type' in connection:
                     pass
                 elif not ArgUtil.connection_find_by_name(connection['name'], result, idx):
-                    raise ValidationError(name + '[' + str(idx) + '].name', 'references non-existing connection "%s"' % (connection['name']))
+                    raise ValidationError(name + '[' + str(idx) + '].name', 'state "%s" references non-existing connection "%s"' % (connection['state'], connection['name']))
             if 'type' in connection:
                 if connection['master']:
                     c = ArgUtil.connection_find_by_name(connection['master'], result, idx)
@@ -1183,6 +1185,35 @@ class IfcfgUtil:
                 with open(path, 'w') as text_file:
                     text_file.write(h)
 
+    @classmethod
+    def connection_seems_active(cls, name):
+        # we don't know whether a ifcfg file is currently active,
+        # and we also don't know which.
+        #
+        # Do a very basic guess based on whether the interface
+        # is in operstate "up".
+        #
+        # But first we need to find the interface name. Do
+        # some naive parsing and check for DEVICE setting.
+        content = cls.content_from_file(name, 'ifcfg')
+        if content['ifcfg'] is not None:
+            content = cls.ifcfg_parse(content['ifcfg'])
+        else:
+            content = {}
+        if 'DEVICE' not in content:
+            return None
+        path = '/sys/class/net/' + content['DEVICE'] + '/operstate'
+        try:
+            with open(path, 'r') as content_file:
+                i_content = str(content_file.read())
+        except Exception as e:
+            return None
+
+        if i_content.strip() != 'up':
+            return False
+
+        return True
+
 ###############################################################################
 
 class NMUtil:
@@ -1216,8 +1247,7 @@ class NMUtil:
             active_cons = [ac for ac in active_cons if ac.get_connection() in connections]
         if black_list:
             active_cons = [ac for ac in active_cons if ac not in black_list]
-        active_cons = list(active_cons)
-        return active_cons;
+        return list(active_cons)
 
     def connection_list(self, name = None, uuid = None, black_list = None, black_list_names = None, black_list_uuids = None):
         cons = self.nmclient.get_connections()
@@ -1274,6 +1304,14 @@ class NMUtil:
             compare_flags = NM.SettingCompareFlags.IGNORE_TIMESTAMP
 
         return not(not(con_a.compare (con_b, compare_flags)))
+
+    def connection_is_active(self, con):
+        NM = Util.NM()
+        for ac in self.active_connection_list(connections=[con]):
+            if     ac.get_state() >= NM.ActiveConnectionState.ACTIVATING \
+               and ac.get_state() <= NM.ActiveConnectionState.ACTIVATED:
+                return True
+        return False
 
     def connection_create(self, connections, idx):
         NM = Util.NM()
@@ -1528,7 +1566,14 @@ class NMUtil:
 
         def check_activated(ac, dev):
             ac_state = ac.get_state()
-            ac_reason = ac.get_state_reason()
+
+            # the state reason was for active-connection was introduced in NM 1.8 API.
+            # Work around for older library version.
+            try:
+                ac_reason = ac.get_state_reason()
+            except AttributeError as e:
+                ac_reason = None
+
             if dev:
                 dev_state = dev.get_state()
 
@@ -1544,13 +1589,14 @@ class NMUtil:
                 return True, None
             elif ac_state == NM.ActiveConnectionState.DEACTIVATED:
                 if     not dev \
-                    or ac_reason != NM.ActiveConnectionStateReason.DEVICE_DISCONNECTED \
+                    or (    ac_reason is not None \
+                        and ac_reason != NM.ActiveConnectionStateReason.DEVICE_DISCONNECTED) \
                     or dev.get_active_connection() is not ac:
-                    return True, (ac_reason.value_nick or 'unknown reason')
+                    return True, ((ac_reason.value_nick if ac_reason else None) or 'unknown reason')
                 # the state of the active connection is not very helpful.
                 # see if the device-state is better.
                 if dev_state <= NM.DeviceState.DISCONNECTED or dev_state > NM.DeviceState.DEACTIVATING:
-                    return True, (dev.get_state_reason().value_nick or ac_reason.value_nick or 'unknown reason')
+                    return True, (dev.get_state_reason().value_nick or (ac_reason.value_nick if ac_reason else None) or 'unknown reason')
                 # fall through, wait longer for a better state reason.
 
             # wait longer.
@@ -1569,7 +1615,11 @@ class NMUtil:
                     cb_out.append(failure_reason)
                     Util.GMainLoop().quit()
 
-            ac_id = ac.connect('state-changed', lambda source, state, reason: check_activated_cb())
+            try:
+                # 'state-changed' signal is 1.8 API. Workaround for older libnm API version
+                ac_id = ac.connect('state-changed', lambda source, state, reason: check_activated_cb())
+            except:
+                ac_id = None
             if dev:
                 dev_id = dev.connect('notify::state', lambda source, pspec: check_activated_cb())
 
@@ -1579,7 +1629,8 @@ class NMUtil:
             finally:
                 if dev:
                     dev.handler_disconnect(dev_id)
-                ac.handler_disconnect(ac_id)
+                if ac_id is not None:
+                    ac.handler_disconnect(ac_id)
 
             failure_reason = cb_out[0]
 
@@ -1642,6 +1693,7 @@ class _AnsibleUtil:
 
     ARGS = {
         'ignore_errors':  { 'required': False, 'default': False, 'type': 'str' },
+        'force_state_change': { 'required': False, 'default': False, 'type': 'bool' },
         'provider':       { 'required': True,  'default': None,  'type': 'str' },
         'connections':    { 'required': False, 'default': None,  'type': 'list' },
     }
@@ -1694,6 +1746,24 @@ class _AnsibleUtil:
     def params(self):
         return self.module.params
 
+    def params_ignore_errors(self, connection, default_value = None):
+        v = connection['ignore_errors']
+        if v is None:
+            try:
+                v = Util.boolean(self.params['ignore_errors'])
+            except:
+                v = default_value
+        return v
+
+    def params_force_state_change(self, connection, default_value = None):
+        v = connection['force_state_change']
+        if v is None:
+            if 'force_state_change' in self.params:
+                v = Util.boolean(self.params['force_state_change'])
+            if v is None:
+                v = default_value
+        return v
+
     @property
     def connections(self):
         c = self._connections
@@ -1702,9 +1772,43 @@ class _AnsibleUtil:
                 c = self.ARGS_CONNECTIONS.validate(self.params['connections'])
             except ValidationError as e:
                 self.fail_json('configuration error: %s' % (e),
-                               warn_traceback = True)
+                               warn_traceback = False)
             self._connections = c
         return c
+
+    def connection_modified_earlier(self, idx):
+        # for index @idx, check if any of the previous profiles [0..idx[
+        # modify the connection.
+
+        con = self.connections[idx]
+        assert(con['state'] in ['up', 'down'])
+
+        # also check, if the current profile is 'up' with a 'type' (which
+        # possibly modifies the connection as well)
+        if     con['state'] == 'up' \
+           and 'type' in con \
+           and self.run_results[idx]['changed']:
+            return True
+
+        for i in reversed(range(idx)):
+            c = self.connections[i]
+            if 'name' not in c:
+                continue
+            if c['name'] != con['name']:
+                continue
+
+            c_state = c['state']
+            if c_state == 'up' and 'type' not in c:
+                pass
+            elif c_state == 'down':
+                return True
+            elif c_state == 'absent':
+                return True
+            elif c_state in ['present', 'up']:
+                if self.run_results[i]['changed']:
+                    return True
+
+        return False
 
     @property
     def run_results(self):
@@ -1754,18 +1858,8 @@ class _AnsibleUtil:
             assert(idx >= 0 and idx < len(self.run_results) - 1)
         self.run_results[idx]['log'].append((severity, msg, self._log_idx))
         if severity == LogLevel.ERROR:
-            # ignore_errors can be specified per profile. In absense of a
-            # per-profile setting, a global parameter is consulted.
-            if force_fail:
-                ignore_errors = False
-            else:
-                ignore_errors = self.connections[idx]['ignore_errors']
-            if ignore_errors is None:
-                try:
-                    ignore_errors = Util.boolean(self.params['ignore_errors'])
-                except:
-                    ignore_errors = None
-            if not ignore_errors:
+            if    force_fail \
+               or not self.params_ignore_errors(self.connections[idx], False):
                 self.fail_json('error: %s' % (msg), warn_traceback = warn_traceback)
 
     def _complete_kwargs_loglines(self, rr, idx):
@@ -2009,7 +2103,21 @@ class Cmd_nm(Cmd):
             else:
                 AnsibleUtil.log_info(idx, 'up connection %s, %s' % (connection['name'], connection['nm.uuid']))
             return
-        AnsibleUtil.log_info(idx, 'up connection %s, %s' % (con.get_id(), con.get_uuid()))
+
+        is_active = self.nmutil.connection_is_active(con)
+        is_modified = AnsibleUtil.connection_modified_earlier(idx)
+        force_state_change = AnsibleUtil.params_force_state_change(connection, False)
+
+        if is_active and not force_state_change and not is_modified:
+            AnsibleUtil.log_info(idx, 'up connection %s, %s skipped because already active' %
+                                      (con.get_id(), con.get_uuid()))
+            return
+
+        AnsibleUtil.log_info(idx, 'up connection %s, %s (%s)' %
+                             (con.get_id(), con.get_uuid(),
+                              'not-active' if not is_active else \
+                              'is-modified' if is_modified else \
+                              'force-state-change'))
         if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
             try:
                 ac = self.nmutil.connection_activate (con)
@@ -2142,7 +2250,7 @@ class Cmd_initscripts(Cmd):
 
         AnsibleUtil.run_results_changed(idx)
 
-    def _run_state_updown(self, idx, cmd):
+    def _run_state_updown(self, idx, do_up):
         if not self.check_name(idx):
             return
 
@@ -2154,29 +2262,56 @@ class Cmd_initscripts(Cmd):
             # command completes. Silently ignore the argument.
             pass
 
-        AnsibleUtil.log_info(idx, 'call `%s %s`' % (cmd, name))
-
         path = IfcfgUtil.ifcfg_path(name)
         if not os.path.isfile(path):
             if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
                 AnsibleUtil.log_error(idx, 'ifcfg file "%s" does not exist' % (path))
             else:
                 AnsibleUtil.log_info(idx, 'ifcfg file "%s" does not exist in check mode' % (path))
+            return
+
+        is_active = IfcfgUtil.connection_seems_active(name)
+        is_modified = AnsibleUtil.connection_modified_earlier(idx)
+        force_state_change = AnsibleUtil.params_force_state_change(connection, False)
+
+        if do_up:
+            if is_active is True and not force_state_change and not is_modified:
+                AnsibleUtil.log_info(idx, 'up connection %s skipped because already active' %
+                                          (name))
+                return
+
+            AnsibleUtil.log_info(idx, 'up connection %s (%s)' %
+                                 (name,
+                                  'not-active' if is_active is not True else \
+                                  'is-modified' if is_modified else \
+                                  'force-state-change'))
+            cmd = 'ifup'
         else:
-            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
-                rc, out, err = AnsibleUtil.module.run_command([cmd, name], encoding=None)
-                AnsibleUtil.log_info(idx, 'call `%s %s`: rc=%d, out="%s", err="%s"' % (cmd, name, rc, out, err))
-                if rc != 0:
-                    AnsibleUtil.log_error(idx, 'call `%s %s` failed with exit status %d' % (cmd, name, rc))
+            if is_active is False and not force_state_change:
+                AnsibleUtil.log_info(idx, 'down connection %s skipped because not active' %
+                                          (name))
+                return
+
+            AnsibleUtil.log_info(idx, 'up connection %s (%s)' %
+                                 (name,
+                                  'active' if is_active is not False else \
+                                  'force-state-change'))
+            cmd = 'ifdown'
+
+        if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+            rc, out, err = AnsibleUtil.module.run_command([cmd, name], encoding=None)
+            AnsibleUtil.log_info(idx, 'call `%s %s`: rc=%d, out="%s", err="%s"' % (cmd, name, rc, out, err))
+            if rc != 0:
+                AnsibleUtil.log_error(idx, 'call `%s %s` failed with exit status %d' % (cmd, name, rc))
 
         AnsibleUtil.run_results_changed(idx)
 
 
     def run_state_up(self, idx):
-        self._run_state_updown(idx, 'ifup')
+        self._run_state_updown(idx, True)
 
     def run_state_down(self, idx):
-        self._run_state_updown(idx, 'ifdown')
+        self._run_state_updown(idx, False)
 
 ###############################################################################
 

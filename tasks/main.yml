@@ -19,9 +19,10 @@
 
 - name: Configure networking connection profiles
   network_connections:
-      provider:       "{{ network_provider      | mandatory }}"
-      ignore_errors:  "{{ network_ignore_errors | default(omit) }}"
-      connections:    "{{ network_connections   | default([]) }}"
+      provider:            "{{ network_provider           | mandatory }}"
+      ignore_errors:       "{{ network_ignore_errors      | default(omit) }}"
+      force_state_change:  "{{ network_force_state_change | default(omit) }}"
+      connections:         "{{ network_connections        | default([]) }}"
 
 - name: Re-test connectivity
   ping:
