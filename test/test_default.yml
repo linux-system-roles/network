@@ -1,4 +1,5 @@
 ---
-- hosts: all
+- name: Test executing the role with default parameters
+  hosts: all
   roles:
     - network
