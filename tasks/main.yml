@@ -6,9 +6,26 @@
       - "{{ ansible_os_family }}.yml"
       - "default.yml"
 
+
+- name: Print setting network_provider
+  debug:
+      var: network_provider
+      verbosity: 2
+
+- name: Print setting network_packages
+  debug:
+      var: network_packages
+      verbosity: 2
+
+- name: Print setting network_service_name
+  debug:
+      var: network_service_name
+      verbosity: 2
+
+
 - name: Install packages
   package:
-      name: "{{ network_packages | default([]) }}"
+      name: "{{ network_packages }}"
       state: present
 
 - name: Enable network service
