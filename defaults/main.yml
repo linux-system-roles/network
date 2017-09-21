@@ -1,2 +1,35 @@
-network_provider: "{{ network_provider_default }}"
-network_connections: []
+network_provider:     "{{ network_provider_default }}"
+network_connections:  []
+
+network_service_name_default_nm: NetworkManager
+network_packages_default_nm: [ NetworkManager ]
+
+network_service_name_default_initscripts: network
+network_packages_default_initscripts: []
+
+
+# The user can explicitly set host variables "network_provider",
+# "network_service_name" and "network_packages".
+#
+# Usually, the user only wants to select the "network_provider"
+# (or not set it at all and let it be autodetected via the
+# internal variable "{{ network_provider_default }}". Hence,
+# depending on the "network_provider", a different set of
+# service-name and packages is chosen.
+#
+# That is done via the internal "_network_provider_setup" dictionary.
+# If the user doesn't explicitly set "network_service_name" or
+# "network_packages" (which he usually wouldn't), then the defaults
+# from "network_service_name_default_*" and "network_packages_default_*"
+# apply. These values are hard-coded in this file, but they also could
+# be overwritten as host variables or via vars/*.yml.
+_network_provider_setup:
+    nm:
+        service_name: "{{ network_service_name_default_nm }}"
+        packages:     "{{ network_packages_default_nm }}"
+    initscripts:
+        service_name: "{{ network_service_name_default_initscripts }}"
+        packages:     "{{ network_packages_default_initscripts }}"
+
+network_packages:     "{{ _network_provider_setup[network_provider]['packages'] }}"
+network_service_name: "{{ _network_provider_setup[network_provider]['service_name'] }}"

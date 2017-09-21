@@ -8,7 +8,7 @@
 
 - name: Install packages
   package:
-      name: "{{ network_packages | default([]) }}"
+      name: "{{ network_packages }}"
       state: present
 
 - name: Enable network service
