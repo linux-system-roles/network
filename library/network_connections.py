@@ -558,13 +558,14 @@ class ArgValidatorIPAddr(ArgValidatorStr):
             raise ValidationError(name, 'value "%s" is not a valid IP%s address with prefix length' % (value, Util.addr_family_to_v(self.family)))
 
 class ArgValidatorDict(ArgValidator):
-    def __init__(self, name = None, required = False, nested = None, default_value = None, all_missing_during_validate = False):
+    def __init__(self, name = None, required = False, nested = None, default_value = None, all_missing_during_validate = False, ignore_unknown = False):
         ArgValidator.__init__(self, name, required, default_value)
         if nested is not None:
             self.nested = dict([(v.name, v) for v in nested])
         else:
             self.nested = {}
         self.all_missing_during_validate = all_missing_during_validate
+        self.ignore_unknown = ignore_unknown
     def _validate(self, value, name):
         result = {}
         seen_keys = set()
@@ -578,11 +579,15 @@ class ArgValidatorDict(ArgValidator):
             seen_keys.add(k)
             validator = self.nested.get(k, None)
             if validator is None:
-                raise ValidationError(name, 'invalid key "%s"' % (k))
-            try:
-                vv = validator.validate(v, name + '.' + k)
-            except ValidationError as e:
-                raise ValidationError(e.name, e.error_message)
+                if not self.ignore_unknown:
+                    raise ValidationError(name, 'invalid key "%s"' % (k))
+                import copy
+                vv = copy.deepcopy(v)
+            else:
+                try:
+                    vv = validator.validate(v, name + '.' + k)
+                except ValidationError as e:
+                    raise ValidationError(e.name, e.error_message)
             result[k] = vv
         for (k,v) in self.nested.items():
             if k in seen_keys:
@@ -716,6 +721,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidatorNum ('infiniband_p_key', val_min = -1, val_max = 0xFFFF, default_value = None),
                 ArgValidator_DictIP(),
                 ArgValidator_DictBond(),
+                ArgValidatorDict('user_attrs', ignore_unknown = True),
             ],
             default_value = dict,
             all_missing_during_validate = True,
@@ -736,11 +742,11 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 VALID_FIELDS.remove('wait')
                 VALID_FIELDS.remove('force_state_change')
         elif result['state'] in ['up', 'down']:
-            VALID_FIELDS = ['name', 'state', 'wait', 'ignore_errors', 'force_state_change']
+            VALID_FIELDS = ['name', 'state', 'wait', 'ignore_errors', 'force_state_change', 'user_attrs']
         elif result['state'] == 'absent':
-            VALID_FIELDS = ['name', 'state', 'ignore_errors']
+            VALID_FIELDS = ['name', 'state', 'ignore_errors', 'user_attrs']
         elif result['state'] == 'wait':
-            VALID_FIELDS = ['state', 'wait']
+            VALID_FIELDS = ['state', 'wait', 'user_attrs']
         else:
             assert False
 

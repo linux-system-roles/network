@@ -161,6 +161,7 @@ class TestValidator(unittest.TestCase):
                     'slave_type': None,
                     'infiniband_p_key': None,
                     'infiniband_transport_mode': None,
+                    'user_attrs': None,
                 },
                 {
                     'name': '5',
@@ -168,13 +169,18 @@ class TestValidator(unittest.TestCase):
                     'force_state_change': None,
                     'wait': None,
                     'ignore_errors': None,
+                    'user_attrs': { 'k1': 'v1_ignored' },
                 }
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
                 { 'name': '5',
                   'type': 'ethernet',
                 },
-                { 'name': '5' }
+                { 'name': '5',
+                  'user_attrs': {
+                    'k1': 'v1_ignored'
+                  },
+                },
             ]),
         )
         self.assertEqual(
@@ -209,6 +215,7 @@ class TestValidator(unittest.TestCase):
                     'wait': None,
                     'infiniband_p_key': None,
                     'infiniband_transport_mode': None,
+                    'user_attrs': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -228,6 +235,7 @@ class TestValidator(unittest.TestCase):
                     'name': '5',
                     'state': 'absent',
                     'ignore_errors': None,
+                    'user_attrs': None,
                 }
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -277,6 +285,7 @@ class TestValidator(unittest.TestCase):
                     'wait': None,
                     'infiniband_p_key': None,
                     'infiniband_transport_mode': None,
+                    'user_attrs': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -326,6 +335,7 @@ class TestValidator(unittest.TestCase):
                     'wait': None,
                     'infiniband_p_key': None,
                     'infiniband_transport_mode': None,
+                    'user_attrs': None,
                 },
                 {
                     'autoconnect': True,
@@ -364,6 +374,7 @@ class TestValidator(unittest.TestCase):
                     'wait': None,
                     'infiniband_p_key': None,
                     'infiniband_transport_mode': None,
+                    'user_attrs': None,
                 }
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -420,6 +431,7 @@ class TestValidator(unittest.TestCase):
                     'wait': None,
                     'infiniband_p_key': None,
                     'infiniband_transport_mode': None,
+                    'user_attrs': None,
                 },
                 {
                     'autoconnect': True,
@@ -451,6 +463,7 @@ class TestValidator(unittest.TestCase):
                     'wait': None,
                     'infiniband_p_key': None,
                     'infiniband_transport_mode': None,
+                    'user_attrs': None,
                 }
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -510,6 +523,7 @@ class TestValidator(unittest.TestCase):
                     'wait': None,
                     'infiniband_p_key': None,
                     'infiniband_transport_mode': None,
+                    'user_attrs': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -557,6 +571,7 @@ class TestValidator(unittest.TestCase):
                     'wait': None,
                     'infiniband_p_key': None,
                     'infiniband_transport_mode': None,
+                    'user_attrs': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -606,6 +621,7 @@ class TestValidator(unittest.TestCase):
                     'vlan_id': None,
                     'infiniband_p_key': None,
                     'infiniband_transport_mode': None,
+                    'user_attrs': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -649,6 +665,7 @@ class TestValidator(unittest.TestCase):
                     'wait': None,
                     'infiniband_p_key': None,
                     'infiniband_transport_mode': None,
+                    'user_attrs': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -691,6 +708,7 @@ class TestValidator(unittest.TestCase):
                     'wait': None,
                     'infiniband_p_key': None,
                     'infiniband_transport_mode': None,
+                    'user_attrs': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
@@ -735,6 +753,7 @@ class TestValidator(unittest.TestCase):
                     'wait': None,
                     'infiniband_p_key': None,
                     'infiniband_transport_mode': None,
+                    'user_attrs': None,
                 },
             ],
             n.AnsibleUtil.ARGS_CONNECTIONS.validate([
