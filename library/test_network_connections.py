@@ -301,9 +301,22 @@ class TestValidator(unittest.TestCase):
                     'name': 'prod1',
                     'parent': None,
                     'ip': {
-                        'dhcp4': True,
+                        'dhcp4': False,
                         'auto6': True,
-                        'address': [],
+                        'address': [
+                            {
+                                'is_v4': True,
+                                'prefix': 24,
+                                'family': 2,
+                                'address': '192.168.176.5'
+                            },
+                            {
+                                'is_v4': True,
+                                'prefix': 24,
+                                'family': 2,
+                                'address': '192.168.177.5'
+                            }
+                        ],
                         'route_metric6': None,
                         'route_metric4': None,
                         'dns_search': [],
@@ -374,6 +387,9 @@ class TestValidator(unittest.TestCase):
                     'autoconnect': 'yes',
                     'mac': '52:54:00:44:9f:ba',
                     'mtu': 1450,
+                    'ip': {
+                        'address': '192.168.176.5/24 192.168.177.5/24',
+                    }
                 },
                 {
                     'name': 'prod.100',
