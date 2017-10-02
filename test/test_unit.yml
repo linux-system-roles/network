@@ -3,11 +3,11 @@
   name: execute python unit tests
   tasks:
     - copy:
-        src: /role/library/network_connections.py
+        src: ../library/network_connections.py
         dest: /tmp/test-unit-1/
 
     - copy:
-        src: /role/library/test_network_connections.py
+        src: ../library/test_network_connections.py
         dest: /tmp/test-unit-1/
 
 
