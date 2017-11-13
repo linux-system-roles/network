@@ -634,7 +634,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
                     default_value = list,
                 ),
                 ArgValidatorList('dns',
-                    nested = ArgValidatorIP('dns[?]'),
+                    nested = ArgValidatorIP('dns[?]', plain_address=False),
                     default_value = list,
                 ),
                 ArgValidatorList('dns_search',
