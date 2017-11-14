@@ -275,7 +275,6 @@ class Util:
                 raise MyError('expect two addr-parts: ADDR/PLEN')
             a, family = Util.parse_ip(addr_parts[0], family)
             result['address'] = a
-            result['is_v4'] = (family == socket.AF_INET)
             result['family'] = family
             prefix = int(addr_parts[1])
             if not (prefix >=0 and prefix <= (32 if family == socket.AF_INET else 128)):
@@ -590,7 +589,7 @@ class ArgValidatorIP(ArgValidatorStr):
             raise ValidationError(name, 'value "%s" is not a valid IP%s address' % (value, Util.addr_family_to_v(self.family)))
         if self.plain_address:
             return addr
-        return { 'is_v4': family == socket.AF_INET, 'family': family, 'address': addr }
+        return { 'family': family, 'address': addr }
 
 class ArgValidatorMac(ArgValidatorStr):
     def __init__(self, name, force_len = None, required = False, default_value = None):
@@ -662,9 +661,9 @@ class ArgValidator_DictIP(ArgValidatorDict):
 
     def _validate_post(self, value, name, result):
         if result['dhcp4'] is None:
-            result['dhcp4'] = result['dhcp4_send_hostname'] is not None or not any([a for a in result['address'] if a['is_v4']])
+            result['dhcp4'] = result['dhcp4_send_hostname'] is not None or not any([a for a in result['address'] if a['family'] == socket.AF_INET])
         if result['auto6'] is None:
-            result['auto6'] = not any([a for a in result['address'] if not a['is_v4']])
+            result['auto6'] = not any([a for a in result['address'] if a['family'] == socket.AF_INET6])
         if result['dhcp4_send_hostname'] is not None:
             if not result['dhcp4']:
                 raise ValidationError(name, '"dhcp4_send_hostname" is only valid if "dhcp4" is enabled')
@@ -1047,8 +1046,8 @@ class IfcfgUtil:
             else:
                 raise MyError('invalid slave_type "%s"' % (connection['slave_type']))
         else:
-            addrs4 = list([a for a in ip['address'] if     a['is_v4']])
-            addrs6 = list([a for a in ip['address'] if not a['is_v4']])
+            addrs4 = list([a for a in ip['address'] if a['family'] == socket.AF_INET])
+            addrs6 = list([a for a in ip['address'] if a['family'] == socket.AF_INET6])
 
             if ip['dhcp4']:
                 ifcfg['BOOTPROTO'] = 'dhcp'
@@ -1382,8 +1381,8 @@ class NMUtil:
             s_ip4.set_property(NM.SETTING_IP_CONFIG_METHOD, 'auto')
             s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, 'auto')
 
-            addrs4 = list([a for a in ip['address'] if     a['is_v4']])
-            addrs6 = list([a for a in ip['address'] if not a['is_v4']])
+            addrs4 = list([a for a in ip['address'] if a['family'] == socket.AF_INET])
+            addrs6 = list([a for a in ip['address'] if a['family'] == socket.AF_INET6])
 
             if ip['dhcp4']:
                 s_ip4.set_property(NM.SETTING_IP_CONFIG_METHOD, 'auto')
@@ -1399,7 +1398,7 @@ class NMUtil:
             if ip['route_metric4'] is not None and ip['route_metric4'] >= 0:
                 s_ip4.set_property(NM.SETTING_IP_CONFIG_ROUTE_METRIC, ip['route_metric4'])
             for d in ip['dns']:
-                if d['is_v4']:
+                if d['family'] == socket.AF_INET:
                     s_ip4.add_dns(d['address'])
             for s in ip['dns_search']:
                 s_ip4.add_dns_search(s)
@@ -1417,7 +1416,7 @@ class NMUtil:
             if ip['route_metric6'] is not None and ip['route_metric6'] >= 0:
                 s_ip6.set_property(NM.SETTING_IP_CONFIG_ROUTE_METRIC, ip['route_metric6'])
             for d in ip['dns']:
-                if not d['is_v4']:
+                if d['family'] == socket.AF_INET6:
                     s_ip6.add_dns(d['address'])
 
         try:
