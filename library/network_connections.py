@@ -517,46 +517,6 @@ class ArgValidatorBool(ArgValidator):
             pass
         raise ValidationError(name, 'must be an boolean but is "%s"' % (value))
 
-class ArgValidatorIP(ArgValidatorStr):
-    def __init__(self, name, family = None, required = False, default_value = None, plain_address = True):
-        ArgValidatorStr.__init__(self, name, required, default_value, None)
-        self.family = family
-        self.plain_address = plain_address
-    def _validate(self, value, name):
-        v = ArgValidatorStr._validate(self, value, name)
-        try:
-            addr, family = Util.parse_ip(v, self.family)
-        except:
-            raise ValidationError(name, 'value "%s" is not a valid IP%s address' % (value, Util.addr_family_to_v(self.family)))
-        if self.plain_address:
-            return addr
-        return { 'is_v4': family == socket.AF_INET, 'family': family, 'address': addr }
-
-class ArgValidatorMac(ArgValidatorStr):
-    def __init__(self, name, force_len = None, required = False, default_value = None):
-        ArgValidatorStr.__init__(self, name, required, default_value, None)
-        self.force_len = force_len
-    def _validate(self, value, name):
-        v = ArgValidatorStr._validate(self, value, name)
-        try:
-            addr = Util.mac_aton(v, self.force_len)
-        except MyError as e:
-            raise ValidationError(name, 'value "%s" is not a valid MAC address' % (value))
-        if not addr:
-            raise ValidationError(name, 'value "%s" is not a valid MAC address' % (value))
-        return Util.mac_ntoa(addr)
-
-class ArgValidatorIPAddr(ArgValidatorStr):
-    def __init__(self, name, family = None, required = False, default_value = None):
-        ArgValidatorStr.__init__(self, name, required, default_value, None)
-        self.family = family
-    def _validate(self, value, name):
-        v = ArgValidatorStr._validate(self, value, name)
-        try:
-            return Util.parse_address(v, self.family)
-        except:
-            raise ValidationError(name, 'value "%s" is not a valid IP%s address with prefix length' % (value, Util.addr_family_to_v(self.family)))
-
 class ArgValidatorDict(ArgValidator):
     def __init__(self, name = None, required = False, nested = None, default_value = None, all_missing_during_validate = False):
         ArgValidator.__init__(self, name, required, default_value)
@@ -616,6 +576,46 @@ class ArgValidatorList(ArgValidator):
                 raise ValidationError(e.name, e.error_message)
             result.append(vv)
         return result
+
+class ArgValidatorIP(ArgValidatorStr):
+    def __init__(self, name, family = None, required = False, default_value = None, plain_address = True):
+        ArgValidatorStr.__init__(self, name, required, default_value, None)
+        self.family = family
+        self.plain_address = plain_address
+    def _validate(self, value, name):
+        v = ArgValidatorStr._validate(self, value, name)
+        try:
+            addr, family = Util.parse_ip(v, self.family)
+        except:
+            raise ValidationError(name, 'value "%s" is not a valid IP%s address' % (value, Util.addr_family_to_v(self.family)))
+        if self.plain_address:
+            return addr
+        return { 'is_v4': family == socket.AF_INET, 'family': family, 'address': addr }
+
+class ArgValidatorMac(ArgValidatorStr):
+    def __init__(self, name, force_len = None, required = False, default_value = None):
+        ArgValidatorStr.__init__(self, name, required, default_value, None)
+        self.force_len = force_len
+    def _validate(self, value, name):
+        v = ArgValidatorStr._validate(self, value, name)
+        try:
+            addr = Util.mac_aton(v, self.force_len)
+        except MyError as e:
+            raise ValidationError(name, 'value "%s" is not a valid MAC address' % (value))
+        if not addr:
+            raise ValidationError(name, 'value "%s" is not a valid MAC address' % (value))
+        return Util.mac_ntoa(addr)
+
+class ArgValidatorIPAddr(ArgValidatorStr):
+    def __init__(self, name, family = None, required = False, default_value = None):
+        ArgValidatorStr.__init__(self, name, required, default_value, None)
+        self.family = family
+    def _validate(self, value, name):
+        v = ArgValidatorStr._validate(self, value, name)
+        try:
+            return Util.parse_address(v, self.family)
+        except:
+            raise ValidationError(name, 'value "%s" is not a valid IP%s address with prefix length' % (value, Util.addr_family_to_v(self.family)))
 
 class ArgValidator_DictIP(ArgValidatorDict):
     def __init__(self):
