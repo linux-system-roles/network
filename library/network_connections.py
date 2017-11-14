@@ -243,6 +243,7 @@ class Util:
         if addr is None:
             return (None, None)
         if family is not None:
+            Util.addr_family_check(family)
             a = socket.inet_pton(family, addr)
         else:
             a = None
@@ -256,6 +257,11 @@ class Util:
         return (socket.inet_ntop(family, a), family)
 
     @staticmethod
+    def addr_family_check(family):
+        if family != socket.AF_INET and family != socket.AF_INET6:
+            raise MyError('invalid address family %s' % (family))
+
+    @staticmethod
     def addr_family_to_v(family):
         if family is None:
             return ''
@@ -266,25 +272,42 @@ class Util:
         raise MyError('invalid address family "%s"' % (family))
 
     @staticmethod
+    def addr_family_default_prefix(family):
+        Util.addr_family_check(family)
+        if family == socket.AF_INET:
+            return 24
+        else:
+            return 64
+
+    @staticmethod
+    def addr_family_valid_prefix(family, prefix):
+        Util.addr_family_check(family)
+        if family == socket.AF_INET:
+            m = 32
+        else:
+            m = 128
+        return prefix >= 0 and prefix <= m
+
+    @staticmethod
     def parse_address(address, family = None):
-        result = {}
         try:
             parts = address.split()
             addr_parts = parts[0].split('/')
             if len(addr_parts) != 2:
                 raise MyError('expect two addr-parts: ADDR/PLEN')
             a, family = Util.parse_ip(addr_parts[0], family)
-            result['address'] = a
-            result['family'] = family
             prefix = int(addr_parts[1])
-            if not (prefix >=0 and prefix <= (32 if family == socket.AF_INET else 128)):
+            if not Util.addr_family_valid_prefix(family, prefix):
                 raise MyError('invalid prefix %s' % (prefix))
-            result['prefix'] = prefix
             if len(parts) > 1:
                 raise MyError('too many parts')
+            return {
+                'address': a,
+                'family': family,
+                'prefix': prefix,
+            }
         except Exception as e:
             raise MyError('invalid address "%s"' % (address))
-        return result
 
 ###############################################################################
 
@@ -605,20 +628,41 @@ class ArgValidatorMac(ArgValidatorStr):
             raise ValidationError(name, 'value "%s" is not a valid MAC address' % (value))
         return Util.mac_ntoa(addr)
 
-class ArgValidatorIPAddr(ArgValidator):
+class ArgValidatorIPAddr(ArgValidatorDict):
     def __init__(self, name, family = None, required = False, default_value = None):
-        ArgValidator.__init__(self, name, required, default_value)
+        ArgValidatorDict.__init__(self,
+            name,
+            required,
+            nested = [
+                ArgValidatorIP ('address', family = family, required = True, plain_address = False),
+                ArgValidatorNum('prefix', default_value = None, val_min = 0),
+            ],
+        )
         self.family = family
     def _validate(self, value, name):
-        if not isinstance(value, Util.STRING_TYPE):
-            raise ValidationError(name, 'must be a string but is "%s"' % (value))
-        v = str(value)
-        if not v:
-            raise ValidationError(name, 'cannot be empty')
-        try:
-            return Util.parse_address(v, self.family)
-        except:
-            raise ValidationError(name, 'value "%s" is not a valid IP%s address with prefix length' % (value, Util.addr_family_to_v(self.family)))
+        if isinstance(value, Util.STRING_TYPE):
+            v = str(value)
+            if not v:
+                raise ValidationError(name, 'cannot be empty')
+            try:
+                return Util.parse_address(v, self.family)
+            except:
+                raise ValidationError(name, 'value "%s" is not a valid IP%s address with prefix length' % (value, Util.addr_family_to_v(self.family)))
+        v = ArgValidatorDict._validate(self, value, name)
+        return {
+            'address': v['address']['address'],
+            'family':  v['address']['family'],
+            'prefix':  v['prefix'],
+        }
+    def _validate_post(self, value, name, result):
+        family = result['family']
+        prefix = result['prefix']
+        if prefix is None:
+            prefix = Util.addr_family_default_prefix(family)
+            result['prefix'] = prefix
+        elif not Util.addr_family_valid_prefix(family, prefix):
+           raise ValidationError(name, 'invalid prefix %s in "%s"' % (prefix, value))
+        return result
 
 class ArgValidator_DictIP(ArgValidatorDict):
     def __init__(self):
