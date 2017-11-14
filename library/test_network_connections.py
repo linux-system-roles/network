@@ -256,7 +256,6 @@ class TestValidator(unittest.TestCase):
                         'dns': [],
                         'address': [
                             {
-                                'is_v4': True,
                                 'prefix': 24,
                                 'family': 2,
                                 'address': '192.168.174.5'
@@ -305,13 +304,11 @@ class TestValidator(unittest.TestCase):
                         'auto6': True,
                         'address': [
                             {
-                                'is_v4': True,
                                 'prefix': 24,
                                 'family': 2,
                                 'address': '192.168.176.5'
                             },
                             {
-                                'is_v4': True,
                                 'prefix': 24,
                                 'family': 2,
                                 'address': '192.168.177.5'
@@ -356,7 +353,6 @@ class TestValidator(unittest.TestCase):
                         'dns': [],
                         'address': [
                             {
-                                'is_v4': True,
                                 'prefix': 24,
                                 'family': 2,
                                 'address': '192.168.174.5'
