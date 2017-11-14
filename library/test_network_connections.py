@@ -3,6 +3,7 @@
 import sys
 import os
 import unittest
+import socket
 
 sys.path.insert(1, os.path.dirname(os.path.abspath(__file__)))
 
@@ -257,7 +258,7 @@ class TestValidator(unittest.TestCase):
                         'address': [
                             {
                                 'prefix': 24,
-                                'family': 2,
+                                'family': socket.AF_INET,
                                 'address': '192.168.174.5'
                             }
                         ]
@@ -305,12 +306,12 @@ class TestValidator(unittest.TestCase):
                         'address': [
                             {
                                 'prefix': 24,
-                                'family': 2,
+                                'family': socket.AF_INET,
                                 'address': '192.168.176.5'
                             },
                             {
                                 'prefix': 24,
-                                'family': 2,
+                                'family': socket.AF_INET,
                                 'address': '192.168.177.5'
                             }
                         ],
@@ -349,14 +350,19 @@ class TestValidator(unittest.TestCase):
                         'dhcp4_send_hostname': None,
                         'gateway6': None,
                         'gateway4': None,
-                        'auto6': True,
+                        'auto6': False,
                         'dns': [],
                         'address': [
                             {
                                 'prefix': 24,
-                                'family': 2,
+                                'family': socket.AF_INET,
                                 'address': '192.168.174.5'
-                            }
+                            },
+                            {
+                                'prefix': 65,
+                                'family': socket.AF_INET6,
+                                'address': 'a:b:c::6',
+                            },
                         ]
                     },
                     'mac': None,
@@ -394,7 +400,13 @@ class TestValidator(unittest.TestCase):
                     'parent': 'prod1',
                     'vlan_id': '100',
                     'ip': {
-                        'address': [ '192.168.174.5/24' ],
+                        'address': [
+                            '192.168.174.5/24',
+                            {
+                                'address': 'a:b:c::6',
+                                'prefix': 65,
+                            },
+                        ],
                     }
                 }
             ]),
