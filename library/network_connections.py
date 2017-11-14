@@ -606,12 +606,16 @@ class ArgValidatorMac(ArgValidatorStr):
             raise ValidationError(name, 'value "%s" is not a valid MAC address' % (value))
         return Util.mac_ntoa(addr)
 
-class ArgValidatorIPAddr(ArgValidatorStr):
+class ArgValidatorIPAddr(ArgValidator):
     def __init__(self, name, family = None, required = False, default_value = None):
-        ArgValidatorStr.__init__(self, name, required, default_value, None)
+        ArgValidator.__init__(self, name, required, default_value)
         self.family = family
     def _validate(self, value, name):
-        v = ArgValidatorStr._validate(self, value, name)
+        if not isinstance(value, Util.STRING_TYPE):
+            raise ValidationError(name, 'must be a string but is "%s"' % (value))
+        v = str(value)
+        if not v:
+            raise ValidationError(name, 'cannot be empty')
         try:
             return Util.parse_address(v, self.family)
         except:
