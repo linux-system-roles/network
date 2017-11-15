@@ -667,6 +667,41 @@ class ArgValidatorIPAddr(ArgValidatorDict):
            raise ValidationError(name, 'invalid prefix %s in "%s"' % (prefix, value))
         return result
 
+class ArgValidatorIPRoute(ArgValidatorDict):
+    def __init__(self, name, family = None, required = False, default_value = None):
+        ArgValidatorDict.__init__(self,
+            name,
+            required,
+            nested = [
+                ArgValidatorIP ('network', family = family, required = True, plain_address = False),
+                ArgValidatorNum('prefix', default_value = None, val_min = 0),
+                ArgValidatorIP ('gateway', family = family, default_value = None, plain_address = False),
+                ArgValidatorNum('metric', default_value = -1, val_min = -1, val_max = 0xFFFFFFFF),
+            ],
+        )
+        self.family = family
+    def _validate_post(self, value, name, result):
+        network = result['network']
+
+        family = network['family']
+        result['network'] = network['address']
+        result['family'] = family
+
+        gateway = result['gateway']
+        if gateway is not None:
+            if family != gateway['family']:
+                raise ValidationError(name, 'conflicting address family between network and gateway \"%s\"' % (gateway['address']))
+            result['gateway'] = gateway['address']
+
+        prefix = result['prefix']
+        if prefix is None:
+            prefix = Util.addr_family_default_prefix(family)
+            result['prefix'] = prefix
+        elif not Util.addr_family_valid_prefix(family, prefix):
+           raise ValidationError(name, 'invalid prefix %s in "%s"' % (prefix, value))
+
+        return result
+
 class ArgValidator_DictIP(ArgValidatorDict):
     def __init__(self):
         ArgValidatorDict.__init__(self,
@@ -683,6 +718,11 @@ class ArgValidator_DictIP(ArgValidatorDict):
                     nested = ArgValidatorIPAddr('address[?]'),
                     default_value = list,
                 ),
+                ArgValidatorList('route',
+                    nested = ArgValidatorIPRoute('route[?]'),
+                    default_value = list,
+                ),
+                ArgValidatorBool('route_append_only'),
                 ArgValidatorList('dns',
                     nested = ArgValidatorIP('dns[?]', plain_address=False),
                     default_value = list,
@@ -701,6 +741,8 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 'gateway6': None,
                 'route_metric6': None,
                 'address': [],
+                'route': [],
+                'route_append_only': False,
                 'dns': [],
                 'dns_search': [],
             },
@@ -1045,14 +1087,40 @@ class IfcfgUtil:
         return s
 
     @classmethod
-    def ifcfg_create(cls, connections, idx, warn_fcn = lambda msg: None):
+    def _ifcfg_route_merge(cls, route, append_only, current):
+        if not append_only or current is None:
+            if not route:
+                return None
+            return '\n'.join(route) + '\n'
+
+        if route:
+            # the 'route' file is processed line by line by initscripts' ifup-route. Hence,
+            # the order of the route matters. _ifcfg_route_merge() is not sophisticated
+            # enough to understand pre-existing lines. It will only append lines that
+            # don't exist yet, which hopefully is correct.
+            # It's better to always rewrite the entire file with route_append_only=False.
+            changed = False
+            c_lines = list(current.split('\n'))
+            for r in route:
+                if r not in c_lines:
+                    changed = True
+                    c_lines.append(r)
+            if changed:
+                return '\n'.join(c_lines) + '\n'
+
+        return current
+
+    @classmethod
+    def ifcfg_create(cls, connections, idx, warn_fcn = lambda msg: None, content_current = None):
         connection = connections[idx]
         ip = connection['ip']
 
-        ifcfg_all = {}
-        for file_type in cls.FILE_TYPES:
-            ifcfg_all[file_type] = {}
-        ifcfg = ifcfg_all['ifcfg']
+        ifcfg = {}
+        keys_file = None
+        route4_file = None
+        route6_file = None
+        rule4_file = None
+        rule6_file = None
 
         if ip['dhcp4_send_hostname'] is not None:
             warn_fcn('ip.dhcp4_send_hostname is not supported by initscripts provider')
@@ -1117,6 +1185,10 @@ class IfcfgUtil:
                     ifcfg['DEVICETYPE'] = 'TeamPort'
             else:
                 raise MyError('invalid slave_type "%s"' % (connection['slave_type']))
+
+            if ip['route_append_only'] and content_current:
+                route4_file = content_current['route']
+                route6_file = content_current['route6']
         else:
             addrs4 = list([a for a in ip['address'] if a['family'] == socket.AF_INET])
             addrs6 = list([a for a in ip['address'] if a['family'] == socket.AF_INET6])
@@ -1154,16 +1226,43 @@ class IfcfgUtil:
             if ip['gateway6'] is not None:
                 ifcfg['IPV6_DEFAULTGW'] = ip['gateway6']
 
-        for file_type in cls.FILE_TYPES:
-            h = ifcfg_all[file_type]
-            for key in h.keys():
-                if h[key] is None:
-                    del h[key]
-                    continue
-                if type(h[key]) == type(True):
-                    h[key] = 'yes' if h[key] else 'no'
+            route4 = []
+            route6 = []
+            for r in ip['route']:
+                line = r['network'] + '/' + str(r['prefix'])
+                if r['gateway']:
+                    line += ' via ' + r['gateway']
+                if r['metric'] != -1:
+                    line += ' metric ' + str(r['metric'])
 
-        return ifcfg_all
+                if r['family'] == socket.AF_INET:
+                    route4.append(line)
+                else:
+                    route6.append(line)
+
+            route4_file = cls._ifcfg_route_merge(route4,
+                                                 ip['route_append_only'] and content_current,
+                                                 content_current['route'] if content_current else None)
+            route6_file = cls._ifcfg_route_merge(route6,
+                                                 ip['route_append_only'] and content_current,
+                                                 content_current['route6'] if content_current else None)
+
+        for key in list(ifcfg.keys()):
+            v = ifcfg[key]
+            if v is None:
+                del ifcfg[key]
+                continue
+            if type(v) == type(True):
+                ifcfg[key] = 'yes' if v else 'no'
+
+        return {
+            'ifcfg':  ifcfg,
+            'keys':   keys_file,
+            'route':  route4_file,
+            'route6': route6_file,
+            'rule':   rule4_file,
+            'rule6':  rule6_file,
+        }
 
     @classmethod
     def ifcfg_parse_line(cls, line):
@@ -1210,18 +1309,18 @@ class IfcfgUtil:
         content = {}
         for file_type in cls._file_types(file_type):
             h = ifcfg_all[file_type]
-            if not h:
-                if file_type != 'ifcfg':
-                    content[file_type] = None
-                continue
-            s = cls.ANSIBLE_MANAGED + '\n'
-            for key in sorted(h.keys()):
-                value = h[key]
-                if not cls.KeyValid(key):
-                    raise MyError('invalid ifcfg key %s' % (key))
-                if value is not None:
-                    s += key + '=' + cls.ValueEscape(value) + '\n'
-            content[file_type] = s
+            if file_type == 'ifcfg':
+                s = cls.ANSIBLE_MANAGED + '\n'
+                for key in sorted(h.keys()):
+                    value = h[key]
+                    if not cls.KeyValid(key):
+                        raise MyError('invalid ifcfg key %s' % (key))
+                    if value is not None:
+                        s += key + '=' + cls.ValueEscape(value) + '\n'
+                content[file_type] = s
+            else:
+                content[file_type] = h
+
         return content
 
     @classmethod
@@ -1297,6 +1396,11 @@ class NMUtil:
         if nmclient is None:
             nmclient = Util.NM().Client.new(None)
         self.nmclient = nmclient
+
+    def setting_ip_config_get_routes(self, s_ip):
+        if s_ip is not None:
+            for i in range(0, s_ip.get_num_routes()):
+               yield s_ip.get_route(i)
 
     def connection_ensure_setting(self, connection, setting_type):
         setting = connection.get_setting(setting_type)
@@ -1388,7 +1492,7 @@ class NMUtil:
                 return True
         return False
 
-    def connection_create(self, connections, idx):
+    def connection_create(self, connections, idx, connection_current = None):
         NM = Util.NM()
 
         connection = connections[idx]
@@ -1490,6 +1594,18 @@ class NMUtil:
             for d in ip['dns']:
                 if d['family'] == socket.AF_INET6:
                     s_ip6.add_dns(d['address'])
+
+            if ip['route_append_only'] and connection_current:
+                for r in self.setting_ip_config_get_routes(connection_current.get_setting(NM.SettingIP4Config)):
+                    s_ip4.add_route(r)
+                for r in self.setting_ip_config_get_routes(connection_current.get_setting(NM.SettingIP6Config)):
+                    s_ip6.add_route(r)
+            for r in ip['route']:
+                rr = NM.IPRoute.new(r['family'], r['network'], r['prefix'], r['gateway'], r['metric'])
+                if r['family'] == socket.AF_INET:
+                    s_ip4.add_route(rr)
+                else:
+                    s_ip6.add_route(rr)
 
         try:
             con.normalize()
@@ -2135,7 +2251,7 @@ class Cmd_nm(Cmd):
     def run_state_present(self, idx):
         connection = AnsibleUtil.connections[idx]
         con_cur = Util.first(self.nmutil.connection_list(name = connection['name'], uuid = connection['nm.uuid']))
-        con_new = self.nmutil.connection_create(AnsibleUtil.connections, idx)
+        con_new = self.nmutil.connection_create(AnsibleUtil.connections, idx, con_cur)
         changed = False
         if con_cur is None:
             AnsibleUtil.log_info(idx, 'add connection %s, %s' % (connection['name'], connection['nm.uuid']))
@@ -2314,10 +2430,12 @@ class Cmd_initscripts(Cmd):
         connection = AnsibleUtil.connections[idx]
         name = connection['name']
 
-        ifcfg_all = IfcfgUtil.ifcfg_create(AnsibleUtil.connections, idx,
-                                           lambda msg: AnsibleUtil.log_warn(idx, msg))
-
         old_content = IfcfgUtil.content_from_file(name)
+
+        ifcfg_all = IfcfgUtil.ifcfg_create(AnsibleUtil.connections, idx,
+                                           lambda msg: AnsibleUtil.log_warn(idx, msg),
+                                           old_content)
+
         new_content = IfcfgUtil.content_from_dict(ifcfg_all)
 
         if old_content == new_content:
