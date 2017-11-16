@@ -48,6 +48,10 @@ class ValidationError(MyError):
         self.error_message = message
         self.name = name
 
+    @staticmethod
+    def from_connection(idx, message):
+        return ValidationError('connection[' + str(idx) + ']', message)
+
 class Util:
 
     PY3 = (sys.version_info[0] == 3)
@@ -442,7 +446,6 @@ class ArgUtil:
         c = ArgUtil.connection_find_by_name(name, connections, n_connections)
         if not c:
             raise MyError('invalid master/parent "%s"' % (name))
-        assert c.get('nm.uuid', None)
         return c['nm.uuid']
 
     @staticmethod
@@ -925,6 +928,31 @@ class ArgValidator_ListConnections(ArgValidatorList):
                     if not ArgUtil.connection_find_by_name(connection['parent'], result, idx):
                         raise ValidationError(name + '[' + str(idx) + '].parent', 'references non-existing "parent" connection "%s"' % (connection['parent']))
         return result
+
+    VALIDATE_ONE_MODE_NM = 'nm'
+    VALIDATE_ONE_MODE_INITSCRIPTS = 'initscripts'
+
+    def validate_connection_one(self, mode, connections, idx):
+        connection = connections[idx]
+        if 'type' not in connection:
+            return
+
+        if (   (    (mode == self.VALIDATE_ONE_MODE_INITSCRIPTS)
+                and (connection['type'] == 'vlan'))
+            or (    (connection['type'] == 'infiniband')
+                and (connection['infiniband_p_key'] not in [ None, -1 ])
+                and (connection['parent']))):
+            try:
+                ArgUtil.connection_find_master(connection['parent'], connections, idx)
+            except MyError as e:
+                raise ValidationError.from_connection(idx, 'profile references a parent "%s" which has \'interface_name\' missing' % (connection['parent']))
+
+        if (    (mode == self.VALIDATE_ONE_MODE_INITSCRIPTS)
+            and (connection['master'])):
+            try:
+                ArgUtil.connection_find_master(connection['master'], connections, idx)
+            except MyError as e:
+                raise ValidationError.from_connection(idx, 'profile references a master "%s" which has \'interface_name\' missing' % (connection['master']))
 
 ###############################################################################
 
@@ -1972,6 +2000,13 @@ class Cmd:
         AnsibleUtil.fail_json('unsupported provider %s' % (provider))
 
     def run(self):
+        for idx, connection in enumerate(AnsibleUtil.connections):
+            try:
+                AnsibleUtil.ARGS_CONNECTIONS.validate_connection_one(self.validate_one_type,
+                                                                     AnsibleUtil.connections,
+                                                                     idx)
+            except ValidationError as e:
+                AnsibleUtil.log_fatal(idx, str(e))
         self.run_prepare()
         while AnsibleUtil.check_mode_next() != CheckMode.DONE:
             for idx, connection in enumerate(AnsibleUtil.connections):
@@ -2033,6 +2068,7 @@ class Cmd_nm(Cmd):
 
     def __init__(self):
         self._nmutil = None
+        self.validate_one_type = ArgValidator_ListConnections.VALIDATE_ONE_MODE_NM
 
     @property
     def nmutil(self):
@@ -2221,6 +2257,9 @@ class Cmd_nm(Cmd):
 ###############################################################################
 
 class Cmd_initscripts(Cmd):
+
+    def __init__(self):
+        self.validate_one_type = ArgValidator_ListConnections.VALIDATE_ONE_MODE_INITSCRIPTS
 
     def check_name(self, idx, name = None):
         if name is None:
