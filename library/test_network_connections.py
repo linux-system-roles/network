@@ -33,6 +33,13 @@ class TestValidator(unittest.TestCase):
                           v.validate,
                           value)
 
+    def do_connections_check_invalid(self, input_connections):
+        self.assertValidationError(n.AnsibleUtil.ARGS_CONNECTIONS, input_connections)
+
+    def do_connections_validate(self, expected_connections, input_connections):
+        connections = n.AnsibleUtil.ARGS_CONNECTIONS.validate(input_connections)
+        self.assertEqual(expected_connections, connections)
+
     def test_validate_str(self):
 
         v = n.ArgValidatorStr('state')
@@ -127,12 +134,12 @@ class TestValidator(unittest.TestCase):
 
         self.maxDiff = None
 
-        self.assertEqual(
+        self.do_connections_validate(
             [],
-            n.AnsibleUtil.ARGS_CONNECTIONS.validate([]),
+            [],
         )
 
-        self.assertEqual(
+        self.do_connections_validate(
             [
                 {
                     'name': '5',
@@ -171,14 +178,14 @@ class TestValidator(unittest.TestCase):
                     'ignore_errors': None,
                 }
             ],
-            n.AnsibleUtil.ARGS_CONNECTIONS.validate([
+            [
                 { 'name': '5',
                   'type': 'ethernet',
                 },
                 { 'name': '5' }
-            ]),
+            ],
         )
-        self.assertEqual(
+        self.do_connections_validate(
             [
                 {
                     'name': '5',
@@ -212,18 +219,17 @@ class TestValidator(unittest.TestCase):
                     'infiniband_transport_mode': None,
                 },
             ],
-            n.AnsibleUtil.ARGS_CONNECTIONS.validate([
+            [
                 { 'name': '5',
                   'state': 'up',
                   'type': 'ethernet',
                 },
-            ]),
+            ],
         )
 
-        self.assertValidationError(n.AnsibleUtil.ARGS_CONNECTIONS,
-                                   [ { 'name': 'a', 'autoconnect': True }])
+        self.do_connections_check_invalid([ { 'name': 'a', 'autoconnect': True }])
 
-        self.assertEqual(
+        self.do_connections_validate(
             [
                 {
                     'name': '5',
@@ -231,15 +237,15 @@ class TestValidator(unittest.TestCase):
                     'ignore_errors': None,
                 }
             ],
-            n.AnsibleUtil.ARGS_CONNECTIONS.validate([
+            [
                 {
                     'name': '5',
                     'state': 'absent',
                 }
-            ]),
+            ],
         )
 
-        self.assertEqual(
+        self.do_connections_validate(
             [
                 {
                     'autoconnect': True,
@@ -279,7 +285,7 @@ class TestValidator(unittest.TestCase):
                     'infiniband_transport_mode': None,
                 },
             ],
-            n.AnsibleUtil.ARGS_CONNECTIONS.validate([
+            [
                 {
                     'name': 'prod1',
                     'state': 'up',
@@ -291,10 +297,10 @@ class TestValidator(unittest.TestCase):
                         'address': '192.168.174.5/24',
                     }
                 }
-            ]),
+            ],
         )
 
-        self.assertEqual(
+        self.do_connections_validate(
             [
                 {
                     'autoconnect': True,
@@ -381,7 +387,7 @@ class TestValidator(unittest.TestCase):
                     'infiniband_transport_mode': None,
                 }
             ],
-            n.AnsibleUtil.ARGS_CONNECTIONS.validate([
+            [
                 {
                     'name': 'prod1',
                     'state': 'up',
@@ -409,10 +415,10 @@ class TestValidator(unittest.TestCase):
                         ],
                     }
                 }
-            ]),
+            ],
         )
 
-        self.assertEqual(
+        self.do_connections_validate(
             [
                 {
                     'autoconnect': True,
@@ -477,7 +483,7 @@ class TestValidator(unittest.TestCase):
                     'infiniband_transport_mode': None,
                 }
             ],
-            n.AnsibleUtil.ARGS_CONNECTIONS.validate([
+            [
                 {
                     'name': 'prod2',
                     'state': 'up',
@@ -495,10 +501,10 @@ class TestValidator(unittest.TestCase):
                     'interface_name': 'eth1',
                     'master': 'prod2',
                 }
-            ]),
+            ],
         )
 
-        self.assertEqual(
+        self.do_connections_validate(
             [
                 {
                     'autoconnect': True,
@@ -536,16 +542,16 @@ class TestValidator(unittest.TestCase):
                     'infiniband_transport_mode': None,
                 },
             ],
-            n.AnsibleUtil.ARGS_CONNECTIONS.validate([
+            [
                 {
                     'name': 'bond1',
                     'state': 'up',
                     'type': 'bond',
                 },
-            ]),
+            ],
         )
 
-        self.assertEqual(
+        self.do_connections_validate(
             [
                 {
                     'autoconnect': True,
@@ -583,7 +589,7 @@ class TestValidator(unittest.TestCase):
                     'infiniband_transport_mode': None,
                 },
             ],
-            n.AnsibleUtil.ARGS_CONNECTIONS.validate([
+            [
                 {
                     'name': 'bond1',
                     'state': 'up',
@@ -592,15 +598,13 @@ class TestValidator(unittest.TestCase):
                         'mode': 'active-backup',
                     },
                 },
-            ]),
+            ],
         )
 
-        self.assertValidationError(n.AnsibleUtil.ARGS_CONNECTIONS,
-                                   [ { } ])
-        self.assertValidationError(n.AnsibleUtil.ARGS_CONNECTIONS,
-                                   [ { 'name': 'b', 'xxx': 5 } ])
+        self.do_connections_check_invalid([ { } ])
+        self.do_connections_check_invalid([ { 'name': 'b', 'xxx': 5 } ])
 
-        self.assertEqual(
+        self.do_connections_validate(
             [
                 {
                     'autoconnect': True,
@@ -632,16 +636,16 @@ class TestValidator(unittest.TestCase):
                     'infiniband_transport_mode': None,
                 },
             ],
-            n.AnsibleUtil.ARGS_CONNECTIONS.validate([
+            [
                 {
                     'name': '5',
                     'type': 'ethernet',
                     'mac': 'AA:bb:cC:DD:ee:FF',
                 }
-            ]),
+            ],
         )
 
-        self.assertEqual(
+        self.do_connections_validate(
             [
                 {
                     'name': '5',
@@ -675,15 +679,15 @@ class TestValidator(unittest.TestCase):
                     'infiniband_transport_mode': None,
                 },
             ],
-            n.AnsibleUtil.ARGS_CONNECTIONS.validate([
+            [
                 { 'name': '5',
                   'state': 'up',
                   'type': 'ethernet',
                 },
-            ]),
+            ],
         )
 
-        self.assertEqual(
+        self.do_connections_validate(
             [
                 {
                     'name': '5',
@@ -717,17 +721,17 @@ class TestValidator(unittest.TestCase):
                     'infiniband_transport_mode': None,
                 },
             ],
-            n.AnsibleUtil.ARGS_CONNECTIONS.validate([
+            [
                 { 'name': '5',
                   'state': 'up',
                   'type': 'ethernet',
                   'ip': {
                   },
                 },
-            ]),
+            ],
         )
 
-        self.assertEqual(
+        self.do_connections_validate(
             [
                 {
                     'name': '5',
@@ -761,7 +765,7 @@ class TestValidator(unittest.TestCase):
                     'infiniband_transport_mode': None,
                 },
             ],
-            n.AnsibleUtil.ARGS_CONNECTIONS.validate([
+            [
                 { 'name': '5',
                   'state': 'up',
                   'type': 'ethernet',
@@ -769,12 +773,10 @@ class TestValidator(unittest.TestCase):
                       'dns_search': [ 'aa', 'bb' ],
                   },
                 },
-            ]),
+            ],
         )
 
-
-        self.assertValidationError(n.AnsibleUtil.ARGS_CONNECTIONS,
-                                   [ { 'name': 'b', 'type': 'ethernet', 'mac': 'aa:b' } ])
+        self.do_connections_check_invalid([ { 'name': 'b', 'type': 'ethernet', 'mac': 'aa:b' } ])
 
 @my_test_skipIf(nmutil is None, 'no support for NM (libnm via pygobject)')
 class TestNM(unittest.TestCase):
