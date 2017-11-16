@@ -1045,7 +1045,7 @@ class IfcfgUtil:
         return s
 
     @classmethod
-    def ifcfg_create(cls, connections, idx, warn_fcn):
+    def ifcfg_create(cls, connections, idx, warn_fcn = lambda msg: None):
         connection = connections[idx]
         ip = connection['ip']
 
