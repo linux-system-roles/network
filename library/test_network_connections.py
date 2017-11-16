@@ -21,10 +21,23 @@ except AttributeError:
 
 try:
     nmutil = n.NMUtil()
+    assert(nmutil)
 except:
     # NMUtil is not supported, for example on RHEL 6 or without
     # pygobject.
     nmutil = None
+
+if nmutil:
+    NM = n.Util.NM()
+    GObject = n.Util.GObject()
+
+def pprint(msg, obj):
+    print('PRINT: %s\n' % (msg))
+    import pprint
+    p = pprint.PrettyPrinter(indent = 4)
+    p.pprint(obj)
+    if nmutil is not None and isinstance(obj, NM.Connection):
+        obj.dump()
 
 class TestValidator(unittest.TestCase):
 
@@ -36,9 +49,41 @@ class TestValidator(unittest.TestCase):
     def do_connections_check_invalid(self, input_connections):
         self.assertValidationError(n.AnsibleUtil.ARGS_CONNECTIONS, input_connections)
 
+    def do_connections_validate_nm(self, input_connections):
+        if not nmutil:
+            return
+        connections = n.AnsibleUtil.ARGS_CONNECTIONS.validate(input_connections)
+        for connection in connections:
+            if 'type' in connection:
+                connection['nm.exists'] = False
+                connection['nm.uuid'] = n.Util.create_uuid()
+        mode = n.ArgValidator_ListConnections.VALIDATE_ONE_MODE_INITSCRIPTS
+        for idx, connection in enumerate(connections):
+            try:
+                n.AnsibleUtil.ARGS_CONNECTIONS.validate_connection_one(mode, connections, idx)
+            except n.ValidationError as e:
+                continue
+            if 'type' in connection:
+                con_new = nmutil.connection_create(connections, idx)
+                self.assertTrue(con_new)
+                self.assertTrue(con_new.verify())
+
+    def do_connections_validate_ifcfg(self, input_connections):
+        mode = n.ArgValidator_ListConnections.VALIDATE_ONE_MODE_INITSCRIPTS
+        connections = n.AnsibleUtil.ARGS_CONNECTIONS.validate(input_connections)
+        for idx, connection in enumerate(connections):
+            try:
+                n.AnsibleUtil.ARGS_CONNECTIONS.validate_connection_one(mode, connections, idx)
+            except n.ValidationError as e:
+                continue
+            if 'type' in connection:
+                c = n.IfcfgUtil.ifcfg_create(connections, idx)
+
     def do_connections_validate(self, expected_connections, input_connections):
         connections = n.AnsibleUtil.ARGS_CONNECTIONS.validate(input_connections)
         self.assertEqual(expected_connections, connections)
+        self.do_connections_validate_nm(input_connections)
+        self.do_connections_validate_ifcfg(input_connections)
 
     def test_validate_str(self):
 
@@ -782,10 +827,6 @@ class TestValidator(unittest.TestCase):
 class TestNM(unittest.TestCase):
 
     def test_connection_ensure_setting(self):
-
-        NM = n.Util.NM()
-        GObject = n.Util.GObject()
-
         con = NM.SimpleConnection.new()
         self.assertIsNotNone(con)
         self.assertTrue(GObject.type_is_a(con, NM.Connection))
