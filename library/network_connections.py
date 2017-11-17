@@ -723,6 +723,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
                     default_value = list,
                 ),
                 ArgValidatorBool('route_append_only'),
+                ArgValidatorBool('rule_append_only'),
                 ArgValidatorList('dns',
                     nested = ArgValidatorIP('dns[?]', plain_address=False),
                     default_value = list,
@@ -743,6 +744,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 'address': [],
                 'route': [],
                 'route_append_only': False,
+                'rule_append_only': False,
                 'dns': [],
                 'dns_search': [],
             },
@@ -1246,6 +1248,10 @@ class IfcfgUtil:
             route6_file = cls._ifcfg_route_merge(route6,
                                                  ip['route_append_only'] and content_current,
                                                  content_current['route6'] if content_current else None)
+
+        if ip['rule_append_only'] and content_current:
+            rule4_file = content_current['rule']
+            rule6_file = content_current['rule6']
 
         for key in list(ifcfg.keys()):
             v = ifcfg[key]
