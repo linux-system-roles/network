@@ -242,6 +242,7 @@ class TestValidator(unittest.TestCase):
                         'dhcp4': True,
                         'address': [],
                         'route_append_only': False,
+                        'rule_append_only': False,
                         'route': [],
                         'route_metric6': None,
                         'dhcp4_send_hostname': None,
@@ -290,6 +291,7 @@ class TestValidator(unittest.TestCase):
                         'dhcp4': True,
                         'address': [],
                         'route_append_only': False,
+                        'rule_append_only': False,
                         'route': [],
                         'dns': [],
                         'dns_search': [],
@@ -360,6 +362,7 @@ class TestValidator(unittest.TestCase):
                             }
                         ],
                         'route_append_only': False,
+                        'rule_append_only': False,
                         'route': [],
                     },
                     'state': 'up',
@@ -415,6 +418,7 @@ class TestValidator(unittest.TestCase):
                             }
                         ],
                         'route_append_only': False,
+                        'rule_append_only': False,
                         'route': [],
                         'route_metric6': None,
                         'route_metric4': None,
@@ -466,6 +470,7 @@ class TestValidator(unittest.TestCase):
                             },
                         ],
                         'route_append_only': False,
+                        'rule_append_only': False,
                         'route': [
                             {
                                 'family': socket.AF_INET,
@@ -519,6 +524,7 @@ class TestValidator(unittest.TestCase):
                             },
                         ],
                         'route_append_only': False,
+                        'rule_append_only': False,
                         'route': [
                             {
                                 'network': '192.168.5.0',
@@ -547,6 +553,7 @@ class TestValidator(unittest.TestCase):
                         'dns': [],
                         'address': [],
                         'route_append_only': False,
+                        'rule_append_only': False,
                         'route': [],
                     },
                     'mac': None,
@@ -573,6 +580,7 @@ class TestValidator(unittest.TestCase):
                         'auto6': True,
                         'address': [],
                         'route_append_only': False,
+                        'rule_append_only': False,
                         'route': [],
                         'route_metric6': None,
                         'route_metric4': None,
@@ -637,6 +645,7 @@ class TestValidator(unittest.TestCase):
                         'dns': [],
                         'address': [],
                         'route_append_only': False,
+                        'rule_append_only': False,
                         'route': [],
                     },
                     'mac': None,
@@ -686,6 +695,7 @@ class TestValidator(unittest.TestCase):
                         'dns': [],
                         'address': [],
                         'route_append_only': False,
+                        'rule_append_only': False,
                         'route': [],
                     },
                     'mac': None,
@@ -731,6 +741,7 @@ class TestValidator(unittest.TestCase):
                     'ip': {
                         'address': [],
                         'route_append_only': False,
+                        'rule_append_only': False,
                         'route': [],
                         'auto6': True,
                         'dhcp4': True,
@@ -782,6 +793,7 @@ class TestValidator(unittest.TestCase):
                         'dhcp4': True,
                         'address': [],
                         'route_append_only': False,
+                        'rule_append_only': False,
                         'route': [],
                         'dns': [],
                         'dns_search': [ ],
@@ -826,6 +838,7 @@ class TestValidator(unittest.TestCase):
                         'dhcp4': True,
                         'address': [],
                         'route_append_only': False,
+                        'rule_append_only': False,
                         'route': [],
                         'dns': [],
                         'dns_search': [ ],
@@ -872,6 +885,7 @@ class TestValidator(unittest.TestCase):
                         'dhcp4': True,
                         'address': [],
                         'route_append_only': False,
+                        'rule_append_only': False,
                         'route': [
                             {
                                 'family': socket.AF_INET,
@@ -962,6 +976,7 @@ class TestValidator(unittest.TestCase):
                         'dhcp4': True,
                         'address': [],
                         'route_append_only': True,
+                        'rule_append_only': False,
                         'route': [
                             {
                                 'family': socket.AF_INET,
@@ -1011,6 +1026,7 @@ class TestValidator(unittest.TestCase):
                   'ip': {
                       'dns_search': [ 'aa', 'bb' ],
                       'route_append_only': True,
+                      'rule_append_only': False,
                       'route': [
                           {
                               'network': '192.168.45.0',
