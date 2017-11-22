@@ -48,6 +48,10 @@ class ValidationError(MyError):
         self.error_message = message
         self.name = name
 
+    @staticmethod
+    def from_connection(idx, message):
+        return ValidationError('connection[' + str(idx) + ']', message)
+
 class Util:
 
     PY3 = (sys.version_info[0] == 3)
@@ -243,6 +247,7 @@ class Util:
         if addr is None:
             return (None, None)
         if family is not None:
+            Util.addr_family_check(family)
             a = socket.inet_pton(family, addr)
         else:
             a = None
@@ -256,6 +261,11 @@ class Util:
         return (socket.inet_ntop(family, a), family)
 
     @staticmethod
+    def addr_family_check(family):
+        if family != socket.AF_INET and family != socket.AF_INET6:
+            raise MyError('invalid address family %s' % (family))
+
+    @staticmethod
     def addr_family_to_v(family):
         if family is None:
             return ''
@@ -266,26 +276,42 @@ class Util:
         raise MyError('invalid address family "%s"' % (family))
 
     @staticmethod
+    def addr_family_default_prefix(family):
+        Util.addr_family_check(family)
+        if family == socket.AF_INET:
+            return 24
+        else:
+            return 64
+
+    @staticmethod
+    def addr_family_valid_prefix(family, prefix):
+        Util.addr_family_check(family)
+        if family == socket.AF_INET:
+            m = 32
+        else:
+            m = 128
+        return prefix >= 0 and prefix <= m
+
+    @staticmethod
     def parse_address(address, family = None):
-        result = {}
         try:
             parts = address.split()
             addr_parts = parts[0].split('/')
             if len(addr_parts) != 2:
                 raise MyError('expect two addr-parts: ADDR/PLEN')
             a, family = Util.parse_ip(addr_parts[0], family)
-            result['address'] = a
-            result['is_v4'] = (family == socket.AF_INET)
-            result['family'] = family
             prefix = int(addr_parts[1])
-            if not (prefix >=0 and prefix <= (32 if family == socket.AF_INET else 128)):
+            if not Util.addr_family_valid_prefix(family, prefix):
                 raise MyError('invalid prefix %s' % (prefix))
-            result['prefix'] = prefix
             if len(parts) > 1:
                 raise MyError('too many parts')
+            return {
+                'address': a,
+                'family': family,
+                'prefix': prefix,
+            }
         except Exception as e:
             raise MyError('invalid address "%s"' % (address))
-        return result
 
 ###############################################################################
 
@@ -420,7 +446,6 @@ class ArgUtil:
         c = ArgUtil.connection_find_by_name(name, connections, n_connections)
         if not c:
             raise MyError('invalid master/parent "%s"' % (name))
-        assert c.get('nm.uuid', None)
         return c['nm.uuid']
 
     @staticmethod
@@ -517,46 +542,6 @@ class ArgValidatorBool(ArgValidator):
             pass
         raise ValidationError(name, 'must be an boolean but is "%s"' % (value))
 
-class ArgValidatorIP(ArgValidatorStr):
-    def __init__(self, name, family = None, required = False, default_value = None, plain_address = True):
-        ArgValidatorStr.__init__(self, name, required, default_value, None)
-        self.family = family
-        self.plain_address = plain_address
-    def _validate(self, value, name):
-        v = ArgValidatorStr._validate(self, value, name)
-        try:
-            addr, family = Util.parse_ip(v, self.family)
-        except:
-            raise ValidationError(name, 'value "%s" is not a valid IP%s address' % (value, Util.addr_family_to_v(self.family)))
-        if self.plain_address:
-            return addr
-        return { 'is_v4': family == socket.AF_INET, 'family': family, 'address': addr }
-
-class ArgValidatorMac(ArgValidatorStr):
-    def __init__(self, name, force_len = None, required = False, default_value = None):
-        ArgValidatorStr.__init__(self, name, required, default_value, None)
-        self.force_len = force_len
-    def _validate(self, value, name):
-        v = ArgValidatorStr._validate(self, value, name)
-        try:
-            addr = Util.mac_aton(v, self.force_len)
-        except MyError as e:
-            raise ValidationError(name, 'value "%s" is not a valid MAC address' % (value))
-        if not addr:
-            raise ValidationError(name, 'value "%s" is not a valid MAC address' % (value))
-        return Util.mac_ntoa(addr)
-
-class ArgValidatorIPAddr(ArgValidatorStr):
-    def __init__(self, name, family = None, required = False, default_value = None):
-        ArgValidatorStr.__init__(self, name, required, default_value, None)
-        self.family = family
-    def _validate(self, value, name):
-        v = ArgValidatorStr._validate(self, value, name)
-        try:
-            return Util.parse_address(v, self.family)
-        except:
-            raise ValidationError(name, 'value "%s" is not a valid IP%s address with prefix length' % (value, Util.addr_family_to_v(self.family)))
-
 class ArgValidatorDict(ArgValidator):
     def __init__(self, name = None, required = False, nested = None, default_value = None, all_missing_during_validate = False):
         ArgValidator.__init__(self, name, required, default_value)
@@ -617,6 +602,106 @@ class ArgValidatorList(ArgValidator):
             result.append(vv)
         return result
 
+class ArgValidatorIP(ArgValidatorStr):
+    def __init__(self, name, family = None, required = False, default_value = None, plain_address = True):
+        ArgValidatorStr.__init__(self, name, required, default_value, None)
+        self.family = family
+        self.plain_address = plain_address
+    def _validate(self, value, name):
+        v = ArgValidatorStr._validate(self, value, name)
+        try:
+            addr, family = Util.parse_ip(v, self.family)
+        except:
+            raise ValidationError(name, 'value "%s" is not a valid IP%s address' % (value, Util.addr_family_to_v(self.family)))
+        if self.plain_address:
+            return addr
+        return { 'family': family, 'address': addr }
+
+class ArgValidatorMac(ArgValidatorStr):
+    def __init__(self, name, force_len = None, required = False, default_value = None):
+        ArgValidatorStr.__init__(self, name, required, default_value, None)
+        self.force_len = force_len
+    def _validate(self, value, name):
+        v = ArgValidatorStr._validate(self, value, name)
+        try:
+            addr = Util.mac_aton(v, self.force_len)
+        except MyError as e:
+            raise ValidationError(name, 'value "%s" is not a valid MAC address' % (value))
+        if not addr:
+            raise ValidationError(name, 'value "%s" is not a valid MAC address' % (value))
+        return Util.mac_ntoa(addr)
+
+class ArgValidatorIPAddr(ArgValidatorDict):
+    def __init__(self, name, family = None, required = False, default_value = None):
+        ArgValidatorDict.__init__(self,
+            name,
+            required,
+            nested = [
+                ArgValidatorIP ('address', family = family, required = True, plain_address = False),
+                ArgValidatorNum('prefix', default_value = None, val_min = 0),
+            ],
+        )
+        self.family = family
+    def _validate(self, value, name):
+        if isinstance(value, Util.STRING_TYPE):
+            v = str(value)
+            if not v:
+                raise ValidationError(name, 'cannot be empty')
+            try:
+                return Util.parse_address(v, self.family)
+            except:
+                raise ValidationError(name, 'value "%s" is not a valid IP%s address with prefix length' % (value, Util.addr_family_to_v(self.family)))
+        v = ArgValidatorDict._validate(self, value, name)
+        return {
+            'address': v['address']['address'],
+            'family':  v['address']['family'],
+            'prefix':  v['prefix'],
+        }
+    def _validate_post(self, value, name, result):
+        family = result['family']
+        prefix = result['prefix']
+        if prefix is None:
+            prefix = Util.addr_family_default_prefix(family)
+            result['prefix'] = prefix
+        elif not Util.addr_family_valid_prefix(family, prefix):
+           raise ValidationError(name, 'invalid prefix %s in "%s"' % (prefix, value))
+        return result
+
+class ArgValidatorIPRoute(ArgValidatorDict):
+    def __init__(self, name, family = None, required = False, default_value = None):
+        ArgValidatorDict.__init__(self,
+            name,
+            required,
+            nested = [
+                ArgValidatorIP ('network', family = family, required = True, plain_address = False),
+                ArgValidatorNum('prefix', default_value = None, val_min = 0),
+                ArgValidatorIP ('gateway', family = family, default_value = None, plain_address = False),
+                ArgValidatorNum('metric', default_value = -1, val_min = -1, val_max = 0xFFFFFFFF),
+            ],
+        )
+        self.family = family
+    def _validate_post(self, value, name, result):
+        network = result['network']
+
+        family = network['family']
+        result['network'] = network['address']
+        result['family'] = family
+
+        gateway = result['gateway']
+        if gateway is not None:
+            if family != gateway['family']:
+                raise ValidationError(name, 'conflicting address family between network and gateway \"%s\"' % (gateway['address']))
+            result['gateway'] = gateway['address']
+
+        prefix = result['prefix']
+        if prefix is None:
+            prefix = Util.addr_family_default_prefix(family)
+            result['prefix'] = prefix
+        elif not Util.addr_family_valid_prefix(family, prefix):
+           raise ValidationError(name, 'invalid prefix %s in "%s"' % (prefix, value))
+
+        return result
+
 class ArgValidator_DictIP(ArgValidatorDict):
     def __init__(self):
         ArgValidatorDict.__init__(self,
@@ -633,6 +718,12 @@ class ArgValidator_DictIP(ArgValidatorDict):
                     nested = ArgValidatorIPAddr('address[?]'),
                     default_value = list,
                 ),
+                ArgValidatorList('route',
+                    nested = ArgValidatorIPRoute('route[?]'),
+                    default_value = list,
+                ),
+                ArgValidatorBool('route_append_only'),
+                ArgValidatorBool('rule_append_only'),
                 ArgValidatorList('dns',
                     nested = ArgValidatorIP('dns[?]', plain_address=False),
                     default_value = list,
@@ -651,6 +742,9 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 'gateway6': None,
                 'route_metric6': None,
                 'address': [],
+                'route': [],
+                'route_append_only': False,
+                'rule_append_only': False,
                 'dns': [],
                 'dns_search': [],
             },
@@ -658,9 +752,9 @@ class ArgValidator_DictIP(ArgValidatorDict):
 
     def _validate_post(self, value, name, result):
         if result['dhcp4'] is None:
-            result['dhcp4'] = result['dhcp4_send_hostname'] is not None or not any([a for a in result['address'] if a['is_v4']])
+            result['dhcp4'] = result['dhcp4_send_hostname'] is not None or not any([a for a in result['address'] if a['family'] == socket.AF_INET])
         if result['auto6'] is None:
-            result['auto6'] = not any([a for a in result['address'] if not a['is_v4']])
+            result['auto6'] = not any([a for a in result['address'] if a['family'] == socket.AF_INET6])
         if result['dhcp4_send_hostname'] is not None:
             if not result['dhcp4']:
                 raise ValidationError(name, '"dhcp4_send_hostname" is only valid if "dhcp4" is enabled')
@@ -879,6 +973,31 @@ class ArgValidator_ListConnections(ArgValidatorList):
                         raise ValidationError(name + '[' + str(idx) + '].parent', 'references non-existing "parent" connection "%s"' % (connection['parent']))
         return result
 
+    VALIDATE_ONE_MODE_NM = 'nm'
+    VALIDATE_ONE_MODE_INITSCRIPTS = 'initscripts'
+
+    def validate_connection_one(self, mode, connections, idx):
+        connection = connections[idx]
+        if 'type' not in connection:
+            return
+
+        if (    (connection['parent'])
+            and (   (    (mode == self.VALIDATE_ONE_MODE_INITSCRIPTS)
+                     and (connection['type'] == 'vlan'))
+                 or (    (connection['type'] == 'infiniband')
+                     and (connection['infiniband_p_key'] not in [ None, -1 ])))):
+            try:
+                ArgUtil.connection_find_master(connection['parent'], connections, idx)
+            except MyError as e:
+                raise ValidationError.from_connection(idx, 'profile references a parent "%s" which has \'interface_name\' missing' % (connection['parent']))
+
+        if (    (connection['master'])
+            and (mode == self.VALIDATE_ONE_MODE_INITSCRIPTS)):
+            try:
+                ArgUtil.connection_find_master(connection['master'], connections, idx)
+            except MyError as e:
+                raise ValidationError.from_connection(idx, 'profile references a master "%s" which has \'interface_name\' missing' % (connection['master']))
+
 ###############################################################################
 
 class IfcfgUtil:
@@ -970,14 +1089,40 @@ class IfcfgUtil:
         return s
 
     @classmethod
-    def ifcfg_create(cls, connections, idx, warn_fcn):
+    def _ifcfg_route_merge(cls, route, append_only, current):
+        if not append_only or current is None:
+            if not route:
+                return None
+            return '\n'.join(route) + '\n'
+
+        if route:
+            # the 'route' file is processed line by line by initscripts' ifup-route. Hence,
+            # the order of the route matters. _ifcfg_route_merge() is not sophisticated
+            # enough to understand pre-existing lines. It will only append lines that
+            # don't exist yet, which hopefully is correct.
+            # It's better to always rewrite the entire file with route_append_only=False.
+            changed = False
+            c_lines = list(current.split('\n'))
+            for r in route:
+                if r not in c_lines:
+                    changed = True
+                    c_lines.append(r)
+            if changed:
+                return '\n'.join(c_lines) + '\n'
+
+        return current
+
+    @classmethod
+    def ifcfg_create(cls, connections, idx, warn_fcn = lambda msg: None, content_current = None):
         connection = connections[idx]
         ip = connection['ip']
 
-        ifcfg_all = {}
-        for file_type in cls.FILE_TYPES:
-            ifcfg_all[file_type] = {}
-        ifcfg = ifcfg_all['ifcfg']
+        ifcfg = {}
+        keys_file = None
+        route4_file = None
+        route6_file = None
+        rule4_file = None
+        rule6_file = None
 
         if ip['dhcp4_send_hostname'] is not None:
             warn_fcn('ip.dhcp4_send_hostname is not supported by initscripts provider')
@@ -1042,9 +1187,13 @@ class IfcfgUtil:
                     ifcfg['DEVICETYPE'] = 'TeamPort'
             else:
                 raise MyError('invalid slave_type "%s"' % (connection['slave_type']))
+
+            if ip['route_append_only'] and content_current:
+                route4_file = content_current['route']
+                route6_file = content_current['route6']
         else:
-            addrs4 = list([a for a in ip['address'] if     a['is_v4']])
-            addrs6 = list([a for a in ip['address'] if not a['is_v4']])
+            addrs4 = list([a for a in ip['address'] if a['family'] == socket.AF_INET])
+            addrs6 = list([a for a in ip['address'] if a['family'] == socket.AF_INET6])
 
             if ip['dhcp4']:
                 ifcfg['BOOTPROTO'] = 'dhcp'
@@ -1079,16 +1228,47 @@ class IfcfgUtil:
             if ip['gateway6'] is not None:
                 ifcfg['IPV6_DEFAULTGW'] = ip['gateway6']
 
-        for file_type in cls.FILE_TYPES:
-            h = ifcfg_all[file_type]
-            for key in h.keys():
-                if h[key] is None:
-                    del h[key]
-                    continue
-                if type(h[key]) == type(True):
-                    h[key] = 'yes' if h[key] else 'no'
+            route4 = []
+            route6 = []
+            for r in ip['route']:
+                line = r['network'] + '/' + str(r['prefix'])
+                if r['gateway']:
+                    line += ' via ' + r['gateway']
+                if r['metric'] != -1:
+                    line += ' metric ' + str(r['metric'])
 
-        return ifcfg_all
+                if r['family'] == socket.AF_INET:
+                    route4.append(line)
+                else:
+                    route6.append(line)
+
+            route4_file = cls._ifcfg_route_merge(route4,
+                                                 ip['route_append_only'] and content_current,
+                                                 content_current['route'] if content_current else None)
+            route6_file = cls._ifcfg_route_merge(route6,
+                                                 ip['route_append_only'] and content_current,
+                                                 content_current['route6'] if content_current else None)
+
+        if ip['rule_append_only'] and content_current:
+            rule4_file = content_current['rule']
+            rule6_file = content_current['rule6']
+
+        for key in list(ifcfg.keys()):
+            v = ifcfg[key]
+            if v is None:
+                del ifcfg[key]
+                continue
+            if type(v) == type(True):
+                ifcfg[key] = 'yes' if v else 'no'
+
+        return {
+            'ifcfg':  ifcfg,
+            'keys':   keys_file,
+            'route':  route4_file,
+            'route6': route6_file,
+            'rule':   rule4_file,
+            'rule6':  rule6_file,
+        }
 
     @classmethod
     def ifcfg_parse_line(cls, line):
@@ -1135,18 +1315,18 @@ class IfcfgUtil:
         content = {}
         for file_type in cls._file_types(file_type):
             h = ifcfg_all[file_type]
-            if not h:
-                if file_type != 'ifcfg':
-                    content[file_type] = None
-                continue
-            s = cls.ANSIBLE_MANAGED + '\n'
-            for key in sorted(h.keys()):
-                value = h[key]
-                if not cls.KeyValid(key):
-                    raise MyError('invalid ifcfg key %s' % (key))
-                if value is not None:
-                    s += key + '=' + cls.ValueEscape(value) + '\n'
-            content[file_type] = s
+            if file_type == 'ifcfg':
+                s = cls.ANSIBLE_MANAGED + '\n'
+                for key in sorted(h.keys()):
+                    value = h[key]
+                    if not cls.KeyValid(key):
+                        raise MyError('invalid ifcfg key %s' % (key))
+                    if value is not None:
+                        s += key + '=' + cls.ValueEscape(value) + '\n'
+                content[file_type] = s
+            else:
+                content[file_type] = h
+
         return content
 
     @classmethod
@@ -1222,6 +1402,11 @@ class NMUtil:
         if nmclient is None:
             nmclient = Util.NM().Client.new(None)
         self.nmclient = nmclient
+
+    def setting_ip_config_get_routes(self, s_ip):
+        if s_ip is not None:
+            for i in range(0, s_ip.get_num_routes()):
+               yield s_ip.get_route(i)
 
     def connection_ensure_setting(self, connection, setting_type):
         setting = connection.get_setting(setting_type)
@@ -1313,7 +1498,7 @@ class NMUtil:
                 return True
         return False
 
-    def connection_create(self, connections, idx):
+    def connection_create(self, connections, idx, connection_current = None):
         NM = Util.NM()
 
         connection = connections[idx]
@@ -1378,8 +1563,8 @@ class NMUtil:
             s_ip4.set_property(NM.SETTING_IP_CONFIG_METHOD, 'auto')
             s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, 'auto')
 
-            addrs4 = list([a for a in ip['address'] if     a['is_v4']])
-            addrs6 = list([a for a in ip['address'] if not a['is_v4']])
+            addrs4 = list([a for a in ip['address'] if a['family'] == socket.AF_INET])
+            addrs6 = list([a for a in ip['address'] if a['family'] == socket.AF_INET6])
 
             if ip['dhcp4']:
                 s_ip4.set_property(NM.SETTING_IP_CONFIG_METHOD, 'auto')
@@ -1395,7 +1580,7 @@ class NMUtil:
             if ip['route_metric4'] is not None and ip['route_metric4'] >= 0:
                 s_ip4.set_property(NM.SETTING_IP_CONFIG_ROUTE_METRIC, ip['route_metric4'])
             for d in ip['dns']:
-                if d['is_v4']:
+                if d['family'] == socket.AF_INET:
                     s_ip4.add_dns(d['address'])
             for s in ip['dns_search']:
                 s_ip4.add_dns_search(s)
@@ -1413,8 +1598,20 @@ class NMUtil:
             if ip['route_metric6'] is not None and ip['route_metric6'] >= 0:
                 s_ip6.set_property(NM.SETTING_IP_CONFIG_ROUTE_METRIC, ip['route_metric6'])
             for d in ip['dns']:
-                if not d['is_v4']:
+                if d['family'] == socket.AF_INET6:
                     s_ip6.add_dns(d['address'])
+
+            if ip['route_append_only'] and connection_current:
+                for r in self.setting_ip_config_get_routes(connection_current.get_setting(NM.SettingIP4Config)):
+                    s_ip4.add_route(r)
+                for r in self.setting_ip_config_get_routes(connection_current.get_setting(NM.SettingIP6Config)):
+                    s_ip6.add_route(r)
+            for r in ip['route']:
+                rr = NM.IPRoute.new(r['family'], r['network'], r['prefix'], r['gateway'], r['metric'])
+                if r['family'] == socket.AF_INET:
+                    s_ip4.add_route(rr)
+                else:
+                    s_ip6.add_route(rr)
 
         try:
             con.normalize()
@@ -1925,6 +2122,13 @@ class Cmd:
         AnsibleUtil.fail_json('unsupported provider %s' % (provider))
 
     def run(self):
+        for idx, connection in enumerate(AnsibleUtil.connections):
+            try:
+                AnsibleUtil.ARGS_CONNECTIONS.validate_connection_one(self.validate_one_type,
+                                                                     AnsibleUtil.connections,
+                                                                     idx)
+            except ValidationError as e:
+                AnsibleUtil.log_fatal(idx, str(e))
         self.run_prepare()
         while AnsibleUtil.check_mode_next() != CheckMode.DONE:
             for idx, connection in enumerate(AnsibleUtil.connections):
@@ -1986,6 +2190,7 @@ class Cmd_nm(Cmd):
 
     def __init__(self):
         self._nmutil = None
+        self.validate_one_type = ArgValidator_ListConnections.VALIDATE_ONE_MODE_NM
 
     @property
     def nmutil(self):
@@ -2052,7 +2257,7 @@ class Cmd_nm(Cmd):
     def run_state_present(self, idx):
         connection = AnsibleUtil.connections[idx]
         con_cur = Util.first(self.nmutil.connection_list(name = connection['name'], uuid = connection['nm.uuid']))
-        con_new = self.nmutil.connection_create(AnsibleUtil.connections, idx)
+        con_new = self.nmutil.connection_create(AnsibleUtil.connections, idx, con_cur)
         changed = False
         if con_cur is None:
             AnsibleUtil.log_info(idx, 'add connection %s, %s' % (connection['name'], connection['nm.uuid']))
@@ -2175,6 +2380,9 @@ class Cmd_nm(Cmd):
 
 class Cmd_initscripts(Cmd):
 
+    def __init__(self):
+        self.validate_one_type = ArgValidator_ListConnections.VALIDATE_ONE_MODE_INITSCRIPTS
+
     def check_name(self, idx, name = None):
         if name is None:
             name = AnsibleUtil.connections[idx]['name']
@@ -2228,10 +2436,12 @@ class Cmd_initscripts(Cmd):
         connection = AnsibleUtil.connections[idx]
         name = connection['name']
 
-        ifcfg_all = IfcfgUtil.ifcfg_create(AnsibleUtil.connections, idx,
-                                           lambda msg: AnsibleUtil.log_warn(idx, msg))
-
         old_content = IfcfgUtil.content_from_file(name)
+
+        ifcfg_all = IfcfgUtil.ifcfg_create(AnsibleUtil.connections, idx,
+                                           lambda msg: AnsibleUtil.log_warn(idx, msg),
+                                           old_content)
+
         new_content = IfcfgUtil.content_from_dict(ifcfg_all)
 
         if old_content == new_content:
