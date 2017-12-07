@@ -159,6 +159,12 @@ interface. In case of a missing `interface_name`, the profile name `name` is use
 Note the destinction between the profile name `name` and the device
 name `interface_name`, which may or may not be the same.
 
+### `zone`
+
+Sets the firewalld zone for the interface.
+
+Slaves to bridge/bond/team devices cannot specify a zone.
+
 ### `state: up`
 
 #### Example

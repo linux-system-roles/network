@@ -802,6 +802,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidatorStr ('interface_name'),
                 ArgValidatorMac ('mac'),
                 ArgValidatorNum ('mtu', val_min = 0, val_max = 0xFFFFFFFF, default_value = None),
+                ArgValidatorStr ('zone'),
                 ArgValidatorBool('check_iface_exists', default_value = True),
                 ArgValidatorStr ('parent'),
                 ArgValidatorNum ('vlan_id', val_min = 0, val_max = 4094, default_value = None),
@@ -1192,6 +1193,9 @@ class IfcfgUtil:
                 route4_file = content_current['route']
                 route6_file = content_current['route6']
         else:
+            if connection['zone']:
+                ifcfg['ZONE'] = connection['zone']
+
             addrs4 = list([a for a in ip['address'] if a['family'] == socket.AF_INET])
             addrs6 = list([a for a in ip['address'] if a['family'] == socket.AF_INET6])
 
@@ -1555,6 +1559,9 @@ class NMUtil:
             s_con.set_property(NM.SETTING_CONNECTION_SLAVE_TYPE, connection['slave_type'])
             s_con.set_property(NM.SETTING_CONNECTION_MASTER, ArgUtil.connection_find_master_uuid(connection['master'], connections, idx))
         else:
+            if connection['zone']:
+                s_con.set_property(NM.SETTING_CONNECTION_ZONE, connection['zone'])
+
             ip = connection['ip']
 
             s_ip4 = self.connection_ensure_setting(con, NM.SettingIP4Config)
