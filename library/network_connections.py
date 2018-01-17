@@ -880,6 +880,12 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 if 'master' not in result:
                     result['ip'] = self.nested['ip'].get_default_value()
 
+            if 'zone' in result:
+                if 'master' in result:
+                    raise ValidationError(name + '.zone', '"zone" cannot be configured for slave types')
+            else:
+                result['zone'] = None
+
             if 'mac' in result:
                 if result['type'] not in [ 'ethernet', 'infiniband' ]:
                     raise ValidationError(name + '.mac', 'a "mac" address is only allowed for type "ethernet" or "infiniband"')
