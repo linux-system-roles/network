@@ -2187,13 +2187,12 @@ AnsibleUtil = _AnsibleUtil()
 class Cmd:
 
     @staticmethod
-    def create():
-        provider = AnsibleUtil.params['provider']
+    def create(provider):
         if provider == 'nm':
             return Cmd_nm()
         elif provider == 'initscripts':
             return Cmd_initscripts()
-        AnsibleUtil.fail_json('unsupported provider %s' % (provider))
+        raise MyError('unsupported provider %s' % (provider))
 
     def run(self):
         for idx, connection in enumerate(AnsibleUtil.connections):
@@ -2601,8 +2600,8 @@ class Cmd_initscripts(Cmd):
 
 if __name__ == '__main__':
     try:
-        Cmd.create().run()
+        Cmd.create(AnsibleUtil.params['provider']).run()
     except Exception as e:
         AnsibleUtil.fail_json('fatal error: %s' % (e),
-                              warn_traceback = True)
+                              warn_traceback = not isinstance(e, MyError))
     AnsibleUtil.exit_json()
