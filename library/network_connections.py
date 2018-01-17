@@ -1960,7 +1960,10 @@ class NMUtil:
 
 ###############################################################################
 
-class _AnsibleUtil:
+class RunEnvironment:
+    pass
+
+class _AnsibleUtil(RunEnvironment):
 
     ARGS = {
         'ignore_errors':  { 'required': False, 'default': False, 'type': 'str' },
@@ -2186,12 +2189,15 @@ AnsibleUtil = _AnsibleUtil()
 
 class Cmd:
 
+    def __init__(self, run_env):
+        self._run_env = run_env
+
     @staticmethod
-    def create(provider):
+    def create(provider, **kwargs):
         if provider == 'nm':
-            return Cmd_nm()
+            return Cmd_nm(**kwargs)
         elif provider == 'initscripts':
-            return Cmd_initscripts()
+            return Cmd_initscripts(**kwargs)
         raise MyError('unsupported provider %s' % (provider))
 
     def run(self):
@@ -2261,7 +2267,8 @@ class Cmd:
 
 class Cmd_nm(Cmd):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
+        Cmd.__init__(self, **kwargs)
         self._nmutil = None
         self.validate_one_type = ArgValidator_ListConnections.VALIDATE_ONE_MODE_NM
 
@@ -2453,7 +2460,8 @@ class Cmd_nm(Cmd):
 
 class Cmd_initscripts(Cmd):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
+        Cmd.__init__(self, **kwargs)
         self.validate_one_type = ArgValidator_ListConnections.VALIDATE_ONE_MODE_INITSCRIPTS
 
     def check_name(self, idx, name = None):
@@ -2599,9 +2607,12 @@ class Cmd_initscripts(Cmd):
 ###############################################################################
 
 if __name__ == '__main__':
+    ansible_util = AnsibleUtil
     try:
-        Cmd.create(AnsibleUtil.params['provider']).run()
+        cmd = Cmd.create(ansible_util.params['provider'],
+                         run_env = ansible_util)
+        cmd.run()
     except Exception as e:
-        AnsibleUtil.fail_json('fatal error: %s' % (e),
-                              warn_traceback = not isinstance(e, MyError))
-    AnsibleUtil.exit_json()
+        ansible_util.fail_json('fatal error: %s' % (e),
+                               warn_traceback = not isinstance(e, MyError))
+    ansible_util.exit_json()
