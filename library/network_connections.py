@@ -1972,8 +1972,6 @@ class _AnsibleUtil(RunEnvironment):
         'connections':    { 'required': False, 'default': None,  'type': 'list' },
     }
 
-    ARGS_CONNECTIONS = ArgValidator_ListConnections()
-
     def __init__(self):
         self._module = None
         self._connections = None
@@ -2020,7 +2018,7 @@ class _AnsibleUtil(RunEnvironment):
         c = self._connections
         if c is None:
             try:
-                c = self.ARGS_CONNECTIONS.validate(self.params['connections'])
+                c = ArgValidator_ListConnections().validate(self.params['connections'])
             except ValidationError as e:
                 self.fail_json('configuration error: %s' % (e),
                                warn_traceback = False)
@@ -2166,8 +2164,9 @@ AnsibleUtil = _AnsibleUtil()
 
 class Cmd:
 
-    def __init__(self, run_env, is_check_mode = False):
+    def __init__(self, run_env, connection_validator, is_check_mode = False):
         self._run_env = run_env
+        self._connection_validator = connection_validator
         self._is_check_mode = is_check_mode
         self._check_mode = CheckMode.PREPARE
 
@@ -2204,9 +2203,9 @@ class Cmd:
     def run(self):
         for idx, connection in enumerate(AnsibleUtil.connections):
             try:
-                AnsibleUtil.ARGS_CONNECTIONS.validate_connection_one(self.validate_one_type,
-                                                                     AnsibleUtil.connections,
-                                                                     idx)
+                self._connection_validator.validate_connection_one(self.validate_one_type,
+                                                                   AnsibleUtil.connections,
+                                                                   idx)
             except ValidationError as e:
                 AnsibleUtil.log_fatal(idx, str(e))
         self.run_prepare()
@@ -2612,6 +2611,7 @@ if __name__ == '__main__':
     try:
         cmd = Cmd.create(ansible_util.params['provider'],
                          run_env = ansible_util,
+                         connection_validator = ArgValidator_ListConnections(),
                          is_check_mode = ansible_util.module.check_mode)
         cmd.run()
     except Exception as e:

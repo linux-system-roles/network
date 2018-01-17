@@ -40,6 +40,8 @@ def pprint(msg, obj):
     if nmutil is not None and isinstance(obj, NM.Connection):
         obj.dump()
 
+ARGS_CONNECTIONS = n.ArgValidator_ListConnections()
+
 class TestValidator(unittest.TestCase):
 
     def assertValidationError(self, v, value):
@@ -62,12 +64,12 @@ class TestValidator(unittest.TestCase):
         self.assertEqual(route_list_exp, route_list_new)
 
     def do_connections_check_invalid(self, input_connections):
-        self.assertValidationError(n.AnsibleUtil.ARGS_CONNECTIONS, input_connections)
+        self.assertValidationError(ARGS_CONNECTIONS, input_connections)
 
     def do_connections_validate_nm(self, input_connections, **kwargs):
         if not nmutil:
             return
-        connections = n.AnsibleUtil.ARGS_CONNECTIONS.validate(input_connections)
+        connections = ARGS_CONNECTIONS.validate(input_connections)
         for connection in connections:
             if 'type' in connection:
                 connection['nm.exists'] = False
@@ -75,7 +77,7 @@ class TestValidator(unittest.TestCase):
         mode = n.ArgValidator_ListConnections.VALIDATE_ONE_MODE_INITSCRIPTS
         for idx, connection in enumerate(connections):
             try:
-                n.AnsibleUtil.ARGS_CONNECTIONS.validate_connection_one(mode, connections, idx)
+                ARGS_CONNECTIONS.validate_connection_one(mode, connections, idx)
             except n.ValidationError as e:
                 continue
             if 'type' in connection:
@@ -104,10 +106,10 @@ class TestValidator(unittest.TestCase):
 
     def do_connections_validate_ifcfg(self, input_connections, **kwargs):
         mode = n.ArgValidator_ListConnections.VALIDATE_ONE_MODE_INITSCRIPTS
-        connections = n.AnsibleUtil.ARGS_CONNECTIONS.validate(input_connections)
+        connections = ARGS_CONNECTIONS.validate(input_connections)
         for idx, connection in enumerate(connections):
             try:
-                n.AnsibleUtil.ARGS_CONNECTIONS.validate_connection_one(mode, connections, idx)
+                ARGS_CONNECTIONS.validate_connection_one(mode, connections, idx)
             except n.ValidationError as e:
                 continue
             if 'type' in connection:
@@ -122,7 +124,7 @@ class TestValidator(unittest.TestCase):
 
 
     def do_connections_validate(self, expected_connections, input_connections, **kwargs):
-        connections = n.AnsibleUtil.ARGS_CONNECTIONS.validate(input_connections)
+        connections = ARGS_CONNECTIONS.validate(input_connections)
         self.assertEqual(expected_connections, connections)
         self.do_connections_validate_nm(input_connections, **kwargs)
         self.do_connections_validate_ifcfg(input_connections, **kwargs)
