@@ -1979,30 +1979,7 @@ class _AnsibleUtil(RunEnvironment):
         self._connections = None
         self._run_results = None
         self._run_results_prepare = None
-        self._check_mode = CheckMode.PREPARE
         self._log_idx = 0
-
-    @property
-    def check_mode(self):
-        return self._check_mode
-
-    def check_mode_next(self):
-        if self._check_mode == CheckMode.PREPARE:
-            self._run_results_prepare = self._run_results
-            self._run_results = None
-            if self.module.check_mode:
-                self._check_mode = CheckMode.DRY_RUN
-            else:
-                self._check_mode = CheckMode.PRE_RUN
-            return self._check_mode
-        if self.check_mode == CheckMode.PRE_RUN:
-            self._run_results = None
-            self._check_mode = CheckMode.REAL_RUN
-            return CheckMode.REAL_RUN
-        if self._check_mode != CheckMode.DONE:
-            self._check_mode = CheckMode.DONE
-            return CheckMode.DONE
-        assert False
 
     @property
     def module(self):
@@ -2189,8 +2166,10 @@ AnsibleUtil = _AnsibleUtil()
 
 class Cmd:
 
-    def __init__(self, run_env):
+    def __init__(self, run_env, is_check_mode = False):
         self._run_env = run_env
+        self._is_check_mode = is_check_mode
+        self._check_mode = CheckMode.PREPARE
 
     @staticmethod
     def create(provider, **kwargs):
@@ -2199,6 +2178,28 @@ class Cmd:
         elif provider == 'initscripts':
             return Cmd_initscripts(**kwargs)
         raise MyError('unsupported provider %s' % (provider))
+
+    @property
+    def check_mode(self):
+        return self._check_mode
+
+    def check_mode_next(self):
+        if self._check_mode == CheckMode.PREPARE:
+            AnsibleUtil._run_results_prepare = AnsibleUtil._run_results
+            AnsibleUtil._run_results = None
+            if self._is_check_mode:
+                self._check_mode = CheckMode.DRY_RUN
+            else:
+                self._check_mode = CheckMode.PRE_RUN
+            return self._check_mode
+        if self.check_mode == CheckMode.PRE_RUN:
+            AnsibleUtil._run_results = None
+            self._check_mode = CheckMode.REAL_RUN
+            return CheckMode.REAL_RUN
+        if self._check_mode != CheckMode.DONE:
+            self._check_mode = CheckMode.DONE
+            return CheckMode.DONE
+        assert False
 
     def run(self):
         for idx, connection in enumerate(AnsibleUtil.connections):
@@ -2209,7 +2210,7 @@ class Cmd:
             except ValidationError as e:
                 AnsibleUtil.log_fatal(idx, str(e))
         self.run_prepare()
-        while AnsibleUtil.check_mode_next() != CheckMode.DONE:
+        while self.check_mode_next() != CheckMode.DONE:
             for idx, connection in enumerate(AnsibleUtil.connections):
                 try:
                     state = connection['state']
@@ -2218,7 +2219,7 @@ class Cmd:
                         if w is None:
                             w = 10
                         AnsibleUtil.log_info(idx, 'wait for %s seconds' % (w))
-                        if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+                        if self.check_mode == CheckMode.REAL_RUN:
                             import time
                             time.sleep(w)
                     elif state == 'absent':
@@ -2326,7 +2327,7 @@ class Cmd_nm(Cmd):
             seen.add(c)
             AnsibleUtil.run_results_changed(idx)
             AnsibleUtil.log_info(idx, 'delete connection %s, %s' % (c.get_id(), c.get_uuid()))
-            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+            if self.check_mode == CheckMode.REAL_RUN:
                 try:
                     self.nmutil.connection_delete(c)
                 except MyError as e:
@@ -2343,14 +2344,14 @@ class Cmd_nm(Cmd):
             AnsibleUtil.log_info(idx, 'add connection %s, %s' % (connection['name'], connection['nm.uuid']))
             changed = True
             try:
-                if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+                if self.check_mode == CheckMode.REAL_RUN:
                     con_cur = self.nmutil.connection_add(con_new)
             except MyError as e:
                 AnsibleUtil.log_error(idx, 'adding connection failed: %s' % (e))
         elif not self.nmutil.connection_compare(con_cur, con_new, normalize_a = True):
             changed = True
             AnsibleUtil.log_info(idx, 'update connection %s, %s' % (con_cur.get_id(), con_cur.get_uuid()))
-            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+            if self.check_mode == CheckMode.REAL_RUN:
                 try:
                     self.nmutil.connection_update(con_cur, con_new)
                 except MyError as e:
@@ -2369,7 +2370,7 @@ class Cmd_nm(Cmd):
             c = connections[-1]
             AnsibleUtil.log_info(idx, 'delete duplicate connection %s, %s' % (c.get_id(), c.get_uuid()))
             changed = True
-            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+            if self.check_mode == CheckMode.REAL_RUN:
                 try:
                    self.nmutil.connection_delete(c)
                 except MyError as e:
@@ -2383,7 +2384,7 @@ class Cmd_nm(Cmd):
 
         con = Util.first(self.nmutil.connection_list(name = connection['name'], uuid = connection['nm.uuid']))
         if not con:
-            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+            if self.check_mode == CheckMode.REAL_RUN:
                 AnsibleUtil.log_error(idx, 'up connection %s, %s failed: no connection' % (connection['name'], connection['nm.uuid']))
             else:
                 AnsibleUtil.log_info(idx, 'up connection %s, %s' % (connection['name'], connection['nm.uuid']))
@@ -2403,7 +2404,7 @@ class Cmd_nm(Cmd):
                               'not-active' if not is_active else \
                               'is-modified' if is_modified else \
                               'force-state-change'))
-        if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+        if self.check_mode == CheckMode.REAL_RUN:
             try:
                 ac = self.nmutil.connection_activate (con)
             except MyError as e:
@@ -2434,7 +2435,7 @@ class Cmd_nm(Cmd):
                 changed = True
                 seen.add(ac)
                 AnsibleUtil.log_info(idx, 'down connection %s: %s' % (connection['name'], ac.get_path()))
-                if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+                if self.check_mode == CheckMode.REAL_RUN:
                     try:
                         self.nmutil.active_connection_deactivate(ac)
                     except MyError as e:
@@ -2500,7 +2501,7 @@ class Cmd_initscripts(Cmd):
                     continue
                 changed = True
                 AnsibleUtil.log_info(idx, 'delete ifcfg-rh file "%s"' % (path))
-                if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+                if self.check_mode == CheckMode.REAL_RUN:
                     try:
                         os.unlink(path)
                     except Exception as e:
@@ -2533,7 +2534,7 @@ class Cmd_initscripts(Cmd):
 
         AnsibleUtil.log_info(idx, '%s ifcfg-rh profile "%s"' % (op, name))
 
-        if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+        if self.check_mode == CheckMode.REAL_RUN:
             try:
                 IfcfgUtil.content_to_file(name, new_content)
             except MyError as e:
@@ -2555,7 +2556,7 @@ class Cmd_initscripts(Cmd):
 
         path = IfcfgUtil.ifcfg_path(name)
         if not os.path.isfile(path):
-            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+            if self.check_mode == CheckMode.REAL_RUN:
                 AnsibleUtil.log_error(idx, 'ifcfg file "%s" does not exist' % (path))
             else:
                 AnsibleUtil.log_info(idx, 'ifcfg file "%s" does not exist in check mode' % (path))
@@ -2589,7 +2590,7 @@ class Cmd_initscripts(Cmd):
                                   'force-state-change'))
             cmd = 'ifdown'
 
-        if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+        if self.check_mode == CheckMode.REAL_RUN:
             rc, out, err = AnsibleUtil.module.run_command([cmd, name], encoding=None)
             AnsibleUtil.log_info(idx, 'call `%s %s`: rc=%d, out="%s", err="%s"' % (cmd, name, rc, out, err))
             if rc != 0:
@@ -2610,7 +2611,8 @@ if __name__ == '__main__':
     ansible_util = AnsibleUtil
     try:
         cmd = Cmd.create(ansible_util.params['provider'],
-                         run_env = ansible_util)
+                         run_env = ansible_util,
+                         is_check_mode = ansible_util.module.check_mode)
         cmd.run()
     except Exception as e:
         ansible_util.fail_json('fatal error: %s' % (e),
