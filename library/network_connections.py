@@ -1986,8 +1986,7 @@ class _AnsibleUtil(RunEnvironment):
     def __init__(self):
         self._module = None
         self._connections = None
-        self._run_results = None
-        self._run_results_prepare = None
+        self._run_results = []
         self._log_idx = 0
 
     @property
@@ -2020,24 +2019,28 @@ class _AnsibleUtil(RunEnvironment):
             self._connections = c
         return c
 
+    def run_results_push(self, n_connections = None):
+        c = []
+        if n_connections is None:
+            n_connections = len(self.run_results) - 1
+        for cc in range(0, n_connections + 1):
+            c.append({
+                'changed': False,
+                'log': [],
+                'rc': [],
+            })
+        self._run_results.append(c)
+
+    def run_results_reset(self):
+        n_connections = len(self.run_results) - 1
+        del self._run_results[-1]
+        self.run_results_push(n_connections)
+
     @property
     def run_results(self):
-        c = self._run_results
-        if c is None:
-            c = []
-            for cc in range(0, len(self.connections) + 1):
-                c.append({
-                    'changed': False,
-                    'log': [],
-                    'rc': [],
-                })
-            self._run_results = c
-        return c
+        return self._run_results[-1]
 
-    def run_results_changed(self, idx, changed = None):
-        assert(idx >= 0 and idx < len(self.run_results) - 1)
-        if changed is None:
-            changed = True
+    def run_results_changed(self, idx, changed = True):
         self.run_results[idx]['changed'] = bool(changed)
 
     def log(self,
@@ -2047,11 +2050,8 @@ class _AnsibleUtil(RunEnvironment):
             ignore_errors = False,
             warn_traceback = False,
             force_fail = False):
+        assert(idx >= -1)
         self._log_idx += 1
-        if idx == -1:
-            idx = len(self.run_results) - 1
-        else:
-            assert(idx >= 0 and idx < len(self.run_results) - 1)
         self.run_results[idx]['log'].append((severity, msg, self._log_idx))
         if severity == LogLevel.ERROR:
             if    force_fail \
@@ -2076,11 +2076,8 @@ class _AnsibleUtil(RunEnvironment):
             logs = []
 
         l = []
-        if self._run_results_prepare is not None:
-            for idx, rr in enumerate(self._run_results_prepare):
-                l.extend(self._complete_kwargs_loglines(rr, idx))
-        if self._run_results is not None:
-            for idx, rr in enumerate(self._run_results):
+        for res in self._run_results:
+            for idx, rr in enumerate(res):
                 l.extend(self._complete_kwargs_loglines(rr, idx))
         l.sort(key = lambda x: x[0])
         logs.extend([x[1] for x in l])
@@ -2091,10 +2088,11 @@ class _AnsibleUtil(RunEnvironment):
 
     def exit_json(self, **kwargs):
         changed = False
-        if self._run_results is not None:
+        if self._run_results:
             for rr in self.run_results:
                 if rr['changed']:
                     changed = True
+                    break
         kwargs['changed'] = changed
         self.module.exit_json(**self._complete_kwargs(kwargs))
 
@@ -2212,15 +2210,14 @@ class Cmd:
 
     def check_mode_next(self):
         if self._check_mode == CheckMode.PREPARE:
-            AnsibleUtil._run_results_prepare = AnsibleUtil._run_results
-            AnsibleUtil._run_results = None
+            AnsibleUtil.run_results_push()
             if self._is_check_mode:
                 self._check_mode = CheckMode.DRY_RUN
             else:
                 self._check_mode = CheckMode.PRE_RUN
             return self._check_mode
         if self.check_mode == CheckMode.PRE_RUN:
-            AnsibleUtil._run_results = None
+            AnsibleUtil.run_results_reset()
             self._check_mode = CheckMode.REAL_RUN
             return CheckMode.REAL_RUN
         if self._check_mode != CheckMode.DONE:
@@ -2229,6 +2226,7 @@ class Cmd:
         assert False
 
     def run(self):
+        AnsibleUtil.run_results_push(len(AnsibleUtil.connections))
         for idx, connection in enumerate(AnsibleUtil.connections):
             try:
                 self._connection_validator.validate_connection_one(self.validate_one_type,
