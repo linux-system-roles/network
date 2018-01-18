@@ -2013,8 +2013,7 @@ class _AnsibleUtil(RunEnvironment):
             try:
                 c = ArgValidator_ListConnections().validate(self.params['connections'])
             except ValidationError as e:
-                self.fail_json('configuration error: %s' % (e),
-                               warn_traceback = False)
+                raise MyError('configuration error: %s' % (e))
             self._connections = c
         return c
 
@@ -2290,7 +2289,7 @@ class Cmd_nm(Cmd):
             try:
                 nmclient = Util.NM().Client.new(None)
             except Exception as e:
-                AnsibleUtil.fail_json('failure loading libnm library: %s' % (e))
+                raise MyError('failure loading libnm library: %s' % (e))
             self._nmutil = NMUtil(nmclient)
         return self._nmutil
 
