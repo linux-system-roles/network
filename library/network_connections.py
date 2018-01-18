@@ -1961,7 +1961,9 @@ class NMUtil:
 ###############################################################################
 
 class RunEnvironment:
-    pass
+
+    def log(self, idx, severity, msg, warn_traceback = False, force_fail = False):
+        raise NotImplementedError()
 
 class _AnsibleUtil(RunEnvironment):
 
@@ -2041,21 +2043,6 @@ class _AnsibleUtil(RunEnvironment):
         self.run_results[idx]['rc'].append((rc, msg))
         self.log(idx, LogLevel.INFO, 'command: %s (rc=%s)' % (msg, rc))
 
-    def log_debug(self, idx, msg):
-        self.log(idx, LogLevel.DEBUG, msg)
-
-    def log_info(self, idx, msg):
-        self.log(idx, LogLevel.INFO, msg)
-
-    def log_warn(self, idx, msg):
-        self.log(idx, LogLevel.WARN, msg)
-
-    def log_error(self, idx, msg, warn_traceback = False, force_fail = False):
-        self.log(idx, LogLevel.ERROR, msg, warn_traceback = warn_traceback, force_fail = force_fail)
-
-    def log_fatal(self, idx, msg, warn_traceback = False):
-        self.log(idx, LogLevel.ERROR, msg, warn_traceback = warn_traceback, force_fail = True)
-
     def log(self, idx, severity, msg, warn_traceback = False, force_fail = False):
         self._log_idx += 1
         if idx == -1:
@@ -2126,12 +2113,34 @@ class Cmd:
                  connection_validator,
                  is_check_mode = False,
                  force_state_change = False):
-        self._run_env = run_env
+        self.run_env = run_env
         self._connection_validator = connection_validator
         self._is_check_mode = is_check_mode
         self._force_state_change = Util.boolean(force_state_change)
 
         self._check_mode = CheckMode.PREPARE
+
+    def log_debug(self, idx, msg):
+        self.log(idx, LogLevel.DEBUG, msg)
+
+    def log_info(self, idx, msg):
+        self.log(idx, LogLevel.INFO, msg)
+
+    def log_warn(self, idx, msg):
+        self.log(idx, LogLevel.WARN, msg)
+
+    def log_error(self, idx, msg, warn_traceback = False, force_fail = False):
+        self.log(idx, LogLevel.ERROR, msg, warn_traceback = warn_traceback, force_fail = force_fail)
+
+    def log_fatal(self, idx, msg, warn_traceback = False):
+        self.log(idx, LogLevel.ERROR, msg, warn_traceback = warn_traceback, force_fail = True)
+
+    def log(self, idx, severity, msg, warn_traceback = False, force_fail = False):
+        self.run_env.log(idx,
+                         severity,
+                         msg,
+                         warn_traceback = warn_traceback,
+                         force_fail = force_fail)
 
     @staticmethod
     def create(provider, **kwargs):
@@ -2210,7 +2219,7 @@ class Cmd:
                                                                    AnsibleUtil.connections,
                                                                    idx)
             except ValidationError as e:
-                AnsibleUtil.log_fatal(idx, str(e))
+                self.log_fatal(idx, str(e))
         self.run_prepare()
         while self.check_mode_next() != CheckMode.DONE:
             for idx, connection in enumerate(AnsibleUtil.connections):
@@ -2220,7 +2229,7 @@ class Cmd:
                         w = connection['wait']
                         if w is None:
                             w = 10
-                        AnsibleUtil.log_info(idx, 'wait for %s seconds' % (w))
+                        self.log_info(idx, 'wait for %s seconds' % (w))
                         if self.check_mode == CheckMode.REAL_RUN:
                             import time
                             time.sleep(w)
@@ -2237,7 +2246,7 @@ class Cmd:
                     else:
                         assert False
                 except Exception as e:
-                    AnsibleUtil.log_warn(idx, 'failure: %s [[%s]]' % (e, traceback.format_exc()))
+                    self.log_warn(idx, 'failure: %s [[%s]]' % (e, traceback.format_exc()))
                     raise
 
     def run_prepare(self):
@@ -2254,17 +2263,17 @@ class Cmd:
                 if connection['mac']:
                     li_mac = SysUtil.link_info_find(mac = connection['mac'])
                     if not li_mac:
-                        AnsibleUtil.log_fatal(idx, 'profile specifies mac "%s" but no such interface exists' % (connection['mac']))
+                        self.log_fatal(idx, 'profile specifies mac "%s" but no such interface exists' % (connection['mac']))
                 if connection['interface_name']:
                     li_ifname = SysUtil.link_info_find(ifname = connection['interface_name'])
                     if not li_ifname:
                         if connection['type'] == 'ethernet':
-                            AnsibleUtil.log_fatal(idx, 'profile specifies interface_name "%s" but no such interface exists' % (connection['interface_name']))
+                            self.log_fatal(idx, 'profile specifies interface_name "%s" but no such interface exists' % (connection['interface_name']))
                         elif connection['type'] == 'infiniband':
                             if connection['infiniband_p_key'] in [None, -1]:
-                                AnsibleUtil.log_fatal(idx, 'profile specifies interface_name "%s" but no such infiniband interface exists' % (connection['interface_name']))
+                                self.log_fatal(idx, 'profile specifies interface_name "%s" but no such infiniband interface exists' % (connection['interface_name']))
                 if li_mac and li_ifname and li_mac != li_ifname:
-                    AnsibleUtil.log_fatal(idx, 'profile specifies interface_name "%s" and mac "%s" but no such interface exists' % (connection['interface_name'], connection['mac']))
+                    self.log_fatal(idx, 'profile specifies interface_name "%s" and mac "%s" but no such interface exists' % (connection['interface_name'], connection['mac']))
 
 ###############################################################################
 
@@ -2328,14 +2337,14 @@ class Cmd_nm(Cmd):
             c = connections[-1]
             seen.add(c)
             AnsibleUtil.run_results_changed(idx)
-            AnsibleUtil.log_info(idx, 'delete connection %s, %s' % (c.get_id(), c.get_uuid()))
+            self.log_info(idx, 'delete connection %s, %s' % (c.get_id(), c.get_uuid()))
             if self.check_mode == CheckMode.REAL_RUN:
                 try:
                     self.nmutil.connection_delete(c)
                 except MyError as e:
-                    AnsibleUtil.log_error(idx, 'delete connection failed: %s' % (e))
+                    self.log_error(idx, 'delete connection failed: %s' % (e))
         if not seen:
-            AnsibleUtil.log_info(idx, 'no connection "%s"' % (name))
+            self.log_info(idx, 'no connection "%s"' % (name))
 
     def run_state_present(self, idx):
         connection = AnsibleUtil.connections[idx]
@@ -2343,23 +2352,23 @@ class Cmd_nm(Cmd):
         con_new = self.nmutil.connection_create(AnsibleUtil.connections, idx, con_cur)
         changed = False
         if con_cur is None:
-            AnsibleUtil.log_info(idx, 'add connection %s, %s' % (connection['name'], connection['nm.uuid']))
+            self.log_info(idx, 'add connection %s, %s' % (connection['name'], connection['nm.uuid']))
             changed = True
             try:
                 if self.check_mode == CheckMode.REAL_RUN:
                     con_cur = self.nmutil.connection_add(con_new)
             except MyError as e:
-                AnsibleUtil.log_error(idx, 'adding connection failed: %s' % (e))
+                self.log_error(idx, 'adding connection failed: %s' % (e))
         elif not self.nmutil.connection_compare(con_cur, con_new, normalize_a = True):
             changed = True
-            AnsibleUtil.log_info(idx, 'update connection %s, %s' % (con_cur.get_id(), con_cur.get_uuid()))
+            self.log_info(idx, 'update connection %s, %s' % (con_cur.get_id(), con_cur.get_uuid()))
             if self.check_mode == CheckMode.REAL_RUN:
                 try:
                     self.nmutil.connection_update(con_cur, con_new)
                 except MyError as e:
-                    AnsibleUtil.log_error(idx, 'updating connection failed: %s' % (e))
+                    self.log_error(idx, 'updating connection failed: %s' % (e))
         else:
-            AnsibleUtil.log_info(idx, 'connection %s, %s already up to date' % (con_cur.get_id(), con_cur.get_uuid()))
+            self.log_info(idx, 'connection %s, %s already up to date' % (con_cur.get_id(), con_cur.get_uuid()))
 
         seen = set()
         if con_cur is not None:
@@ -2370,13 +2379,13 @@ class Cmd_nm(Cmd):
             if not connections:
                 break
             c = connections[-1]
-            AnsibleUtil.log_info(idx, 'delete duplicate connection %s, %s' % (c.get_id(), c.get_uuid()))
+            self.log_info(idx, 'delete duplicate connection %s, %s' % (c.get_id(), c.get_uuid()))
             changed = True
             if self.check_mode == CheckMode.REAL_RUN:
                 try:
                    self.nmutil.connection_delete(c)
                 except MyError as e:
-                    AnsibleUtil.log_error(idx, 'delete duplicate connection failed: %s' % (e))
+                    self.log_error(idx, 'delete duplicate connection failed: %s' % (e))
             seen.add(c)
 
         AnsibleUtil.run_results_changed(idx, changed)
@@ -2387,9 +2396,9 @@ class Cmd_nm(Cmd):
         con = Util.first(self.nmutil.connection_list(name = connection['name'], uuid = connection['nm.uuid']))
         if not con:
             if self.check_mode == CheckMode.REAL_RUN:
-                AnsibleUtil.log_error(idx, 'up connection %s, %s failed: no connection' % (connection['name'], connection['nm.uuid']))
+                self.log_error(idx, 'up connection %s, %s failed: no connection' % (connection['name'], connection['nm.uuid']))
             else:
-                AnsibleUtil.log_info(idx, 'up connection %s, %s' % (connection['name'], connection['nm.uuid']))
+                self.log_info(idx, 'up connection %s, %s' % (connection['name'], connection['nm.uuid']))
             return
 
         is_active = self.nmutil.connection_is_active(con)
@@ -2397,20 +2406,20 @@ class Cmd_nm(Cmd):
         force_state_change = self.connection_force_state_change(connection)
 
         if is_active and not force_state_change and not is_modified:
-            AnsibleUtil.log_info(idx, 'up connection %s, %s skipped because already active' %
-                                      (con.get_id(), con.get_uuid()))
+            self.log_info(idx, 'up connection %s, %s skipped because already active' %
+                          (con.get_id(), con.get_uuid()))
             return
 
-        AnsibleUtil.log_info(idx, 'up connection %s, %s (%s)' %
-                             (con.get_id(), con.get_uuid(),
-                              'not-active' if not is_active else \
-                              'is-modified' if is_modified else \
-                              'force-state-change'))
+        self.log_info(idx, 'up connection %s, %s (%s)' %
+                      (con.get_id(), con.get_uuid(),
+                       'not-active' if not is_active else \
+                       'is-modified' if is_modified else \
+                       'force-state-change'))
         if self.check_mode == CheckMode.REAL_RUN:
             try:
                 ac = self.nmutil.connection_activate (con)
             except MyError as e:
-                AnsibleUtil.log_error(idx, 'up connection failed: %s' % (e))
+                self.log_error(idx, 'up connection failed: %s' % (e))
 
             wait_time = connection['wait']
             if wait_time is None:
@@ -2419,7 +2428,7 @@ class Cmd_nm(Cmd):
             try:
                 self.nmutil.connection_activate_wait(ac, wait_time)
             except MyError as e:
-                AnsibleUtil.log_error(idx, 'up connection failed while waiting: %s' % (e))
+                self.log_error(idx, 'up connection failed while waiting: %s' % (e))
 
         AnsibleUtil.run_results_changed(idx)
 
@@ -2436,12 +2445,12 @@ class Cmd_nm(Cmd):
                     break
                 changed = True
                 seen.add(ac)
-                AnsibleUtil.log_info(idx, 'down connection %s: %s' % (connection['name'], ac.get_path()))
+                self.log_info(idx, 'down connection %s: %s' % (connection['name'], ac.get_path()))
                 if self.check_mode == CheckMode.REAL_RUN:
                     try:
                         self.nmutil.active_connection_deactivate(ac)
                     except MyError as e:
-                        AnsibleUtil.log_error(idx, 'down connection failed: %s' % (e))
+                        self.log_error(idx, 'down connection failed: %s' % (e))
 
                     wait_time = connection['wait']
                     if wait_time is None:
@@ -2450,12 +2459,12 @@ class Cmd_nm(Cmd):
                     try:
                         self.nmutil.active_connection_deactivate_wait(ac, wait_time)
                     except MyError as e:
-                        AnsibleUtil.log_error(idx, 'down connection failed while waiting: %s' % (e))
+                        self.log_error(idx, 'down connection failed while waiting: %s' % (e))
 
                 cons = self.nmutil.connection_list(name = connection['name'])
 
         if not changed:
-            AnsibleUtil.log_info(idx, 'down connection %s failed: no connection' % (connection['name']))
+            self.log_info(idx, 'down connection %s failed: no connection' % (connection['name']))
         AnsibleUtil.run_results_changed(idx, changed)
 
 
@@ -2473,7 +2482,7 @@ class Cmd_initscripts(Cmd):
         try:
             f = IfcfgUtil.ifcfg_path(name)
         except MyError as e:
-            AnsibleUtil.log_error(idx, 'invalid name %s for connection' % (name))
+            self.log_error(idx, 'invalid name %s for connection' % (name))
             return None
         return f
 
@@ -2502,15 +2511,15 @@ class Cmd_initscripts(Cmd):
                 if not os.path.isfile(path):
                     continue
                 changed = True
-                AnsibleUtil.log_info(idx, 'delete ifcfg-rh file "%s"' % (path))
+                self.log_info(idx, 'delete ifcfg-rh file "%s"' % (path))
                 if self.check_mode == CheckMode.REAL_RUN:
                     try:
                         os.unlink(path)
                     except Exception as e:
-                        AnsibleUtil.log_error(idx, 'delete ifcfg-rh file "%s" failed: %s' % (path, e))
+                        self.log_error(idx, 'delete ifcfg-rh file "%s" failed: %s' % (path, e))
 
         if not changed:
-            AnsibleUtil.log_info(idx, 'delete ifcfg-rh files for %s (no files present)' % ('"'+n+'"' if n else '*'))
+            self.log_info(idx, 'delete ifcfg-rh files for %s (no files present)' % ('"'+n+'"' if n else '*'))
         AnsibleUtil.run_results_changed(idx, changed)
 
     def run_state_present(self, idx):
@@ -2523,24 +2532,24 @@ class Cmd_initscripts(Cmd):
         old_content = IfcfgUtil.content_from_file(name)
 
         ifcfg_all = IfcfgUtil.ifcfg_create(AnsibleUtil.connections, idx,
-                                           lambda msg: AnsibleUtil.log_warn(idx, msg),
+                                           lambda msg: self.log_warn(idx, msg),
                                            old_content)
 
         new_content = IfcfgUtil.content_from_dict(ifcfg_all)
 
         if old_content == new_content:
-            AnsibleUtil.log_info(idx, 'ifcfg-rh profile "%s" already up to date' % (name))
+            self.log_info(idx, 'ifcfg-rh profile "%s" already up to date' % (name))
             return
 
         op = 'add' if (old_content['ifcfg'] is None) else 'update'
 
-        AnsibleUtil.log_info(idx, '%s ifcfg-rh profile "%s"' % (op, name))
+        self.log_info(idx, '%s ifcfg-rh profile "%s"' % (op, name))
 
         if self.check_mode == CheckMode.REAL_RUN:
             try:
                 IfcfgUtil.content_to_file(name, new_content)
             except MyError as e:
-                AnsibleUtil.log_error(idx, '%s ifcfg-rh profile "%s" failed: %s' % (op, name, e))
+                self.log_error(idx, '%s ifcfg-rh profile "%s" failed: %s' % (op, name, e))
 
         AnsibleUtil.run_results_changed(idx)
 
@@ -2559,9 +2568,9 @@ class Cmd_initscripts(Cmd):
         path = IfcfgUtil.ifcfg_path(name)
         if not os.path.isfile(path):
             if self.check_mode == CheckMode.REAL_RUN:
-                AnsibleUtil.log_error(idx, 'ifcfg file "%s" does not exist' % (path))
+                self.log_error(idx, 'ifcfg file "%s" does not exist' % (path))
             else:
-                AnsibleUtil.log_info(idx, 'ifcfg file "%s" does not exist in check mode' % (path))
+                self.log_info(idx, 'ifcfg file "%s" does not exist in check mode' % (path))
             return
 
         is_active = IfcfgUtil.connection_seems_active(name)
@@ -2570,33 +2579,33 @@ class Cmd_initscripts(Cmd):
 
         if do_up:
             if is_active is True and not force_state_change and not is_modified:
-                AnsibleUtil.log_info(idx, 'up connection %s skipped because already active' %
-                                          (name))
+                self.log_info(idx, 'up connection %s skipped because already active' %
+                              (name))
                 return
 
-            AnsibleUtil.log_info(idx, 'up connection %s (%s)' %
-                                 (name,
-                                  'not-active' if is_active is not True else \
-                                  'is-modified' if is_modified else \
-                                  'force-state-change'))
+            self.log_info(idx, 'up connection %s (%s)' %
+                          (name,
+                           'not-active' if is_active is not True else \
+                           'is-modified' if is_modified else \
+                           'force-state-change'))
             cmd = 'ifup'
         else:
             if is_active is False and not force_state_change:
-                AnsibleUtil.log_info(idx, 'down connection %s skipped because not active' %
-                                          (name))
+                self.log_info(idx, 'down connection %s skipped because not active' %
+                              (name))
                 return
 
-            AnsibleUtil.log_info(idx, 'up connection %s (%s)' %
-                                 (name,
-                                  'active' if is_active is not False else \
-                                  'force-state-change'))
+            self.log_info(idx, 'up connection %s (%s)' %
+                          (name,
+                           'active' if is_active is not False else \
+                           'force-state-change'))
             cmd = 'ifdown'
 
         if self.check_mode == CheckMode.REAL_RUN:
             rc, out, err = AnsibleUtil.module.run_command([cmd, name], encoding=None)
-            AnsibleUtil.log_info(idx, 'call `%s %s`: rc=%d, out="%s", err="%s"' % (cmd, name, rc, out, err))
+            self.log_info(idx, 'call `%s %s`: rc=%d, out="%s", err="%s"' % (cmd, name, rc, out, err))
             if rc != 0:
-                AnsibleUtil.log_error(idx, 'call `%s %s` failed with exit status %d' % (cmd, name, rc))
+                self.log_error(idx, 'call `%s %s` failed with exit status %d' % (cmd, name, rc))
 
         AnsibleUtil.run_results_changed(idx)
 
