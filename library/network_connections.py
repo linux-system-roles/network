@@ -2025,40 +2025,6 @@ class _AnsibleUtil(RunEnvironment):
             self._connections = c
         return c
 
-    def connection_modified_earlier(self, idx):
-        # for index @idx, check if any of the previous profiles [0..idx[
-        # modify the connection.
-
-        con = self.connections[idx]
-        assert(con['state'] in ['up', 'down'])
-
-        # also check, if the current profile is 'up' with a 'type' (which
-        # possibly modifies the connection as well)
-        if     con['state'] == 'up' \
-           and 'type' in con \
-           and self.run_results[idx]['changed']:
-            return True
-
-        for i in reversed(range(idx)):
-            c = self.connections[i]
-            if 'name' not in c:
-                continue
-            if c['name'] != con['name']:
-                continue
-
-            c_state = c['state']
-            if c_state == 'up' and 'type' not in c:
-                pass
-            elif c_state == 'down':
-                return True
-            elif c_state == 'absent':
-                return True
-            elif c_state in ['present', 'up']:
-                if self.run_results[i]['changed']:
-                    return True
-
-        return False
-
     @property
     def run_results(self):
         c = self._run_results
@@ -2177,6 +2143,40 @@ class Cmd:
         elif provider == 'initscripts':
             return Cmd_initscripts(**kwargs)
         raise MyError('unsupported provider %s' % (provider))
+
+    def connection_modified_earlier(self, idx):
+        # for index @idx, check if any of the previous profiles [0..idx[
+        # modify the connection.
+
+        con = AnsibleUtil.connections[idx]
+        assert(con['state'] in ['up', 'down'])
+
+        # also check, if the current profile is 'up' with a 'type' (which
+        # possibly modifies the connection as well)
+        if     con['state'] == 'up' \
+           and 'type' in con \
+           and AnsibleUtil.run_results[idx]['changed']:
+            return True
+
+        for i in reversed(range(idx)):
+            c = AnsibleUtil.connections[i]
+            if 'name' not in c:
+                continue
+            if c['name'] != con['name']:
+                continue
+
+            c_state = c['state']
+            if c_state == 'up' and 'type' not in c:
+                pass
+            elif c_state == 'down':
+                return True
+            elif c_state == 'absent':
+                return True
+            elif c_state in ['present', 'up']:
+                if AnsibleUtil.run_results[i]['changed']:
+                    return True
+
+        return False
 
     @property
     def check_mode(self):
@@ -2390,7 +2390,7 @@ class Cmd_nm(Cmd):
             return
 
         is_active = self.nmutil.connection_is_active(con)
-        is_modified = AnsibleUtil.connection_modified_earlier(idx)
+        is_modified = self.connection_modified_earlier(idx)
         force_state_change = AnsibleUtil.params_force_state_change(connection, False)
 
         if is_active and not force_state_change and not is_modified:
@@ -2562,7 +2562,7 @@ class Cmd_initscripts(Cmd):
             return
 
         is_active = IfcfgUtil.connection_seems_active(name)
-        is_modified = AnsibleUtil.connection_modified_earlier(idx)
+        is_modified = self.connection_modified_earlier(idx)
         force_state_change = AnsibleUtil.params_force_state_change(connection, False)
 
         if do_up:
