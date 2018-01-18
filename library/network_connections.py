@@ -1963,6 +1963,7 @@ class NMUtil:
 class RunEnvironment:
 
     def log(self,
+            connections,
             idx,
             severity,
             msg,
@@ -1985,7 +1986,6 @@ class _AnsibleUtil(RunEnvironment):
 
     def __init__(self):
         self._module = None
-        self._connections = None
         self._run_results = []
         self._log_idx = 0
 
@@ -2007,17 +2007,6 @@ class _AnsibleUtil(RunEnvironment):
     @property
     def params(self):
         return self.module.params
-
-    @property
-    def connections(self):
-        c = self._connections
-        if c is None:
-            try:
-                c = ArgValidator_ListConnections().validate(self.params['connections'])
-            except ValidationError as e:
-                raise MyError('configuration error: %s' % (e))
-            self._connections = c
-        return c
 
     def run_results_push(self, n_connections = None):
         c = []
@@ -2044,6 +2033,7 @@ class _AnsibleUtil(RunEnvironment):
         self.run_results[idx]['changed'] = bool(changed)
 
     def log(self,
+            connections,
             idx,
             severity,
             msg,
@@ -2056,20 +2046,20 @@ class _AnsibleUtil(RunEnvironment):
         if severity == LogLevel.ERROR:
             if    force_fail \
                or not ignore_errors:
-                self.fail_json('error: %s' % (msg), warn_traceback = warn_traceback)
+                self.fail_json(connections, 'error: %s' % (msg), warn_traceback = warn_traceback)
 
-    def _complete_kwargs_loglines(self, rr, idx):
-        if idx == len(self.connections):
+    def _complete_kwargs_loglines(self, rr, connections, idx):
+        if idx == len(connections):
             prefix = '#'
         else:
-            c = self.connections[idx]
+            c = connections[idx]
             prefix = '#%s, state:%s' % (idx, c['state'])
             if c['state'] != 'wait':
                 prefix = prefix + (', "%s"' % (c['name']))
         for r in rr['log']:
             yield (r[2], '[%03d] %s %s: %s' % (r[2], LogLevel.fmt(r[0]), prefix, r[1]))
 
-    def _complete_kwargs(self, kwargs, traceback_msg = None):
+    def _complete_kwargs(self, connections, kwargs, traceback_msg = None):
         if 'warnings' in kwargs:
             logs = list(kwargs['warnings'])
         else:
@@ -2078,7 +2068,7 @@ class _AnsibleUtil(RunEnvironment):
         l = []
         for res in self._run_results:
             for idx, rr in enumerate(res):
-                l.extend(self._complete_kwargs_loglines(rr, idx))
+                l.extend(self._complete_kwargs_loglines(rr, connections, idx))
         l.sort(key = lambda x: x[0])
         logs.extend([x[1] for x in l])
         if traceback_msg is not None:
@@ -2086,7 +2076,7 @@ class _AnsibleUtil(RunEnvironment):
         kwargs['warnings'] = logs
         return kwargs
 
-    def exit_json(self, **kwargs):
+    def exit_json(self, connections, **kwargs):
         changed = False
         if self._run_results:
             for rr in self.run_results:
@@ -2094,14 +2084,14 @@ class _AnsibleUtil(RunEnvironment):
                     changed = True
                     break
         kwargs['changed'] = changed
-        self.module.exit_json(**self._complete_kwargs(kwargs))
+        self.module.exit_json(**self._complete_kwargs(connections, kwargs))
 
-    def fail_json(self, msg, warn_traceback = False, **kwargs):
+    def fail_json(self, connections, msg, warn_traceback = False, **kwargs):
         traceback_msg = None
         if warn_traceback:
             traceback_msg = 'exception: %s' % (traceback.format_exc())
         kwargs['msg'] = msg
-        self.module.fail_json(**self._complete_kwargs(kwargs, traceback_msg))
+        self.module.fail_json(**self._complete_kwargs(connections, kwargs, traceback_msg))
 
 AnsibleUtil = _AnsibleUtil()
 
@@ -2111,20 +2101,34 @@ class Cmd:
 
     def __init__(self,
                  run_env,
+                 connections_unvalidated,
                  connection_validator,
                  is_check_mode = False,
                  ignore_errors = False,
                  force_state_change = False):
         self.run_env = run_env
+        self._connections_unvalidated = connections_unvalidated
         self._connection_validator = connection_validator
         self._is_check_mode = is_check_mode
         self._ignore_errors = Util.boolean(ignore_errors)
         self._force_state_change = Util.boolean(force_state_change)
 
+        self._connections = None
         self._check_mode = CheckMode.PREPARE
 
     def run_command(argv, encoding = None):
         return self.run_env.run_command(argv, encoding = encoding)
+
+    @property
+    def connections(self):
+        c = self._connections
+        if c is None:
+            try:
+                c = self._connection_validator.validate(self._connections_unvalidated)
+            except ValidationError as e:
+                raise MyError('configuration error: %s' % (e))
+            self._connections = c
+        return c
 
     def log_debug(self, idx, msg):
         self.log(idx, LogLevel.DEBUG, msg)
@@ -2142,8 +2146,9 @@ class Cmd:
         self.log(idx, LogLevel.ERROR, msg, warn_traceback = warn_traceback, force_fail = True)
 
     def log(self, idx, severity, msg, warn_traceback = False, force_fail = False):
-        connection = AnsibleUtil.connections[idx]
-        self.run_env.log(idx,
+        connection = self.connections[idx]
+        self.run_env.log(connections,
+                         idx,
                          severity,
                          msg,
                          ignore_errors = self.connection_ignore_errors(connection),
@@ -2174,7 +2179,7 @@ class Cmd:
         # for index @idx, check if any of the previous profiles [0..idx[
         # modify the connection.
 
-        con = AnsibleUtil.connections[idx]
+        con = self.connections[idx]
         assert(con['state'] in ['up', 'down'])
 
         # also check, if the current profile is 'up' with a 'type' (which
@@ -2185,7 +2190,7 @@ class Cmd:
             return True
 
         for i in reversed(range(idx)):
-            c = AnsibleUtil.connections[i]
+            c = self.connections[i]
             if 'name' not in c:
                 continue
             if c['name'] != con['name']:
@@ -2226,17 +2231,17 @@ class Cmd:
         assert False
 
     def run(self):
-        AnsibleUtil.run_results_push(len(AnsibleUtil.connections))
-        for idx, connection in enumerate(AnsibleUtil.connections):
+        AnsibleUtil.run_results_push(len(self.connections))
+        for idx, connection in enumerate(self.connections):
             try:
                 self._connection_validator.validate_connection_one(self.validate_one_type,
-                                                                   AnsibleUtil.connections,
+                                                                   self.connections,
                                                                    idx)
             except ValidationError as e:
                 self.log_fatal(idx, str(e))
         self.run_prepare()
         while self.check_mode_next() != CheckMode.DONE:
-            for idx, connection in enumerate(AnsibleUtil.connections):
+            for idx, connection in enumerate(self.connections):
                 try:
                     state = connection['state']
                     if state == 'wait':
@@ -2264,7 +2269,7 @@ class Cmd:
                     raise
 
     def run_prepare(self):
-        for idx, connection in enumerate(AnsibleUtil.connections):
+        for idx, connection in enumerate(self.connections):
             if 'type' in connection and connection['check_iface_exists']:
                 # when the profile is tied to a certain interface via 'interface_name' or 'mac',
                 # check that such an interface exists.
@@ -2311,7 +2316,7 @@ class Cmd_nm(Cmd):
     def run_prepare(self):
         Cmd.run_prepare(self)
         names = {}
-        for connection in AnsibleUtil.connections:
+        for connection in self.connections:
             if connection['state'] not in ['up', 'down', 'present', 'absent']:
                 continue
             name = connection['name']
@@ -2339,11 +2344,11 @@ class Cmd_nm(Cmd):
     def run_state_absent(self, idx):
         changed = False
         seen = set()
-        name = AnsibleUtil.connections[idx]['name']
+        name = self.connections[idx]['name']
         black_list_names = None
         if not name:
             name = None
-            black_list_names = ArgUtil.connection_get_non_absent_names(AnsibleUtil.connections)
+            black_list_names = ArgUtil.connection_get_non_absent_names(self.connections)
         while True:
             connections = self.nmutil.connection_list(name = name, black_list_names = black_list_names, black_list = seen)
             if not connections:
@@ -2361,9 +2366,9 @@ class Cmd_nm(Cmd):
             self.log_info(idx, 'no connection "%s"' % (name))
 
     def run_state_present(self, idx):
-        connection = AnsibleUtil.connections[idx]
+        connection = self.connections[idx]
         con_cur = Util.first(self.nmutil.connection_list(name = connection['name'], uuid = connection['nm.uuid']))
-        con_new = self.nmutil.connection_create(AnsibleUtil.connections, idx, con_cur)
+        con_new = self.nmutil.connection_create(self.connections, idx, con_cur)
         changed = False
         if con_cur is None:
             self.log_info(idx, 'add connection %s, %s' % (connection['name'], connection['nm.uuid']))
@@ -2405,7 +2410,7 @@ class Cmd_nm(Cmd):
         AnsibleUtil.run_results_changed(idx, changed)
 
     def run_state_up(self, idx):
-        connection = AnsibleUtil.connections[idx]
+        connection = self.connections[idx]
 
         con = Util.first(self.nmutil.connection_list(name = connection['name'], uuid = connection['nm.uuid']))
         if not con:
@@ -2447,7 +2452,7 @@ class Cmd_nm(Cmd):
         AnsibleUtil.run_results_changed(idx)
 
     def run_state_down(self, idx):
-        connection = AnsibleUtil.connections[idx]
+        connection = self.connections[idx]
 
         cons = self.nmutil.connection_list(name = connection['name'])
         changed = False
@@ -2492,7 +2497,7 @@ class Cmd_initscripts(Cmd):
 
     def check_name(self, idx, name = None):
         if name is None:
-            name = AnsibleUtil.connections[idx]['name']
+            name = self.connections[idx]['name']
         try:
             f = IfcfgUtil.ifcfg_path(name)
         except MyError as e:
@@ -2502,11 +2507,11 @@ class Cmd_initscripts(Cmd):
 
     def run_state_absent(self, idx):
         changed = False
-        n = AnsibleUtil.connections[idx]['name']
+        n = self.connections[idx]['name']
         name = n
         if not name:
             names = []
-            black_list_names = ArgUtil.connection_get_non_absent_names(AnsibleUtil.connections)
+            black_list_names = ArgUtil.connection_get_non_absent_names(self.connections)
             for f in os.listdir('/etc/sysconfig/network-scripts'):
                 if not f.startswith('ifcfg-'):
                     continue
@@ -2540,12 +2545,12 @@ class Cmd_initscripts(Cmd):
         if not self.check_name(idx):
             return
 
-        connection = AnsibleUtil.connections[idx]
+        connection = self.connections[idx]
         name = connection['name']
 
         old_content = IfcfgUtil.content_from_file(name)
 
-        ifcfg_all = IfcfgUtil.ifcfg_create(AnsibleUtil.connections, idx,
+        ifcfg_all = IfcfgUtil.ifcfg_create(self.connections, idx,
                                            lambda msg: self.log_warn(idx, msg),
                                            old_content)
 
@@ -2571,7 +2576,7 @@ class Cmd_initscripts(Cmd):
         if not self.check_name(idx):
             return
 
-        connection = AnsibleUtil.connections[idx]
+        connection = self.connections[idx]
         name = connection['name']
 
         if connection['wait'] is not None:
@@ -2634,15 +2639,19 @@ class Cmd_initscripts(Cmd):
 
 if __name__ == '__main__':
     ansible_util = AnsibleUtil
+    connections = None
     try:
         cmd = Cmd.create(ansible_util.params['provider'],
                          run_env = ansible_util,
+                         connections_unvalidated = ansible_util.params['connections'],
                          connection_validator = ArgValidator_ListConnections(),
                          is_check_mode = ansible_util.module.check_mode,
                          ignore_errors = ansible_util.params['ignore_errors'],
                          force_state_change = ansible_util.params['force_state_change'])
+        connections = cmd.connections
         cmd.run()
     except Exception as e:
-        ansible_util.fail_json('fatal error: %s' % (e),
+        ansible_util.fail_json(connections,
+                               'fatal error: %s' % (e),
                                warn_traceback = not isinstance(e, MyError))
-    ansible_util.exit_json()
+    ansible_util.exit_json(connections)
