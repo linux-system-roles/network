@@ -1962,7 +1962,13 @@ class NMUtil:
 
 class RunEnvironment:
 
-    def log(self, idx, severity, msg, warn_traceback = False, force_fail = False):
+    def log(self,
+            idx,
+            severity,
+            msg,
+            ignore_errors = False,
+            warn_traceback = False,
+            force_fail = False):
         raise NotImplementedError()
 
     def run_command(self, argv, encoding = None):
@@ -2003,15 +2009,6 @@ class _AnsibleUtil(RunEnvironment):
     def params(self):
         return self.module.params
 
-    def params_ignore_errors(self, connection, default_value = None):
-        v = connection['ignore_errors']
-        if v is None:
-            try:
-                v = Util.boolean(self.params['ignore_errors'])
-            except:
-                v = default_value
-        return v
-
     @property
     def connections(self):
         c = self._connections
@@ -2043,7 +2040,13 @@ class _AnsibleUtil(RunEnvironment):
             changed = True
         self.run_results[idx]['changed'] = bool(changed)
 
-    def log(self, idx, severity, msg, warn_traceback = False, force_fail = False):
+    def log(self,
+            idx,
+            severity,
+            msg,
+            ignore_errors = False,
+            warn_traceback = False,
+            force_fail = False):
         self._log_idx += 1
         if idx == -1:
             idx = len(self.run_results) - 1
@@ -2052,7 +2055,7 @@ class _AnsibleUtil(RunEnvironment):
         self.run_results[idx]['log'].append((severity, msg, self._log_idx))
         if severity == LogLevel.ERROR:
             if    force_fail \
-               or not self.params_ignore_errors(self.connections[idx], False):
+               or not ignore_errors:
                 self.fail_json('error: %s' % (msg), warn_traceback = warn_traceback)
 
     def _complete_kwargs_loglines(self, rr, idx):
@@ -2112,10 +2115,12 @@ class Cmd:
                  run_env,
                  connection_validator,
                  is_check_mode = False,
+                 ignore_errors = False,
                  force_state_change = False):
         self.run_env = run_env
         self._connection_validator = connection_validator
         self._is_check_mode = is_check_mode
+        self._ignore_errors = Util.boolean(ignore_errors)
         self._force_state_change = Util.boolean(force_state_change)
 
         self._check_mode = CheckMode.PREPARE
@@ -2139,9 +2144,11 @@ class Cmd:
         self.log(idx, LogLevel.ERROR, msg, warn_traceback = warn_traceback, force_fail = True)
 
     def log(self, idx, severity, msg, warn_traceback = False, force_fail = False):
+        connection = AnsibleUtil.connections[idx]
         self.run_env.log(idx,
                          severity,
                          msg,
+                         ignore_errors = self.connection_ignore_errors(connection),
                          warn_traceback = warn_traceback,
                          force_fail = force_fail)
 
@@ -2158,6 +2165,12 @@ class Cmd:
         if v is not None:
             return v
         return self._force_state_change
+
+    def connection_ignore_errors(self, connection):
+        v = connection['ignore_errors']
+        if v is not None:
+            return v
+        return self._ignore_errors
 
     def connection_modified_earlier(self, idx):
         # for index @idx, check if any of the previous profiles [0..idx[
@@ -2628,6 +2641,7 @@ if __name__ == '__main__':
                          run_env = ansible_util,
                          connection_validator = ArgValidator_ListConnections(),
                          is_check_mode = ansible_util.module.check_mode,
+                         ignore_errors = ansible_util.params['ignore_errors'],
                          force_state_change = ansible_util.params['force_state_change'])
         cmd.run()
     except Exception as e:
