@@ -2037,11 +2037,6 @@ class _AnsibleUtil(RunEnvironment):
             changed = True
         self.run_results[idx]['changed'] = bool(changed)
 
-    def run_results_rc(self, idx, rc, msg):
-        assert(idx >= 0 and idx < len(self.run_results) - 1)
-        self.run_results[idx]['rc'].append((rc, msg))
-        self.log(idx, LogLevel.INFO, 'command: %s (rc=%s)' % (msg, rc))
-
     def log(self, idx, severity, msg, warn_traceback = False, force_fail = False):
         self._log_idx += 1
         if idx == -1:
