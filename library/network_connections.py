@@ -2004,15 +2004,6 @@ class _AnsibleUtil(RunEnvironment):
                 v = default_value
         return v
 
-    def params_force_state_change(self, connection, default_value = None):
-        v = connection['force_state_change']
-        if v is None:
-            if 'force_state_change' in self.params:
-                v = Util.boolean(self.params['force_state_change'])
-            if v is None:
-                v = default_value
-        return v
-
     @property
     def connections(self):
         c = self._connections
@@ -2130,10 +2121,16 @@ AnsibleUtil = _AnsibleUtil()
 
 class Cmd:
 
-    def __init__(self, run_env, connection_validator, is_check_mode = False):
+    def __init__(self,
+                 run_env,
+                 connection_validator,
+                 is_check_mode = False,
+                 force_state_change = False):
         self._run_env = run_env
         self._connection_validator = connection_validator
         self._is_check_mode = is_check_mode
+        self._force_state_change = Util.boolean(force_state_change)
+
         self._check_mode = CheckMode.PREPARE
 
     @staticmethod
@@ -2143,6 +2140,12 @@ class Cmd:
         elif provider == 'initscripts':
             return Cmd_initscripts(**kwargs)
         raise MyError('unsupported provider %s' % (provider))
+
+    def connection_force_state_change(self, connection):
+        v = connection['force_state_change']
+        if v is not None:
+            return v
+        return self._force_state_change
 
     def connection_modified_earlier(self, idx):
         # for index @idx, check if any of the previous profiles [0..idx[
@@ -2391,7 +2394,7 @@ class Cmd_nm(Cmd):
 
         is_active = self.nmutil.connection_is_active(con)
         is_modified = self.connection_modified_earlier(idx)
-        force_state_change = AnsibleUtil.params_force_state_change(connection, False)
+        force_state_change = self.connection_force_state_change(connection)
 
         if is_active and not force_state_change and not is_modified:
             AnsibleUtil.log_info(idx, 'up connection %s, %s skipped because already active' %
@@ -2563,7 +2566,7 @@ class Cmd_initscripts(Cmd):
 
         is_active = IfcfgUtil.connection_seems_active(name)
         is_modified = self.connection_modified_earlier(idx)
-        force_state_change = AnsibleUtil.params_force_state_change(connection, False)
+        force_state_change = self.connection_force_state_change(connection)
 
         if do_up:
             if is_active is True and not force_state_change and not is_modified:
@@ -2612,7 +2615,8 @@ if __name__ == '__main__':
         cmd = Cmd.create(ansible_util.params['provider'],
                          run_env = ansible_util,
                          connection_validator = ArgValidator_ListConnections(),
-                         is_check_mode = ansible_util.module.check_mode)
+                         is_check_mode = ansible_util.module.check_mode,
+                         force_state_change = ansible_util.params['force_state_change'])
         cmd.run()
     except Exception as e:
         ansible_util.fail_json('fatal error: %s' % (e),
