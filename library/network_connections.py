@@ -1965,6 +1965,9 @@ class RunEnvironment:
     def log(self, idx, severity, msg, warn_traceback = False, force_fail = False):
         raise NotImplementedError()
 
+    def run_command(self, argv, encoding = None):
+        raise NotImplementedError()
+
 class _AnsibleUtil(RunEnvironment):
 
     ARGS = {
@@ -1992,6 +1995,9 @@ class _AnsibleUtil(RunEnvironment):
             )
             self._module = module
         return module
+
+    def run_command(self, argv, encoding = None):
+        return self.module.run_command(argv, encoding = encoding)
 
     @property
     def params(self):
@@ -2113,6 +2119,9 @@ class Cmd:
         self._force_state_change = Util.boolean(force_state_change)
 
         self._check_mode = CheckMode.PREPARE
+
+    def run_command(argv, encoding = None):
+        return self.run_env.run_command(argv, encoding = encoding)
 
     def log_debug(self, idx, msg):
         self.log(idx, LogLevel.DEBUG, msg)
@@ -2596,7 +2605,7 @@ class Cmd_initscripts(Cmd):
             cmd = 'ifdown'
 
         if self.check_mode == CheckMode.REAL_RUN:
-            rc, out, err = AnsibleUtil.module.run_command([cmd, name], encoding=None)
+            rc, out, err = self.run_env.run_command([cmd, name])
             self.log_info(idx, 'call `%s %s`: rc=%d, out="%s", err="%s"' % (cmd, name, rc, out, err))
             if rc != 0:
                 self.log_error(idx, 'call `%s %s` failed with exit status %d' % (cmd, name, rc))
