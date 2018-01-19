@@ -2004,21 +2004,15 @@ class AnsibleUtil(RunEnvironment):
 
     def __init__(self):
         RunEnvironment.__init__(self)
-        self._module = None
         self._run_results = []
         self._log_idx = 0
 
-    @property
-    def module(self):
-        module = self._module
-        if module is None:
-            from ansible.module_utils.basic import AnsibleModule
-            module = AnsibleModule(
-                argument_spec = self.ARGS,
-                supports_check_mode = True,
-            )
-            self._module = module
-        return module
+        from ansible.module_utils.basic import AnsibleModule
+        module = AnsibleModule(
+            argument_spec = self.ARGS,
+            supports_check_mode = True,
+        )
+        self.module = module
 
     def run_command(self, argv, encoding = None):
         return self.module.run_command(argv, encoding = encoding)
@@ -2681,9 +2675,9 @@ class Cmd_initscripts(Cmd):
 ###############################################################################
 
 if __name__ == '__main__':
-    ansible_util = AnsibleUtil()
     connections = None
     cmd = None
+    ansible_util = AnsibleUtil()
     try:
         params = ansible_util.module.params
         cmd = Cmd.create(params['provider'],
