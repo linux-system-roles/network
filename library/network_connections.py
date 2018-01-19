@@ -2017,20 +2017,13 @@ class RunEnvironmentAnsible(RunEnvironment):
     def run_command(self, argv, encoding = None):
         return self.module.run_command(argv, encoding = encoding)
 
-    def run_results_push(self, n_connections = None):
+    def _run_results_push(self, n_connections):
         c = []
-        if n_connections is None:
-            n_connections = len(self.run_results) - 1
         for cc in range(0, n_connections + 1):
             c.append({
                 'log': [],
             })
         self._run_results.append(c)
-
-    def run_results_reset(self):
-        n_connections = len(self.run_results) - 1
-        del self._run_results[-1]
-        self.run_results_push(n_connections)
 
     @property
     def run_results(self):
@@ -2038,11 +2031,15 @@ class RunEnvironmentAnsible(RunEnvironment):
 
     def _check_mode_changed(self, old_check_mode, new_check_mode, connections):
         if old_check_mode is None:
-            self.run_results_push(len(connections))
+            self._run_results_push(len(connections))
         elif old_check_mode == CheckMode.PREPARE:
-            self.run_results_push()
+            self._run_results_push(len(self.run_results) - 1)
         elif old_check_mode == CheckMode.PRE_RUN:
-            self.run_results_reset()
+            # when switching from RRE_RUN to REAL_RUN, we drop the run-results
+            # we just collected and reset to empty. The PRE_RUN succeeded.
+            n_connections = len(self.run_results) - 1
+            del self._run_results[-1]
+            self._run_results_push(n_connections)
 
     def log(self,
             connections,
