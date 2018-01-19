@@ -1993,7 +1993,7 @@ class RunEnvironment:
         self._check_mode_changed(c, check_mode, connections)
 
 
-class AnsibleUtil(RunEnvironment):
+class RunEnvironmentAnsible(RunEnvironment):
 
     ARGS = {
         'ignore_errors':  { 'required': False, 'default': False, 'type': 'str' },
@@ -2677,22 +2677,22 @@ class Cmd_initscripts(Cmd):
 if __name__ == '__main__':
     connections = None
     cmd = None
-    ansible_util = AnsibleUtil()
+    run_env_ansible = RunEnvironmentAnsible()
     try:
-        params = ansible_util.module.params
+        params = run_env_ansible.module.params
         cmd = Cmd.create(params['provider'],
-                         run_env = ansible_util,
+                         run_env = run_env_ansible,
                          connections_unvalidated = params['connections'],
                          connection_validator = ArgValidator_ListConnections(),
-                         is_check_mode = ansible_util.module.check_mode,
+                         is_check_mode = run_env_ansible.module.check_mode,
                          ignore_errors = params['ignore_errors'],
                          force_state_change = params['force_state_change'])
         connections = cmd.connections
         cmd.run()
     except Exception as e:
-        ansible_util.fail_json(connections,
-                               'fatal error: %s' % (e),
-                               changed = (cmd is not None and cmd.is_changed),
-                               warn_traceback = not isinstance(e, MyError))
-    ansible_util.exit_json(connections,
-                           changed = (cmd is not None and cmd.is_changed))
+        run_env_ansible.fail_json(connections,
+                                  'fatal error: %s' % (e),
+                                  changed = (cmd is not None and cmd.is_changed),
+                                  warn_traceback = not isinstance(e, MyError))
+    run_env_ansible.exit_json(connections,
+                              changed = (cmd is not None and cmd.is_changed))
