@@ -2128,14 +2128,14 @@ class Cmd:
         self._connections = None
         self._connections_data = None
         self._check_mode = CheckMode.PREPARE
-        self._is_changed = False
+        self._is_changed_modified_system = False
 
     def run_command(argv, encoding = None):
         return self.run_env.run_command(argv, encoding = encoding)
 
     @property
-    def is_changed(self):
-        return self._is_changed
+    def is_changed_modified_system(self):
+        return self._is_changed_modified_system
 
     @property
     def connections(self):
@@ -2164,14 +2164,18 @@ class Cmd:
     def connections_data_reset(self):
         for c in self.connections_data:
             c['changed'] = False
-        self._is_changed = False
 
     def connections_data_set_changed(self, idx, changed = True):
+        assert(self._check_mode in [CheckMode.PRE_RUN, CheckMode.DRY_RUN, CheckMode.REAL_RUN])
         if not changed:
             return
         self.connections_data[idx]['changed'] = changed
-        if changed:
-            self._is_changed = True
+        if     changed \
+           and self._check_mode in [CheckMode.DRY_RUN, CheckMode.REAL_RUN]:
+            # we only do actual modifications during the REAL_RUN step.
+            # And as a special exception, during the DRY_RUN step, which
+            # is like REAL_RUN, except not not actually changing anything.
+            self._is_changed_modified_system = True
 
     def log_debug(self, idx, msg):
         self.log(idx, LogLevel.DEBUG, msg)
@@ -2193,7 +2197,7 @@ class Cmd:
                          idx,
                          severity,
                          msg,
-                         is_changed = self.is_changed,
+                         is_changed = self.is_changed_modified_system,
                          ignore_errors = self.connection_ignore_errors(connections[idx]),
                          warn_traceback = warn_traceback,
                          force_fail = force_fail)
@@ -2385,7 +2389,6 @@ class Cmd_nm(Cmd):
             connection['nm.uuid'] = uuid
 
     def run_state_absent(self, idx):
-        changed = False
         seen = set()
         name = self.connections[idx]['name']
         black_list_names = None
@@ -2398,8 +2401,8 @@ class Cmd_nm(Cmd):
                 break
             c = connections[-1]
             seen.add(c)
-            self.connections_data_set_changed(idx)
             self.log_info(idx, 'delete connection %s, %s' % (c.get_id(), c.get_uuid()))
+            self.connections_data_set_changed(idx)
             if self.check_mode == CheckMode.REAL_RUN:
                 try:
                     self.nmutil.connection_delete(c)
@@ -2412,18 +2415,17 @@ class Cmd_nm(Cmd):
         connection = self.connections[idx]
         con_cur = Util.first(self.nmutil.connection_list(name = connection['name'], uuid = connection['nm.uuid']))
         con_new = self.nmutil.connection_create(self.connections, idx, con_cur)
-        changed = False
         if con_cur is None:
             self.log_info(idx, 'add connection %s, %s' % (connection['name'], connection['nm.uuid']))
-            changed = True
-            try:
-                if self.check_mode == CheckMode.REAL_RUN:
+            self.connections_data_set_changed(idx)
+            if self.check_mode == CheckMode.REAL_RUN:
+                try:
                     con_cur = self.nmutil.connection_add(con_new)
-            except MyError as e:
-                self.log_error(idx, 'adding connection failed: %s' % (e))
+                except MyError as e:
+                    self.log_error(idx, 'adding connection failed: %s' % (e))
         elif not self.nmutil.connection_compare(con_cur, con_new, normalize_a = True):
-            changed = True
             self.log_info(idx, 'update connection %s, %s' % (con_cur.get_id(), con_cur.get_uuid()))
+            self.connections_data_set_changed(idx)
             if self.check_mode == CheckMode.REAL_RUN:
                 try:
                     self.nmutil.connection_update(con_cur, con_new)
@@ -2442,7 +2444,7 @@ class Cmd_nm(Cmd):
                 break
             c = connections[-1]
             self.log_info(idx, 'delete duplicate connection %s, %s' % (c.get_id(), c.get_uuid()))
-            changed = True
+            self.connections_data_set_changed(idx)
             if self.check_mode == CheckMode.REAL_RUN:
                 try:
                    self.nmutil.connection_delete(c)
@@ -2450,7 +2452,6 @@ class Cmd_nm(Cmd):
                     self.log_error(idx, 'delete duplicate connection failed: %s' % (e))
             seen.add(c)
 
-        self.connections_data_set_changed(idx, changed)
 
     def run_state_up(self, idx):
         connection = self.connections[idx]
@@ -2477,6 +2478,7 @@ class Cmd_nm(Cmd):
                        'not-active' if not is_active else \
                        'is-modified' if is_modified else \
                        'force-state-change'))
+        self.connections_data_set_changed(idx)
         if self.check_mode == CheckMode.REAL_RUN:
             try:
                 ac = self.nmutil.connection_activate (con)
@@ -2492,8 +2494,6 @@ class Cmd_nm(Cmd):
             except MyError as e:
                 self.log_error(idx, 'up connection failed while waiting: %s' % (e))
 
-        self.connections_data_set_changed(idx)
-
     def run_state_down(self, idx):
         connection = self.connections[idx]
 
@@ -2505,9 +2505,10 @@ class Cmd_nm(Cmd):
                 ac = Util.first(self.nmutil.active_connection_list(connections = cons, black_list = seen))
                 if ac is None:
                     break
-                changed = True
                 seen.add(ac)
                 self.log_info(idx, 'down connection %s: %s' % (connection['name'], ac.get_path()))
+                changed = True
+                self.connections_data_set_changed(idx)
                 if self.check_mode == CheckMode.REAL_RUN:
                     try:
                         self.nmutil.active_connection_deactivate(ac)
@@ -2527,7 +2528,6 @@ class Cmd_nm(Cmd):
 
         if not changed:
             self.log_info(idx, 'down connection %s failed: no connection' % (connection['name']))
-        self.connections_data_set_changed(idx, changed)
 
 
 ###############################################################################
@@ -2549,7 +2549,6 @@ class Cmd_initscripts(Cmd):
         return f
 
     def run_state_absent(self, idx):
-        changed = False
         n = self.connections[idx]['name']
         name = n
         if not name:
@@ -2568,12 +2567,15 @@ class Cmd_initscripts(Cmd):
             if not self.check_name(idx):
                 return
             names = [name]
+
+        changed = False
         for name in names:
             for path in IfcfgUtil.ifcfg_paths(name):
                 if not os.path.isfile(path):
                     continue
                 changed = True
                 self.log_info(idx, 'delete ifcfg-rh file "%s"' % (path))
+                self.connections_data_set_changed(idx)
                 if self.check_mode == CheckMode.REAL_RUN:
                     try:
                         os.unlink(path)
@@ -2582,7 +2584,6 @@ class Cmd_initscripts(Cmd):
 
         if not changed:
             self.log_info(idx, 'delete ifcfg-rh files for %s (no files present)' % ('"'+n+'"' if n else '*'))
-        self.connections_data_set_changed(idx, changed)
 
     def run_state_present(self, idx):
         if not self.check_name(idx):
@@ -2608,13 +2609,12 @@ class Cmd_initscripts(Cmd):
 
         self.log_info(idx, '%s ifcfg-rh profile "%s"' % (op, name))
 
+        self.connections_data_set_changed(idx)
         if self.check_mode == CheckMode.REAL_RUN:
             try:
                 IfcfgUtil.content_to_file(name, new_content)
             except MyError as e:
                 self.log_error(idx, '%s ifcfg-rh profile "%s" failed: %s' % (op, name, e))
-
-        self.connections_data_set_changed(idx)
 
     def _run_state_updown(self, idx, do_up):
         if not self.check_name(idx):
@@ -2664,13 +2664,12 @@ class Cmd_initscripts(Cmd):
                            'force-state-change'))
             cmd = 'ifdown'
 
+        self.connections_data_set_changed(idx)
         if self.check_mode == CheckMode.REAL_RUN:
             rc, out, err = self.run_env.run_command([cmd, name])
             self.log_info(idx, 'call `%s %s`: rc=%d, out="%s", err="%s"' % (cmd, name, rc, out, err))
             if rc != 0:
                 self.log_error(idx, 'call `%s %s` failed with exit status %d' % (cmd, name, rc))
-
-        self.connections_data_set_changed(idx)
 
 
     def run_state_up(self, idx):
@@ -2699,7 +2698,7 @@ if __name__ == '__main__':
     except Exception as e:
         run_env_ansible.fail_json(connections,
                                   'fatal error: %s' % (e),
-                                  changed = (cmd is not None and cmd.is_changed),
+                                  changed = (cmd is not None and cmd.is_changed_modified_system),
                                   warn_traceback = not isinstance(e, MyError))
     run_env_ansible.exit_json(connections,
-                              changed = (cmd is not None and cmd.is_changed))
+                              changed = (cmd is not None and cmd.is_changed_modified_system))
