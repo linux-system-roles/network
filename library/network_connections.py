@@ -1372,15 +1372,16 @@ class IfcfgUtil:
                 ifcfg[val[0]] = val[1]
         return ifcfg
 
-    ANSIBLE_MANAGED = '# this file was created by ansible'
-
     @classmethod
-    def content_from_dict(cls, ifcfg_all, file_type = None):
+    def content_from_dict(cls, ifcfg_all, file_type = None, header = None):
         content = {}
         for file_type in cls._file_types(file_type):
             h = ifcfg_all[file_type]
             if file_type == 'ifcfg':
-                s = cls.ANSIBLE_MANAGED + '\n'
+                if header is not None:
+                    s = header + '\n'
+                else:
+                    s = ""
                 for key in sorted(h.keys()):
                     value = h[key]
                     if not cls.KeyValid(key):
@@ -1965,6 +1966,10 @@ class RunEnvironment:
     def __init__(self):
         self._check_mode = None
 
+    @property
+    def ifcfg_header(self):
+        return None
+
     def log(self,
             connections,
             idx,
@@ -2013,6 +2018,10 @@ class RunEnvironmentAnsible(RunEnvironment):
             supports_check_mode = True,
         )
         self.module = module
+
+    @property
+    def ifcfg_header(self):
+        return '# this file was created by ansible'
 
     def run_command(self, argv, encoding = None):
         return self.module.run_command(argv, encoding = encoding)
@@ -2588,7 +2597,8 @@ class Cmd_initscripts(Cmd):
                                            lambda msg: self.log_warn(idx, msg),
                                            old_content)
 
-        new_content = IfcfgUtil.content_from_dict(ifcfg_all)
+        new_content = IfcfgUtil.content_from_dict(ifcfg_all,
+                                                  header = self.run_env.ifcfg_header)
 
         if old_content == new_content:
             self.log_info(idx, 'ifcfg-rh profile "%s" already up to date' % (name))
