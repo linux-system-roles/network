@@ -760,6 +760,43 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 raise ValidationError(name, '"dhcp4_send_hostname" is only valid if "dhcp4" is enabled')
         return result
 
+class ArgValidator_DictEthernet(ArgValidatorDict):
+    def __init__(self):
+        ArgValidatorDict.__init__(self,
+            name = 'ethernet',
+            nested = [
+                ArgValidatorBool('autoneg', default_value = None),
+                ArgValidatorNum ('speed', val_min = 0, val_max = 0xFFFFFFFF, default_value = 0),
+                ArgValidatorStr ('duplex', enum_values = ['half', 'full']),
+            ],
+            default_value = ArgValidator.MISSING,
+        )
+
+    def get_default_ethernet(self):
+        return {
+            'autoneg': None,
+            'speed': 0,
+            'duplex': None,
+        }
+
+    def _validate_post(self, value, name, result):
+        has_speed_or_duplex =    result['speed'] != 0 \
+                              or result['duplex'] is not None
+        if result['autoneg'] is None:
+            if has_speed_or_duplex:
+                result['autoneg'] = False
+        elif result['autoneg']:
+            if has_speed_or_duplex:
+                raise ValidationError(name, 'cannot specify "%s" with "autoneg" enabled' % ('duplex' if result['duplex'] is not None else 'speed'))
+        else:
+            if not has_speed_or_duplex:
+                raise ValidationError(name, 'need to specify "duplex" and "speed" with "autoneg" enabled')
+        if (    has_speed_or_duplex \
+            and (   result['speed'] == 0 \
+                 or result['duplex'] is None)):
+            raise ValidationError(name, 'need to specify both "speed" and "duplex" with "autoneg" disabled')
+        return result
+
 class ArgValidator_DictBond(ArgValidatorDict):
 
     VALID_MODES = [ 'balance-rr', 'active-backup', 'balance-xor', 'broadcast', '802.3ad', 'balance-tlb', 'balance-alb']
@@ -810,6 +847,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidatorStr ('infiniband_transport_mode', enum_values = ['datagram', 'connected']),
                 ArgValidatorNum ('infiniband_p_key', val_min = -1, val_max = 0xFFFF, default_value = None),
                 ArgValidator_DictIP(),
+                ArgValidator_DictEthernet(),
                 ArgValidator_DictBond(),
             ],
             default_value = dict,
@@ -938,6 +976,13 @@ class ArgValidator_DictConnection(ArgValidatorDict):
             else:
                 if 'bond' in result:
                     raise ValidationError(name + '.bond', '"bond" settings are not allowed for "type" "%s"' % (result['type']))
+
+            if result['type'] in ['ethernet', 'vlan', 'bridge', 'bond', 'team']:
+                if 'ethernet' not in result:
+                    result['ethernet'] = self.nested['ethernet'].get_default_ethernet()
+            else:
+                if 'ethernet' in result:
+                    raise ValidationError(name + '.ethernet', '"ethernet" settings are not allowed for "type" "%s"' % (result['type']))
 
         for k in VALID_FIELDS:
             if k in result:
@@ -1178,6 +1223,15 @@ class IfcfgUtil:
 
         if connection['mtu']:
             ifcfg['MTU'] = str(connection['mtu'])
+
+        if 'ethernet' in connection:
+            if connection['ethernet']['autoneg'] is not None:
+                if connection['ethernet']['autoneg']:
+                    s = 'autoneg on'
+                else:
+                    s = 'autoneg off speed %s duplex %s' % (connection['ethernet']['speed'],
+                                                            connection['ethernet']['duplex'])
+                ifcfg['ETHTOOL_OPTS'] = s
 
         if connection['master'] is not None:
             m = ArgUtil.connection_find_master(connection['master'], connections, idx)
@@ -1552,6 +1606,13 @@ class NMUtil:
             s_vlan.set_property(NM.SETTING_VLAN_PARENT, ArgUtil.connection_find_master_uuid(connection['parent'], connections, idx))
         else:
             raise MyError('unsupported type %s' % (connection['type']))
+
+        if 'ethernet' in connection:
+            if connection['ethernet']['autoneg'] is not None:
+                s_wired = self.connection_ensure_setting(con, NM.SettingWired)
+                s_wired.set_property(NM.SETTING_WIRED_AUTO_NEGOTIATE, connection['ethernet']['autoneg'])
+                s_wired.set_property(NM.SETTING_WIRED_DUPLEX, connection['ethernet']['duplex'])
+                s_wired.set_property(NM.SETTING_WIRED_SPEED, connection['ethernet']['speed'])
 
         if connection['mtu']:
             if connection['type'] == 'infiniband':
