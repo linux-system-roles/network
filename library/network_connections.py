@@ -1372,15 +1372,16 @@ class IfcfgUtil:
                 ifcfg[val[0]] = val[1]
         return ifcfg
 
-    ANSIBLE_MANAGED = '# this file was created by ansible'
-
     @classmethod
-    def content_from_dict(cls, ifcfg_all, file_type = None):
+    def content_from_dict(cls, ifcfg_all, file_type = None, header = None):
         content = {}
         for file_type in cls._file_types(file_type):
             h = ifcfg_all[file_type]
             if file_type == 'ifcfg':
-                s = cls.ANSIBLE_MANAGED + '\n'
+                if header is not None:
+                    s = header + '\n'
+                else:
+                    s = ""
                 for key in sorted(h.keys()):
                     value = h[key]
                     if not cls.KeyValid(key):
@@ -1960,7 +1961,44 @@ class NMUtil:
 
 ###############################################################################
 
-class _AnsibleUtil:
+class RunEnvironment:
+
+    def __init__(self):
+        self._check_mode = None
+
+    @property
+    def ifcfg_header(self):
+        return None
+
+    def log(self,
+            connections,
+            idx,
+            severity,
+            msg,
+            is_changed = False,
+            ignore_errors = False,
+            warn_traceback = False,
+            force_fail = False):
+        raise NotImplementedError()
+
+    def run_command(self, argv, encoding = None):
+        raise NotImplementedError()
+
+    def _check_mode_changed(self, old_check_mode, new_check_mode, connections):
+        raise NotImplementedError()
+
+    def check_mode_set(self, check_mode, connections = None):
+        c = self._check_mode
+        self._check_mode = check_mode
+        assert(   (c is None               and check_mode in [CheckMode.PREPARE]) \
+               or (c == CheckMode.PREPARE  and check_mode in [CheckMode.PRE_RUN, CheckMode.DRY_RUN]) \
+               or (c == CheckMode.PRE_RUN  and check_mode in [CheckMode.REAL_RUN]) \
+               or (c == CheckMode.REAL_RUN and check_mode in [CheckMode.DONE]) \
+               or (c == CheckMode.DRY_RUN  and check_mode in [CheckMode.DONE]))
+        self._check_mode_changed(c, check_mode, connections)
+
+
+class RunEnvironmentAnsible(RunEnvironment):
 
     ARGS = {
         'ignore_errors':  { 'required': False, 'default': False, 'type': 'str' },
@@ -1969,142 +2007,175 @@ class _AnsibleUtil:
         'connections':    { 'required': False, 'default': None,  'type': 'list' },
     }
 
-    ARGS_CONNECTIONS = ArgValidator_ListConnections()
-
     def __init__(self):
-        self._module = None
-        self._connections = None
-        self._run_results = None
-        self._run_results_prepare = None
-        self._check_mode = CheckMode.PREPARE
+        RunEnvironment.__init__(self)
+        self._run_results = []
         self._log_idx = 0
 
-    @property
-    def check_mode(self):
-        return self._check_mode
-
-    def check_mode_next(self):
-        if self._check_mode == CheckMode.PREPARE:
-            self._run_results_prepare = self._run_results
-            self._run_results = None
-            if self.module.check_mode:
-                self._check_mode = CheckMode.DRY_RUN
-            else:
-                self._check_mode = CheckMode.PRE_RUN
-            return self._check_mode
-        if self.check_mode == CheckMode.PRE_RUN:
-            self._run_results = None
-            self._check_mode = CheckMode.REAL_RUN
-            return CheckMode.REAL_RUN
-        if self._check_mode != CheckMode.DONE:
-            self._check_mode = CheckMode.DONE
-            return CheckMode.DONE
-        assert False
+        from ansible.module_utils.basic import AnsibleModule
+        module = AnsibleModule(
+            argument_spec = self.ARGS,
+            supports_check_mode = True,
+        )
+        self.module = module
 
     @property
-    def module(self):
-        module = self._module
-        if module is None:
-            from ansible.module_utils.basic import AnsibleModule
-            module = AnsibleModule(
-                argument_spec = self.ARGS,
-                supports_check_mode = True,
-            )
-            self._module = module
-        return module
+    def ifcfg_header(self):
+        return '# this file was created by ansible'
+
+    def run_command(self, argv, encoding = None):
+        return self.module.run_command(argv, encoding = encoding)
+
+    def _run_results_push(self, n_connections):
+        c = []
+        for cc in range(0, n_connections + 1):
+            c.append({
+                'log': [],
+            })
+        self._run_results.append(c)
 
     @property
-    def params(self):
-        return self.module.params
+    def run_results(self):
+        return self._run_results[-1]
 
-    def params_ignore_errors(self, connection, default_value = None):
-        v = connection['ignore_errors']
-        if v is None:
-            try:
-                v = Util.boolean(self.params['ignore_errors'])
-            except:
-                v = default_value
-        return v
+    def _check_mode_changed(self, old_check_mode, new_check_mode, connections):
+        if old_check_mode is None:
+            self._run_results_push(len(connections))
+        elif old_check_mode == CheckMode.PREPARE:
+            self._run_results_push(len(self.run_results) - 1)
+        elif old_check_mode == CheckMode.PRE_RUN:
+            # when switching from RRE_RUN to REAL_RUN, we drop the run-results
+            # we just collected and reset to empty. The PRE_RUN succeeded.
+            n_connections = len(self.run_results) - 1
+            del self._run_results[-1]
+            self._run_results_push(n_connections)
 
-    def params_force_state_change(self, connection, default_value = None):
-        v = connection['force_state_change']
-        if v is None:
-            if 'force_state_change' in self.params:
-                v = Util.boolean(self.params['force_state_change'])
-            if v is None:
-                v = default_value
-        return v
+    def log(self,
+            connections,
+            idx,
+            severity,
+            msg,
+            is_changed = False,
+            ignore_errors = False,
+            warn_traceback = False,
+            force_fail = False):
+        assert(idx >= -1)
+        self._log_idx += 1
+        self.run_results[idx]['log'].append((severity, msg, self._log_idx))
+        if severity == LogLevel.ERROR:
+            if    force_fail \
+               or not ignore_errors:
+                self.fail_json(connections, 'error: %s' % (msg), changed = is_changed, warn_traceback = warn_traceback)
+
+    def _complete_kwargs_loglines(self, rr, connections, idx):
+        if idx == len(connections):
+            prefix = '#'
+        else:
+            c = connections[idx]
+            prefix = '#%s, state:%s' % (idx, c['state'])
+            if c['state'] != 'wait':
+                prefix = prefix + (', "%s"' % (c['name']))
+        for r in rr['log']:
+            yield (r[2], '[%03d] %s %s: %s' % (r[2], LogLevel.fmt(r[0]), prefix, r[1]))
+
+    def _complete_kwargs(self, connections, kwargs, traceback_msg = None):
+        if 'warnings' in kwargs:
+            logs = list(kwargs['warnings'])
+        else:
+            logs = []
+
+        l = []
+        for res in self._run_results:
+            for idx, rr in enumerate(res):
+                l.extend(self._complete_kwargs_loglines(rr, connections, idx))
+        l.sort(key = lambda x: x[0])
+        logs.extend([x[1] for x in l])
+        if traceback_msg is not None:
+            logs.append(traceback_msg)
+        kwargs['warnings'] = logs
+        return kwargs
+
+    def exit_json(self, connections, changed = False, **kwargs):
+        kwargs['changed'] = changed
+        self.module.exit_json(**self._complete_kwargs(connections, kwargs))
+
+    def fail_json(self, connections, msg, changed = False, warn_traceback = False, **kwargs):
+        traceback_msg = None
+        if warn_traceback:
+            traceback_msg = 'exception: %s' % (traceback.format_exc())
+        kwargs['msg'] = msg
+        kwargs['changed'] = changed
+        self.module.fail_json(**self._complete_kwargs(connections, kwargs, traceback_msg))
+
+###############################################################################
+
+class Cmd:
+
+    def __init__(self,
+                 run_env,
+                 connections_unvalidated,
+                 connection_validator,
+                 is_check_mode = False,
+                 ignore_errors = False,
+                 force_state_change = False):
+        self.run_env = run_env
+        self._connections_unvalidated = connections_unvalidated
+        self._connection_validator = connection_validator
+        self._is_check_mode = is_check_mode
+        self._ignore_errors = Util.boolean(ignore_errors)
+        self._force_state_change = Util.boolean(force_state_change)
+
+        self._connections = None
+        self._connections_data = None
+        self._check_mode = CheckMode.PREPARE
+        self._is_changed_modified_system = False
+
+    def run_command(argv, encoding = None):
+        return self.run_env.run_command(argv, encoding = encoding)
+
+    @property
+    def is_changed_modified_system(self):
+        return self._is_changed_modified_system
 
     @property
     def connections(self):
         c = self._connections
         if c is None:
             try:
-                c = self.ARGS_CONNECTIONS.validate(self.params['connections'])
+                c = self._connection_validator.validate(self._connections_unvalidated)
             except ValidationError as e:
-                self.fail_json('configuration error: %s' % (e),
-                               warn_traceback = False)
+                raise MyError('configuration error: %s' % (e))
             self._connections = c
         return c
 
-    def connection_modified_earlier(self, idx):
-        # for index @idx, check if any of the previous profiles [0..idx[
-        # modify the connection.
-
-        con = self.connections[idx]
-        assert(con['state'] in ['up', 'down'])
-
-        # also check, if the current profile is 'up' with a 'type' (which
-        # possibly modifies the connection as well)
-        if     con['state'] == 'up' \
-           and 'type' in con \
-           and self.run_results[idx]['changed']:
-            return True
-
-        for i in reversed(range(idx)):
-            c = self.connections[i]
-            if 'name' not in c:
-                continue
-            if c['name'] != con['name']:
-                continue
-
-            c_state = c['state']
-            if c_state == 'up' and 'type' not in c:
-                pass
-            elif c_state == 'down':
-                return True
-            elif c_state == 'absent':
-                return True
-            elif c_state in ['present', 'up']:
-                if self.run_results[i]['changed']:
-                    return True
-
-        return False
-
     @property
-    def run_results(self):
-        c = self._run_results
+    def connections_data(self):
+        c = self._connections_data
         if c is None:
+            assert(self.check_mode in [CheckMode.DRY_RUN, CheckMode.PRE_RUN, CheckMode.REAL_RUN])
             c = []
-            for cc in range(0, len(self.connections) + 1):
+            for idx in range(0, len(self.connections)):
                 c.append({
                     'changed': False,
-                    'log': [],
-                    'rc': [],
                 })
-            self._run_results = c
+            self._connections_data = c
         return c
 
-    def run_results_changed(self, idx, changed = None):
-        assert(idx >= 0 and idx < len(self.run_results) - 1)
-        if changed is None:
-            changed = True
-        self.run_results[idx]['changed'] = bool(changed)
+    def connections_data_reset(self):
+        for c in self.connections_data:
+            c['changed'] = False
 
-    def run_results_rc(self, idx, rc, msg):
-        assert(idx >= 0 and idx < len(self.run_results) - 1)
-        self.run_results[idx]['rc'].append((rc, msg))
-        self.log(idx, LogLevel.INFO, 'command: %s (rc=%s)' % (msg, rc))
+    def connections_data_set_changed(self, idx, changed = True):
+        assert(self._check_mode in [CheckMode.PRE_RUN, CheckMode.DRY_RUN, CheckMode.REAL_RUN])
+        if not changed:
+            return
+        self.connections_data[idx]['changed'] = changed
+        if     changed \
+           and self._check_mode in [CheckMode.DRY_RUN, CheckMode.REAL_RUN]:
+            # we only do actual modifications during the REAL_RUN step.
+            # And as a special exception, during the DRY_RUN step, which
+            # is like REAL_RUN, except not not actually changing anything.
+            self._is_changed_modified_system = True
 
     def log_debug(self, idx, msg):
         self.log(idx, LogLevel.DEBUG, msg)
@@ -2122,98 +2193,110 @@ class _AnsibleUtil:
         self.log(idx, LogLevel.ERROR, msg, warn_traceback = warn_traceback, force_fail = True)
 
     def log(self, idx, severity, msg, warn_traceback = False, force_fail = False):
-        self._log_idx += 1
-        if idx == -1:
-            idx = len(self.run_results) - 1
-        else:
-            assert(idx >= 0 and idx < len(self.run_results) - 1)
-        self.run_results[idx]['log'].append((severity, msg, self._log_idx))
-        if severity == LogLevel.ERROR:
-            if    force_fail \
-               or not self.params_ignore_errors(self.connections[idx], False):
-                self.fail_json('error: %s' % (msg), warn_traceback = warn_traceback)
-
-    def _complete_kwargs_loglines(self, rr, idx):
-        if idx == len(self.connections):
-            prefix = '#'
-        else:
-            c = self.connections[idx]
-            prefix = '#%s, state:%s' % (idx, c['state'])
-            if c['state'] != 'wait':
-                prefix = prefix + (', "%s"' % (c['name']))
-        for r in rr['log']:
-            yield (r[2], '[%03d] %s %s: %s' % (r[2], LogLevel.fmt(r[0]), prefix, r[1]))
-
-    def _complete_kwargs(self, kwargs, traceback_msg = None):
-        if 'warnings' in kwargs:
-            logs = list(kwargs['warnings'])
-        else:
-            logs = []
-
-        l = []
-        if self._run_results_prepare is not None:
-            for idx, rr in enumerate(self._run_results_prepare):
-                l.extend(self._complete_kwargs_loglines(rr, idx))
-        if self._run_results is not None:
-            for idx, rr in enumerate(self._run_results):
-                l.extend(self._complete_kwargs_loglines(rr, idx))
-        l.sort(key = lambda x: x[0])
-        logs.extend([x[1] for x in l])
-        if traceback_msg is not None:
-            logs.append(traceback_msg)
-        kwargs['warnings'] = logs
-        return kwargs
-
-    def exit_json(self, **kwargs):
-        changed = False
-        if self._run_results is not None:
-            for rr in self.run_results:
-                if rr['changed']:
-                    changed = True
-        kwargs['changed'] = changed
-        self.module.exit_json(**self._complete_kwargs(kwargs))
-
-    def fail_json(self, msg, warn_traceback = False, **kwargs):
-        traceback_msg = None
-        if warn_traceback:
-            traceback_msg = 'exception: %s' % (traceback.format_exc())
-        kwargs['msg'] = msg
-        self.module.fail_json(**self._complete_kwargs(kwargs, traceback_msg))
-
-AnsibleUtil = _AnsibleUtil()
-
-###############################################################################
-
-class Cmd:
+        self.run_env.log(connections,
+                         idx,
+                         severity,
+                         msg,
+                         is_changed = self.is_changed_modified_system,
+                         ignore_errors = self.connection_ignore_errors(connections[idx]),
+                         warn_traceback = warn_traceback,
+                         force_fail = force_fail)
 
     @staticmethod
-    def create():
-        provider = AnsibleUtil.params['provider']
+    def create(provider, **kwargs):
         if provider == 'nm':
-            return Cmd_nm()
+            return Cmd_nm(**kwargs)
         elif provider == 'initscripts':
-            return Cmd_initscripts()
-        AnsibleUtil.fail_json('unsupported provider %s' % (provider))
+            return Cmd_initscripts(**kwargs)
+        raise MyError('unsupported provider %s' % (provider))
+
+    def connection_force_state_change(self, connection):
+        v = connection['force_state_change']
+        if v is not None:
+            return v
+        return self._force_state_change
+
+    def connection_ignore_errors(self, connection):
+        v = connection['ignore_errors']
+        if v is not None:
+            return v
+        return self._ignore_errors
+
+    def connection_modified_earlier(self, idx):
+        # for index @idx, check if any of the previous profiles [0..idx[
+        # modify the connection.
+
+        con = self.connections[idx]
+        assert(con['state'] in ['up', 'down'])
+
+        # also check, if the current profile is 'up' with a 'type' (which
+        # possibly modifies the connection as well)
+        if     con['state'] == 'up' \
+           and 'type' in con \
+           and self.connections_data[idx]['changed']:
+            return True
+
+        for i in reversed(range(idx)):
+            c = self.connections[i]
+            if 'name' not in c:
+                continue
+            if c['name'] != con['name']:
+                continue
+
+            c_state = c['state']
+            if c_state == 'up' and 'type' not in c:
+                pass
+            elif c_state == 'down':
+                return True
+            elif c_state == 'absent':
+                return True
+            elif c_state in ['present', 'up']:
+                if self.connections_data[idx]['changed']:
+                    return True
+
+        return False
+
+    @property
+    def check_mode(self):
+        return self._check_mode
+
+    def check_mode_next(self):
+        if self._check_mode == CheckMode.PREPARE:
+            if self._is_check_mode:
+                c = CheckMode.DRY_RUN
+            else:
+                c = CheckMode.PRE_RUN
+        elif self.check_mode == CheckMode.PRE_RUN:
+            self.connections_data_reset()
+            c = CheckMode.REAL_RUN
+        elif self._check_mode != CheckMode.DONE:
+            c = CheckMode.DONE
+        else:
+            assert False
+        self._check_mode = c
+        self.run_env.check_mode_set(c)
+        return c
 
     def run(self):
-        for idx, connection in enumerate(AnsibleUtil.connections):
+        self.run_env.check_mode_set(CheckMode.PREPARE, self.connections)
+        for idx, connection in enumerate(self.connections):
             try:
-                AnsibleUtil.ARGS_CONNECTIONS.validate_connection_one(self.validate_one_type,
-                                                                     AnsibleUtil.connections,
-                                                                     idx)
+                self._connection_validator.validate_connection_one(self.validate_one_type,
+                                                                   self.connections,
+                                                                   idx)
             except ValidationError as e:
-                AnsibleUtil.log_fatal(idx, str(e))
+                self.log_fatal(idx, str(e))
         self.run_prepare()
-        while AnsibleUtil.check_mode_next() != CheckMode.DONE:
-            for idx, connection in enumerate(AnsibleUtil.connections):
+        while self.check_mode_next() != CheckMode.DONE:
+            for idx, connection in enumerate(self.connections):
                 try:
                     state = connection['state']
                     if state == 'wait':
                         w = connection['wait']
                         if w is None:
                             w = 10
-                        AnsibleUtil.log_info(idx, 'wait for %s seconds' % (w))
-                        if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+                        self.log_info(idx, 'wait for %s seconds' % (w))
+                        if self.check_mode == CheckMode.REAL_RUN:
                             import time
                             time.sleep(w)
                     elif state == 'absent':
@@ -2229,11 +2312,11 @@ class Cmd:
                     else:
                         assert False
                 except Exception as e:
-                    AnsibleUtil.log_warn(idx, 'failure: %s [[%s]]' % (e, traceback.format_exc()))
+                    self.log_warn(idx, 'failure: %s [[%s]]' % (e, traceback.format_exc()))
                     raise
 
     def run_prepare(self):
-        for idx, connection in enumerate(AnsibleUtil.connections):
+        for idx, connection in enumerate(self.connections):
             if 'type' in connection and connection['check_iface_exists']:
                 # when the profile is tied to a certain interface via 'interface_name' or 'mac',
                 # check that such an interface exists.
@@ -2246,23 +2329,24 @@ class Cmd:
                 if connection['mac']:
                     li_mac = SysUtil.link_info_find(mac = connection['mac'])
                     if not li_mac:
-                        AnsibleUtil.log_fatal(idx, 'profile specifies mac "%s" but no such interface exists' % (connection['mac']))
+                        self.log_fatal(idx, 'profile specifies mac "%s" but no such interface exists' % (connection['mac']))
                 if connection['interface_name']:
                     li_ifname = SysUtil.link_info_find(ifname = connection['interface_name'])
                     if not li_ifname:
                         if connection['type'] == 'ethernet':
-                            AnsibleUtil.log_fatal(idx, 'profile specifies interface_name "%s" but no such interface exists' % (connection['interface_name']))
+                            self.log_fatal(idx, 'profile specifies interface_name "%s" but no such interface exists' % (connection['interface_name']))
                         elif connection['type'] == 'infiniband':
                             if connection['infiniband_p_key'] in [None, -1]:
-                                AnsibleUtil.log_fatal(idx, 'profile specifies interface_name "%s" but no such infiniband interface exists' % (connection['interface_name']))
+                                self.log_fatal(idx, 'profile specifies interface_name "%s" but no such infiniband interface exists' % (connection['interface_name']))
                 if li_mac and li_ifname and li_mac != li_ifname:
-                    AnsibleUtil.log_fatal(idx, 'profile specifies interface_name "%s" and mac "%s" but no such interface exists' % (connection['interface_name'], connection['mac']))
+                    self.log_fatal(idx, 'profile specifies interface_name "%s" and mac "%s" but no such interface exists' % (connection['interface_name'], connection['mac']))
 
 ###############################################################################
 
 class Cmd_nm(Cmd):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
+        Cmd.__init__(self, **kwargs)
         self._nmutil = None
         self.validate_one_type = ArgValidator_ListConnections.VALIDATE_ONE_MODE_NM
 
@@ -2272,14 +2356,14 @@ class Cmd_nm(Cmd):
             try:
                 nmclient = Util.NM().Client.new(None)
             except Exception as e:
-                AnsibleUtil.fail_json('failure loading libnm library: %s' % (e))
+                raise MyError('failure loading libnm library: %s' % (e))
             self._nmutil = NMUtil(nmclient)
         return self._nmutil
 
     def run_prepare(self):
         Cmd.run_prepare(self)
         names = {}
-        for connection in AnsibleUtil.connections:
+        for connection in self.connections:
             if connection['state'] not in ['up', 'down', 'present', 'absent']:
                 continue
             name = connection['name']
@@ -2305,52 +2389,50 @@ class Cmd_nm(Cmd):
             connection['nm.uuid'] = uuid
 
     def run_state_absent(self, idx):
-        changed = False
         seen = set()
-        name = AnsibleUtil.connections[idx]['name']
+        name = self.connections[idx]['name']
         black_list_names = None
         if not name:
             name = None
-            black_list_names = ArgUtil.connection_get_non_absent_names(AnsibleUtil.connections)
+            black_list_names = ArgUtil.connection_get_non_absent_names(self.connections)
         while True:
             connections = self.nmutil.connection_list(name = name, black_list_names = black_list_names, black_list = seen)
             if not connections:
                 break
             c = connections[-1]
             seen.add(c)
-            AnsibleUtil.run_results_changed(idx)
-            AnsibleUtil.log_info(idx, 'delete connection %s, %s' % (c.get_id(), c.get_uuid()))
-            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+            self.log_info(idx, 'delete connection %s, %s' % (c.get_id(), c.get_uuid()))
+            self.connections_data_set_changed(idx)
+            if self.check_mode == CheckMode.REAL_RUN:
                 try:
                     self.nmutil.connection_delete(c)
                 except MyError as e:
-                    AnsibleUtil.log_error(idx, 'delete connection failed: %s' % (e))
+                    self.log_error(idx, 'delete connection failed: %s' % (e))
         if not seen:
-            AnsibleUtil.log_info(idx, 'no connection "%s"' % (name))
+            self.log_info(idx, 'no connection "%s"' % (name))
 
     def run_state_present(self, idx):
-        connection = AnsibleUtil.connections[idx]
+        connection = self.connections[idx]
         con_cur = Util.first(self.nmutil.connection_list(name = connection['name'], uuid = connection['nm.uuid']))
-        con_new = self.nmutil.connection_create(AnsibleUtil.connections, idx, con_cur)
-        changed = False
+        con_new = self.nmutil.connection_create(self.connections, idx, con_cur)
         if con_cur is None:
-            AnsibleUtil.log_info(idx, 'add connection %s, %s' % (connection['name'], connection['nm.uuid']))
-            changed = True
-            try:
-                if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+            self.log_info(idx, 'add connection %s, %s' % (connection['name'], connection['nm.uuid']))
+            self.connections_data_set_changed(idx)
+            if self.check_mode == CheckMode.REAL_RUN:
+                try:
                     con_cur = self.nmutil.connection_add(con_new)
-            except MyError as e:
-                AnsibleUtil.log_error(idx, 'adding connection failed: %s' % (e))
+                except MyError as e:
+                    self.log_error(idx, 'adding connection failed: %s' % (e))
         elif not self.nmutil.connection_compare(con_cur, con_new, normalize_a = True):
-            changed = True
-            AnsibleUtil.log_info(idx, 'update connection %s, %s' % (con_cur.get_id(), con_cur.get_uuid()))
-            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+            self.log_info(idx, 'update connection %s, %s' % (con_cur.get_id(), con_cur.get_uuid()))
+            self.connections_data_set_changed(idx)
+            if self.check_mode == CheckMode.REAL_RUN:
                 try:
                     self.nmutil.connection_update(con_cur, con_new)
                 except MyError as e:
-                    AnsibleUtil.log_error(idx, 'updating connection failed: %s' % (e))
+                    self.log_error(idx, 'updating connection failed: %s' % (e))
         else:
-            AnsibleUtil.log_info(idx, 'connection %s, %s already up to date' % (con_cur.get_id(), con_cur.get_uuid()))
+            self.log_info(idx, 'connection %s, %s already up to date' % (con_cur.get_id(), con_cur.get_uuid()))
 
         seen = set()
         if con_cur is not None:
@@ -2361,47 +2443,47 @@ class Cmd_nm(Cmd):
             if not connections:
                 break
             c = connections[-1]
-            AnsibleUtil.log_info(idx, 'delete duplicate connection %s, %s' % (c.get_id(), c.get_uuid()))
-            changed = True
-            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+            self.log_info(idx, 'delete duplicate connection %s, %s' % (c.get_id(), c.get_uuid()))
+            self.connections_data_set_changed(idx)
+            if self.check_mode == CheckMode.REAL_RUN:
                 try:
                    self.nmutil.connection_delete(c)
                 except MyError as e:
-                    AnsibleUtil.log_error(idx, 'delete duplicate connection failed: %s' % (e))
+                    self.log_error(idx, 'delete duplicate connection failed: %s' % (e))
             seen.add(c)
 
-        AnsibleUtil.run_results_changed(idx, changed)
 
     def run_state_up(self, idx):
-        connection = AnsibleUtil.connections[idx]
+        connection = self.connections[idx]
 
         con = Util.first(self.nmutil.connection_list(name = connection['name'], uuid = connection['nm.uuid']))
         if not con:
-            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
-                AnsibleUtil.log_error(idx, 'up connection %s, %s failed: no connection' % (connection['name'], connection['nm.uuid']))
+            if self.check_mode == CheckMode.REAL_RUN:
+                self.log_error(idx, 'up connection %s, %s failed: no connection' % (connection['name'], connection['nm.uuid']))
             else:
-                AnsibleUtil.log_info(idx, 'up connection %s, %s' % (connection['name'], connection['nm.uuid']))
+                self.log_info(idx, 'up connection %s, %s' % (connection['name'], connection['nm.uuid']))
             return
 
         is_active = self.nmutil.connection_is_active(con)
-        is_modified = AnsibleUtil.connection_modified_earlier(idx)
-        force_state_change = AnsibleUtil.params_force_state_change(connection, False)
+        is_modified = self.connection_modified_earlier(idx)
+        force_state_change = self.connection_force_state_change(connection)
 
         if is_active and not force_state_change and not is_modified:
-            AnsibleUtil.log_info(idx, 'up connection %s, %s skipped because already active' %
-                                      (con.get_id(), con.get_uuid()))
+            self.log_info(idx, 'up connection %s, %s skipped because already active' %
+                          (con.get_id(), con.get_uuid()))
             return
 
-        AnsibleUtil.log_info(idx, 'up connection %s, %s (%s)' %
-                             (con.get_id(), con.get_uuid(),
-                              'not-active' if not is_active else \
-                              'is-modified' if is_modified else \
-                              'force-state-change'))
-        if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+        self.log_info(idx, 'up connection %s, %s (%s)' %
+                      (con.get_id(), con.get_uuid(),
+                       'not-active' if not is_active else \
+                       'is-modified' if is_modified else \
+                       'force-state-change'))
+        self.connections_data_set_changed(idx)
+        if self.check_mode == CheckMode.REAL_RUN:
             try:
                 ac = self.nmutil.connection_activate (con)
             except MyError as e:
-                AnsibleUtil.log_error(idx, 'up connection failed: %s' % (e))
+                self.log_error(idx, 'up connection failed: %s' % (e))
 
             wait_time = connection['wait']
             if wait_time is None:
@@ -2410,12 +2492,10 @@ class Cmd_nm(Cmd):
             try:
                 self.nmutil.connection_activate_wait(ac, wait_time)
             except MyError as e:
-                AnsibleUtil.log_error(idx, 'up connection failed while waiting: %s' % (e))
-
-        AnsibleUtil.run_results_changed(idx)
+                self.log_error(idx, 'up connection failed while waiting: %s' % (e))
 
     def run_state_down(self, idx):
-        connection = AnsibleUtil.connections[idx]
+        connection = self.connections[idx]
 
         cons = self.nmutil.connection_list(name = connection['name'])
         changed = False
@@ -2425,14 +2505,15 @@ class Cmd_nm(Cmd):
                 ac = Util.first(self.nmutil.active_connection_list(connections = cons, black_list = seen))
                 if ac is None:
                     break
-                changed = True
                 seen.add(ac)
-                AnsibleUtil.log_info(idx, 'down connection %s: %s' % (connection['name'], ac.get_path()))
-                if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+                self.log_info(idx, 'down connection %s: %s' % (connection['name'], ac.get_path()))
+                changed = True
+                self.connections_data_set_changed(idx)
+                if self.check_mode == CheckMode.REAL_RUN:
                     try:
                         self.nmutil.active_connection_deactivate(ac)
                     except MyError as e:
-                        AnsibleUtil.log_error(idx, 'down connection failed: %s' % (e))
+                        self.log_error(idx, 'down connection failed: %s' % (e))
 
                     wait_time = connection['wait']
                     if wait_time is None:
@@ -2441,39 +2522,38 @@ class Cmd_nm(Cmd):
                     try:
                         self.nmutil.active_connection_deactivate_wait(ac, wait_time)
                     except MyError as e:
-                        AnsibleUtil.log_error(idx, 'down connection failed while waiting: %s' % (e))
+                        self.log_error(idx, 'down connection failed while waiting: %s' % (e))
 
                 cons = self.nmutil.connection_list(name = connection['name'])
 
         if not changed:
-            AnsibleUtil.log_info(idx, 'down connection %s failed: no connection' % (connection['name']))
-        AnsibleUtil.run_results_changed(idx, changed)
+            self.log_info(idx, 'down connection %s failed: no connection' % (connection['name']))
 
 
 ###############################################################################
 
 class Cmd_initscripts(Cmd):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
+        Cmd.__init__(self, **kwargs)
         self.validate_one_type = ArgValidator_ListConnections.VALIDATE_ONE_MODE_INITSCRIPTS
 
     def check_name(self, idx, name = None):
         if name is None:
-            name = AnsibleUtil.connections[idx]['name']
+            name = self.connections[idx]['name']
         try:
             f = IfcfgUtil.ifcfg_path(name)
         except MyError as e:
-            AnsibleUtil.log_error(idx, 'invalid name %s for connection' % (name))
+            self.log_error(idx, 'invalid name %s for connection' % (name))
             return None
         return f
 
     def run_state_absent(self, idx):
-        changed = False
-        n = AnsibleUtil.connections[idx]['name']
+        n = self.connections[idx]['name']
         name = n
         if not name:
             names = []
-            black_list_names = ArgUtil.connection_get_non_absent_names(AnsibleUtil.connections)
+            black_list_names = ArgUtil.connection_get_non_absent_names(self.connections)
             for f in os.listdir('/etc/sysconfig/network-scripts'):
                 if not f.startswith('ifcfg-'):
                     continue
@@ -2487,58 +2567,60 @@ class Cmd_initscripts(Cmd):
             if not self.check_name(idx):
                 return
             names = [name]
+
+        changed = False
         for name in names:
             for path in IfcfgUtil.ifcfg_paths(name):
                 if not os.path.isfile(path):
                     continue
                 changed = True
-                AnsibleUtil.log_info(idx, 'delete ifcfg-rh file "%s"' % (path))
-                if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+                self.log_info(idx, 'delete ifcfg-rh file "%s"' % (path))
+                self.connections_data_set_changed(idx)
+                if self.check_mode == CheckMode.REAL_RUN:
                     try:
                         os.unlink(path)
                     except Exception as e:
-                        AnsibleUtil.log_error(idx, 'delete ifcfg-rh file "%s" failed: %s' % (path, e))
+                        self.log_error(idx, 'delete ifcfg-rh file "%s" failed: %s' % (path, e))
 
         if not changed:
-            AnsibleUtil.log_info(idx, 'delete ifcfg-rh files for %s (no files present)' % ('"'+n+'"' if n else '*'))
-        AnsibleUtil.run_results_changed(idx, changed)
+            self.log_info(idx, 'delete ifcfg-rh files for %s (no files present)' % ('"'+n+'"' if n else '*'))
 
     def run_state_present(self, idx):
         if not self.check_name(idx):
             return
 
-        connection = AnsibleUtil.connections[idx]
+        connection = self.connections[idx]
         name = connection['name']
 
         old_content = IfcfgUtil.content_from_file(name)
 
-        ifcfg_all = IfcfgUtil.ifcfg_create(AnsibleUtil.connections, idx,
-                                           lambda msg: AnsibleUtil.log_warn(idx, msg),
+        ifcfg_all = IfcfgUtil.ifcfg_create(self.connections, idx,
+                                           lambda msg: self.log_warn(idx, msg),
                                            old_content)
 
-        new_content = IfcfgUtil.content_from_dict(ifcfg_all)
+        new_content = IfcfgUtil.content_from_dict(ifcfg_all,
+                                                  header = self.run_env.ifcfg_header)
 
         if old_content == new_content:
-            AnsibleUtil.log_info(idx, 'ifcfg-rh profile "%s" already up to date' % (name))
+            self.log_info(idx, 'ifcfg-rh profile "%s" already up to date' % (name))
             return
 
         op = 'add' if (old_content['ifcfg'] is None) else 'update'
 
-        AnsibleUtil.log_info(idx, '%s ifcfg-rh profile "%s"' % (op, name))
+        self.log_info(idx, '%s ifcfg-rh profile "%s"' % (op, name))
 
-        if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
+        self.connections_data_set_changed(idx)
+        if self.check_mode == CheckMode.REAL_RUN:
             try:
                 IfcfgUtil.content_to_file(name, new_content)
             except MyError as e:
-                AnsibleUtil.log_error(idx, '%s ifcfg-rh profile "%s" failed: %s' % (op, name, e))
-
-        AnsibleUtil.run_results_changed(idx)
+                self.log_error(idx, '%s ifcfg-rh profile "%s" failed: %s' % (op, name, e))
 
     def _run_state_updown(self, idx, do_up):
         if not self.check_name(idx):
             return
 
-        connection = AnsibleUtil.connections[idx]
+        connection = self.connections[idx]
         name = connection['name']
 
         if connection['wait'] is not None:
@@ -2548,47 +2630,46 @@ class Cmd_initscripts(Cmd):
 
         path = IfcfgUtil.ifcfg_path(name)
         if not os.path.isfile(path):
-            if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
-                AnsibleUtil.log_error(idx, 'ifcfg file "%s" does not exist' % (path))
+            if self.check_mode == CheckMode.REAL_RUN:
+                self.log_error(idx, 'ifcfg file "%s" does not exist' % (path))
             else:
-                AnsibleUtil.log_info(idx, 'ifcfg file "%s" does not exist in check mode' % (path))
+                self.log_info(idx, 'ifcfg file "%s" does not exist in check mode' % (path))
             return
 
         is_active = IfcfgUtil.connection_seems_active(name)
-        is_modified = AnsibleUtil.connection_modified_earlier(idx)
-        force_state_change = AnsibleUtil.params_force_state_change(connection, False)
+        is_modified = self.connection_modified_earlier(idx)
+        force_state_change = self.connection_force_state_change(connection)
 
         if do_up:
             if is_active is True and not force_state_change and not is_modified:
-                AnsibleUtil.log_info(idx, 'up connection %s skipped because already active' %
-                                          (name))
+                self.log_info(idx, 'up connection %s skipped because already active' %
+                              (name))
                 return
 
-            AnsibleUtil.log_info(idx, 'up connection %s (%s)' %
-                                 (name,
-                                  'not-active' if is_active is not True else \
-                                  'is-modified' if is_modified else \
-                                  'force-state-change'))
+            self.log_info(idx, 'up connection %s (%s)' %
+                          (name,
+                           'not-active' if is_active is not True else \
+                           'is-modified' if is_modified else \
+                           'force-state-change'))
             cmd = 'ifup'
         else:
             if is_active is False and not force_state_change:
-                AnsibleUtil.log_info(idx, 'down connection %s skipped because not active' %
-                                          (name))
+                self.log_info(idx, 'down connection %s skipped because not active' %
+                              (name))
                 return
 
-            AnsibleUtil.log_info(idx, 'up connection %s (%s)' %
-                                 (name,
-                                  'active' if is_active is not False else \
-                                  'force-state-change'))
+            self.log_info(idx, 'up connection %s (%s)' %
+                          (name,
+                           'active' if is_active is not False else \
+                           'force-state-change'))
             cmd = 'ifdown'
 
-        if AnsibleUtil.check_mode == CheckMode.REAL_RUN:
-            rc, out, err = AnsibleUtil.module.run_command([cmd, name], encoding=None)
-            AnsibleUtil.log_info(idx, 'call `%s %s`: rc=%d, out="%s", err="%s"' % (cmd, name, rc, out, err))
+        self.connections_data_set_changed(idx)
+        if self.check_mode == CheckMode.REAL_RUN:
+            rc, out, err = self.run_env.run_command([cmd, name])
+            self.log_info(idx, 'call `%s %s`: rc=%d, out="%s", err="%s"' % (cmd, name, rc, out, err))
             if rc != 0:
-                AnsibleUtil.log_error(idx, 'call `%s %s` failed with exit status %d' % (cmd, name, rc))
-
-        AnsibleUtil.run_results_changed(idx)
+                self.log_error(idx, 'call `%s %s` failed with exit status %d' % (cmd, name, rc))
 
 
     def run_state_up(self, idx):
@@ -2600,9 +2681,24 @@ class Cmd_initscripts(Cmd):
 ###############################################################################
 
 if __name__ == '__main__':
+    connections = None
+    cmd = None
+    run_env_ansible = RunEnvironmentAnsible()
     try:
-        Cmd.create().run()
+        params = run_env_ansible.module.params
+        cmd = Cmd.create(params['provider'],
+                         run_env = run_env_ansible,
+                         connections_unvalidated = params['connections'],
+                         connection_validator = ArgValidator_ListConnections(),
+                         is_check_mode = run_env_ansible.module.check_mode,
+                         ignore_errors = params['ignore_errors'],
+                         force_state_change = params['force_state_change'])
+        connections = cmd.connections
+        cmd.run()
     except Exception as e:
-        AnsibleUtil.fail_json('fatal error: %s' % (e),
-                              warn_traceback = True)
-    AnsibleUtil.exit_json()
+        run_env_ansible.fail_json(connections,
+                                  'fatal error: %s' % (e),
+                                  changed = (cmd is not None and cmd.is_changed_modified_system),
+                                  warn_traceback = not isinstance(e, MyError))
+    run_env_ansible.exit_json(connections,
+                              changed = (cmd is not None and cmd.is_changed_modified_system))
