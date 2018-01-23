@@ -2,7 +2,7 @@ network_provider:     "{{ network_provider_default }}"
 network_connections:  []
 
 network_service_name_default_nm: NetworkManager
-network_packages_default_nm: [ ethtool, NetworkManager ]
+network_packages_default_nm: [ ethtool, python-gobject, NetworkManager ]
 
 network_service_name_default_initscripts: network
 network_packages_default_initscripts: [ ethtool ]
