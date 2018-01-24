@@ -818,6 +818,22 @@ class ArgValidator_DictBond(ArgValidatorDict):
             'miimon': None,
         }
 
+class ArgValidator_DictVlan(ArgValidatorDict):
+
+    def __init__(self):
+        ArgValidatorDict.__init__(self,
+            name = 'vlan',
+            nested = [
+                ArgValidatorNum ('id', val_min = 0, val_max = 4094, required = True),
+            ],
+            default_value = ArgValidator.MISSING,
+        )
+
+    def get_default_vlan(self):
+        return {
+            'id': None,
+        }
+
 
 class ArgValidator_DictConnection(ArgValidatorDict):
 
@@ -843,13 +859,16 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidatorStr ('zone'),
                 ArgValidatorBool('check_iface_exists', default_value = True),
                 ArgValidatorStr ('parent'),
-                ArgValidatorNum ('vlan_id', val_min = 0, val_max = 4094, default_value = None),
                 ArgValidatorBool('ignore_errors', default_value = None),
                 ArgValidatorStr ('infiniband_transport_mode', enum_values = ['datagram', 'connected']),
                 ArgValidatorNum ('infiniband_p_key', val_min = -1, val_max = 0xFFFF, default_value = None),
                 ArgValidator_DictIP(),
                 ArgValidator_DictEthernet(),
                 ArgValidator_DictBond(),
+                ArgValidator_DictVlan(),
+
+                # deprecated options:
+                ArgValidatorNum ('vlan_id', val_min = 0, val_max = 4094, default_value = ArgValidator.MISSING),
             ],
             default_value = dict,
             all_missing_during_validate = True,
@@ -957,11 +976,20 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                     result['interface_name'] = result['name']
 
             if result['type'] == 'vlan':
-                if 'vlan_id' not in result:
-                    raise ValidationError(name + '.vlan_id', 'missing "vlan_id" for "type" "vlan"')
+                if 'vlan' not in result:
+                    if 'vlan_id' not in result:
+                        raise ValidationError(name + '.vlan', 'missing "vlan" settings for "type" "vlan"')
+                    result['vlan'] = self.nested['vlan'].get_default_vlan()
+                    result['vlan']['id'] = result['vlan_id']
+                    del result['vlan_id']
+                else:
+                    if 'vlan_id' in result:
+                        raise ValidationError(name + '.vlan_id', 'don\'t use the deprecated "vlan_id" together with the "vlan" settings"')
                 if 'parent' not in result:
                     raise ValidationError(name + '.parent', 'missing "parent" for "type" "vlan"')
             else:
+                if 'vlan' in result:
+                    raise ValidationError(name + '.vlan', '"vlan" is only allowed for "type" "vlan"')
                 if 'vlan_id' in result:
                     raise ValidationError(name + '.vlan_id', '"vlan_id" is only allowed for "type" "vlan"')
 
@@ -1218,7 +1246,7 @@ class IfcfgUtil:
             ifcfg['VLAN'] = 'yes'
             ifcfg['TYPE'] = 'Vlan'
             ifcfg['PHYSDEV'] = ArgUtil.connection_find_master(connection['parent'], connections, idx)
-            ifcfg['VID'] = str(connection['vlan_id'])
+            ifcfg['VID'] = str(connection['vlan']['id'])
         else:
             raise MyError('unsupported type %s' % (connection['type']))
 
@@ -1604,7 +1632,7 @@ class NMUtil:
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, 'team')
         elif connection['type'] == 'vlan':
             s_vlan = self.connection_ensure_setting(con, NM.SettingVlan)
-            s_vlan.set_property(NM.SETTING_VLAN_ID, connection['vlan_id'])
+            s_vlan.set_property(NM.SETTING_VLAN_ID, connection['vlan']['id'])
             s_vlan.set_property(NM.SETTING_VLAN_PARENT, ArgUtil.connection_find_master_uuid(connection['parent'], connections, idx))
         else:
             raise MyError('unsupported type %s' % (connection['type']))
