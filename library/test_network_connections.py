@@ -264,8 +264,6 @@ class TestValidator(unittest.TestCase):
                     'interface_name': None,
                     'check_iface_exists': True,
                     'slave_type': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
                 {
                     'name': '5',
@@ -320,8 +318,6 @@ class TestValidator(unittest.TestCase):
                     'force_state_change': None,
                     'slave_type': None,
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
             ],
             [
@@ -394,8 +390,6 @@ class TestValidator(unittest.TestCase):
                     'type': 'ethernet',
                     'slave_type': None,
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
             ],
             [
@@ -462,8 +456,6 @@ class TestValidator(unittest.TestCase):
                     'type': 'ethernet',
                     'slave_type': None,
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
                 {
                     'autoconnect': True,
@@ -523,8 +515,6 @@ class TestValidator(unittest.TestCase):
                         'id' : 100,
                     },
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 }
             ],
             [
@@ -616,8 +606,6 @@ class TestValidator(unittest.TestCase):
                     'type': 'ethernet',
                     'slave_type': None,
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
                 {
                     'autoconnect': True,
@@ -677,8 +665,6 @@ class TestValidator(unittest.TestCase):
                         'id' : 101,
                     },
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 }
             ],
             [
@@ -757,8 +743,6 @@ class TestValidator(unittest.TestCase):
                     'type': 'bridge',
                     'slave_type': None,
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
                 {
                     'autoconnect': True,
@@ -796,8 +780,6 @@ class TestValidator(unittest.TestCase):
                     'type': 'ethernet',
                     'slave_type': 'bridge',
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 }
             ],
             [
@@ -863,8 +845,6 @@ class TestValidator(unittest.TestCase):
                         'miimon': None,
                     },
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
             ],
             [
@@ -918,8 +898,6 @@ class TestValidator(unittest.TestCase):
                         'miimon': None,
                     },
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
             ],
             [
@@ -973,8 +951,6 @@ class TestValidator(unittest.TestCase):
                     'slave_type': None,
                     'state': 'present',
                     'type': 'ethernet',
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
             ],
             [
@@ -1024,8 +1000,6 @@ class TestValidator(unittest.TestCase):
                     'force_state_change': None,
                     'slave_type': None,
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
             ],
             [
@@ -1074,8 +1048,6 @@ class TestValidator(unittest.TestCase):
                     'force_state_change': None,
                     'slave_type': None,
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
             ],
             [
@@ -1123,8 +1095,6 @@ class TestValidator(unittest.TestCase):
                     },
                     'force_state_change': None,
                     'ignore_errors': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                     'interface_name': '6643-master',
                     'ip': {
                         'address': [],
@@ -1162,8 +1132,6 @@ class TestValidator(unittest.TestCase):
                     },
                     'force_state_change': None,
                     'ignore_errors': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                     'interface_name': None,
                     'ip': {
                         'address': [],
@@ -1212,8 +1180,10 @@ class TestValidator(unittest.TestCase):
                     'check_iface_exists': True,
                     'force_state_change': None,
                     'ignore_errors': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': 'datagram',
+                    'infiniband': {
+                        'p_key': -1,
+                        'transport_mode': 'datagram',
+                    },
                     'interface_name': None,
                     'ip': {
                         'address': [],
@@ -1276,8 +1246,10 @@ class TestValidator(unittest.TestCase):
                     'check_iface_exists': True,
                     'force_state_change': None,
                     'ignore_errors': None,
-                    'infiniband_p_key': 5,
-                    'infiniband_transport_mode': 'datagram',
+                    'infiniband': {
+                        'p_key': 5,
+                        'transport_mode': 'datagram',
+                    },
                     'interface_name': None,
                     'ip': {
                         'address': [],
@@ -1392,8 +1364,6 @@ class TestValidator(unittest.TestCase):
                     'force_state_change': None,
                     'slave_type': None,
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
             ],
             [
@@ -1495,8 +1465,6 @@ class TestValidator(unittest.TestCase):
                     'force_state_change': None,
                     'slave_type': None,
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
             ],
             [
