@@ -352,7 +352,8 @@ network_connections:
     autoconnect: no
     type: vlan
     parent: eth1-profile
-    vlan_id: 6
+    vlan:
+      id: 6
     ip:
       address:
         - 192.0.2.5/24
