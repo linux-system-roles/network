@@ -1065,6 +1065,142 @@ class TestValidator(unittest.TestCase):
         self.do_connections_validate(
             [
                 {
+                    'autoconnect': True,
+                    'check_iface_exists': True,
+                    'force_state_change': None,
+                    'ignore_errors': None,
+                    'infiniband_p_key': None,
+                    'infiniband_transport_mode': 'datagram',
+                    'interface_name': None,
+                    'ip': {
+                        'address': [],
+                        'auto6': True,
+                        'dhcp4': True,
+                        'dhcp4_send_hostname': None,
+                        'dns': [],
+                        'dns_search': [],
+                        'gateway4': None,
+                        'gateway6': None,
+                        'route': [],
+                        'route_append_only': False,
+                        'route_metric4': None,
+                        'route_metric6': None,
+                        'rule_append_only': False
+                    },
+                    'mac': None,
+                    'master': None,
+                    'mtu': None,
+                    'name': 'infiniband.1',
+                    'parent': None,
+                    'slave_type': None,
+                    'state': 'up',
+                    'type': 'infiniband',
+                    'vlan_id': None,
+                    'wait': None,
+                    'zone': None,
+                },
+            ],
+            [
+                {
+                    'name': 'infiniband.1',
+                    'state': 'up',
+                    'type': 'infiniband',
+                },
+            ],
+            initscripts_dict_expected = [
+                {
+                    'ifcfg': {
+                        'BOOTPROTO': 'dhcp',
+                        'CONNECTED_MODE': 'no',
+                        'IPV6INIT': 'yes',
+                        'IPV6_AUTOCONF': 'yes',
+                        'NM_CONTROLLED': 'no',
+                        'ONBOOT': 'yes',
+                        'TYPE': 'InfiniBand',
+                    },
+                    'keys': None,
+                    'route': None,
+                    'route6': None,
+                    'rule': None,
+                    'rule6': None,
+                },
+            ],
+        )
+
+        self.do_connections_validate(
+            [
+                {
+                    'autoconnect': True,
+                    'check_iface_exists': True,
+                    'force_state_change': None,
+                    'ignore_errors': None,
+                    'infiniband_p_key': 5,
+                    'infiniband_transport_mode': 'datagram',
+                    'interface_name': None,
+                    'ip': {
+                        'address': [],
+                        'auto6': True,
+                        'dhcp4': True,
+                        'dhcp4_send_hostname': None,
+                        'dns': [],
+                        'dns_search': [],
+                        'gateway4': None,
+                        'gateway6': None,
+                        'route': [],
+                        'route_append_only': False,
+                        'route_metric4': None,
+                        'route_metric6': None,
+                        'rule_append_only': False
+                    },
+                    'mac': '11:22:33:44:55:66:77:88:99:00:11:22:33:44:55:66:77:88:99:00',
+                    'master': None,
+                    'mtu': None,
+                    'name': 'infiniband.2',
+                    'parent': None,
+                    'slave_type': None,
+                    'state': 'up',
+                    'type': 'infiniband',
+                    'vlan_id': None,
+                    'wait': None,
+                    'zone': None,
+                },
+            ],
+            [
+                {
+                    'name': 'infiniband.2',
+                    'state': 'up',
+                    'type': 'infiniband',
+                    'mac': '11:22:33:44:55:66:77:88:99:00:11:22:33:44:55:66:77:88:99:00',
+                    'infiniband_p_key': 5,
+                },
+            ],
+            initscripts_dict_expected = [
+                {
+                    'ifcfg': {
+                        'BOOTPROTO': 'dhcp',
+                        'CONNECTED_MODE': 'no',
+                        'HWADDR': '11:22:33:44:55:66:77:88:99:00:11:22:33:44:55:66:77:88:99:00',
+                        'IPV6INIT': 'yes',
+                        'IPV6_AUTOCONF': 'yes',
+                        'NM_CONTROLLED': 'no',
+                        'ONBOOT': 'yes',
+                        'PKEY': 'yes',
+                        'PKEY_ID': '5',
+                        'TYPE': 'InfiniBand',
+                    },
+                    'keys': None,
+                    'route': None,
+                    'route6': None,
+                    'rule': None,
+                    'rule6': None,
+                },
+            ],
+        )
+
+
+        self.do_connections_validate(
+            [
+                {
                     'name': '555',
                     'state': 'up',
                     'type': 'ethernet',
