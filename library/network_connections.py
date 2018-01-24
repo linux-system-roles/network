@@ -465,6 +465,7 @@ class ArgUtil:
 
 class ArgValidator:
     MISSING = object()
+    DEFAULT_SENTINEL = object()
 
     def __init__(self, name = None, required = False, default_value = None):
         self.name = name
@@ -502,10 +503,10 @@ class ArgValidatorStr(ArgValidator):
 
 class ArgValidatorNum(ArgValidator):
     def __init__(self, name, required = False, val_min = None, val_max = None,
-                 default_value = ArgValidator.MISSING,
+                 default_value = ArgValidator.DEFAULT_SENTINEL,
                  numeric_type = int):
         ArgValidator.__init__(self, name, required, \
-                              numeric_type(0) if default_value is ArgValidator.MISSING else default_value)
+                              numeric_type(0) if default_value is ArgValidator.DEFAULT_SENTINEL else default_value)
         self.val_min = val_min
         self.val_max = val_max
         self.numeric_type = numeric_type
