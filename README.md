@@ -8,6 +8,7 @@ The role can be used to configure:
 - Bridge interfaces
 - Bonded interfaces
 - VLAN  interfaces
+- MacVLAN interfaces
 - IP configuration
 
 General
@@ -361,6 +362,34 @@ network_connections:
 ```
 
 Like for `master`, the `parent` references the connection profile in the ansible
+role.
+
+### `type: macvlan`
+
+MACVLANs also work:
+
+```yaml
+network_connections:
+  - name: eth0-profile
+    type: ethernet
+    interface_name: eth0
+    ip:
+      address:
+        - 192.168.0.1/24
+
+  - name: veth0
+    type: macvlan
+    parent: eth0-profile
+    macvlan:
+      mode: bridge
+      promiscuous: True
+      tap: False
+    ip:
+      address:
+        - 192.168.1.1/24
+```
+
+Like for `master` and `vlan`, the `parent` references the connection profile in the ansible
 role.
 
 ### `network_provider`
