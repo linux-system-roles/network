@@ -818,6 +818,40 @@ class ArgValidator_DictBond(ArgValidatorDict):
             'miimon': None,
         }
 
+class ArgValidator_DictInfiniband(ArgValidatorDict):
+
+    def __init__(self):
+        ArgValidatorDict.__init__(self,
+            name = 'infiniband',
+            nested = [
+                ArgValidatorStr ('transport_mode', enum_values = ['datagram', 'connected']),
+                ArgValidatorNum ('p_key', val_min = -1, val_max = 0xFFFF, default_value = -1),
+            ],
+            default_value = ArgValidator.MISSING,
+        )
+
+    def get_default_infiniband(self):
+        return {
+            'transport_mode': 'datagram',
+            'p_key': -1,
+        }
+
+class ArgValidator_DictVlan(ArgValidatorDict):
+
+    def __init__(self):
+        ArgValidatorDict.__init__(self,
+            name = 'vlan',
+            nested = [
+                ArgValidatorNum ('id', val_min = 0, val_max = 4094, required = True),
+            ],
+            default_value = ArgValidator.MISSING,
+        )
+
+    def get_default_vlan(self):
+        return {
+            'id': None,
+        }
+
 
 class ArgValidator_DictConnection(ArgValidatorDict):
 
@@ -843,13 +877,17 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidatorStr ('zone'),
                 ArgValidatorBool('check_iface_exists', default_value = True),
                 ArgValidatorStr ('parent'),
-                ArgValidatorNum ('vlan_id', val_min = 0, val_max = 4094, default_value = None),
                 ArgValidatorBool('ignore_errors', default_value = None),
-                ArgValidatorStr ('infiniband_transport_mode', enum_values = ['datagram', 'connected']),
-                ArgValidatorNum ('infiniband_p_key', val_min = -1, val_max = 0xFFFF, default_value = None),
                 ArgValidator_DictIP(),
                 ArgValidator_DictEthernet(),
                 ArgValidator_DictBond(),
+                ArgValidator_DictInfiniband(),
+                ArgValidator_DictVlan(),
+
+                # deprecated options:
+                ArgValidatorStr ('infiniband_transport_mode', enum_values = ['datagram', 'connected'], default_value = ArgValidator.MISSING),
+                ArgValidatorNum ('infiniband_p_key', val_min = -1, val_max = 0xFFFF, default_value = ArgValidator.MISSING),
+                ArgValidatorNum ('vlan_id', val_min = 0, val_max = 4094, default_value = ArgValidator.MISSING),
             ],
             default_value = dict,
             all_missing_during_validate = True,
@@ -934,18 +972,33 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 if result['type'] == 'infiniband' and l != 20:
                     raise ValidationError(name + '.mac', 'a "mac" address for type ethernet requires 20 octets but is "%s"' % result['mac'])
 
-            if 'infiniband_transport_mode' in result:
-                if result['type'] != 'infiniband':
+            if result['type'] == 'infiniband':
+                if 'infiniband' not in result:
+                    result['infiniband'] = self.nested['infiniband'].get_default_infiniband()
+                    if 'infiniband_transport_mode' in result:
+                        result['infiniband']['transport_mode'] = result['infiniband_transport_mode']
+                        del result['infiniband_transport_mode']
+                    if 'infiniband_p_key' in result:
+                        result['infiniband']['p_key'] = result['infiniband_p_key']
+                        del result['infiniband_p_key']
+                else:
+                    if 'infiniband_transport_mode' in result:
+                        raise ValidationError(name + '.infiniband_transport_mode', 'cannot mix deprecated "infiniband_transport_mode" property with "infiniband" settings')
+                    if 'infiniband_p_key' in result:
+                        raise ValidationError(name + '.infiniband_p_key', 'cannot mix deprecated "infiniband_p_key" property with "infiniband" settings')
+                    if result['infiniband']['transport_mode'] is None:
+                        result['infiniband']['transport_mode'] = 'datagram'
+                if result['infiniband']['p_key'] != -1:
+                    if 'mac' not in result and \
+                       'parent' not in result:
+                        raise ValidationError(name + '.infiniband.p_key', 'a infiniband device with "infiniband.p_key" property also needs "mac" or "parent" property')
+            else:
+                if 'infiniband' in result:
+                    raise ValidationError(name + '.infiniband', '"infiniband" settings are only allowed for type "infiniband"')
+                if 'infiniband_transport_mode' in result:
                     raise ValidationError(name + '.infiniband_transport_mode', 'a "infiniband_transport_mode" property is only allowed for type "infiniband"')
-            elif result['type'] == 'infiniband':
-                result['infiniband_transport_mode'] = 'datagram'
-
-            if 'infiniband_p_key' in result:
-                if result['type'] != 'infiniband':
+                if 'infiniband_p_key' in result:
                     raise ValidationError(name + '.infiniband_p_key', 'a "infiniband_p_key" property is only allowed for type "infiniband"')
-                if 'mac' not in result and \
-                   'parent' not in result:
-                    raise ValidationError(name + '.infiniband_p_key', 'a infiniband device with "infiniband_p_key" property also needs "mac" or "parent" property')
 
             if 'interface_name' in result:
                 if not Util.ifname_valid(result['interface_name']):
@@ -957,11 +1010,20 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                     result['interface_name'] = result['name']
 
             if result['type'] == 'vlan':
-                if 'vlan_id' not in result:
-                    raise ValidationError(name + '.vlan_id', 'missing "vlan_id" for "type" "vlan"')
+                if 'vlan' not in result:
+                    if 'vlan_id' not in result:
+                        raise ValidationError(name + '.vlan', 'missing "vlan" settings for "type" "vlan"')
+                    result['vlan'] = self.nested['vlan'].get_default_vlan()
+                    result['vlan']['id'] = result['vlan_id']
+                    del result['vlan_id']
+                else:
+                    if 'vlan_id' in result:
+                        raise ValidationError(name + '.vlan_id', 'don\'t use the deprecated "vlan_id" together with the "vlan" settings"')
                 if 'parent' not in result:
                     raise ValidationError(name + '.parent', 'missing "parent" for "type" "vlan"')
             else:
+                if 'vlan' in result:
+                    raise ValidationError(name + '.vlan', '"vlan" is only allowed for "type" "vlan"')
                 if 'vlan_id' in result:
                     raise ValidationError(name + '.vlan_id', '"vlan_id" is only allowed for "type" "vlan"')
 
@@ -1038,7 +1100,7 @@ class ArgValidator_ListConnections(ArgValidatorList):
             and (   (    (mode == self.VALIDATE_ONE_MODE_INITSCRIPTS)
                      and (connection['type'] == 'vlan'))
                  or (    (connection['type'] == 'infiniband')
-                     and (connection['infiniband_p_key'] not in [ None, -1 ])))):
+                     and (connection['infiniband']['p_key'] != -1)))):
             try:
                 ArgUtil.connection_find_master(connection['parent'], connections, idx)
             except MyError as e:
@@ -1197,10 +1259,10 @@ class IfcfgUtil:
         elif connection['type'] == 'infiniband':
             ifcfg['TYPE'] = 'InfiniBand'
             ifcfg['HWADDR'] = connection['mac']
-            ifcfg['CONNECTED_MODE'] = 'yes' if (connection['infiniband_transport_mode'] == 'connected') else 'no'
-            if connection['infiniband_p_key'] not in [ None, -1 ]:
+            ifcfg['CONNECTED_MODE'] = 'yes' if (connection['infiniband']['transport_mode'] == 'connected') else 'no'
+            if connection['infiniband']['p_key'] != -1:
                 ifcfg['PKEY'] = 'yes'
-                ifcfg['PKEY_ID'] = str(connection['infiniband_p_key'])
+                ifcfg['PKEY_ID'] = str(connection['infiniband']['p_key'])
                 if connection['parent']:
                     ifcfg['PHYSDEV'] = ArgUtil.connection_find_master(connection['parent'], connections, idx)
         elif connection['type'] == 'bridge':
@@ -1218,7 +1280,7 @@ class IfcfgUtil:
             ifcfg['VLAN'] = 'yes'
             ifcfg['TYPE'] = 'Vlan'
             ifcfg['PHYSDEV'] = ArgUtil.connection_find_master(connection['parent'], connections, idx)
-            ifcfg['VID'] = str(connection['vlan_id'])
+            ifcfg['VID'] = str(connection['vlan']['id'])
         else:
             raise MyError('unsupported type %s' % (connection['type']))
 
@@ -1585,9 +1647,9 @@ class NMUtil:
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, 'infiniband')
             s_infiniband = self.connection_ensure_setting(con, NM.SettingInfiniband)
             s_infiniband.set_property(NM.SETTING_INFINIBAND_MAC_ADDRESS, connection['mac'])
-            s_infiniband.set_property(NM.SETTING_INFINIBAND_TRANSPORT_MODE, connection['infiniband_transport_mode'])
-            if connection['infiniband_p_key'] not in [ None, -1 ]:
-                s_infiniband.set_property(NM.SETTING_INFINIBAND_P_KEY, connection['infiniband_p_key'])
+            s_infiniband.set_property(NM.SETTING_INFINIBAND_TRANSPORT_MODE, connection['infiniband']['transport_mode'])
+            if connection['infiniband']['p_key'] != -1:
+                s_infiniband.set_property(NM.SETTING_INFINIBAND_P_KEY, connection['infiniband']['p_key'])
                 if connection['parent']:
                     s_infiniband.set_property(NM.SETTING_INFINIBAND_PARENT, ArgUtil.connection_find_master(connection['parent'], connections, idx))
         elif connection['type'] == 'bridge':
@@ -1604,7 +1666,7 @@ class NMUtil:
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, 'team')
         elif connection['type'] == 'vlan':
             s_vlan = self.connection_ensure_setting(con, NM.SettingVlan)
-            s_vlan.set_property(NM.SETTING_VLAN_ID, connection['vlan_id'])
+            s_vlan.set_property(NM.SETTING_VLAN_ID, connection['vlan']['id'])
             s_vlan.set_property(NM.SETTING_VLAN_PARENT, ArgUtil.connection_find_master_uuid(connection['parent'], connections, idx))
         else:
             raise MyError('unsupported type %s' % (connection['type']))
@@ -2337,7 +2399,7 @@ class Cmd:
                         if connection['type'] == 'ethernet':
                             self.log_fatal(idx, 'profile specifies interface_name "%s" but no such interface exists' % (connection['interface_name']))
                         elif connection['type'] == 'infiniband':
-                            if connection['infiniband_p_key'] in [None, -1]:
+                            if connection['infiniband']['p_key'] != -1:
                                 self.log_fatal(idx, 'profile specifies interface_name "%s" but no such infiniband interface exists' % (connection['interface_name']))
                 if li_mac and li_ifname and li_mac != li_ifname:
                     self.log_fatal(idx, 'profile specifies interface_name "%s" and mac "%s" but no such interface exists' % (connection['interface_name'], connection['mac']))

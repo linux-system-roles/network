@@ -260,13 +260,10 @@ class TestValidator(unittest.TestCase):
                     'mtu': None,
                     'zone': None,
                     'master': None,
-                    'vlan_id': None,
                     'ignore_errors': None,
                     'interface_name': None,
                     'check_iface_exists': True,
                     'slave_type': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
                 {
                     'name': '5',
@@ -315,15 +312,12 @@ class TestValidator(unittest.TestCase):
                     'mtu': None,
                     'zone': None,
                     'master': None,
-                    'vlan_id': None,
                     'ignore_errors': None,
                     'interface_name': None,
                     'check_iface_exists': True,
                     'force_state_change': None,
                     'slave_type': None,
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
             ],
             [
@@ -391,14 +385,11 @@ class TestValidator(unittest.TestCase):
                     'mac': '52:54:00:44:9f:ba',
                     'zone': None,
                     'master': None,
-                    'vlan_id': None,
                     'ignore_errors': None,
                     'interface_name': None,
                     'type': 'ethernet',
                     'slave_type': None,
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
             ],
             [
@@ -460,14 +451,11 @@ class TestValidator(unittest.TestCase):
                     'mac': '52:54:00:44:9f:ba',
                     'zone': None,
                     'master': None,
-                    'vlan_id': None,
                     'ignore_errors': None,
                     'interface_name': None,
                     'type': 'ethernet',
                     'slave_type': None,
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
                 {
                     'autoconnect': True,
@@ -523,10 +511,10 @@ class TestValidator(unittest.TestCase):
                     'ignore_errors': None,
                     'interface_name': 'prod.100',
                     'type': 'vlan',
-                    'vlan_id': 100,
+                    'vlan': {
+                        'id' : 100,
+                    },
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 }
             ],
             [
@@ -546,7 +534,157 @@ class TestValidator(unittest.TestCase):
                     'state': 'up',
                     'type': 'vlan',
                     'parent': 'prod1',
-                    'vlan_id': '100',
+                    'vlan': {
+                        'id': '100',
+                    },
+                    'ip': {
+                        'address': [
+                            '192.168.174.5/24',
+                            {
+                                'address': 'a:b:c::6',
+                                'prefix': 65,
+                            },
+                        ],
+                        'route_append_only': False,
+                        'rule_append_only': False,
+                        'route': [
+                            {
+                                'network': '192.168.5.0',
+                            },
+                        ],
+                    }
+                }
+            ],
+        )
+
+        self.do_connections_validate(
+            [
+                {
+                    'autoconnect': True,
+                    'name': 'prod1',
+                    'parent': None,
+                    'ip': {
+                        'dhcp4': False,
+                        'auto6': True,
+                        'address': [
+                            {
+                                'prefix': 24,
+                                'family': socket.AF_INET,
+                                'address': '192.168.176.5'
+                            },
+                            {
+                                'prefix': 24,
+                                'family': socket.AF_INET,
+                                'address': '192.168.177.5'
+                            }
+                        ],
+                        'route_append_only': False,
+                        'rule_append_only': False,
+                        'route': [],
+                        'route_metric6': None,
+                        'route_metric4': None,
+                        'dns_search': [],
+                        'dhcp4_send_hostname': None,
+                        'gateway6': None,
+                        'gateway4': None,
+                        'dns': []
+                    },
+                    'ethernet': {
+                        'autoneg': None,
+                        'duplex': None,
+                        'speed': 0,
+                    },
+                    'state': 'up',
+                    'mtu': 1450,
+                    'check_iface_exists': True,
+                    'force_state_change': None,
+                    'mac': '52:54:00:44:9f:ba',
+                    'zone': None,
+                    'master': None,
+                    'ignore_errors': None,
+                    'interface_name': None,
+                    'type': 'ethernet',
+                    'slave_type': None,
+                    'wait': None,
+                },
+                {
+                    'autoconnect': True,
+                    'name': 'prod.100',
+                    'parent': 'prod1',
+                    'ip': {
+                        'dhcp4': False,
+                        'route_metric6': None,
+                        'route_metric4': None,
+                        'dns_search': [],
+                        'dhcp4_send_hostname': None,
+                        'gateway6': None,
+                        'gateway4': None,
+                        'auto6': False,
+                        'dns': [],
+                        'address': [
+                            {
+                                'prefix': 24,
+                                'family': socket.AF_INET,
+                                'address': '192.168.174.5'
+                            },
+                            {
+                                'prefix': 65,
+                                'family': socket.AF_INET6,
+                                'address': 'a:b:c::6',
+                            },
+                        ],
+                        'route_append_only': False,
+                        'rule_append_only': False,
+                        'route': [
+                            {
+                                'family': socket.AF_INET,
+                                'network': '192.168.5.0',
+                                'prefix': 24,
+                                'gateway': None,
+                                'metric': -1,
+                            },
+                        ],
+                    },
+                    'ethernet': {
+                        'autoneg': None,
+                        'duplex': None,
+                        'speed': 0,
+                    },
+                    'mac': None,
+                    'mtu': None,
+                    'zone': None,
+                    'check_iface_exists': True,
+                    'force_state_change': None,
+                    'state': 'up',
+                    'master': None,
+                    'slave_type': None,
+                    'ignore_errors': None,
+                    'interface_name': 'prod.100',
+                    'type': 'vlan',
+                    'vlan': {
+                        'id' : 101,
+                    },
+                    'wait': None,
+                }
+            ],
+            [
+                {
+                    'name': 'prod1',
+                    'state': 'up',
+                    'type': 'ethernet',
+                    'autoconnect': 'yes',
+                    'mac': '52:54:00:44:9f:ba',
+                    'mtu': 1450,
+                    'ip': {
+                        'address': '192.168.176.5/24 192.168.177.5/24',
+                    }
+                },
+                {
+                    'name': 'prod.100',
+                    'state': 'up',
+                    'type': 'vlan',
+                    'parent': 'prod1',
+                    'vlan_id': 101,
                     'ip': {
                         'address': [
                             '192.168.174.5/24',
@@ -600,14 +738,11 @@ class TestValidator(unittest.TestCase):
                     'force_state_change': None,
                     'state': 'up',
                     'master': None,
-                    'vlan_id': None,
                     'ignore_errors': None,
                     'interface_name': 'bridge2',
                     'type': 'bridge',
                     'slave_type': None,
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
                 {
                     'autoconnect': True,
@@ -640,14 +775,11 @@ class TestValidator(unittest.TestCase):
                     'force_state_change': None,
                     'state': 'up',
                     'master': 'prod2',
-                    'vlan_id': None,
                     'ignore_errors': None,
                     'interface_name': 'eth1',
                     'type': 'ethernet',
                     'slave_type': 'bridge',
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 }
             ],
             [
@@ -704,7 +836,6 @@ class TestValidator(unittest.TestCase):
                     'force_state_change': None,
                     'state': 'up',
                     'master': None,
-                    'vlan_id': None,
                     'ignore_errors': None,
                     'interface_name': 'bond1',
                     'type': 'bond',
@@ -714,8 +845,6 @@ class TestValidator(unittest.TestCase):
                         'miimon': None,
                     },
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
             ],
             [
@@ -760,7 +889,6 @@ class TestValidator(unittest.TestCase):
                     'force_state_change': None,
                     'state': 'up',
                     'master': None,
-                    'vlan_id': None,
                     'ignore_errors': None,
                     'interface_name': 'bond1',
                     'type': 'bond',
@@ -770,8 +898,6 @@ class TestValidator(unittest.TestCase):
                         'miimon': None,
                     },
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
             ],
             [
@@ -825,9 +951,6 @@ class TestValidator(unittest.TestCase):
                     'slave_type': None,
                     'state': 'present',
                     'type': 'ethernet',
-                    'vlan_id': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
             ],
             [
@@ -871,15 +994,12 @@ class TestValidator(unittest.TestCase):
                     'mtu': None,
                     'zone': None,
                     'master': None,
-                    'vlan_id': None,
                     'ignore_errors': None,
                     'interface_name': None,
                     'check_iface_exists': True,
                     'force_state_change': None,
                     'slave_type': None,
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
             ],
             [
@@ -922,15 +1042,12 @@ class TestValidator(unittest.TestCase):
                     'mtu': None,
                     'zone': None,
                     'master': None,
-                    'vlan_id': None,
                     'ignore_errors': None,
                     'interface_name': None,
                     'check_iface_exists': True,
                     'force_state_change': None,
                     'slave_type': None,
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
             ],
             [
@@ -978,8 +1095,6 @@ class TestValidator(unittest.TestCase):
                     },
                     'force_state_change': None,
                     'ignore_errors': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                     'interface_name': '6643-master',
                     'ip': {
                         'address': [],
@@ -1004,7 +1119,6 @@ class TestValidator(unittest.TestCase):
                     'slave_type': None,
                     'state': 'up',
                     'type': 'bridge',
-                    'vlan_id': None,
                     'wait': None,
                     'zone': None,
                 },
@@ -1018,8 +1132,6 @@ class TestValidator(unittest.TestCase):
                     },
                     'force_state_change': None,
                     'ignore_errors': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                     'interface_name': None,
                     'ip': {
                         'address': [],
@@ -1044,7 +1156,6 @@ class TestValidator(unittest.TestCase):
                     'slave_type': 'bridge',
                     'state': 'up',
                     'type': 'ethernet',
-                    'vlan_id': None,
                     'wait': None,
                     'zone': None,
                 }
@@ -1069,8 +1180,10 @@ class TestValidator(unittest.TestCase):
                     'check_iface_exists': True,
                     'force_state_change': None,
                     'ignore_errors': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': 'datagram',
+                    'infiniband': {
+                        'p_key': -1,
+                        'transport_mode': 'datagram',
+                    },
                     'interface_name': None,
                     'ip': {
                         'address': [],
@@ -1095,7 +1208,6 @@ class TestValidator(unittest.TestCase):
                     'slave_type': None,
                     'state': 'up',
                     'type': 'infiniband',
-                    'vlan_id': None,
                     'wait': None,
                     'zone': None,
                 },
@@ -1134,8 +1246,10 @@ class TestValidator(unittest.TestCase):
                     'check_iface_exists': True,
                     'force_state_change': None,
                     'ignore_errors': None,
-                    'infiniband_p_key': 5,
-                    'infiniband_transport_mode': 'datagram',
+                    'infiniband': {
+                        'p_key': 5,
+                        'transport_mode': 'datagram',
+                    },
                     'interface_name': None,
                     'ip': {
                         'address': [],
@@ -1160,7 +1274,6 @@ class TestValidator(unittest.TestCase):
                     'slave_type': None,
                     'state': 'up',
                     'type': 'infiniband',
-                    'vlan_id': None,
                     'wait': None,
                     'zone': None,
                 },
@@ -1245,15 +1358,12 @@ class TestValidator(unittest.TestCase):
                     'mtu': None,
                     'zone': None,
                     'master': None,
-                    'vlan_id': None,
                     'ignore_errors': None,
                     'interface_name': None,
                     'check_iface_exists': True,
                     'force_state_change': None,
                     'slave_type': None,
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
             ],
             [
@@ -1349,15 +1459,12 @@ class TestValidator(unittest.TestCase):
                     'mtu': None,
                     'zone': 'external',
                     'master': None,
-                    'vlan_id': None,
                     'ignore_errors': None,
                     'interface_name': None,
                     'check_iface_exists': True,
                     'force_state_change': None,
                     'slave_type': None,
                     'wait': None,
-                    'infiniband_p_key': None,
-                    'infiniband_transport_mode': None,
                 },
             ],
             [
