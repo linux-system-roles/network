@@ -851,11 +851,51 @@ class ArgValidator_DictVlan(ArgValidatorDict):
             'id': None,
         }
 
+class ArgValidator_DictMacvlan(ArgValidatorDict):
+
+    VALID_MODES = ['vepa', 'bridge', 'private', 'passthru', 'source']
+
+    def __init__(self):
+        ArgValidatorDict.__init__(self,
+            name = 'macvlan',
+            nested = [
+                ArgValidatorStr ('mode', enum_values = ArgValidator_DictMacvlan.VALID_MODES, default_value = 'bridge'),
+                ArgValidatorNum ('mode_id', val_min = 1, val_max = 5, default_value = None),
+                ArgValidatorBool('promiscuous', default_value = None),
+                ArgValidatorBool('tap', default_value = None),
+            ],
+            default_value = ArgValidator.MISSING,
+        )
+
+    def get_default_macvlan(self):
+        return {
+                'mode': 'bridge',
+                'mode_id': 2,
+                'promiscuous': None,
+                'tap': None,
+        }
+
+    def _validate_post(self, value, name, result):
+        if 'mode' in result:
+            NM = Util.NM()
+            # convert mode name to a number (which is actually expected by nm)
+            mode = result['mode']
+            try:
+                mode_id = int(getattr( NM.SettingMacvlanMode, mode.upper() ))
+            except AttributeError as e:
+                raise ValidationError(name, 'Macvlan mode "%s" is not recognized' % (mode))
+            if result['mode_id'] is not None and result['mode_id'] != mode_id:
+                raise ValidationError(name, 'Supplied Macvlan mode "%s" and mode_id "%s" differ (expected: "%s"). Please specify only one of "mode" and "mode_id".' % (mode, str(mode_id), str(result['mode_id'])))
+            result['mode_id'] = mode_id
+        elif 'mode_id' in result:
+            # only mode_id was specified. mode name is not necessary.
+            pass
+        return result
 
 class ArgValidator_DictConnection(ArgValidatorDict):
 
     VALID_STATES = ['up', 'down', 'present', 'absent', 'wait']
-    VALID_TYPES = [ 'ethernet', 'infiniband', 'bridge', 'team', 'bond', 'vlan' ]
+    VALID_TYPES = [ 'ethernet', 'infiniband', 'bridge', 'team', 'bond', 'vlan', 'macvlan' ]
     VALID_SLAVE_TYPES = [ 'bridge', 'bond', 'team' ]
 
     def __init__(self):
@@ -882,6 +922,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidator_DictBond(),
                 ArgValidator_DictInfiniband(),
                 ArgValidator_DictVlan(),
+                ArgValidator_DictMacvlan(),
 
                 # deprecated options:
                 ArgValidatorStr ('infiniband_transport_mode', enum_values = ['datagram', 'connected'], default_value = ArgValidator.MISSING),
@@ -1003,7 +1044,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 if not Util.ifname_valid(result['interface_name']):
                     raise ValidationError(name + '.interface_name', 'invalid "interface_name" "%s"' % (result['interface_name']))
             else:
-                if result['type'] in [ 'bridge', 'bond', 'team', 'vlan' ]:
+                if result['type'] in [ 'bridge', 'bond', 'team', 'vlan', 'macvlan' ]:
                     if not Util.ifname_valid(result['name']):
                         raise ValidationError(name + '.interface_name', 'requires "interface_name" as "name" "%s" is not valid' % (result['name']))
                     result['interface_name'] = result['name']
@@ -1027,8 +1068,8 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                     raise ValidationError(name + '.vlan_id', '"vlan_id" is only allowed for "type" "vlan"')
 
             if 'parent' in result:
-                if result['type'] not in ['vlan', 'infiniband']:
-                    raise ValidationError(name + '.parent', '"parent" is only allowed for type "vlan" or "infiniband"')
+                if result['type'] not in ['vlan', 'macvlan', 'infiniband']:
+                    raise ValidationError(name + '.parent', '"parent" is only allowed for type "vlan", "macvlan" or "infiniband"')
                 if result['parent'] == result['name']:
                     raise ValidationError(name + '.parent', '"parent" cannot refer to itself')
 
@@ -1045,6 +1086,13 @@ class ArgValidator_DictConnection(ArgValidatorDict):
             else:
                 if 'ethernet' in result:
                     raise ValidationError(name + '.ethernet', '"ethernet" settings are not allowed for "type" "%s"' % (result['type']))
+
+            if result['type'] == 'macvlan':
+                if 'macvlan' not in result:
+                    result['macvlan'] = self.nested['macvlan'].get_default_macvlan()
+            else:
+                if 'macvlan' in result:
+                    raise ValidationError(name + '.macvlan', '"macvlan" settings are not allowed for "type" "%s"' % (result['type']))
 
         for k in VALID_FIELDS:
             if k in result:
@@ -1667,6 +1715,14 @@ class NMUtil:
             s_vlan = self.connection_ensure_setting(con, NM.SettingVlan)
             s_vlan.set_property(NM.SETTING_VLAN_ID, connection['vlan']['id'])
             s_vlan.set_property(NM.SETTING_VLAN_PARENT, ArgUtil.connection_find_master_uuid(connection['parent'], connections, idx))
+        elif connection['type'] == 'macvlan':
+            s_macvlan = self.connection_ensure_setting(con, NM.SettingMacvlan)
+            s_macvlan.set_property(NM.SETTING_MACVLAN_MODE, connection['macvlan']['mode_id'])
+            if connection['macvlan']['promiscuous'] is not None:
+                s_macvlan.set_property(NM.SETTING_MACVLAN_PROMISCUOUS, connection['macvlan']['promiscuous'])
+            if connection['macvlan']['tap'] is not None:
+                s_macvlan.set_property(NM.SETTING_MACVLAN_TAP, connection['macvlan']['tap'])
+            s_macvlan.set_property(NM.SETTING_MACVLAN_PARENT, ArgUtil.connection_find_master(connection['parent'], connections, idx))
         else:
             raise MyError('unsupported type %s' % (connection['type']))
 
@@ -2599,6 +2655,13 @@ class Cmd_initscripts(Cmd):
     def __init__(self, **kwargs):
         Cmd.__init__(self, **kwargs)
         self.validate_one_type = ArgValidator_ListConnections.VALIDATE_ONE_MODE_INITSCRIPTS
+
+    def run_prepare(self):
+        Cmd.run_prepare(self)
+        names = {}
+        for idx, connection in enumerate(self.connections):
+            if connection['type'] in [ 'macvlan' ]:
+                self.log_fatal(idx, 'unsupported type %s for initscripts provider' % (connection['type']))
 
     def check_name(self, idx, name = None):
         if name is None:

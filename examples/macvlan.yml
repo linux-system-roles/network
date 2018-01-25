@@ -1,0 +1,26 @@
+---
+- hosts: network-test
+  vars:
+    network_connections:
+
+      - name: eth0
+        type: ethernet
+        interface_name: eth0
+        ip:
+          address:
+            - 192.168.0.1/24
+
+      # Create a virtual ethernet card bound to eth0
+      - name: veth0
+        type: macvlan
+        parent: eth0
+        macvlan:
+          mode: bridge
+          promiscuous: True
+          tap: False
+        ip:
+          address:
+            - 192.168.1.1/24
+
+  roles:
+    - network
