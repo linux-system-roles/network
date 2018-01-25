@@ -228,19 +228,18 @@ class Util:
 
     @staticmethod
     def boolean(arg):
-        BOOLEANS_TRUE = ['y', 'yes', 'on', '1', 'true', 1, True]
-        BOOLEANS_FALSE = ['n', 'no', 'off', '0', 'false', 0, False]
-
         if arg is None or isinstance(arg, bool):
             return arg
+        arg0 = arg
         if isinstance(arg, Util.STRING_TYPE):
             arg = arg.lower()
-        if arg in BOOLEANS_TRUE:
+
+        if arg in ['y', 'yes', 'on', '1', 'true', 1, True]:
             return True
-        elif arg in BOOLEANS_FALSE:
+        if arg in ['n', 'no', 'off', '0', 'false', 0, False]:
             return False
-        else:
-            raise MyError('value "%s" is not a boolean' % (arg))
+
+        raise MyError('value "%s" is not a boolean' % (arg0))
 
     @staticmethod
     def parse_ip(addr, family=None):
