@@ -796,7 +796,6 @@ class TestValidator(unittest.TestCase):
                     'type': 'macvlan',
                     'macvlan': {
                         'mode' : 'bridge',
-                        'mode_id': 2,
                         'promiscuous': True,
                         'tap': False,
                     },
@@ -848,7 +847,6 @@ class TestValidator(unittest.TestCase):
                     'type': 'macvlan',
                     'macvlan': {
                         'mode' : 'passthru',
-                        'mode_id': 4,
                         'promiscuous': False,
                         'tap': True,
                     },
@@ -877,7 +875,6 @@ class TestValidator(unittest.TestCase):
                     'interface_name': 'veth0',
                     'macvlan': {
                         'mode': 'bridge',
-                        'mode_id': 2,
                         'promiscuous': True,
                         'tap': False,
                     },
@@ -901,7 +898,6 @@ class TestValidator(unittest.TestCase):
                     'interface_name': 'veth1',
                     'macvlan': {
                         'mode': 'passthru',
-                        'mode_id': 4,
                         'promiscuous': False,
                         'tap': True
                     },

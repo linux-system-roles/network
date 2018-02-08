@@ -860,9 +860,8 @@ class ArgValidator_DictMacvlan(ArgValidatorDict):
             name = 'macvlan',
             nested = [
                 ArgValidatorStr ('mode', enum_values = ArgValidator_DictMacvlan.VALID_MODES, default_value = 'bridge'),
-                ArgValidatorNum ('mode_id', val_min = 1, val_max = 5, default_value = None),
-                ArgValidatorBool('promiscuous', default_value = None),
-                ArgValidatorBool('tap', default_value = None),
+                ArgValidatorBool('promiscuous', default_value = True),
+                ArgValidatorBool('tap', default_value = False),
             ],
             default_value = ArgValidator.MISSING,
         )
@@ -870,26 +869,13 @@ class ArgValidator_DictMacvlan(ArgValidatorDict):
     def get_default_macvlan(self):
         return {
                 'mode': 'bridge',
-                'mode_id': 2,
-                'promiscuous': None,
-                'tap': None,
+                'promiscuous': True,
+                'tap': False,
         }
 
     def _validate_post(self, value, name, result):
-        if 'mode' in result:
-            NM = Util.NM()
-            # convert mode name to a number (which is actually expected by nm)
-            mode = result['mode']
-            try:
-                mode_id = int(getattr( NM.SettingMacvlanMode, mode.upper() ))
-            except AttributeError as e:
-                raise ValidationError(name, 'Macvlan mode "%s" is not recognized' % (mode))
-            if result['mode_id'] is not None and result['mode_id'] != mode_id:
-                raise ValidationError(name, 'Supplied Macvlan mode "%s" and mode_id "%s" differ (expected: "%s"). Please specify only one of "mode" and "mode_id".' % (mode, str(mode_id), str(result['mode_id'])))
-            result['mode_id'] = mode_id
-        elif 'mode_id' in result:
-            # only mode_id was specified. mode name is not necessary.
-            pass
+        if result['promiscuous'] == False and result['mode'] != "passthru":
+            raise ValidationError(name, 'non promiscuous operation is allowed only in passthru mode')
         return result
 
 class ArgValidator_DictConnection(ArgValidatorDict):
@@ -1716,12 +1702,16 @@ class NMUtil:
             s_vlan.set_property(NM.SETTING_VLAN_ID, connection['vlan']['id'])
             s_vlan.set_property(NM.SETTING_VLAN_PARENT, ArgUtil.connection_find_master_uuid(connection['parent'], connections, idx))
         elif connection['type'] == 'macvlan':
+            # convert mode name to a number (which is actually expected by nm)
+            mode = connection['macvlan']['mode']
+            try:
+                mode_id = int(getattr( NM.SettingMacvlanMode, mode.upper() ))
+            except AttributeError as e:
+                raise MyError('Macvlan mode "%s" is not recognized' % (mode))
             s_macvlan = self.connection_ensure_setting(con, NM.SettingMacvlan)
-            s_macvlan.set_property(NM.SETTING_MACVLAN_MODE, connection['macvlan']['mode_id'])
-            if connection['macvlan']['promiscuous'] is not None:
-                s_macvlan.set_property(NM.SETTING_MACVLAN_PROMISCUOUS, connection['macvlan']['promiscuous'])
-            if connection['macvlan']['tap'] is not None:
-                s_macvlan.set_property(NM.SETTING_MACVLAN_TAP, connection['macvlan']['tap'])
+            s_macvlan.set_property(NM.SETTING_MACVLAN_MODE, mode_id)
+            s_macvlan.set_property(NM.SETTING_MACVLAN_PROMISCUOUS, connection['macvlan']['promiscuous'])
+            s_macvlan.set_property(NM.SETTING_MACVLAN_TAP, connection['macvlan']['tap'])
             s_macvlan.set_property(NM.SETTING_MACVLAN_PARENT, ArgUtil.connection_find_master(connection['parent'], connections, idx))
         else:
             raise MyError('unsupported type %s' % (connection['type']))
