@@ -112,15 +112,19 @@ class TestValidator(unittest.TestCase):
                 ARGS_CONNECTIONS.validate_connection_one(mode, connections, idx)
             except n.ValidationError as e:
                 continue
-            if 'type' in connection:
-                content_current = kwargs.get('initscripts_content_current', None)
-                if content_current:
-                    content_current = content_current[idx]
-                c = n.IfcfgUtil.ifcfg_create(connections, idx, content_current = content_current)
-                #pprint("con[%s] = \"%s\"" % (idx, connections[idx]['name']), c)
-                exp = kwargs.get('initscripts_dict_expected', None)
-                if exp is not None:
-                    self.assertEqual(exp[idx], c)
+            if 'type' not in connection:
+                continue
+            if connection['type'] in ['macvlan']:
+                # initscripts do not support this type. Skip the test.
+                continue
+            content_current = kwargs.get('initscripts_content_current', None)
+            if content_current:
+                content_current = content_current[idx]
+            c = n.IfcfgUtil.ifcfg_create(connections, idx, content_current = content_current)
+            #pprint("con[%s] = \"%s\"" % (idx, connections[idx]['name']), c)
+            exp = kwargs.get('initscripts_dict_expected', None)
+            if exp is not None:
+                self.assertEqual(exp[idx], c)
 
 
     def do_connections_validate(self, expected_connections, input_connections, **kwargs):
@@ -704,6 +708,218 @@ class TestValidator(unittest.TestCase):
                 }
             ],
         )
+
+        self.do_connections_validate(
+            [
+                {
+                    'autoconnect': True,
+                    'name': 'eth0-parent',
+                    'parent': None,
+                    'ip': {
+                        'dhcp4': False,
+                        'auto6': False,
+                        'address': [
+                            {
+                                'prefix': 24,
+                                'family': socket.AF_INET,
+                                'address': '192.168.122.3'
+                            },
+                        ],
+                        'route_append_only': False,
+                        'rule_append_only': False,
+                        'route': [],
+                        'route_metric6': None,
+                        'route_metric4': None,
+                        'dns_search': [],
+                        'dhcp4_send_hostname': None,
+                        'gateway6': None,
+                        'gateway4': None,
+                        'dns': []
+                    },
+                    'ethernet': {
+                        'autoneg': None,
+                        'duplex': None,
+                        'speed': 0,
+                    },
+                    'state': 'up',
+                    'mtu': 1450,
+                    'check_iface_exists': True,
+                    'force_state_change': None,
+                    'mac': '33:24:10:24:2f:b9',
+                    'zone': None,
+                    'master': None,
+                    'ignore_errors': None,
+                    'interface_name': "eth0",
+                    'type': 'ethernet',
+                    'slave_type': None,
+                    'wait': None,
+                },
+                {
+                    'autoconnect': True,
+                    'name': 'veth0.0',
+                    'parent': 'eth0-parent',
+                    'ip': {
+                        'dhcp4': False,
+                        'route_metric6': None,
+                        'route_metric4': None,
+                        'dns_search': [],
+                        'dhcp4_send_hostname': None,
+                        'gateway6': None,
+                        'gateway4': None,
+                        'auto6': False,
+                        'dns': [],
+                        'address': [
+                            {
+                                'prefix': 24,
+                                'family': socket.AF_INET,
+                                'address': '192.168.244.1'
+                            },
+                        ],
+                        'route_append_only': False,
+                        'rule_append_only': False,
+                        'route': [
+                            {
+                                'family': socket.AF_INET,
+                                'network': '192.168.244.0',
+                                'prefix': 24,
+                                'gateway': None,
+                                'metric': -1,
+                            },
+                        ],
+                    },
+                    'mac': None,
+                    'mtu': None,
+                    'zone': None,
+                    'check_iface_exists': True,
+                    'force_state_change': None,
+                    'state': 'up',
+                    'master': None,
+                    'slave_type': None,
+                    'ignore_errors': None,
+                    'interface_name': 'veth0',
+                    'type': 'macvlan',
+                    'macvlan': {
+                        'mode' : 'bridge',
+                        'promiscuous': True,
+                        'tap': False,
+                    },
+                    'wait': None,
+                },
+                {
+                    'autoconnect': True,
+                    'name': 'veth0.1',
+                    'parent': 'eth0-parent',
+                    'ip': {
+                        'dhcp4': False,
+                        'route_metric6': None,
+                        'route_metric4': None,
+                        'dns_search': [],
+                        'dhcp4_send_hostname': None,
+                        'gateway6': None,
+                        'gateway4': None,
+                        'auto6': False,
+                        'dns': [],
+                        'address': [
+                            {
+                                'prefix': 24,
+                                'family': socket.AF_INET,
+                                'address': '192.168.245.7'
+                            },
+                        ],
+                        'route_append_only': False,
+                        'rule_append_only': False,
+                        'route': [
+                            {
+                                'family': socket.AF_INET,
+                                'network': '192.168.245.0',
+                                'prefix': 24,
+                                'gateway': None,
+                                'metric': -1,
+                            },
+                        ],
+                    },
+                    'mac': None,
+                    'mtu': None,
+                    'zone': None,
+                    'check_iface_exists': True,
+                    'force_state_change': None,
+                    'state': 'up',
+                    'master': None,
+                    'slave_type': None,
+                    'ignore_errors': None,
+                    'interface_name': 'veth1',
+                    'type': 'macvlan',
+                    'macvlan': {
+                        'mode' : 'passthru',
+                        'promiscuous': False,
+                        'tap': True,
+                    },
+                    'wait': None,
+                }
+            ],
+            [
+                {
+                    'name': 'eth0-parent',
+                    'state': 'up',
+                    'type': 'ethernet',
+                    'autoconnect': 'yes',
+                    'interface_name': 'eth0',
+                    'mac': '33:24:10:24:2f:b9',
+                    'mtu': 1450,
+                    'ip': {
+                        'address': '192.168.122.3/24',
+                        'auto6': False
+                    },
+                },
+                {
+                    'name': 'veth0.0',
+                    'state': 'up',
+                    'type': 'macvlan',
+                    'parent': 'eth0-parent',
+                    'interface_name': 'veth0',
+                    'macvlan': {
+                        'mode': 'bridge',
+                        'promiscuous': True,
+                        'tap': False,
+                    },
+                    'ip': {
+                        'address': '192.168.244.1/24',
+                        'auto6': False,
+                        'route_append_only': False,
+                        'rule_append_only': False,
+                        'route': [
+                            {
+                                'network': '192.168.244.0',
+                            },
+                        ],
+                    }
+                },
+                {
+                    'name': 'veth0.1',
+                    'state': 'up',
+                    'type': 'macvlan',
+                    'parent': 'eth0-parent',
+                    'interface_name': 'veth1',
+                    'macvlan': {
+                        'mode': 'passthru',
+                        'promiscuous': False,
+                        'tap': True
+                    },
+                    'ip': {
+                        'address': '192.168.245.7/24',
+                        'auto6': False,
+                        'route_append_only': False,
+                        'rule_append_only': False,
+                        'route': [
+                            {
+                                'network': '192.168.245.0',
+                            },
+                        ],
+                    }
+                }
+            ],
+        )
+
 
         self.do_connections_validate(
             [
