@@ -2648,7 +2648,6 @@ class Cmd_initscripts(Cmd):
 
     def run_prepare(self):
         Cmd.run_prepare(self)
-        names = {}
         for idx, connection in enumerate(self.connections):
             if connection['type'] in [ 'macvlan' ]:
                 self.log_fatal(idx, 'unsupported type %s for initscripts provider' % (connection['type']))

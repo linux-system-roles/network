@@ -112,15 +112,19 @@ class TestValidator(unittest.TestCase):
                 ARGS_CONNECTIONS.validate_connection_one(mode, connections, idx)
             except n.ValidationError as e:
                 continue
-            if 'type' in connection:
-                content_current = kwargs.get('initscripts_content_current', None)
-                if content_current:
-                    content_current = content_current[idx]
-                c = n.IfcfgUtil.ifcfg_create(connections, idx, content_current = content_current)
-                #pprint("con[%s] = \"%s\"" % (idx, connections[idx]['name']), c)
-                exp = kwargs.get('initscripts_dict_expected', None)
-                if exp is not None:
-                    self.assertEqual(exp[idx], c)
+            if 'type' not in connection:
+                continue
+            if connection['type'] in ['macvlan']:
+                # initscripts do not support this type. Skip the test.
+                continue
+            content_current = kwargs.get('initscripts_content_current', None)
+            if content_current:
+                content_current = content_current[idx]
+            c = n.IfcfgUtil.ifcfg_create(connections, idx, content_current = content_current)
+            #pprint("con[%s] = \"%s\"" % (idx, connections[idx]['name']), c)
+            exp = kwargs.get('initscripts_dict_expected', None)
+            if exp is not None:
+                self.assertEqual(exp[idx], c)
 
 
     def do_connections_validate(self, expected_connections, input_connections, **kwargs):
