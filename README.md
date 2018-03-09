@@ -253,6 +253,13 @@ network_connections:
       #dhcp4_send_hostname: no
       gateway4: 192.0.2.1
 
+      dns:
+        - 192.0.2.2
+        - 198.51.100.5
+      dns_search:
+        - example.com
+        - subdomain.example.com
+
       route_metric6: -1
       auto6: no
       gateway6: 2001:db8::1
@@ -273,6 +280,9 @@ the DHCPv4 request includes the hostname via `dhcp4_send_hostname`.
 Note that `dhcp4_send_hostname` is only supported by the `nm` provider and translates
 to [`ipv4.dhcp-send-hostname`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv4.dhcp-send-hostname)
 property.
+
+Manual DNS configuration can be specified via a list of addresses
+`dns` and a list of domains to search `dns_search`.
 
 - For NetworkManager, `route_metric4` and `route_metric6` corresponds to the
 [`ipv4.route-metric`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv4.route-metric) and
