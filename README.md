@@ -114,6 +114,7 @@ variable.
 Valid values for `type` are:
 
   - `ethernet`
+  - `infiniband`
   - `bridge`
   - `bond`
   - `team`
