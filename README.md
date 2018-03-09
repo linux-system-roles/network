@@ -268,6 +268,18 @@ network_connections:
         - 192.0.2.3/24
         - 198.51.100.3/26
         - 2001:db8::80/7
+
+      route:
+        - network: 198.51.100.128
+          prefix: 26
+          gateway: 198.51.100.1
+          metric: 2
+        - network: 198.51.100.64
+          prefix: 26
+          gateway: 198.51.100.6
+          metric: 4
+      route_append_only: no
+      rule_append_only: yes
 ```
 
 Manual addressing can be specified via a list of addresses and prefixes `address`.
@@ -289,6 +301,19 @@ Manual DNS configuration can be specified via a list of addresses
 [`ipv6.route-metric`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv6.route-metric)
  properties, respectively. If specified, it determines the route metric
 for DHCP assigned routes and the default route, and thus the priority for multiple interfaces.
+
+Static route configuration can be specified via a list of routes given in the `route`
+option. The default value is an empty list. Each route is a dictionary with the following
+entries: `network`, `prefix`, `gateway` and `metric`. `network` and `prefix` together specify
+the destination network. CIDR notation or network mask notation are not supported yet. If the
+boolean option `route_append_only` is `True`, the specified routes are appended to the
+existing routes, if it is `False` (default), the current routes are replaced. Setting this
+option to `True` without setting `route` has the effect of preserving the current static routes. The
+boolean option `rule_append_only` works in a similar way for routing rules. Note that there is
+no further support for routing rules at the moment, so this option serves merely the purpose
+of preserving the current routing rules.  Note also that when
+`route_append_only`/`rule_append_only` is not specified, the current routes/routing rules will
+be deleted by the role.
 
 Slaves to bridge/bond/team devices cannot specify `ip` settings.
 
