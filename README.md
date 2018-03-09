@@ -317,6 +317,25 @@ be deleted by the role.
 
 Slaves to bridge/bond/team devices cannot specify `ip` settings.
 
+### `type: ethernet`
+
+Ethernet-specific options can be set using the connection profile variable `ethernet`. This
+variable should be specified as a dictionary with the following items (options): `autoneg`, `speed` and `duplex`,
+which correspond to the settings of the `ethtool` utility with the same name. `speed` is an
+integer giving the speed in Mb/s, the valid values of `duplex` are `half` and `full` and
+`autoneg` accepts a boolean value.
+
+```yaml
+network_connections:
+  - name: "eth0"
+    type: "ethernet"
+
+    ethernet:
+      autoneg: false
+      speed: 1000
+      duplex: full
+```
+
 ### Virtual types and Slaves
 
 Device types like `bridge`, `bond`, `team` work similar:
