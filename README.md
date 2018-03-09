@@ -143,7 +143,7 @@ to match a non-virtual device with the profile.
 
 - For NetworkManager `mac` is the permanent MAC address `ethernet.mac-address`.
 
-- For initscripts, this means the currently configurd MAC address of the device (`HWADDR`).
+- For initscripts, this means the currently configured MAC address of the device (`HWADDR`).
 
 ### `interface_name`
 
