@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: BSD-3-Clause
 - name: Set version specific variables
   include_vars: "{{ item }}"
   with_first_found:

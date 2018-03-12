@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: BSD-3-Clause
 # an inventory for the examples.
 [network-test]
 v-rhel6 ansible_user=root network_iphost=196 network_mac1=00:00:5e:00:53:00 network_interface_name1=eth0 network_interface_name2=eth1

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: BSD-3-Clause
 galaxy_info:
   author: Thomas Haller <thaller@redhat.com>
   description: Configure networking

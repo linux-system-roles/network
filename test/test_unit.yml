@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: BSD-3-Clause
 ---
 - hosts: all
   name: execute python unit tests
