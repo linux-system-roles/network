@@ -412,6 +412,67 @@ class TestValidator(unittest.TestCase):
             ],
         )
 
+        # set single IPv4 DNS server
+        self.do_connections_validate(
+            [
+                {
+                    'autoconnect': True,
+                    'name': 'prod1',
+                    'parent': None,
+                    'ip': {
+                        'dhcp4': False,
+                        'route_metric6': None,
+                        'route_metric4': None,
+                        'dns_search': [],
+                        'dhcp4_send_hostname': None,
+                        'gateway6': None,
+                        'gateway4': None,
+                        'auto6': True,
+                        'dns': [{'address': '192.168.174.1',
+                                 'family': socket.AF_INET}],
+                        'address': [
+                            {
+                                'prefix': 24,
+                                'family': socket.AF_INET,
+                                'address': '192.168.174.5'
+                            }
+                        ],
+                        'route_append_only': False,
+                        'rule_append_only': False,
+                        'route': [],
+                    },
+                    'ethernet': {
+                        'autoneg': None,
+                        'duplex': None,
+                        'speed': 0,
+                    },
+                    'state': 'up',
+                    'check_iface_exists': True,
+                    'force_state_change': None,
+                    'zone': None,
+                    'mac': None,
+                    'master': None,
+                    'mtu': None,
+                    'ignore_errors': None,
+                    'interface_name': None,
+                    'type': 'ethernet',
+                    'slave_type': None,
+                    'wait': None,
+                },
+            ],
+            [
+                {
+                    'name': 'prod1',
+                    'state': 'up',
+                    'type': 'ethernet',
+                    'autoconnect': 'yes',
+                    'ip': {
+                        'address': '192.168.174.5/24',
+                        'dns': '192.168.174.1',
+                    }
+                }
+            ],
+        )
         self.do_connections_validate(
             [
                 {
