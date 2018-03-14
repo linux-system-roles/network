@@ -295,7 +295,8 @@ to [`ipv4.dhcp-send-hostname`](https://developer.gnome.org/NetworkManager/stable
 property.
 
 Manual DNS configuration can be specified via a list of addresses
-`dns` and a list of domains to search `dns_search`.
+given in the `dns` option and a list of domains to search given in the
+`dns_search` option.
 
 - For NetworkManager, `route_metric4` and `route_metric6` corresponds to the
 [`ipv4.route-metric`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv4.route-metric) and
@@ -307,9 +308,9 @@ Static route configuration can be specified via a list of routes given in the `r
 option. The default value is an empty list. Each route is a dictionary with the following
 entries: `network`, `prefix`, `gateway` and `metric`. `network` and `prefix` together specify
 the destination network. CIDR notation or network mask notation are not supported yet. If the
-boolean option `route_append_only` is `True`, the specified routes are appended to the
-existing routes, if it is `False` (default), the current routes are replaced. Setting this
-option to `True` without setting `route` has the effect of preserving the current static routes. The
+boolean option `route_append_only` is `yes`, the specified routes are appended to the
+existing routes, if it is `no` (default), the current routes are replaced. Setting this
+option to `yes` without setting `route` has the effect of preserving the current static routes. The
 boolean option `rule_append_only` works in a similar way for routing rules. Note that there is
 no further support for routing rules at the moment, so this option serves merely the purpose
 of preserving the current routing rules.  Note also that when
@@ -323,8 +324,8 @@ Slaves to bridge/bond/team devices cannot specify `ip` settings.
 Ethernet-specific options can be set using the connection profile variable `ethernet`. This
 variable should be specified as a dictionary with the following items (options): `autoneg`, `speed` and `duplex`,
 which correspond to the settings of the `ethtool` utility with the same name. `speed` is an
-integer giving the speed in Mb/s, the valid values of `duplex` are `half` and `full` and
-`autoneg` accepts a boolean value.
+integer giving the speed in Mb/s, the valid values of `duplex` are `half` and `full`, and
+`autoneg` accepts a boolean value (default is `yes`) to configure autonegotiation. The `speed` and `duplex` settings are required when autonegotiation is disabled.
 
 ```yaml
 network_connections:
@@ -332,7 +333,7 @@ network_connections:
     type: "ethernet"
 
     ethernet:
-      autoneg: false
+      autoneg: no
       speed: 1000
       duplex: full
 ```
