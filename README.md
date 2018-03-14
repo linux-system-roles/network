@@ -114,6 +114,7 @@ variable.
 Valid values for `type` are:
 
   - `ethernet`
+  - `infiniband`
   - `bridge`
   - `bond`
   - `team`
@@ -253,6 +254,13 @@ network_connections:
       #dhcp4_send_hostname: no
       gateway4: 192.0.2.1
 
+      dns:
+        - 192.0.2.2
+        - 198.51.100.5
+      dns_search:
+        - example.com
+        - subdomain.example.com
+
       route_metric6: -1
       auto6: no
       gateway6: 2001:db8::1
@@ -261,6 +269,18 @@ network_connections:
         - 192.0.2.3/24
         - 198.51.100.3/26
         - 2001:db8::80/7
+
+      route:
+        - network: 198.51.100.128
+          prefix: 26
+          gateway: 198.51.100.1
+          metric: 2
+        - network: 198.51.100.64
+          prefix: 26
+          gateway: 198.51.100.6
+          metric: 4
+      route_append_only: no
+      rule_append_only: yes
 ```
 
 Manual addressing can be specified via a list of addresses and prefixes `address`.
@@ -274,13 +294,49 @@ Note that `dhcp4_send_hostname` is only supported by the `nm` provider and trans
 to [`ipv4.dhcp-send-hostname`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv4.dhcp-send-hostname)
 property.
 
+Manual DNS configuration can be specified via a list of addresses
+given in the `dns` option and a list of domains to search given in the
+`dns_search` option.
+
 - For NetworkManager, `route_metric4` and `route_metric6` corresponds to the
 [`ipv4.route-metric`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv4.route-metric) and
 [`ipv6.route-metric`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv6.route-metric)
  properties, respectively. If specified, it determines the route metric
 for DHCP assigned routes and the default route, and thus the priority for multiple interfaces.
 
+Static route configuration can be specified via a list of routes given in the `route`
+option. The default value is an empty list. Each route is a dictionary with the following
+entries: `network`, `prefix`, `gateway` and `metric`. `network` and `prefix` together specify
+the destination network. CIDR notation or network mask notation are not supported yet. If the
+boolean option `route_append_only` is `yes`, the specified routes are appended to the
+existing routes, if it is `no` (default), the current routes are replaced. Setting this
+option to `yes` without setting `route` has the effect of preserving the current static routes. The
+boolean option `rule_append_only` works in a similar way for routing rules. Note that there is
+no further support for routing rules at the moment, so this option serves merely the purpose
+of preserving the current routing rules.  Note also that when
+`route_append_only`/`rule_append_only` is not specified, the current routes/routing rules will
+be deleted by the role.
+
 Slaves to bridge/bond/team devices cannot specify `ip` settings.
+
+### `type: ethernet`
+
+Ethernet-specific options can be set using the connection profile variable `ethernet`. This
+variable should be specified as a dictionary with the following items (options): `autoneg`, `speed` and `duplex`,
+which correspond to the settings of the `ethtool` utility with the same name. `speed` is an
+integer giving the speed in Mb/s, the valid values of `duplex` are `half` and `full`, and
+`autoneg` accepts a boolean value (default is `yes`) to configure autonegotiation. The `speed` and `duplex` settings are required when autonegotiation is disabled.
+
+```yaml
+network_connections:
+  - name: "eth0"
+    type: "ethernet"
+
+    ethernet:
+      autoneg: no
+      speed: 1000
+      duplex: full
+```
 
 ### Virtual types and Slaves
 
