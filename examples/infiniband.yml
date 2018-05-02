@@ -22,4 +22,4 @@
             - 198.51.100.133/30
 
   roles:
-    - network
+    - linux-system-roles.network

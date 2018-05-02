@@ -35,4 +35,4 @@
             - "192.0.2.{{ network_iphost }}/24"
 
   roles:
-    - network
+    - linux-system-roles.network

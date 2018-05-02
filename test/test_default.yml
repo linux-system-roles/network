@@ -3,4 +3,4 @@
 - name: Test executing the role with default parameters
   hosts: all
   roles:
-    - network
+    - linux-system-roles.network

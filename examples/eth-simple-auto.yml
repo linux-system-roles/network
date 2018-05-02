@@ -15,4 +15,4 @@
         mtu: 1450
 
   roles:
-    - network
+    - linux-system-roles.network
