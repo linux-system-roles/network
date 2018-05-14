@@ -168,14 +168,26 @@ class TestValidator(unittest.TestCase):
     def test_validate_bool(self):
 
         v = n.ArgValidatorBool('state')
+        self.assertEqual(True, v.validate("yes"))
+        self.assertEqual(True, v.validate("yeS"))
+        self.assertEqual(True, v.validate("Y"))
         self.assertEqual(True, v.validate(True))
         self.assertEqual(True, v.validate("True"))
+        self.assertEqual(True, v.validate("1"))
         self.assertEqual(True, v.validate(1))
+
+        self.assertEqual(False, v.validate("no"))
+        self.assertEqual(False, v.validate("nO"))
+        self.assertEqual(False, v.validate("N"))
         self.assertEqual(False, v.validate(False))
         self.assertEqual(False, v.validate("False"))
+        self.assertEqual(False, v.validate("0"))
         self.assertEqual(False, v.validate(0))
-        self.assertValidationError(v, 2)
 
+        self.assertValidationError(v, 2)
+        self.assertValidationError(v, -1)
+        self.assertValidationError(v, "Ye")
+        self.assertValidationError(v, "")
         self.assertValidationError(v, None)
         v = n.ArgValidatorBool('state', required = True)
         self.assertValidationError(v, None)
