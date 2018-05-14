@@ -7,7 +7,8 @@ import unittest
 import socket
 import itertools
 
-sys.path.insert(1, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(1, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "..", "library"))
 
 import network_connections as n
 
