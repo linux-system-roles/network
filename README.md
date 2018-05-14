@@ -1,5 +1,7 @@
 linux-system-roles/network
 ==========================
+[![Coverage Status](https://coveralls.io/repos/github/linux-system-roles/network/badge.svg)](https://coveralls.io/github/linux-system-roles/network)
+[![Travis Build Status](https://travis-ci.org/linux-system-roles/network.svg?branch=master)](https://travis-ci.org/linux-system-roles/network)
 
 This role enables users to configure network on target machines.
 The role can be used to configure:
