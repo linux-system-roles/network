@@ -1,3 +1,7 @@
 *.pyc
-
 /.image-cache/
+/.pytest_cache
+/tests/.coverage
+/tests/htmlcov-py*/
+/tests/__pycache__/
+/.tox
