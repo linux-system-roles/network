@@ -7,8 +7,6 @@ import unittest
 import socket
 import itertools
 
-sys.path.insert(1, os.path.dirname(os.path.abspath(__file__)))
-
 import network_connections as n
 
 try:
