@@ -8,7 +8,7 @@
         dest: /tmp/test-unit-1/
 
     - copy:
-        src: ../library/test_network_connections.py
+        src: test_network_connections.py
         dest: /tmp/test-unit-1/
 
 
