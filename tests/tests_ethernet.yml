@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Test configuring ethernet devices
+  hosts: all
+  vars:
+    type: veth
+    interface: lsr27
+
+  tasks:
+    - name: "set type={{ type }} and interface={{ interface }}"
+      set_fact:
+        type: "{{ type }}"
+        interface: "{{ interface }}"
+    - include_tasks: tasks/show-interfaces.yml
+    - include_tasks: tasks/manage-test-interface.yml state=present
+    - include_tasks: tasks/assert-device_present.yml
+
+- name: Test static interface up
+  hosts: all
+  vars:
+    network_connections:
+      - name: "{{ interface }}"
+        interface_name: "{{ interface }}"
+        state: up
+        type: ethernet
+        autoconnect: yes
+        ip:
+          address: 192.0.27.1/24
+  roles:
+    - linux-system-roles.network
+# FIXME: assert profile present
+# FIXME: assert profile/device up + IP address
+# FIXME: state down does not work currently
+#- import_playbook: down-profile.yml
+#  vars:
+#    profile: "{{ interface }}"
+## FIXME: assert profile/device down
+#- import_playbook: remove-profile.yml
+#  vars:
+#    profile: "{{ interface }}"
+# FIXME: assert profile away
+- name: Remove interfaces
+  hosts: all
+  tasks:
+    - include_tasks: tasks/manage-test-interface.yml state=absent
+    - include_tasks: tasks/assert-device_absent.yml
