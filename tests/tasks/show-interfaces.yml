@@ -1,0 +1,4 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- debug:
+    msg: "ansible_interfaces: {{ ansible_interfaces }}"
