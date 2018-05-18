@@ -1,0 +1,55 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Test configuring bridges
+  hosts: all
+  vars:
+    interface: LSR-TST-br31
+
+  tasks:
+    - name: "set interface={{ interface }}"
+      set_fact:
+        interface: "{{ interface }}"
+    - include_tasks: tasks/show-interfaces.yml
+    - include_tasks: tasks/assert-device_absent.yml
+
+- name: Add test bridge
+  hosts: all
+  vars:
+    network_connections:
+      - name: "{{ interface }}"
+        interface_name: "{{ interface }}"
+        state: up
+        type: bridge
+        ip:
+          dhcp4: no
+          auto6: yes
+  roles:
+    - linux-system-roles.network
+
+- import_playbook: run-tasks.yml
+  vars:
+    task: tasks/assert-device_present.yml
+
+- import_playbook: run-tasks.yml
+  vars:
+    profile: "{{ interface }}"
+    task: tasks/assert-profile_present.yml
+
+- import_playbook: down-profile.yml
+  vars:
+    profile: "{{ interface }}"
+# FIXME: assert profile/device down
+
+- import_playbook: remove-profile.yml
+  vars:
+    profile: "{{ interface }}"
+
+- import_playbook: run-tasks.yml
+  vars:
+    profile: "{{ interface }}"
+    task: tasks/assert-profile_absent.yml
+
+# FIXME: Devices might still be left when profile is absent
+#- import_playbook: run-tasks.yml
+#  vars:
+#    task: tasks/assert-device_absent.yml

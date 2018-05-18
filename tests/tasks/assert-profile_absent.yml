@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: set variable
+  set_fact:
+    profile_path: /etc/sysconfig/network-scripts/ifcfg-{{ profile }}
+- name: stat profile file
+  stat:
+    path: "{{ profile_path }}"
+  register: profile_stat
+
+- assert:
+    name: "assert that {{ profile }} is absent"
+    that: not profile_stat.stat.exists
+    msg: "profile {{ profile_path }} does exist"
