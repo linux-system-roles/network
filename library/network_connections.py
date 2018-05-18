@@ -1120,7 +1120,7 @@ class ArgValidator_ListConnections(ArgValidatorList):
 
     def _validate_post(self, value, name, result):
         for idx, connection in enumerate(result):
-            if connection['state'] in ['down', 'up']:
+            if connection['state'] in ['up']:
                 if connection['state'] == 'up' and 'type' in connection:
                     pass
                 elif not ArgUtil.connection_find_by_name(connection['name'], result, idx):
