@@ -1,0 +1,66 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+# This expects the variable test_playbook to be set from the outside
+- name: Prepare for coverage extraction
+  hosts: all
+  tasks:
+    # Use set_fact to set variables to make them available in all plays
+    # 'vars:' Would only set variables for the current play
+    - name: set facts
+      set_fact:
+        coverage_module: network_connections
+        coverage: /root/.local/bin/coverage
+        destdir: "remote_coverage/{{ test_playbook }}"
+
+    # This uses variables from the other set_fact task, therefore it needs to
+    # be its own task
+    - name: set more facts
+      set_fact:
+        coverage_file: ansible-coverage-{{ coverage_module }}-{{ test_playbook|replace('.yml', '') }}
+
+    - name: debug info
+      debug:
+        msg: Getting coverage for '{{ coverage_module }}' with '{{ test_playbook }}'
+
+    # combine data in case old data is left there
+    - command: "{{ coverage }} combine"
+      environment:
+        COVERAGE_FILE: "{{ coverage_file }}"
+      ignore_errors: yes
+
+    - name: remove old data
+      file:
+        state: absent
+        path: "{{ coverage_file }}"
+
+    - name: remove old data
+      shell: rm -f .coverage.*
+
+    - name: copy coveragerc
+      copy:
+        content: "[run]\ndisable_warnings = no-data-collected\n"
+        dest: .coveragerc
+
+    - name: install latest pip
+      pip:
+        name: coverage
+        extra_args: --user --upgrade
+
+- import_playbook: "{{ test_playbook }}"
+  vars:
+    ansible_python_interpreter: "{{ coverage }} run -p --include *ansible_module_{{ coverage_module }}.py"
+
+- name: Gather coverage data
+  hosts: all
+  tasks:
+    - shell: "{{ coverage }} combine .coverage.*"
+      environment:
+        COVERAGE_FILE: "{{ coverage_file }}"
+
+- name: Get coverage data
+  hosts: all
+  tasks:
+    - fetch:
+        src: "{{ coverage_file }}"
+        dest: "{{ destdir }}"
+        flat: no

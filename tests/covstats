@@ -1,0 +1,16 @@
+#! /bin/bash
+# SPDX-License-Identifier: BSD-3-Clause
+
+if [ "$#" -lt 1 ]
+then
+    echo "USAGE: ${0} coverage_data_file..."
+    echo "Show Statistics for each coverage data file"
+    exit 1
+fi
+
+for coverage_file in "${@}"
+do
+    echo "coverage statistics for: ${coverage_file}:"
+    COVERAGE_FILE="${coverage_file}" coverage report
+    echo
+done
