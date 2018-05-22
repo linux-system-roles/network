@@ -1875,6 +1875,10 @@ class TestNM(unittest.TestCase):
         self.assertIs(s, s2)
         self.assertTrue(GObject.type_is_a(s, NM.SettingWired))
 
+    def test_connection_list(self):
+        connections = nmutil.connection_list()
+        self.assertIsNotNone(connections)
+
 
 class TestSysUtils(unittest.TestCase):
     def test_link_read_permaddress(self):

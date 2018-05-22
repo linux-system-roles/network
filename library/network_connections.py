@@ -16,10 +16,11 @@ options: Documentation needs to be written. Note that the network_connections mo
   this module outside the role. Thus, consult README.md for examples for the role.
 '''
 
+import functools
+import os
 import socket
 import sys
 import traceback
-import os
 
 ###############################################################################
 
@@ -52,6 +53,21 @@ class ValidationError(MyError):
     @staticmethod
     def from_connection(idx, message):
         return ValidationError('connection[' + str(idx) + ']', message)
+
+
+# cmp() is not available in python 3 anymore
+if "cmp" not in dir(__builtins__):
+    def cmp(x, y):
+        """
+        Replacement for built-in function cmp that was removed in Python 3
+
+        Compare the two objects x and y and return an integer according to
+        the outcome. The return value is negative if x < y, zero if x == y
+        and strictly positive if x > y.
+        """
+
+        return (x > y) - (x < y)
+
 
 class Util:
 
@@ -1630,7 +1646,12 @@ class NMUtil:
             if t_b <= 0:
                 return -1
             return cmp(t_a, t_b)
-        cons.sort(cmp = _cmp)
+
+        if Util.PY3:
+            # functools.cmp_to_key does not exist in Python 2.6
+            cons.sort(key=functools.cmp_to_key(_cmp))
+        else:
+            cons.sort(cmp=_cmp)
         return cons
 
     def connection_compare(self, con_a, con_b, normalize_a = False, normalize_b = False, compare_flags = None):
