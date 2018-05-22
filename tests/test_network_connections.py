@@ -11,7 +11,7 @@ TESTS_BASEDIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(1, os.path.join(TESTS_BASEDIR, "..", "library"))
 
 import network_connections as n
-from network_connections import SysUtil
+from network_connections import SysUtil, Util
 
 
 try:
@@ -1878,6 +1878,13 @@ class TestNM(unittest.TestCase):
     def test_connection_list(self):
         connections = nmutil.connection_list()
         self.assertIsNotNone(connections)
+
+
+class TestUtils(unittest.TestCase):
+    def test_check_output(self):
+        res = Util.check_output(["echo", "test"])
+        self.assertEqual(res, "test\n")
+        self.assertRaises(n.MyError, Util.check_output, ["false"])
 
 
 class TestSysUtils(unittest.TestCase):
