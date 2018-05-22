@@ -74,7 +74,8 @@ class Util:
             ev = os.environ.copy()
             ev['LANG'] = lang if lang is not None else 'C'
             p = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=DEVNULL, env=ev)
-            out = p.communicate()[0]
+            # FIXME: Can we assume this to always be UTF-8?
+            out = p.communicate()[0].decode("UTF-8")
             if p.returncode != 0:
                 raise MyError('failure calling %s: exit with %s' % (argv, p.returncode))
         return out

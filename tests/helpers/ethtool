@@ -1,0 +1,6 @@
+#! /bin/bash
+
+if [ "${1}" == "-P" ] && [ "${2}" != "" ]
+then
+    echo "Permanent address: 23:00:00:00:00:00"
+fi

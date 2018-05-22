@@ -7,10 +7,12 @@ import unittest
 import socket
 import itertools
 
-sys.path.insert(1, os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                "..", "library"))
+TESTS_BASEDIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(1, os.path.join(TESTS_BASEDIR, "..", "library"))
 
 import network_connections as n
+from network_connections import SysUtil
+
 
 try:
     my_test_skipIf = unittest.skipIf
@@ -1872,6 +1874,16 @@ class TestNM(unittest.TestCase):
         self.assertIsNotNone(s2)
         self.assertIs(s, s2)
         self.assertTrue(GObject.type_is_a(s, NM.SettingWired))
+
+
+class TestSysUtils(unittest.TestCase):
+    def test_link_read_permaddress(self):
+        # Manipulate PATH to use ethtool mock script to avoid hard dependency on
+        # ethtool
+        os.environ["PATH"] = TESTS_BASEDIR + "/helpers:" + os.environ["PATH"]
+        self.assertEqual(SysUtil._link_read_permaddress("lo"),
+                         "23:00:00:00:00:00")
+
 
 if __name__ == '__main__':
     unittest.main()

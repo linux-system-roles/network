@@ -11,6 +11,16 @@
         src: test_network_connections.py
         dest: /tmp/test-unit-1/
 
+    - file:
+        state: directory
+        dest: /tmp/test-unit-1/helpers
+
+    - copy:
+        src: "{{ item }}"
+        dest: /tmp/test-unit-1/helpers
+        mode: 0755
+      with_fileglob:
+        - helpers/*
 
     - package:
         name: python2
