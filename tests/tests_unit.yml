@@ -1,6 +1,20 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
 - hosts: all
+  name: Setup for test running
+  tasks:
+    # FIXME: change with_items to loop when test-harness is updated
+    - package:
+        name: "{{ item }}"
+        state: present
+      ignore_errors: true
+      with_items:
+        - NetworkManager-libnm
+        - python2-gobject-base
+        - python3-gobject-base
+        - python-gobject-base
+
+- hosts: all
   name: execute python unit tests
   tasks:
     - copy:
@@ -11,6 +25,16 @@
         src: test_network_connections.py
         dest: /tmp/test-unit-1/
 
+    - file:
+        state: directory
+        dest: /tmp/test-unit-1/helpers
+
+    - copy:
+        src: "{{ item }}"
+        dest: /tmp/test-unit-1/helpers
+        mode: 0755
+      with_fileglob:
+        - helpers/*
 
     - package:
         name: python2
@@ -18,9 +42,9 @@
       ignore_errors: true
       register: python2_available
 
-    - command: python2 /tmp/test-unit-1/test_network_connections.py
-      when: python2_available | succeeded
-
+    - command: python2 /tmp/test-unit-1/test_network_connections.py --verbose
+      when: python2_available is succeeded
+      register: python2_result
 
     - package:
         name: python3
@@ -28,8 +52,21 @@
       ignore_errors: true
       register: python3_available
 
-    - command: python3 /tmp/test-unit-1/test_network_connections.py
-      when: python3_available | succeeded
+    - command: python3 /tmp/test-unit-1/test_network_connections.py --verbose
+      when: python3_available is succeeded
+      register: python3_result
 
+    - command: python /tmp/test-unit-1/test_network_connections.py --verbose
+      register: python_result
 
-    - command: python /tmp/test-unit-1/test_network_connections.py
+    - debug:
+        var: python2_result.stderr_lines
+      when: python2_result is succeeded
+
+    - debug:
+        var: python3_result.stderr_lines
+      when: python3_result is succeeded
+
+    - debug:
+        var: python_result.stderr_lines
+      when: python_result is succeeded
