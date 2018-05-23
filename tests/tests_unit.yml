@@ -43,7 +43,7 @@
       register: python2_available
 
     - command: python2 /tmp/test-unit-1/test_network_connections.py --verbose
-      when: python2_available | succeeded
+      when: python2_available is succeeded
       register: python2_result
 
     - package:
@@ -53,7 +53,7 @@
       register: python3_available
 
     - command: python3 /tmp/test-unit-1/test_network_connections.py --verbose
-      when: python3_available | succeeded
+      when: python3_available is succeeded
       register: python3_result
 
     - command: python /tmp/test-unit-1/test_network_connections.py --verbose
