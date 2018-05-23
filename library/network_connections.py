@@ -83,13 +83,14 @@ class Util:
         return default
 
     @staticmethod
-    def check_output(argv, lang = None):
+    def check_output(argv):
         # subprocess.check_output is python 2.7.
         with open('/dev/null', 'wb') as DEVNULL:
             import subprocess
-            ev = os.environ.copy()
-            ev['LANG'] = lang if lang is not None else 'C'
-            p = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=DEVNULL, env=ev)
+            env = os.environ.copy()
+            env['LANG'] = 'C'
+            p = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=DEVNULL,
+                                 env=env)
             # FIXME: Can we assume this to always be UTF-8?
             out = p.communicate()[0].decode("UTF-8")
             if p.returncode != 0:
