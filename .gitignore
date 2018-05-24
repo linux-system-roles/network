@@ -1,4 +1,3 @@
-/.image-cache/
 *.pyc
 /.pytest_cache
 /tests/.coverage
