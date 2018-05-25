@@ -52,9 +52,6 @@
       when: python3_available is succeeded
       register: python3_result
 
-    - command: python /tmp/test-unit-1/test_network_connections.py --verbose
-      register: python_result
-
     - debug:
         var: python2_result.stderr_lines
       when: python2_result is succeeded
@@ -63,6 +60,6 @@
         var: python3_result.stderr_lines
       when: python3_result is succeeded
 
-    - debug:
-        var: python_result.stderr_lines
-      when: python_result is succeeded
+    - fail:
+        msg: Tests did not run with python2 or python3
+      when: not (python2_available is succeeded or python3_available is succeeded)
