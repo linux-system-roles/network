@@ -2,8 +2,13 @@
 network_provider:     "{{ network_provider_default }}"
 network_connections:  []
 
+# The python-gobject-base packag depends on the python version and
+# distribution:
+# - python-gobject-base on RHEL7 (no python2-gobject-base :-/)
+# - python-gobject-base or python2-gobject-base on Fedora 27
+# - python3-gobject-base on Fedora 28+
 network_service_name_default_nm: NetworkManager
-network_packages_default_nm: [ ethtool, NetworkManager ]
+network_packages_default_nm: [ ethtool, NetworkManager, "python{{ ansible_python['version']['major'] | replace('2', '') }}-gobject-base"]
 
 network_service_name_default_initscripts: network
 network_packages_default_initscripts: [ ethtool ]

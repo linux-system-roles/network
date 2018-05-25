@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- fail:
+    msg: "state needs to be present or absent, not '{{ state }}'"
+  when: state not in ["present", "absent"]
+
+- fail:
+    msg: "type needs to be dummy, tap or veth, not '{{ type }}'"
+  when: type not in ["dummy", "tap", "veth"]
+
+# run setup again to make sure ansible_interfaces is accurate
+- setup:
+
+  # veth
+- name: Create veth interface {{ interface }}
+  shell: ip link add {{ interface }} type veth peer name peer{{ interface }}
+  when: "type == 'veth' and state == 'present' and interface not in ansible_interfaces"
+
+- name: Delete veth interface {{ interface }}
+  shell: ip link del {{ interface }} type veth
+  when: "type == 'veth' and state == 'absent' and interface in ansible_interfaces"
+
+  # dummy
+- name: Create dummy interface {{ interface }}
+  shell: ip link add "{{ interface }}" type dummy
+  when: "type == 'dummy' and state == 'present' and interface not in ansible_interfaces"
+
+- name: Delete dummy interface {{ interface }}
+  shell: ip link del "{{ interface }}" type dummy
+  when: "type == 'dummy' and state == 'absent' and interface in ansible_interfaces"
+
+  # tap
+- name: Create tap interface {{ interface }}
+  shell: ip tuntap add dev {{ interface }} mode tap
+  when: "type == 'tap' and state == 'present' and interface not in ansible_interfaces"
+
+- name: Delete tap interface {{ interface }}
+  shell: ip tuntap del dev {{ interface }} mode tap
+  when: "type == 'tap' and state == 'absent' and interface in ansible_interfaces"

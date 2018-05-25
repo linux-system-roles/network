@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Set {{ profile }} down
+  hosts: all
+  vars:
+    network_connections:
+      - name: "{{ profile }}"
+        state: down
+  roles:
+    - linux-system-roles.network

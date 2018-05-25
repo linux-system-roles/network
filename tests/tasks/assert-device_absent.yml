@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- setup:
+- assert:
+    name: "assert that {{ interface }} is absent"
+    that: "{{ not interface in ansible_interfaces }}"
+    msg: "{{ interface }} is in ansible_interfaces: {{ ansible_interfaces }}"

@@ -1,7 +1,9 @@
 *.pyc
-/.image-cache/
 /.pytest_cache
 /tests/.coverage
-/tests/htmlcov-py*/
+/tests/htmlcov*
 /tests/__pycache__/
+/tests/remote-coveragedata-*
+/tests/tmp_merge_coveragerc
+/tests/total-*coveragedata
 /.tox
