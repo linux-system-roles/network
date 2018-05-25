@@ -36,9 +36,7 @@
       with_fileglob:
         - helpers/*
 
-    - package:
-        name: python2
-        state: present
+    - command: python2 --version
       ignore_errors: true
       register: python2_available
 
@@ -46,9 +44,7 @@
       when: python2_available is succeeded
       register: python2_result
 
-    - package:
-        name: python3
-        state: present
+    - command: python3 --version
       ignore_errors: true
       register: python3_available
 
