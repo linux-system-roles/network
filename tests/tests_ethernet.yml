@@ -35,9 +35,9 @@
 #  vars:
 #    profile: "{{ interface }}"
 ## FIXME: assert profile/device down
-#- import_playbook: remove-profile.yml
-#  vars:
-#    profile: "{{ interface }}"
+- import_playbook: remove-profile.yml
+  vars:
+    profile: "{{ interface }}"
 # FIXME: assert profile away
 - name: Remove interfaces
   hosts: all

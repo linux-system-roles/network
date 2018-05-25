@@ -36,9 +36,7 @@
       with_fileglob:
         - helpers/*
 
-    - package:
-        name: python2
-        state: present
+    - command: python2 --version
       ignore_errors: true
       register: python2_available
 
@@ -46,18 +44,13 @@
       when: python2_available is succeeded
       register: python2_result
 
-    - package:
-        name: python3
-        state: present
+    - command: python3 --version
       ignore_errors: true
       register: python3_available
 
     - command: python3 /tmp/test-unit-1/test_network_connections.py --verbose
       when: python3_available is succeeded
       register: python3_result
-
-    - command: python /tmp/test-unit-1/test_network_connections.py --verbose
-      register: python_result
 
     - debug:
         var: python2_result.stderr_lines
@@ -67,6 +60,6 @@
         var: python3_result.stderr_lines
       when: python3_result is succeeded
 
-    - debug:
-        var: python_result.stderr_lines
-      when: python_result is succeeded
+    - fail:
+        msg: Tests did not run with python2 or python3
+      when: not (python2_available is succeeded or python3_available is succeeded)
