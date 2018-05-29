@@ -1302,6 +1302,8 @@ class IfcfgUtil:
 
         if connection['autoconnect']:
             ifcfg['ONBOOT'] = 'yes'
+        else:
+            ifcfg['ONBOOT'] = 'no'
 
         ifcfg['DEVICE'] = connection['interface_name']
 
