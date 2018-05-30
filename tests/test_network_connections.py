@@ -347,6 +347,71 @@ class TestValidator(unittest.TestCase):
                 },
             ],
         )
+        self.do_connections_validate(
+            [
+                {
+                    'name': '5',
+                    'state': 'up',
+                    'type': 'ethernet',
+                    'autoconnect': False,
+                    'parent': None,
+                    'ip': {
+                        'gateway6': None,
+                        'gateway4': None,
+                        'route_metric4': None,
+                        'auto6': True,
+                        'dhcp4': True,
+                        'address': [],
+                        'route_append_only': False,
+                        'rule_append_only': False,
+                        'route': [],
+                        'dns': [],
+                        'dns_search': [],
+                        'route_metric6': None,
+                        'dhcp4_send_hostname': None,
+                    },
+                    'ethernet': {
+                        'autoneg': None,
+                        'duplex': None,
+                        'speed': 0,
+                    },
+                    'mac': None,
+                    'mtu': None,
+                    'zone': None,
+                    'master': None,
+                    'ignore_errors': None,
+                    'interface_name': None,
+                    'check_iface_exists': True,
+                    'force_state_change': None,
+                    'slave_type': None,
+                    'wait': None,
+                },
+            ],
+            [
+                { 'name': '5',
+                  'state': 'up',
+                  'type': 'ethernet',
+                  'autoconnect': 'no',
+                },
+            ],
+            initscripts_dict_expected = [
+                {
+                    'ifcfg': {
+                        'BOOTPROTO': 'dhcp',
+                        'IPV6INIT': 'yes',
+                        'IPV6_AUTOCONF': 'yes',
+                        'NM_CONTROLLED': 'no',
+                        'ONBOOT': 'no',
+                        'TYPE': 'Ethernet',
+                    },
+                    'keys': None,
+                    'route': None,
+                    'route6': None,
+                    'rule': None,
+                    'rule6': None,
+                },
+            ],
+        )
 
         self.do_connections_check_invalid([ { 'name': 'a', 'autoconnect': True }])
 
