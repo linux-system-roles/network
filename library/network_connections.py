@@ -2819,7 +2819,7 @@ class Cmd_initscripts(Cmd):
 
 ###############################################################################
 
-if __name__ == '__main__':
+def main():
     connections = None
     cmd = None
     run_env_ansible = RunEnvironmentAnsible()
@@ -2841,3 +2841,6 @@ if __name__ == '__main__':
                                   warn_traceback = not isinstance(e, MyError))
     run_env_ansible.exit_json(connections,
                               changed = (cmd is not None and cmd.is_changed_modified_system))
+
+if __name__ == '__main__':
+    main()
