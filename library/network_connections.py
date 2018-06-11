@@ -2327,12 +2327,13 @@ class Cmd:
         self.log(idx, LogLevel.ERROR, msg, warn_traceback = warn_traceback, force_fail = True)
 
     def log(self, idx, severity, msg, warn_traceback = False, force_fail = False):
-        self.run_env.log(connections,
+        self.run_env.log(self.connections,
                          idx,
                          severity,
                          msg,
                          is_changed = self.is_changed_modified_system,
-                         ignore_errors = self.connection_ignore_errors(connections[idx]),
+                         ignore_errors = self.connection_ignore_errors(
+                             self.connections[idx]),
                          warn_traceback = warn_traceback,
                          force_fail = force_fail)
 
