@@ -397,6 +397,7 @@ class SysUtil:
             try_count = 0
             b = None
             while True:
+                try_count += 1
                 try:
                     # there is a race in that we lookup properties by ifname
                     # and interfaces can be renamed. Try to avoid that by fetching
