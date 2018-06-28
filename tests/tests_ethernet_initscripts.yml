@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+# empty play to gather facts
+- hosts: all
+
+- import_playbook: tests_ethernet.yml
+  vars:
+    network_provider: initscripts
+  when:
+    - ansible_distribution_major_version != '6'
