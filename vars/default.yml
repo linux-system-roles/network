@@ -1,1 +1,2 @@
-default-nm.yml
+# SPDX-License-Identifier: BSD-3-Clause
+network_provider_default: nm
