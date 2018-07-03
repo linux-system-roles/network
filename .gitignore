@@ -1,3 +1,5 @@
+/.cache
+/.coverage
 *.pyc
 /.pytest_cache
 /tests/.coverage
