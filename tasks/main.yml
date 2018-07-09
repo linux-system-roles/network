@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: BSD-3-Clause
-- name: Set version specific variables
-  include_vars: "{{ item }}"
-  with_first_found:
-      - "{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
-      - "{{ ansible_distribution }}.yml"
-      - "{{ ansible_os_family }}.yml"
-      - "default.yml"
+- name: Define default provider as nm
+  set_fact:
+    network_provider_default: nm
+
+- name: Override default provider to initscipts for older systems
+  set_fact:
+    network_provider_default: initscripts
+  when:
+    - ansible_distribution_major_version == "6"
+    - ansible_distribution == "CentOS" or ansible_distribution == "RedHat"
 
 # needed for ansible_facst.packages
 - name: Check which packages are installed
