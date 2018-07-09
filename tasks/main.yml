@@ -7,10 +7,19 @@
       - "{{ ansible_os_family }}.yml"
       - "default.yml"
 
+# needed for ansible_facst.packages
+- name: Check which packages are installed
+  package_facts:
+
+# Depending on the plugins, checking installed packages might be slow
+# for example subscription manager might slow this down
+# Therefore install packages only when rpm does not find them
 - name: Install packages
   package:
       name: "{{ network_packages }}"
       state: present
+  when:
+    - not network_packages is subset(ansible_facts.packages.keys())
 
 - name: Enable network service
   service:
