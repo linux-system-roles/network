@@ -2661,9 +2661,10 @@ class Cmd_nm(Cmd):
                         self.log_error(idx, 'down connection failed while waiting: %s' % (e))
 
                 cons = self.nmutil.connection_list(name = connection['name'])
-
         if not changed:
-            self.log_info(idx, 'down connection %s failed: no connection' % (connection['name']))
+            self.log_error(idx,
+                           'down connection %s failed: connection not found' %
+                           (connection['name']))
 
 
 ###############################################################################
