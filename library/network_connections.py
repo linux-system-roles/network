@@ -1120,7 +1120,7 @@ class ArgValidator_ListConnections(ArgValidatorList):
 
     def _validate_post(self, value, name, result):
         for idx, connection in enumerate(result):
-            if connection['state'] in ['down', 'up']:
+            if connection['state'] in ['up']:
                 if connection['state'] == 'up' and 'type' in connection:
                     pass
                 elif not ArgUtil.connection_find_by_name(connection['name'], result, idx):
@@ -2661,9 +2661,10 @@ class Cmd_nm(Cmd):
                         self.log_error(idx, 'down connection failed while waiting: %s' % (e))
 
                 cons = self.nmutil.connection_list(name = connection['name'])
-
         if not changed:
-            self.log_info(idx, 'down connection %s failed: no connection' % (connection['name']))
+            self.log_error(idx,
+                           'down connection %s failed: connection not found' %
+                           (connection['name']))
 
 
 ###############################################################################

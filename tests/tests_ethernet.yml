@@ -30,11 +30,10 @@
     - linux-system-roles.network
 # FIXME: assert profile present
 # FIXME: assert profile/device up + IP address
-# FIXME: state down does not work currently
-#- import_playbook: down-profile.yml
-#  vars:
-#    profile: "{{ interface }}"
-## FIXME: assert profile/device down
+- import_playbook: down-profile.yml
+  vars:
+    profile: "{{ interface }}"
+# FIXME: assert profile/device down
 - import_playbook: remove-profile.yml
   vars:
     profile: "{{ interface }}"
