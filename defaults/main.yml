@@ -11,7 +11,15 @@ network_service_name_default_nm: NetworkManager
 network_packages_default_nm: [ ethtool, NetworkManager, "python{{ ansible_python['version']['major'] | replace('2', '') }}-gobject-base"]
 
 network_service_name_default_initscripts: network
-network_packages_default_initscripts: [ ethtool ]
+
+# initscripts requires bridge-utils to manage bridges, install it when the
+# 'bridge' type is used in network_connections
+_network_packages_default_initscripts_bridge: ["{% if ['bridge'] in network_connections|json_query('[*][type]') %}bridge-utils{% endif %}"]
+# convert _network_packages_default_initscripts_bridge to an empty list if it
+# contains only the empty string and add it to the default package list
+# |select() filters the list to include only values that evalueate to true (the empty string is false)
+# |list() converts the generator that |select() creates to a list
+network_packages_default_initscripts: "{{ ['ethtool'] + _network_packages_default_initscripts_bridge|select()|list() }}"
 
 
 # The user can explicitly set host variables "network_provider",
