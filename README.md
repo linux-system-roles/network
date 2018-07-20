@@ -462,8 +462,11 @@ role.
 
 ### `network_provider`
 
-Whether to use `nm` or `initscripts` is detected based on the distribution.
-It can be however be explicitly set via `network_.provider` variable.
+When Network Manager is running on the target system, the role will use the
+`nm` provider and `initscripts` otherwise. The variable `network_provider`
+allows to specify a specific provider. Setting it to
+`network_provider_os_default` will choose the provider depening on the
+operating system. This is usually `nm` except for RHEL 6 or CentOS 6 systems.
 
 #### Example
 
