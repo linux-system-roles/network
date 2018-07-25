@@ -151,18 +151,22 @@ to match a non-virtual device with the profile.
 
 ### `interface_name`
 
-For type `ethernet`, this option restricts the profile to the
-given interface by name. This argument is optional and by default
-a profile is not restricted to any interface by name.
-Note that with [persistent interface naming](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Networking_Guide/ch-Consistent_Network_Device_Naming.html),
+For type `ethernet`, this option restricts the profile to the given interface
+by name. This argument is optional and by default the profile name is used
+unless a mac address is specified using the `mac` key. Specifying an empty
+string (`""`) allows to specify that the profile is not restricted to a network
+interface.
+
+
+**Note:** With [persistent interface naming](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Networking_Guide/ch-Consistent_Network_Device_Naming.html),
 the interface is predictable based on the hardware configuration.
 Otherwise, the `mac` address might be an option.
 
 For virtual interface types like bridges, this argument is the name of the created
 interface. In case of a missing `interface_name`, the profile name `name` is used.
 
-Note the destinction between the profile name `name` and the device
-name `interface_name`, which may or may not be the same.
+**Note:** The profile name `name` and the device name `interface_name` may be
+different or the profile may not be tied to an interface at all.
 
 ### `zone`
 
