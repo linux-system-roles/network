@@ -12,31 +12,35 @@ The role can be used to configure:
 - Bonded interfaces
 - VLAN  interfaces
 - MacVLAN interfaces
+- Infiniband interfaces
 - IP configuration
 
 General
 -------
 
-The role supports two providers: `nm` and `initscripts`. The provider can be configured per host
-via the [`provider`](#provider) variable. In absence of explicit configuration, it is autodetected based on
-the distribution. The `nm` provider is used by default on RHEL7 and
-`initscripts` on RHEL6. However, note that the provider is not tied to a certain distribution,
-given that the required API is available. For `nm` this means that at least version 1.2 of NetworkManager's
-API is available. For `initscripts`, it requires the legacy network service as commonly available
-on Fedora/RHEL.
+The role supports two providers: `nm` and `initscripts`. The provider can be
+configured per host via the [`network_provider`](#provider) variable. In
+absence of explicit configuration, it is autodetected based on the
+distribution. The `nm` provider is used by default on RHEL7 and `initscripts`
+on RHEL6. However, note that the provider is not tied to a certain
+distribution, given that the required API is available. For `nm` this means
+that at least version 1.2 of NetworkManager's API is available. For
+`initscripts`, it requires the legacy network service as commonly available on
+Fedora/RHEL.
 
-For each host a list of networking profiles can be configure via the `network` variable.
+For each host a list of networking profiles can be configure via the
+`network_connections` variable.
 
 - For initscripts, profiles correspond to ifcfg files in `/etc/sysconfig/network-scripts/ifcfg-*`.
 
 - For NetworkManager, profiles correspond to connection profiles as handled by NetworkManager.  Fedora and RHEL use the `rh-plugin` for NetworkManager which also writes configuration files to `/etc/sysconfig/network-scripts/ifcfg-*` for compatibility.
 
 Note that the role primarily operates on networking profiles (connections) and
-not on devices. For example, in the role you would not configure the current IP address
-of an interface. Instead, you create a profile with a certain IP configuration and
-optionally activate the profile on a device. Which means, to apply the configuration
-to the actual networking interface.
-
+not on devices but it defaults to use the profile name as the interface name.
+But it is also possible to create generic profiles, by creating for example a
+profile with a certain IP configuration without activating the profile. To
+apply the configuration to the actual networking interface, a command like
+`nmcli` needs to be used on the target system.
 
 
 Variables
@@ -141,9 +145,10 @@ By default, profiles are created with autoconnect enabled.
 
 ### `mac`
 
-The `mac` address is optional and restricts the profile to be usable only
-on devices with the given MAC address. `mac` only makes sense for `type` `ethernet`
-to match a non-virtual device with the profile.
+The `mac` address is optional and restricts the profile to be usable only on
+devices with the given MAC address. `mac` is only allowed for `type`
+`ethernet` or `type` `infiniband` to match a non-virtual device with the
+profile.
 
 - For NetworkManager `mac` is the permanent MAC address `ethernet.mac-address`.
 
@@ -151,11 +156,11 @@ to match a non-virtual device with the profile.
 
 ### `interface_name`
 
-For type `ethernet`, this option restricts the profile to the given interface
-by name. This argument is optional and by default the profile name is used
-unless a mac address is specified using the `mac` key. Specifying an empty
-string (`""`) allows to specify that the profile is not restricted to a network
-interface.
+For type `ethernet` and `infiniband`, this option restricts the profile to the
+given interface by name. This argument is optional and by default the profile
+name is used unless a mac address is specified using the `mac` key. Specifying
+an empty string (`""`) allows to specify that the profile is not restricted to
+a network interface.
 
 
 **Note:** With [persistent interface naming](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Networking_Guide/ch-Consistent_Network_Device_Naming.html),
