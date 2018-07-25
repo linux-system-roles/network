@@ -9,7 +9,7 @@ network_provider_current: "{{ 'nm' if 'NetworkManager.service' in ansible_facts.
 # Default to the auto-detected value
 network_provider: "{{ network_provider_current }}"
 
-# The python-gobject-base packag depends on the python version and
+# The python-gobject-base package depends on the python version and
 # distribution:
 # - python-gobject-base on RHEL7 (no python2-gobject-base :-/)
 # - python-gobject-base or python2-gobject-base on Fedora 27

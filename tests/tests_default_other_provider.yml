@@ -1,0 +1,13 @@
+- hosts: all
+  tasks:
+  - service_facts: null
+  - set_fact:
+      network_provider: '{{ ''initscripts'' if network_provider_current == ''nm''
+        else ''nm'' }}'
+  vars:
+    network_provider_current: '{{ ''nm'' if ''NetworkManager.service'' in ansible_facts.services
+      and ansible_facts.services[''NetworkManager.service''][''state''] == ''running''
+      else ''initscripts'' }}'
+- import_playbook: tests_default.yml
+  when:
+  - ansible_distribution_major_version != '6'
