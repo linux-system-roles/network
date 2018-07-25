@@ -489,6 +489,15 @@ so that the host is connected to a management LAN or VLAN. It strongly depends o
   via the `up` or `down` [states](#state) -- unless of course, there are other
   components that watch the ifcfg files and react on changes.
 
+- The initscripts provider requires the different profiles to be in the right
+  order when they depend on each other, for example the bonding master device
+  needs to be specified before the slave devices.
+
+- When removing a profile for NetworkManager it will also take the connection
+  down and possibly remove virtual interfaces. With the initscripts provider
+  removing a profile does not change its current runtime state (this is going
+  to be the case for NetworkManager in the future, too.).
+
 - For NetworkManager, modifying a connection with autoconnect enabled
   may result in the activation of the new profile on a previously disconnected
   interface. Also, deleting a NetworkManager connection that is currently active
