@@ -12,6 +12,18 @@ import unittest
 TESTS_BASEDIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(1, os.path.join(TESTS_BASEDIR, "..", "library"))
 
+try:
+    from unittest import mock
+except ImportError:  # py2
+    import mock
+
+sys.modules["ansible"] = mock.Mock()
+sys.modules["ansible.module_utils.basic"] = mock.Mock()
+sys.modules["ansible.module_utils"] = mock.Mock()
+sys.modules["ansible.module_utils.network_lsr"] = __import__("network_lsr")
+
+# pylint: disable=import-error
+import network_lsr
 import network_connections as n
 
 from network_connections import SysUtil
@@ -51,7 +63,8 @@ def pprint(msg, obj):
         obj.dump()
 
 
-ARGS_CONNECTIONS = n.ArgValidator_ListConnections()
+ARGS_CONNECTIONS = network_lsr.argument_validator.ArgValidator_ListConnections()
+VALIDATE_ONE_MODE_INITSCRIPTS = ARGS_CONNECTIONS.VALIDATE_ONE_MODE_INITSCRIPTS
 
 
 class TestValidator(unittest.TestCase):
@@ -59,7 +72,7 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(n.ValidationError, v.validate, value)
 
     def assert_nm_connection_routes_expected(self, connection, route_list_expected):
-        parser = n.ArgValidatorIPRoute("route[?]")
+        parser = network_lsr.argument_validator.ArgValidatorIPRoute("route[?]")
         route_list_exp = [parser.validate(r) for r in route_list_expected]
         route_list_new = itertools.chain(
             nmutil.setting_ip_config_get_routes(
@@ -92,7 +105,7 @@ class TestValidator(unittest.TestCase):
             if "type" in connection:
                 connection["nm.exists"] = False
                 connection["nm.uuid"] = n.Util.create_uuid()
-        mode = n.ArgValidator_ListConnections.VALIDATE_ONE_MODE_INITSCRIPTS
+        mode = VALIDATE_ONE_MODE_INITSCRIPTS
         for idx, connection in enumerate(connections):
             try:
                 ARGS_CONNECTIONS.validate_connection_one(mode, connections, idx)
@@ -103,7 +116,9 @@ class TestValidator(unittest.TestCase):
                 self.assertTrue(con_new)
                 self.assertTrue(con_new.verify())
                 if "nm_route_list_current" in kwargs:
-                    parser = n.ArgValidatorIPRoute("route[?]")
+                    parser = network_lsr.argument_validator.ArgValidatorIPRoute(
+                        "route[?]"
+                    )
                     s4 = con_new.get_setting(NM.SettingIP4Config)
                     s6 = con_new.get_setting(NM.SettingIP6Config)
                     s4.clear_routes()
@@ -132,7 +147,7 @@ class TestValidator(unittest.TestCase):
                     )
 
     def do_connections_validate_ifcfg(self, input_connections, **kwargs):
-        mode = n.ArgValidator_ListConnections.VALIDATE_ONE_MODE_INITSCRIPTS
+        mode = VALIDATE_ONE_MODE_INITSCRIPTS
         connections = ARGS_CONNECTIONS.validate(input_connections)
         for idx, connection in enumerate(connections):
             try:
@@ -165,24 +180,26 @@ class TestValidator(unittest.TestCase):
 
     def test_validate_str(self):
 
-        v = n.ArgValidatorStr("state")
+        v = network_lsr.argument_validator.ArgValidatorStr("state")
         self.assertEqual("a", v.validate("a"))
         self.assertValidationError(v, 1)
         self.assertValidationError(v, None)
 
-        v = n.ArgValidatorStr("state", required=True)
+        v = network_lsr.argument_validator.ArgValidatorStr("state", required=True)
         self.assertValidationError(v, None)
 
     def test_validate_int(self):
 
-        v = n.ArgValidatorNum("state", default_value=None, numeric_type=float)
+        v = network_lsr.argument_validator.ArgValidatorNum(
+            "state", default_value=None, numeric_type=float
+        )
         self.assertEqual(1, v.validate(1))
         self.assertEqual(1.5, v.validate(1.5))
         self.assertEqual(1.5, v.validate("1.5"))
         self.assertValidationError(v, None)
         self.assertValidationError(v, "1a")
 
-        v = n.ArgValidatorNum("state", default_value=None)
+        v = network_lsr.argument_validator.ArgValidatorNum("state", default_value=None)
         self.assertEqual(1, v.validate(1))
         self.assertEqual(1, v.validate(1.0))
         self.assertEqual(1, v.validate("1"))
@@ -191,12 +208,12 @@ class TestValidator(unittest.TestCase):
         self.assertValidationError(v, 1.5)
         self.assertValidationError(v, "1.5")
 
-        v = n.ArgValidatorNum("state", required=True)
+        v = network_lsr.argument_validator.ArgValidatorNum("state", required=True)
         self.assertValidationError(v, None)
 
     def test_validate_bool(self):
 
-        v = n.ArgValidatorBool("state")
+        v = network_lsr.argument_validator.ArgValidatorBool("state")
         self.assertEqual(True, v.validate("yes"))
         self.assertEqual(True, v.validate("yeS"))
         self.assertEqual(True, v.validate("Y"))
@@ -218,18 +235,22 @@ class TestValidator(unittest.TestCase):
         self.assertValidationError(v, "Ye")
         self.assertValidationError(v, "")
         self.assertValidationError(v, None)
-        v = n.ArgValidatorBool("state", required=True)
+        v = network_lsr.argument_validator.ArgValidatorBool("state", required=True)
         self.assertValidationError(v, None)
 
     def test_validate_dict(self):
 
-        v = n.ArgValidatorDict(
+        v = network_lsr.argument_validator.ArgValidatorDict(
             "dict",
             nested=[
-                n.ArgValidatorNum("i", required=True),
-                n.ArgValidatorStr("s", required=False, default_value="s_default"),
-                n.ArgValidatorStr(
-                    "l", required=False, default_value=n.ArgValidator.MISSING
+                network_lsr.argument_validator.ArgValidatorNum("i", required=True),
+                network_lsr.argument_validator.ArgValidatorStr(
+                    "s", required=False, default_value="s_default"
+                ),
+                network_lsr.argument_validator.ArgValidatorStr(
+                    "l",
+                    required=False,
+                    default_value=network_lsr.argument_validator.ArgValidator.MISSING,
                 ),
             ],
         )
@@ -242,16 +263,18 @@ class TestValidator(unittest.TestCase):
 
     def test_validate_list(self):
 
-        v = n.ArgValidatorList("list", nested=n.ArgValidatorNum("i"))
+        v = network_lsr.argument_validator.ArgValidatorList(
+            "list", nested=network_lsr.argument_validator.ArgValidatorNum("i")
+        )
         self.assertEqual([1, 5], v.validate(["1", 5]))
         self.assertValidationError(v, [1, "s"])
 
-    def test_1(self):
-
+    def test_empty(self):
         self.maxDiff = None
-
         self.do_connections_validate([], [])
 
+    def test_minimal_ethernet(self):
+        self.maxDiff = None
         self.do_connections_validate(
             [
                 {
@@ -295,6 +318,9 @@ class TestValidator(unittest.TestCase):
             ],
             [{"name": "5", "type": "ethernet"}, {"name": "5"}],
         )
+
+    def test_up_ethernet(self):
+        self.maxDiff = None
         self.do_connections_validate(
             [
                 {
@@ -333,6 +359,9 @@ class TestValidator(unittest.TestCase):
             ],
             [{"name": "5", "state": "up", "type": "ethernet"}],
         )
+
+    def test_up_ethernet_no_autoconnect(self):
+        self.maxDiff = None
         self.do_connections_validate(
             [
                 {
@@ -390,13 +419,19 @@ class TestValidator(unittest.TestCase):
             ],
         )
 
+    def test_invalid_autoconnect(self):
+        self.maxDiff = None
         self.do_connections_check_invalid([{"name": "a", "autoconnect": True}])
 
+    def test_absent(self):
+        self.maxDiff = None
         self.do_connections_validate(
             [{"name": "5", "state": "absent", "ignore_errors": None}],
             [{"name": "5", "state": "absent"}],
         )
 
+    def test_up_ethernet_mac_mtu_static_ip(self):
+        self.maxDiff = None
         self.do_connections_validate(
             [
                 {
@@ -452,6 +487,8 @@ class TestValidator(unittest.TestCase):
             ],
         )
 
+    def test_up_single_v4_dns(self):
+        self.maxDiff = None
         # set single IPv4 DNS server
         self.do_connections_validate(
             [
@@ -505,6 +542,9 @@ class TestValidator(unittest.TestCase):
                 }
             ],
         )
+
+    def test_routes(self):
+        self.maxDiff = None
         self.do_connections_validate(
             [
                 {
@@ -634,6 +674,8 @@ class TestValidator(unittest.TestCase):
             ],
         )
 
+    def test_vlan(self):
+        self.maxDiff = None
         self.do_connections_validate(
             [
                 {
@@ -763,6 +805,8 @@ class TestValidator(unittest.TestCase):
             ],
         )
 
+    def test_macvlan(self):
+        self.maxDiff = None
         self.do_connections_validate(
             [
                 {
@@ -943,73 +987,75 @@ class TestValidator(unittest.TestCase):
             ],
         )
 
+    def test_bridge_no_dhcp4_auto6(self):
+        self.maxDiff = None
         self.do_connections_validate(
             [
                 {
                     "autoconnect": True,
-                    "name": "prod2",
-                    "parent": None,
-                    "ip": {
-                        "dhcp4": False,
-                        "route_metric6": None,
-                        "route_metric4": None,
-                        "dns_search": [],
-                        "dhcp4_send_hostname": None,
-                        "gateway6": None,
-                        "gateway4": None,
-                        "auto6": False,
-                        "dns": [],
-                        "address": [],
-                        "route_append_only": False,
-                        "rule_append_only": False,
-                        "route": [],
-                    },
-                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
-                    "mac": None,
-                    "mtu": None,
-                    "zone": None,
                     "check_iface_exists": True,
+                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
                     "force_state_change": None,
-                    "state": "up",
-                    "master": None,
                     "ignore_errors": None,
                     "interface_name": "bridge2",
-                    "type": "bridge",
+                    "ip": {
+                        "address": [],
+                        "auto6": False,
+                        "dhcp4": False,
+                        "dhcp4_send_hostname": None,
+                        "dns": [],
+                        "dns_search": [],
+                        "gateway4": None,
+                        "gateway6": None,
+                        "route": [],
+                        "route_append_only": False,
+                        "route_metric4": None,
+                        "route_metric6": None,
+                        "rule_append_only": False,
+                    },
+                    "mac": None,
+                    "master": None,
+                    "mtu": None,
+                    "name": "prod2",
+                    "parent": None,
                     "slave_type": None,
+                    "state": "up",
+                    "type": "bridge",
                     "wait": None,
+                    "zone": None,
                 },
                 {
                     "autoconnect": True,
-                    "name": "prod2-slave1",
-                    "parent": None,
-                    "ip": {
-                        "dhcp4": True,
-                        "auto6": True,
-                        "address": [],
-                        "route_append_only": False,
-                        "rule_append_only": False,
-                        "route": [],
-                        "route_metric6": None,
-                        "route_metric4": None,
-                        "dns_search": [],
-                        "dhcp4_send_hostname": None,
-                        "gateway6": None,
-                        "gateway4": None,
-                        "dns": [],
-                    },
-                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
-                    "mac": None,
-                    "mtu": None,
-                    "zone": None,
                     "check_iface_exists": True,
+                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
                     "force_state_change": None,
-                    "state": "up",
-                    "master": "prod2",
                     "ignore_errors": None,
                     "interface_name": "eth1",
-                    "type": "ethernet",
+                    "ip": {
+                        "address": [],
+                        "auto6": True,
+                        "dhcp4": True,
+                        "dhcp4_send_hostname": None,
+                        "dns": [],
+                        "dns_search": [],
+                        "gateway4": None,
+                        "gateway6": None,
+                        "route": [],
+                        "route_append_only": False,
+                        "route_metric4": None,
+                        "route_metric6": None,
+                        "rule_append_only": False,
+                    },
+                    "mac": None,
+                    "master": "prod2",
+                    "mtu": None,
+                    "name": "prod2-slave1",
+                    "parent": None,
                     "slave_type": "bridge",
+                    "state": "up",
+                    "type": "ethernet",
                     "wait": None,
+                    "zone": None,
                 },
             ],
             [
@@ -1030,6 +1076,8 @@ class TestValidator(unittest.TestCase):
             ],
         )
 
+    def test_bond(self):
+        self.maxDiff = None
         self.do_connections_validate(
             [
                 {
@@ -1070,6 +1118,8 @@ class TestValidator(unittest.TestCase):
             [{"name": "bond1", "state": "up", "type": "bond"}],
         )
 
+    def test_bond_active_backup(self):
+        self.maxDiff = None
         self.do_connections_validate(
             [
                 {
@@ -1117,9 +1167,13 @@ class TestValidator(unittest.TestCase):
             ],
         )
 
+    def test_invalid_values(self):
+        self.maxDiff = None
         self.do_connections_check_invalid([{}])
         self.do_connections_check_invalid([{"name": "b", "xxx": 5}])
 
+    def test_ethernet_mac_address(self):
+        self.maxDiff = None
         self.do_connections_validate(
             [
                 {
@@ -1157,45 +1211,8 @@ class TestValidator(unittest.TestCase):
             [{"name": "5", "type": "ethernet", "mac": "AA:bb:cC:DD:ee:FF"}],
         )
 
-        self.do_connections_validate(
-            [
-                {
-                    "name": "5",
-                    "state": "up",
-                    "type": "ethernet",
-                    "autoconnect": True,
-                    "parent": None,
-                    "ip": {
-                        "gateway6": None,
-                        "gateway4": None,
-                        "route_metric4": None,
-                        "auto6": True,
-                        "dhcp4": True,
-                        "address": [],
-                        "route_append_only": False,
-                        "rule_append_only": False,
-                        "route": [],
-                        "dns": [],
-                        "dns_search": [],
-                        "route_metric6": None,
-                        "dhcp4_send_hostname": None,
-                    },
-                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
-                    "mac": None,
-                    "mtu": None,
-                    "zone": None,
-                    "master": None,
-                    "ignore_errors": None,
-                    "interface_name": "5",
-                    "check_iface_exists": True,
-                    "force_state_change": None,
-                    "slave_type": None,
-                    "wait": None,
-                }
-            ],
-            [{"name": "5", "state": "up", "type": "ethernet"}],
-        )
-
+    def test_ethernet_speed_settings(self):
+        self.maxDiff = None
         self.do_connections_validate(
             [
                 {
@@ -1262,6 +1279,8 @@ class TestValidator(unittest.TestCase):
             ],
         )
 
+    def test_bridge2(self):
+        self.maxDiff = None
         self.do_connections_validate(
             [
                 {
@@ -1307,8 +1326,8 @@ class TestValidator(unittest.TestCase):
                     "ip": {
                         "address": [],
                         "auto6": True,
-                        "dhcp4": True,
                         "dhcp4_send_hostname": None,
+                        "dhcp4": True,
                         "dns": [],
                         "dns_search": [],
                         "gateway4": None,
@@ -1342,6 +1361,8 @@ class TestValidator(unittest.TestCase):
             ],
         )
 
+    def test_infiniband(self):
+        self.maxDiff = None
         self.do_connections_validate(
             [
                 {
@@ -1406,6 +1427,8 @@ class TestValidator(unittest.TestCase):
             ],
         )
 
+    def test_infiniband2(self):
+        self.maxDiff = None
         self.do_connections_validate(
             [
                 {
@@ -1477,6 +1500,8 @@ class TestValidator(unittest.TestCase):
             ],
         )
 
+    def test_route_metric_prefix(self):
+        self.maxDiff = None
         self.do_connections_validate(
             [
                 {
@@ -1563,6 +1588,8 @@ class TestValidator(unittest.TestCase):
             ],
         )
 
+    def test_route_v6(self):
+        self.maxDiff = None
         self.do_connections_validate(
             [
                 {
@@ -1688,6 +1715,8 @@ class TestValidator(unittest.TestCase):
             ],
         )
 
+    def test_invalid_mac(self):
+        self.maxDiff = None
         self.do_connections_check_invalid(
             [{"name": "b", "type": "ethernet", "mac": "aa:b"}]
         )

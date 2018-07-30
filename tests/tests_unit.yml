@@ -18,12 +18,12 @@
   name: execute python unit tests
   tasks:
     - copy:
-        src: ../library/network_connections.py
+        src: "{{ item }}"
         dest: /tmp/test-unit-1/
-
-    - copy:
-        src: test_network_connections.py
-        dest: /tmp/test-unit-1/
+      loop:
+      - ../library/network_connections.py
+      - test_network_connections.py
+      - ../module_utils/network_lsr
 
     - file:
         state: directory
