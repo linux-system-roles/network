@@ -8,6 +8,7 @@
       - name: prod2
         type: ethernet
         autoconnect: no
+        state: up
         interface_name: "{{ network_interface_name2 }}"
         ip:
           dhcp4: no

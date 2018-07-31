@@ -5,6 +5,6 @@
   vars:
     network_connections:
       - name: "{{ profile }}"
-        state: absent
+        persistent_state: absent
   roles:
     - linux-system-roles.network

@@ -15,6 +15,7 @@
         autoconnect: yes
         infiniband_p_key: 10
         parent: ib0
+        state: up
         ip:
           dhcp4: no
           auto6: no

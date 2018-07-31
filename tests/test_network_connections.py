@@ -11,6 +11,7 @@ import unittest
 
 TESTS_BASEDIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(1, os.path.join(TESTS_BASEDIR, "..", "library"))
+sys.path.insert(1, os.path.join(TESTS_BASEDIR, "..", "module_utils"))
 
 try:
     from unittest import mock
@@ -68,6 +69,37 @@ VALIDATE_ONE_MODE_INITSCRIPTS = ARGS_CONNECTIONS.VALIDATE_ONE_MODE_INITSCRIPTS
 
 
 class TestValidator(unittest.TestCase):
+    def setUp(self):
+        # default values when "type" is specified and state is not
+        self.default_connection_settings = {
+            "autoconnect": True,
+            "check_iface_exists": True,
+            "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
+            "ignore_errors": None,
+            "ip": {
+                "gateway6": None,
+                "gateway4": None,
+                "route_metric4": None,
+                "auto6": True,
+                "dhcp4": True,
+                "address": [],
+                "route_append_only": False,
+                "rule_append_only": False,
+                "route": [],
+                "route_metric6": None,
+                "dhcp4_send_hostname": None,
+                "dns": [],
+                "dns_search": [],
+            },
+            "mac": None,
+            "master": None,
+            "mtu": None,
+            "name": "5",
+            "parent": None,
+            "slave_type": None,
+            "zone": None,
+        }
+
     def assertValidationError(self, v, value):
         self.assertRaises(n.ValidationError, v.validate, value)
 
@@ -273,16 +305,17 @@ class TestValidator(unittest.TestCase):
         self.maxDiff = None
         self.do_connections_validate([], [])
 
-    def test_minimal_ethernet(self):
+    def test_ethernet_two_defaults(self):
         self.maxDiff = None
         self.do_connections_validate(
             [
                 {
-                    "name": "5",
-                    "state": "present",
-                    "type": "ethernet",
+                    "actions": ["present"],
                     "autoconnect": True,
-                    "parent": None,
+                    "check_iface_exists": True,
+                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
+                    "ignore_errors": None,
+                    "interface_name": "5",
                     "ip": {
                         "gateway6": None,
                         "gateway4": None,
@@ -298,22 +331,23 @@ class TestValidator(unittest.TestCase):
                         "dns": [],
                         "dns_search": [],
                     },
-                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
                     "mac": None,
-                    "mtu": None,
-                    "zone": None,
                     "master": None,
-                    "ignore_errors": None,
-                    "interface_name": "5",
-                    "check_iface_exists": True,
+                    "mtu": None,
+                    "name": "5",
+                    "parent": None,
+                    "persistent_state": "present",
                     "slave_type": None,
+                    "state": None,
+                    "type": "ethernet",
+                    "zone": None,
                 },
                 {
-                    "name": "5",
-                    "state": "up",
-                    "force_state_change": None,
-                    "wait": None,
+                    "actions": ["present"],
                     "ignore_errors": None,
+                    "name": "5",
+                    "persistent_state": "present",
+                    "state": None,
                 },
             ],
             [{"name": "5", "type": "ethernet"}, {"name": "5"}],
@@ -324,11 +358,13 @@ class TestValidator(unittest.TestCase):
         self.do_connections_validate(
             [
                 {
-                    "name": "5",
-                    "state": "up",
-                    "type": "ethernet",
+                    "actions": ["present", "up"],
                     "autoconnect": True,
-                    "parent": None,
+                    "check_iface_exists": True,
+                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": "5",
                     "ip": {
                         "gateway6": None,
                         "gateway4": None,
@@ -344,17 +380,17 @@ class TestValidator(unittest.TestCase):
                         "route_metric6": None,
                         "dhcp4_send_hostname": None,
                     },
-                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
                     "mac": None,
-                    "mtu": None,
-                    "zone": None,
                     "master": None,
-                    "ignore_errors": None,
-                    "interface_name": "5",
-                    "check_iface_exists": True,
-                    "force_state_change": None,
+                    "mtu": None,
+                    "name": "5",
+                    "parent": None,
+                    "persistent_state": "present",
                     "slave_type": None,
+                    "state": "up",
+                    "type": "ethernet",
                     "wait": None,
+                    "zone": None,
                 }
             ],
             [{"name": "5", "state": "up", "type": "ethernet"}],
@@ -365,11 +401,13 @@ class TestValidator(unittest.TestCase):
         self.do_connections_validate(
             [
                 {
-                    "name": "5",
-                    "state": "up",
-                    "type": "ethernet",
+                    "actions": ["present", "up"],
                     "autoconnect": False,
-                    "parent": None,
+                    "check_iface_exists": True,
+                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": "5",
                     "ip": {
                         "gateway6": None,
                         "gateway4": None,
@@ -385,17 +423,17 @@ class TestValidator(unittest.TestCase):
                         "route_metric6": None,
                         "dhcp4_send_hostname": None,
                     },
-                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
                     "mac": None,
-                    "mtu": None,
-                    "zone": None,
                     "master": None,
-                    "ignore_errors": None,
-                    "interface_name": "5",
-                    "check_iface_exists": True,
-                    "force_state_change": None,
+                    "mtu": None,
+                    "name": "5",
+                    "parent": None,
+                    "persistent_state": "present",
                     "slave_type": None,
+                    "state": "up",
+                    "type": "ethernet",
                     "wait": None,
+                    "zone": None,
                 }
             ],
             [{"name": "5", "state": "up", "type": "ethernet", "autoconnect": "no"}],
@@ -426,8 +464,16 @@ class TestValidator(unittest.TestCase):
     def test_absent(self):
         self.maxDiff = None
         self.do_connections_validate(
-            [{"name": "5", "state": "absent", "ignore_errors": None}],
-            [{"name": "5", "state": "absent"}],
+            [
+                {
+                    "actions": ["absent"],
+                    "ignore_errors": None,
+                    "name": "5",
+                    "persistent_state": "absent",
+                    "state": None,
+                }
+            ],
+            [{"name": "5", "persistent_state": "absent"}],
         )
 
     def test_up_ethernet_mac_mtu_static_ip(self):
@@ -435,9 +481,13 @@ class TestValidator(unittest.TestCase):
         self.do_connections_validate(
             [
                 {
+                    "actions": ["present", "up"],
                     "autoconnect": True,
-                    "name": "prod1",
-                    "parent": None,
+                    "check_iface_exists": True,
+                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": None,
                     "ip": {
                         "dhcp4": False,
                         "route_metric6": None,
@@ -459,19 +509,17 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                         "route": [],
                     },
-                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
-                    "state": "up",
-                    "mtu": 1450,
-                    "check_iface_exists": True,
-                    "force_state_change": None,
                     "mac": "52:54:00:44:9f:ba",
-                    "zone": None,
                     "master": None,
-                    "ignore_errors": None,
-                    "interface_name": None,
-                    "type": "ethernet",
+                    "mtu": 1450,
+                    "name": "prod1",
+                    "parent": None,
+                    "persistent_state": "present",
                     "slave_type": None,
+                    "state": "up",
+                    "type": "ethernet",
                     "wait": None,
+                    "zone": None,
                 }
             ],
             [
@@ -493,9 +541,13 @@ class TestValidator(unittest.TestCase):
         self.do_connections_validate(
             [
                 {
+                    "actions": ["present", "up"],
                     "autoconnect": True,
-                    "name": "prod1",
-                    "parent": None,
+                    "check_iface_exists": True,
+                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": "prod1",
                     "ip": {
                         "dhcp4": False,
                         "route_metric6": None,
@@ -517,19 +569,17 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                         "route": [],
                     },
-                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
-                    "state": "up",
-                    "check_iface_exists": True,
-                    "force_state_change": None,
-                    "zone": None,
                     "mac": None,
                     "master": None,
                     "mtu": None,
-                    "ignore_errors": None,
-                    "interface_name": "prod1",
-                    "type": "ethernet",
+                    "name": "prod1",
+                    "parent": None,
+                    "persistent_state": "present",
                     "slave_type": None,
+                    "state": "up",
+                    "type": "ethernet",
                     "wait": None,
+                    "zone": None,
                 }
             ],
             [
@@ -548,9 +598,13 @@ class TestValidator(unittest.TestCase):
         self.do_connections_validate(
             [
                 {
+                    "actions": ["present", "up"],
                     "autoconnect": True,
-                    "name": "prod1",
-                    "parent": None,
+                    "check_iface_exists": True,
+                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": None,
                     "ip": {
                         "dhcp4": False,
                         "auto6": True,
@@ -577,24 +631,26 @@ class TestValidator(unittest.TestCase):
                         "gateway4": None,
                         "dns": [],
                     },
-                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
-                    "state": "up",
-                    "mtu": 1450,
-                    "check_iface_exists": True,
-                    "force_state_change": None,
                     "mac": "52:54:00:44:9f:ba",
-                    "zone": None,
                     "master": None,
-                    "ignore_errors": None,
-                    "interface_name": None,
-                    "type": "ethernet",
+                    "mtu": 1450,
+                    "name": "prod1",
+                    "parent": None,
+                    "persistent_state": "present",
                     "slave_type": None,
+                    "state": "up",
+                    "type": "ethernet",
                     "wait": None,
+                    "zone": None,
                 },
                 {
+                    "actions": ["present", "up"],
                     "autoconnect": True,
-                    "name": "prod.100",
-                    "parent": "prod1",
+                    "check_iface_exists": True,
+                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": "prod.100",
                     "ip": {
                         "dhcp4": False,
                         "route_metric6": None,
@@ -629,20 +685,18 @@ class TestValidator(unittest.TestCase):
                             }
                         ],
                     },
-                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
                     "mac": None,
-                    "mtu": None,
-                    "zone": None,
-                    "check_iface_exists": True,
-                    "force_state_change": None,
-                    "state": "up",
                     "master": None,
+                    "mtu": None,
+                    "name": "prod.100",
+                    "parent": "prod1",
+                    "persistent_state": "present",
                     "slave_type": None,
-                    "ignore_errors": None,
-                    "interface_name": "prod.100",
+                    "state": "up",
                     "type": "vlan",
                     "vlan": {"id": 100},
                     "wait": None,
+                    "zone": None,
                 },
             ],
             [
@@ -679,9 +733,13 @@ class TestValidator(unittest.TestCase):
         self.do_connections_validate(
             [
                 {
+                    "actions": ["present", "up"],
                     "autoconnect": True,
-                    "name": "prod1",
-                    "parent": None,
+                    "check_iface_exists": True,
+                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": None,
                     "ip": {
                         "dhcp4": False,
                         "auto6": True,
@@ -708,24 +766,26 @@ class TestValidator(unittest.TestCase):
                         "gateway4": None,
                         "dns": [],
                     },
-                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
-                    "state": "up",
-                    "mtu": 1450,
-                    "check_iface_exists": True,
-                    "force_state_change": None,
                     "mac": "52:54:00:44:9f:ba",
-                    "zone": None,
                     "master": None,
-                    "ignore_errors": None,
-                    "interface_name": None,
-                    "type": "ethernet",
+                    "mtu": 1450,
+                    "name": "prod1",
+                    "parent": None,
+                    "persistent_state": "present",
                     "slave_type": None,
+                    "state": "up",
+                    "type": "ethernet",
                     "wait": None,
+                    "zone": None,
                 },
                 {
+                    "actions": ["present", "up"],
                     "autoconnect": True,
-                    "name": "prod.100",
-                    "parent": "prod1",
+                    "check_iface_exists": True,
+                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": "prod.100",
                     "ip": {
                         "dhcp4": False,
                         "route_metric6": None,
@@ -760,20 +820,18 @@ class TestValidator(unittest.TestCase):
                             }
                         ],
                     },
-                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
                     "mac": None,
-                    "mtu": None,
-                    "zone": None,
-                    "check_iface_exists": True,
-                    "force_state_change": None,
-                    "state": "up",
                     "master": None,
+                    "mtu": None,
+                    "name": "prod.100",
+                    "parent": "prod1",
+                    "persistent_state": "present",
                     "slave_type": None,
-                    "ignore_errors": None,
-                    "interface_name": "prod.100",
+                    "state": "up",
                     "type": "vlan",
                     "vlan": {"id": 101},
                     "wait": None,
+                    "zone": None,
                 },
             ],
             [
@@ -810,9 +868,13 @@ class TestValidator(unittest.TestCase):
         self.do_connections_validate(
             [
                 {
+                    "actions": ["present", "up"],
                     "autoconnect": True,
-                    "name": "eth0-parent",
-                    "parent": None,
+                    "check_iface_exists": True,
+                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": "eth0",
                     "ip": {
                         "dhcp4": False,
                         "auto6": False,
@@ -834,24 +896,25 @@ class TestValidator(unittest.TestCase):
                         "gateway4": None,
                         "dns": [],
                     },
-                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
-                    "state": "up",
-                    "mtu": 1450,
-                    "check_iface_exists": True,
-                    "force_state_change": None,
                     "mac": "33:24:10:24:2f:b9",
-                    "zone": None,
                     "master": None,
-                    "ignore_errors": None,
-                    "interface_name": "eth0",
-                    "type": "ethernet",
+                    "mtu": 1450,
+                    "name": "eth0-parent",
+                    "parent": None,
+                    "persistent_state": "present",
                     "slave_type": None,
+                    "state": "up",
+                    "type": "ethernet",
                     "wait": None,
+                    "zone": None,
                 },
                 {
+                    "actions": ["present", "up"],
                     "autoconnect": True,
-                    "name": "veth0.0",
-                    "parent": "eth0-parent",
+                    "check_iface_exists": True,
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": "veth0",
                     "ip": {
                         "dhcp4": False,
                         "route_metric6": None,
@@ -882,23 +945,25 @@ class TestValidator(unittest.TestCase):
                         ],
                     },
                     "mac": None,
-                    "mtu": None,
-                    "zone": None,
-                    "check_iface_exists": True,
-                    "force_state_change": None,
-                    "state": "up",
-                    "master": None,
-                    "slave_type": None,
-                    "ignore_errors": None,
-                    "interface_name": "veth0",
-                    "type": "macvlan",
                     "macvlan": {"mode": "bridge", "promiscuous": True, "tap": False},
+                    "master": None,
+                    "mtu": None,
+                    "name": "veth0.0",
+                    "parent": "eth0-parent",
+                    "persistent_state": "present",
+                    "slave_type": None,
+                    "state": "up",
+                    "type": "macvlan",
                     "wait": None,
+                    "zone": None,
                 },
                 {
+                    "actions": ["present", "up"],
                     "autoconnect": True,
-                    "name": "veth0.1",
-                    "parent": "eth0-parent",
+                    "check_iface_exists": True,
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": "veth1",
                     "ip": {
                         "dhcp4": False,
                         "route_metric6": None,
@@ -929,18 +994,17 @@ class TestValidator(unittest.TestCase):
                         ],
                     },
                     "mac": None,
-                    "mtu": None,
-                    "zone": None,
-                    "check_iface_exists": True,
-                    "force_state_change": None,
-                    "state": "up",
-                    "master": None,
-                    "slave_type": None,
-                    "ignore_errors": None,
-                    "interface_name": "veth1",
-                    "type": "macvlan",
                     "macvlan": {"mode": "passthru", "promiscuous": False, "tap": True},
+                    "master": None,
+                    "mtu": None,
+                    "name": "veth0.1",
+                    "parent": "eth0-parent",
+                    "persistent_state": "present",
+                    "slave_type": None,
+                    "state": "up",
+                    "type": "macvlan",
                     "wait": None,
+                    "zone": None,
                 },
             ],
             [
@@ -992,6 +1056,7 @@ class TestValidator(unittest.TestCase):
         self.do_connections_validate(
             [
                 {
+                    "actions": ["present", "up"],
                     "autoconnect": True,
                     "check_iface_exists": True,
                     "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
@@ -1018,6 +1083,7 @@ class TestValidator(unittest.TestCase):
                     "mtu": None,
                     "name": "prod2",
                     "parent": None,
+                    "persistent_state": "present",
                     "slave_type": None,
                     "state": "up",
                     "type": "bridge",
@@ -1025,6 +1091,7 @@ class TestValidator(unittest.TestCase):
                     "zone": None,
                 },
                 {
+                    "actions": ["present", "up"],
                     "autoconnect": True,
                     "check_iface_exists": True,
                     "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
@@ -1051,6 +1118,7 @@ class TestValidator(unittest.TestCase):
                     "mtu": None,
                     "name": "prod2-slave1",
                     "parent": None,
+                    "persistent_state": "present",
                     "slave_type": "bridge",
                     "state": "up",
                     "type": "ethernet",
@@ -1081,9 +1149,14 @@ class TestValidator(unittest.TestCase):
         self.do_connections_validate(
             [
                 {
+                    "actions": ["present", "up"],
                     "autoconnect": True,
-                    "name": "bond1",
-                    "parent": None,
+                    "bond": {"mode": "balance-rr", "miimon": None},
+                    "check_iface_exists": True,
+                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": "bond1",
                     "ip": {
                         "dhcp4": True,
                         "route_metric6": None,
@@ -1099,20 +1172,17 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                         "route": [],
                     },
-                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
                     "mac": None,
-                    "mtu": None,
-                    "zone": None,
-                    "check_iface_exists": True,
-                    "force_state_change": None,
-                    "state": "up",
                     "master": None,
-                    "ignore_errors": None,
-                    "interface_name": "bond1",
-                    "type": "bond",
+                    "mtu": None,
+                    "name": "bond1",
+                    "parent": None,
+                    "persistent_state": "present",
                     "slave_type": None,
-                    "bond": {"mode": "balance-rr", "miimon": None},
+                    "state": "up",
+                    "type": "bond",
                     "wait": None,
+                    "zone": None,
                 }
             ],
             [{"name": "bond1", "state": "up", "type": "bond"}],
@@ -1123,9 +1193,14 @@ class TestValidator(unittest.TestCase):
         self.do_connections_validate(
             [
                 {
+                    "actions": ["present", "up"],
                     "autoconnect": True,
-                    "name": "bond1",
-                    "parent": None,
+                    "bond": {"mode": "active-backup", "miimon": None},
+                    "check_iface_exists": True,
+                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": "bond1",
                     "ip": {
                         "dhcp4": True,
                         "route_metric6": None,
@@ -1141,20 +1216,17 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                         "route": [],
                     },
-                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
                     "mac": None,
-                    "mtu": None,
-                    "zone": None,
-                    "check_iface_exists": True,
-                    "force_state_change": None,
-                    "state": "up",
                     "master": None,
-                    "ignore_errors": None,
-                    "interface_name": "bond1",
-                    "type": "bond",
+                    "mtu": None,
+                    "name": "bond1",
+                    "parent": None,
+                    "persistent_state": "present",
                     "slave_type": None,
-                    "bond": {"mode": "active-backup", "miimon": None},
+                    "state": "up",
+                    "type": "bond",
                     "wait": None,
+                    "zone": None,
                 }
             ],
             [
@@ -1177,7 +1249,11 @@ class TestValidator(unittest.TestCase):
         self.do_connections_validate(
             [
                 {
+                    "actions": ["present"],
                     "autoconnect": True,
+                    "check_iface_exists": True,
+                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
+                    "ignore_errors": None,
                     "interface_name": None,
                     "ip": {
                         "address": [],
@@ -1194,18 +1270,16 @@ class TestValidator(unittest.TestCase):
                         "dns": [],
                         "dns_search": [],
                     },
-                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
                     "mac": "aa:bb:cc:dd:ee:ff",
-                    "mtu": None,
-                    "zone": None,
                     "master": None,
-                    "check_iface_exists": True,
+                    "mtu": None,
                     "name": "5",
                     "parent": None,
-                    "ignore_errors": None,
+                    "persistent_state": "present",
                     "slave_type": None,
-                    "state": "present",
+                    "state": None,
                     "type": "ethernet",
+                    "zone": None,
                 }
             ],
             [{"name": "5", "type": "ethernet", "mac": "AA:bb:cC:DD:ee:FF"}],
@@ -1216,11 +1290,13 @@ class TestValidator(unittest.TestCase):
         self.do_connections_validate(
             [
                 {
-                    "name": "5",
-                    "state": "up",
-                    "type": "ethernet",
+                    "actions": ["present", "up"],
                     "autoconnect": True,
-                    "parent": None,
+                    "check_iface_exists": True,
+                    "ethernet": {"autoneg": False, "duplex": "half", "speed": 400},
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": "5",
                     "ip": {
                         "gateway6": None,
                         "gateway4": None,
@@ -1236,17 +1312,17 @@ class TestValidator(unittest.TestCase):
                         "route_metric6": None,
                         "dhcp4_send_hostname": None,
                     },
-                    "ethernet": {"autoneg": False, "duplex": "half", "speed": 400},
                     "mac": None,
-                    "mtu": None,
-                    "zone": None,
                     "master": None,
-                    "ignore_errors": None,
-                    "interface_name": "5",
-                    "check_iface_exists": True,
-                    "force_state_change": None,
+                    "mtu": None,
+                    "name": "5",
+                    "parent": None,
+                    "persistent_state": "present",
                     "slave_type": None,
+                    "state": "up",
+                    "type": "ethernet",
                     "wait": None,
+                    "zone": None,
                 }
             ],
             [
@@ -1284,6 +1360,7 @@ class TestValidator(unittest.TestCase):
         self.do_connections_validate(
             [
                 {
+                    "actions": ["present", "up"],
                     "autoconnect": True,
                     "check_iface_exists": True,
                     "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
@@ -1310,6 +1387,7 @@ class TestValidator(unittest.TestCase):
                     "mtu": None,
                     "name": "6643-master",
                     "parent": None,
+                    "persistent_state": "present",
                     "slave_type": None,
                     "state": "up",
                     "type": "bridge",
@@ -1317,6 +1395,7 @@ class TestValidator(unittest.TestCase):
                     "zone": None,
                 },
                 {
+                    "actions": ["present", "up"],
                     "autoconnect": True,
                     "check_iface_exists": True,
                     "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
@@ -1343,6 +1422,7 @@ class TestValidator(unittest.TestCase):
                     "mtu": None,
                     "name": "6643",
                     "parent": None,
+                    "persistent_state": "present",
                     "slave_type": "bridge",
                     "state": "up",
                     "type": "ethernet",
@@ -1366,6 +1446,7 @@ class TestValidator(unittest.TestCase):
         self.do_connections_validate(
             [
                 {
+                    "actions": ["present", "up"],
                     "autoconnect": True,
                     "check_iface_exists": True,
                     "force_state_change": None,
@@ -1392,6 +1473,7 @@ class TestValidator(unittest.TestCase):
                     "mtu": None,
                     "name": "infiniband.1",
                     "parent": None,
+                    "persistent_state": "present",
                     "slave_type": None,
                     "state": "up",
                     "type": "infiniband",
@@ -1432,6 +1514,7 @@ class TestValidator(unittest.TestCase):
         self.do_connections_validate(
             [
                 {
+                    "actions": ["present", "up"],
                     "autoconnect": True,
                     "check_iface_exists": True,
                     "force_state_change": None,
@@ -1459,6 +1542,7 @@ class TestValidator(unittest.TestCase):
                     "mtu": None,
                     "name": "infiniband.2",
                     "parent": None,
+                    "persistent_state": "present",
                     "slave_type": None,
                     "state": "up",
                     "type": "infiniband",
@@ -1505,11 +1589,13 @@ class TestValidator(unittest.TestCase):
         self.do_connections_validate(
             [
                 {
-                    "name": "555",
-                    "state": "up",
-                    "type": "ethernet",
+                    "actions": ["present", "up"],
                     "autoconnect": True,
-                    "parent": None,
+                    "check_iface_exists": True,
+                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": "555",
                     "ip": {
                         "gateway6": None,
                         "gateway4": None,
@@ -1540,17 +1626,17 @@ class TestValidator(unittest.TestCase):
                         "route_metric6": None,
                         "dhcp4_send_hostname": None,
                     },
-                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
                     "mac": None,
-                    "mtu": None,
-                    "zone": None,
                     "master": None,
-                    "ignore_errors": None,
-                    "interface_name": "555",
-                    "check_iface_exists": True,
-                    "force_state_change": None,
+                    "mtu": None,
+                    "name": "555",
+                    "parent": None,
+                    "persistent_state": "present",
                     "slave_type": None,
+                    "state": "up",
+                    "type": "ethernet",
                     "wait": None,
+                    "zone": None,
                 }
             ],
             [
@@ -1593,11 +1679,13 @@ class TestValidator(unittest.TestCase):
         self.do_connections_validate(
             [
                 {
-                    "name": "e556",
-                    "state": "up",
-                    "type": "ethernet",
+                    "actions": ["present", "up"],
                     "autoconnect": True,
-                    "parent": None,
+                    "check_iface_exists": True,
+                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": "e556",
                     "ip": {
                         "gateway6": None,
                         "gateway4": None,
@@ -1635,17 +1723,17 @@ class TestValidator(unittest.TestCase):
                         "route_metric6": None,
                         "dhcp4_send_hostname": None,
                     },
-                    "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
                     "mac": None,
-                    "mtu": None,
-                    "zone": "external",
                     "master": None,
-                    "ignore_errors": None,
-                    "interface_name": "e556",
-                    "check_iface_exists": True,
-                    "force_state_change": None,
+                    "mtu": None,
+                    "name": "e556",
+                    "parent": None,
+                    "persistent_state": "present",
                     "slave_type": None,
+                    "state": "up",
+                    "type": "ethernet",
                     "wait": None,
+                    "zone": "external",
                 }
             ],
             [
@@ -1759,7 +1847,7 @@ class TestValidator(unittest.TestCase):
             {"name": "internal", "type": "ethernet", "interface_name": "eth0"}
         ]
         connections = ARGS_CONNECTIONS.validate(network_connections)
-        self.assertEquals(connections[0]["interface_name"], "eth0")
+        self.assertEqual(connections[0]["interface_name"], "eth0")
 
     def test_interface_name_ethernet_invalid_profile(self):
         """ Require explicit interface_name when the profile name is not a
@@ -1793,7 +1881,205 @@ class TestValidator(unittest.TestCase):
     def test_interface_name_bond_profile_as_interface_name(self):
         network_connections = [{"name": "internal", "type": "bond"}]
         connections = ARGS_CONNECTIONS.validate(network_connections)
-        self.assertEquals(connections[0]["interface_name"], "internal")
+        self.assertEqual(connections[0]["interface_name"], "internal")
+
+    def check_connection(self, connection, expected):
+        reduced_connection = {}
+        for setting in expected:
+            reduced_connection[setting] = connection[setting]
+        self.assertEqual(reduced_connection, expected)
+
+    def check_partial_connection_zero(self, network_config, expected):
+        connections = ARGS_CONNECTIONS.validate([network_config])
+        self.check_connection(connections[0], expected)
+
+    def check_one_connection_with_defaults(
+        self, network_config, expected_changed_settings
+    ):
+        self.maxDiff = None
+        expected = self.default_connection_settings
+        expected.update(expected_changed_settings)
+
+        self.do_connections_validate([expected], [network_config])
+
+    def test_default_states(self):
+        self.check_partial_connection_zero(
+            {"name": "eth0"},
+            {"actions": ["present"], "persistent_state": "present", "state": None},
+        )
+
+    def test_default_states_type(self):
+        self.check_partial_connection_zero(
+            {"name": "eth0", "type": "ethernet"},
+            {"actions": ["present"], "persistent_state": "present", "state": None},
+        )
+
+    def test_persistent_state_present(self):
+        self.check_partial_connection_zero(
+            {"name": "eth0", "persistent_state": "present", "type": "ethernet"},
+            {"actions": ["present"], "persistent_state": "present", "state": None},
+        )
+
+    def test_persistent_state_absent(self):
+        self.check_partial_connection_zero(
+            {"name": "eth0", "persistent_state": "absent"},
+            {"actions": ["absent"], "persistent_state": "absent", "state": None},
+        )
+
+    def test_state_present_up(self):
+        self.check_partial_connection_zero(
+            {
+                "name": "eth0",
+                "persistent_state": "present",
+                "state": "up",
+                "type": "ethernet",
+            },
+            {
+                "actions": ["present", "up"],
+                "persistent_state": "present",
+                "state": "up",
+            },
+        )
+
+    def test_state_present_down(self):
+        self.check_partial_connection_zero(
+            {
+                "name": "eth0",
+                "persistent_state": "present",
+                "state": "down",
+                "type": "ethernet",
+            },
+            {
+                "actions": ["present", "down"],
+                "persistent_state": "present",
+                "state": "down",
+            },
+        )
+
+    def test_state_absent_up_no_type(self):
+        self.check_partial_connection_zero(
+            {"name": "eth0", "persistent_state": "absent", "state": "up"},
+            {
+                "actions": ["present", "up", "absent"],
+                "persistent_state": "absent",
+                "state": "up",
+            },
+        )
+
+    def test_state_absent_up_type(self):
+        # if type is specified, present should happen, too
+        self.check_partial_connection_zero(
+            {
+                "name": "eth0",
+                "persistent_state": "absent",
+                "state": "up",
+                "type": "ethernet",
+            },
+            {
+                "actions": ["present", "up", "absent"],
+                "persistent_state": "absent",
+                "state": "up",
+            },
+        )
+
+    def test_state_absent_down(self):
+        # if type is specified, present should happen, too
+        self.check_partial_connection_zero(
+            {"name": "eth0", "persistent_state": "absent", "state": "down"},
+            {
+                "actions": ["present", "down", "absent"],
+                "persistent_state": "absent",
+                "state": "down",
+            },
+        )
+
+    def test_state_up_no_type(self):
+        self.check_partial_connection_zero(
+            {"name": "eth0", "state": "up"},
+            {
+                "actions": ["present", "up"],
+                "persistent_state": "present",
+                "state": "up",
+            },
+        )
+
+    def test_state_up_type(self):
+        self.check_partial_connection_zero(
+            {"name": "eth0", "state": "up", "type": "ethernet"},
+            {
+                "actions": ["present", "up"],
+                "persistent_state": "present",
+                "state": "up",
+            },
+        )
+
+    def test_state_down_no_type(self):
+        self.check_partial_connection_zero(
+            {"name": "eth0", "state": "down"},
+            {
+                "actions": ["present", "down"],
+                "persistent_state": "present",
+                "state": "down",
+            },
+        )
+
+    def test_full_state_present_no_type(self):
+        self.maxDiff = None
+        self.do_connections_validate(
+            [
+                {
+                    "actions": ["present"],
+                    "ignore_errors": None,
+                    "name": "eth0",
+                    "state": None,
+                    "persistent_state": "present",
+                }
+            ],
+            [{"name": "eth0", "persistent_state": "present"}],
+        )
+
+    def test_full_state_present_type_defaults(self):
+        self.check_one_connection_with_defaults(
+            {"name": "eth0", "type": "ethernet", "persistent_state": "present"},
+            {
+                "actions": ["present"],
+                "interface_name": "eth0",
+                "name": "eth0",
+                "persistent_state": "present",
+                "state": None,
+                "type": "ethernet",
+            },
+        )
+
+    def test_full_state_absent_no_type(self):
+        self.maxDiff = None
+        self.do_connections_validate(
+            [
+                {
+                    "actions": ["absent"],
+                    "ignore_errors": None,
+                    "name": "eth0",
+                    "state": None,
+                    "persistent_state": "absent",
+                }
+            ],
+            [{"name": "eth0", "persistent_state": "absent"}],
+        )
+
+    def test_full_state_absent_defaults(self):
+        self.maxDiff = None
+        self.check_one_connection_with_defaults(
+            {"name": "eth0", "persistent_state": "absent", "type": "ethernet"},
+            {
+                "actions": ["absent"],
+                "ignore_errors": None,
+                "name": "eth0",
+                "state": None,
+                "persistent_state": "absent",
+                "type": "ethernet",
+                "interface_name": "eth0",
+            },
+        )
 
 
 @my_test_skipIf(nmutil is None, "no support for NM (libnm via pygobject)")

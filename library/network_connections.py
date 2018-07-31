@@ -546,6 +546,9 @@ class IfcfgUtil:
 
     @classmethod
     def content_from_file(cls, name, file_type=None):
+        """
+        Return dictionary with all file contents for an initscripts profile
+        """
         content = {}
         for file_type in cls._file_types(file_type):
             path = cls.ifcfg_path(name, file_type)
@@ -1368,9 +1371,12 @@ class RunEnvironmentAnsible(RunEnvironment):
             prefix = "#"
         else:
             c = connections[idx]
-            prefix = "#%s, state:%s" % (idx, c["state"])
-            if c["state"] != "wait":
-                prefix = prefix + (", '%s'" % (c["name"]))
+            prefix = "#%s, state:%s persistent_state:%s" % (
+                idx,
+                c["state"],
+                c["persistent_state"],
+            )
+            prefix = prefix + (", '%s'" % (c["name"]))
         for r in rr["log"]:
             yield (r[2], "[%03d] %s %s: %s" % (r[2], LogLevel.fmt(r[0]), prefix, r[1]))
 
@@ -1565,13 +1571,14 @@ class Cmd:
                 continue
 
             c_state = c["state"]
+            c_pstate = c["persistent_state"]
             if c_state == "up" and "type" not in c:
                 pass
             elif c_state == "down":
                 return True
-            elif c_state == "absent":
+            elif c_pstate == "absent":
                 return True
-            elif c_state in ["present", "up"]:
+            elif c_state == "up" or c_pstate == "present":
                 if self.connections_data[idx]["changed"]:
                     return True
 
@@ -1611,28 +1618,17 @@ class Cmd:
         while self.check_mode_next() != CheckMode.DONE:
             for idx, connection in enumerate(self.connections):
                 try:
-                    state = connection["state"]
-                    if state == "wait":
-                        w = connection["wait"]
-                        if w is None:
-                            w = 10
-                        self.log_info(idx, "wait for %s seconds" % (w))
-                        if self.check_mode == CheckMode.REAL_RUN:
-                            import time
-
-                            time.sleep(w)
-                    elif state == "absent":
-                        self.run_state_absent(idx)
-                    elif state == "present":
-                        self.run_state_present(idx)
-                    elif state == "up":
-                        if "type" in connection:
-                            self.run_state_present(idx)
-                        self.run_state_up(idx)
-                    elif state == "down":
-                        self.run_state_down(idx)
-                    else:
-                        assert False
+                    for action in connection["actions"]:
+                        if action == "absent":
+                            self.run_action_absent(idx)
+                        elif action == "present":
+                            self.run_action_present(idx)
+                        elif action == "up":
+                            self.run_action_up(idx)
+                        elif action == "down":
+                            self.run_action_down(idx)
+                        else:
+                            assert False
                 except Exception as e:
                     self.log_warn(
                         idx, "failure: %s [[%s]]" % (e, traceback.format_exc())
@@ -1687,16 +1683,16 @@ class Cmd:
                         % (connection["interface_name"], connection["mac"]),
                     )
 
-    def run_state_absent(self, idx):
+    def run_action_absent(self, idx):
         raise NotImplementedError()
 
-    def run_state_present(self, idx):
+    def run_action_present(self, idx):
         raise NotImplementedError()
 
-    def run_state_down(self, idx):
+    def run_action_down(self, idx):
         raise NotImplementedError()
 
-    def run_state_up(self, idx):
+    def run_action_up(self, idx):
         raise NotImplementedError()
 
 
@@ -1723,11 +1719,9 @@ class Cmd_nm(Cmd):
         Cmd.run_prepare(self)
         names = {}
         for connection in self.connections:
-            if connection["state"] not in ["up", "down", "present", "absent"]:
-                continue
             name = connection["name"]
             if not name:
-                assert connection["state"] == "absent"
+                assert connection["persistent_state"] == "absent"
                 continue
             if name in names:
                 exists = names[name]["nm.exists"]
@@ -1744,7 +1738,7 @@ class Cmd_nm(Cmd):
             connection["nm.exists"] = exists
             connection["nm.uuid"] = uuid
 
-    def run_state_absent(self, idx):
+    def run_action_absent(self, idx):
         seen = set()
         name = self.connections[idx]["name"]
         black_list_names = None
@@ -1769,13 +1763,23 @@ class Cmd_nm(Cmd):
         if not seen:
             self.log_info(idx, "no connection '%s'" % (name))
 
-    def run_state_present(self, idx):
+    def run_action_present(self, idx):
         connection = self.connections[idx]
         con_cur = Util.first(
             self.nmutil.connection_list(
                 name=connection["name"], uuid=connection["nm.uuid"]
             )
         )
+
+        if not connection.get("type"):
+            # if the type is not specified, just check that the connection was
+            # found
+            if not con_cur:
+                self.log_error(
+                    idx, "Connection not found on system and 'type' not present"
+                )
+            return
+
         con_new = self.nmutil.connection_create(self.connections, idx, con_cur)
         if con_cur is None:
             self.log_info(
@@ -1829,7 +1833,7 @@ class Cmd_nm(Cmd):
                     self.log_error(idx, "delete duplicate connection failed: %s" % (e))
             seen.add(c)
 
-    def run_state_up(self, idx):
+    def run_action_up(self, idx):
         connection = self.connections[idx]
 
         con = Util.first(
@@ -1893,7 +1897,7 @@ class Cmd_nm(Cmd):
             except MyError as e:
                 self.log_error(idx, "up connection failed while waiting: %s" % (e))
 
-    def run_state_down(self, idx):
+    def run_action_down(self, idx):
         connection = self.connections[idx]
 
         cons = self.nmutil.connection_list(name=connection["name"])
@@ -1970,7 +1974,7 @@ class Cmd_initscripts(Cmd):
             return None
         return f
 
-    def run_state_absent(self, idx):
+    def run_action_absent(self, idx):
         n = self.connections[idx]["name"]
         name = n
         if not name:
@@ -2013,7 +2017,7 @@ class Cmd_initscripts(Cmd):
                 % ("'" + n + "'" if n else "*"),
             )
 
-    def run_state_present(self, idx):
+    def run_action_present(self, idx):
         if not self.check_name(idx):
             return
 
@@ -2021,6 +2025,15 @@ class Cmd_initscripts(Cmd):
         name = connection["name"]
 
         old_content = IfcfgUtil.content_from_file(name)
+
+        if not connection.get("type"):
+            # if the type is not specified, just check that the connection was
+            # found
+            if not old_content.get("ifcfg"):
+                self.log_error(
+                    idx, "Connection not found on system and 'type' not present"
+                )
+            return
 
         ifcfg_all = IfcfgUtil.ifcfg_create(
             self.connections, idx, lambda msg: self.log_warn(idx, msg), old_content
@@ -2047,7 +2060,7 @@ class Cmd_initscripts(Cmd):
                     idx, "%s ifcfg-rh profile '%s' failed: %s" % (op, name, e)
                 )
 
-    def _run_state_updown(self, idx, do_up):
+    def _run_action_updown(self, idx, do_up):
         if not self.check_name(idx):
             return
 
@@ -2119,11 +2132,11 @@ class Cmd_initscripts(Cmd):
                     idx, "call '%s %s' failed with exit status %d" % (cmd, name, rc)
                 )
 
-    def run_state_up(self, idx):
-        self._run_state_updown(idx, True)
+    def run_action_up(self, idx):
+        self._run_action_updown(idx, True)
 
-    def run_state_down(self, idx):
-        self._run_state_updown(idx, False)
+    def run_action_down(self, idx):
+        self._run_action_updown(idx, False)
 
 
 ###############################################################################

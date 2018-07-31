@@ -6,6 +6,7 @@
 
       - name: eth0
         type: ethernet
+        state: up
         interface_name: eth0
         ip:
           address:
@@ -14,6 +15,7 @@
       # Create a virtual ethernet card bound to eth0
       - name: veth0
         type: macvlan
+        state: up
         parent: eth0
         macvlan:
           mode: bridge

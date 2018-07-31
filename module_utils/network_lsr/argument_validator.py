@@ -21,10 +21,9 @@ class ArgUtil:
             if "name" not in connection or name != connection["name"]:
                 continue
 
-            if connection["state"] == "absent":
+            if connection["persistent_state"] == "absent":
                 c = None
-            elif "type" in connection:
-                assert connection["state"] in ["up", "present"]
+            elif connection["persistent_state"] == "present":
                 c = connection
         return c
 
@@ -611,7 +610,8 @@ class ArgValidator_DictMacvlan(ArgValidatorDict):
 
 class ArgValidator_DictConnection(ArgValidatorDict):
 
-    VALID_STATES = ["up", "down", "present", "absent", "wait"]
+    VALID_STATES = ["up", "down"]
+    VALID_PERSISTENT_STATES = ["absent", "present"]
     VALID_TYPES = [
         "ethernet",
         "infiniband",
@@ -632,8 +632,18 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidatorStr(
                     "state", enum_values=ArgValidator_DictConnection.VALID_STATES
                 ),
+                ArgValidatorStr(
+                    "persistent_state",
+                    enum_values=ArgValidator_DictConnection.VALID_PERSISTENT_STATES,
+                ),
                 ArgValidatorBool("force_state_change", default_value=None),
-                ArgValidatorNum("wait", val_min=0, val_max=3600, numeric_type=float),
+                ArgValidatorNum(
+                    "wait",
+                    val_min=0,
+                    val_max=3600,
+                    numeric_type=float,
+                    default_value=None,
+                ),
                 ArgValidatorStr(
                     "type", enum_values=ArgValidator_DictConnection.VALID_TYPES
                 ),
@@ -681,69 +691,111 @@ class ArgValidator_DictConnection(ArgValidatorDict):
             all_missing_during_validate=True,
         )
 
-    def _validate_post(self, value, name, result):
-        if "state" not in result:
-            if "type" in result:
-                result["state"] = "present"
-            elif list(result.keys()) == ["wait"]:
-                result["state"] = "wait"
-            else:
-                result["state"] = "up"
+        # valid field based on specified state, used to set defaults and reject
+        # bad values
+        self.VALID_FIELDS = []
 
-        if result["state"] == "present" or (
-            result["state"] == "up" and "type" in result
-        ):
-            VALID_FIELDS = list(self.nested.keys())
-            if result["state"] == "present":
-                VALID_FIELDS.remove("wait")
-                VALID_FIELDS.remove("force_state_change")
-        elif result["state"] in ["up", "down"]:
-            VALID_FIELDS = [
-                "name",
-                "state",
-                "wait",
-                "ignore_errors",
-                "force_state_change",
-            ]
-        elif result["state"] == "absent":
-            VALID_FIELDS = ["name", "state", "ignore_errors"]
-        elif result["state"] == "wait":
-            VALID_FIELDS = ["state", "wait"]
+    def _validate_post_state(self, value, name, result):
+        """
+        Validate state definitions and create a corresponding list of actions.
+        """
+        actions = []
+        state = result.get("state")
+        persistent_state = result.get("persistent_state")
+
+        # default persistent_state to present (not done via default_value in the
+        # ArgValidatorStr, the value will only be set at the end of
+        # _validate_post()
+        if not persistent_state:
+            persistent_state = "present"
+
+        # If the profile is present, it should be ensured first
+        if persistent_state == "present":
+            actions.append(persistent_state)
+
+        # If the profile should be absent at the end, it needs to be present in
+        # the meantime to allow to (de)activate it
+        if persistent_state == "absent" and state:
+            actions.append("present")
+
+        # Change the runtime state if necessary
+        if state:
+            actions.append(state)
+
+        # Remove the profile in the end if requested
+        if persistent_state == "absent":
+            actions.append(persistent_state)
+
+        result["state"] = state
+        result["persistent_state"] = persistent_state
+        result["actions"] = actions
+
+        return result
+
+    def _validate_post_fields(self, value, name, result):
+        """
+        Validate the allowed fields (settings depending on the requested state).
+        FIXME: Maybe it should check whether "up"/"down" is present in the
+        actions instead of checking the runtime state from "state" to switch
+        from state to actions after the state parsing is done.
+        """
+        state = result.get("state")
+        persistent_state = result.get("persistent_state")
+
+        # minimal settings not related to runtime changes
+        valid_fields = ["actions", "ignore_errors", "name", "persistent_state", "state"]
+
+        # when type is present, a profile is completely specified (using
+        # defaults or other settings)
+        if "type" in result:
+            valid_fields += list(self.nested.keys())
+
+        # If there are no runtime changes, "wait" and "force_state_change" do
+        # not make sense
+        # FIXME: Maybe this restriction can be removed. Need to make sure that
+        # defaults for wait or force_state_change do not interfer
+        if not state:
+            while "wait" in valid_fields:
+                valid_fields.remove("wait")
+            while "force_state_change" in valid_fields:
+                valid_fields.remove("force_state_change")
         else:
-            assert False
+            valid_fields += ["force_state_change", "wait"]
 
-        VALID_FIELDS = set(VALID_FIELDS)
+        # FIXME: Maybe just accept all values, even if they are not
+        # needed/meaningful in the respective context
+        valid_fields = set(valid_fields)
         for k in result:
-            if k not in VALID_FIELDS:
+            if k not in valid_fields:
                 raise ValidationError(
                     name + "." + k,
-                    "property is not allowed for state '%s'" % (result["state"]),
+                    "property is not allowed for state '%s' and persistent_state '%s'"
+                    % (state, persistent_state),
                 )
 
-        if result["state"] != "wait":
-            if result["state"] == "absent":
-                if "name" not in result:
-                    result[
-                        "name"
-                    ] = ""  # set to empty string to mean *absent all others*
+        if "name" not in result:
+            if persistent_state == "absent":
+                result["name"] = ""  # set to empty string to mean *absent all others*
             else:
-                if "name" not in result:
-                    raise ValidationError(name, "missing 'name'")
+                raise ValidationError(name, "missing 'name'")
 
-        if result["state"] in ["wait", "up", "down"]:
-            if "wait" not in result:
-                result["wait"] = None
-        else:
-            if "wait" in result:
-                raise ValidationError(
-                    name + ".wait",
-                    "'wait' is not allowed for state '%s'" % (result["state"]),
-                )
-
-        if result["state"] == "present" and "type" not in result:
+        # FIXME: Seems to be a duplicate check since "wait" will be removed from
+        # valid_keys when state is considered to be not True
+        if "wait" in result and not state:
             raise ValidationError(
-                name + ".state", '"present" state requires a "type" argument'
+                name + ".wait",
+                "'wait' is not allowed for state '%s'" % (result["state"]),
             )
+
+        result["state"] = state
+        result["persistent_state"] = persistent_state
+
+        self.VALID_FIELDS = valid_fields
+        return result
+
+    def _validate_post(self, value, name, result):
+        result = self._validate_post_state(value, name, result)
+        result = self._validate_post_fields(value, name, result)
 
         if "type" in result:
 
@@ -959,7 +1011,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                         % (result["type"]),
                     )
 
-        for k in VALID_FIELDS:
+        for k in self.VALID_FIELDS:
             if k in result:
                 continue
             v = self.nested[k]

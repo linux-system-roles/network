@@ -3,6 +3,12 @@
 - hosts: all
   name: Setup for test running
   tasks:
+    - name: Install EPEL on enterprise Linux for python2-mock
+      command: yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
+      when:
+        - ansible_distribution in ['RedHat', 'CentOS']
+        - ansible_distribution_major_version in ['6', '7']
+
     # FIXME: change with_items to loop when test-harness is updated
     - package:
         name: "{{ item }}"
@@ -13,6 +19,7 @@
         - python2-gobject-base
         - python3-gobject-base
         - python-gobject-base
+        - python2-mock
 
 - hosts: all
   name: execute python unit tests

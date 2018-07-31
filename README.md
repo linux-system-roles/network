@@ -68,14 +68,33 @@ for NetworkManager, a connection can only be active at one device at a time.
   Note that here too the name doesn't specify the `DEVICE` but a filename. As a consequence
   `'/'` is not a valid character for the name.
 
-### `state`
+### `state` and `persistent_state`
+
+Each connection profile can have a runtime state, represented by the `state`
+setting and a persistent state, represtented by the `persistent_state` setting.
+
+The optional `state` setting supports the following values:
+
+- `up`
+- `down`
+
+It defines whether the profile is activated (`up`) or deactivated (`down`). If
+it is unset, the profile's runtime state will not be changed.
+
+The `persistent_state` setting is either `present` (default) or `absent`. If
+the `persistent_state` setting is `present` and the connection profile contains
+a `type` setting, the profile will be created or updated. If the profile is
+incomplete (lacks the `type` setting) and `persistent_state` is `present`,
+the behavior is undefined. The value `absent` makes the role ensure
+that the profile is not present on the target host.
+
 
 #### Example
 
 ```yaml
 network_connections:
-  - name: "eth0"
-    state: "absent"
+  - name: eth0
+    persistent_state: absent
 ```
 
 Above example ensures the absence of a connection profile. If a profile with `name` `eth0`
@@ -90,45 +109,36 @@ exists, it will be deleted.
 * For initscripts it results in the deletion of the ifcfg file. Usually that
   has no side-effect, unless some component is watching the sysconfig directory.
 
-We already saw that state `absent` before. There are more states:
-
-  - `absent`
-  - `present`
-  - `up`
-  - `down`
-
-If the `state` variable is omitted, the default is `up` -- unless a `type` is specified,
-in which case the default is `present`.
-
 #### Example
 
 ```yaml
 network_connections:
-  - name: "eth0"
-    #state: present        # default, as a type is present
-    type: "ethernet"
+  - name: eth0
+    #persistent_state: present  # default
+    type: ethernet
     autoconnect: yes
-    mac: "00:00:5e:00:53:5d"
+    mac: 00:00:5e:00:53:5d
     ip:
       dhcp4: yes
 ```
 
 Above example creates a new connection profile or ensures that it is present
-with the given configuration. It has implicitly `state` `present`, due to the
-presence of `type`. On the other hand, the `present` state requires at least a `type`
-variable.
+with the given configuration. It implies the `persistent_state` setting to be
+`present`.
 
 Valid values for `type` are:
 
+  - `bond`
+  - `bridge`
   - `ethernet`
   - `infiniband`
-  - `bridge`
-  - `bond`
+  - `macvlan`
   - `team`
   - `vlan`
 
-`state` `present` does not directly result in a change in the network configuration.
-That is, the profile is only created or modified, not activated.
+The value `present` for the `persistent_state` setting does not directly
+result in a change in the network configuration. That is, without `state`
+set to `up`, the profile is only created or modified, not activated.
 
 - For NetworkManager, note the new connection profile is created with
   `autoconnect` turned on by default. Thus, NetworkManager may very well decide
@@ -156,11 +166,11 @@ profile.
 
 ### `interface_name`
 
-For type `ethernet` and `infiniband`, this option restricts the profile to the
-given interface by name. This argument is optional and by default the profile
-name is used unless a mac address is specified using the `mac` key. Specifying
-an empty string (`""`) allows to specify that the profile is not restricted to
-a network interface.
+For the types `ethernet` and `infiniband`, this option restricts the profile to
+the given interface by name. This argument is optional and by default the
+profile name is used unless a mac address is specified using the `mac` key.
+Specifying an empty string (`""`) allows to specify that the profile is not
+restricted to a network interface.
 
 
 **Note:** With [persistent interface naming](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Networking_Guide/ch-Consistent_Network_Device_Naming.html),
@@ -185,30 +195,27 @@ Slaves to bridge/bond/team devices cannot specify a zone.
 
 ```yaml
 network_connections:
-  - name: "eth0"
-    #state: up        # implicit default, as there is no type specified
-    wait: 0
+  - name: eth0
+    state: up
 ```
 
-The above example defaults to `state=up` and requires an existing profile to activate.
-Note that if neither `type` nor `state` is specifed, `up` is implied. Thus in above
-example the `state` is redundant.
+The above example requires an existing profile to activate.
 
 - For NetworkManager this results in `nmcli connection id {{name}} up`.
 
 - For initscripts it is the same as `ifup {{name}}`.
 
-`up` also supports an optional integer argument `wait`. `wait=0` will only initiate
-the activation but not wait until the device is fully connected. Connection will complete
-in the background, for example after a DHCP lease was received.
-`wait: <SECONDS>` is a timeout for how long we give the device
-to activate. The default is `wait=-1` which uses a suitable timeout. Note that this
-argument only makes sense for NetworkManager.
+State `up` also supports an optional integer argument `wait`. `wait: 0` will
+only initiate the activation but not wait until the device is fully connected.
+Connection will complete in the background, for example after a DHCP lease was
+received. `wait: <SECONDS>` is a timeout for how long we give the device to
+activate. The default is `wait: -1` which uses a suitable timeout. Note that
+this argument only makes sense for NetworkManager.
 **TODO** `wait` different from zero is not yet implemented.
 
-Note that `up` always re-activates the profile and possibly changes the networking
-configuration, even if the profile was already active before. As such, it always
-changes the system.
+Note that state `up` always re-activates the profile and possibly changes the
+networking configuration, even if the profile was already active before. As
+such, it always changes the system.
 
 ### `state: down`
 
@@ -218,7 +225,6 @@ changes the system.
 network_connections:
   - name: eth0
     state: down
-    wait: 0
 ```
 
 Another `state` is `down`.
@@ -228,8 +234,8 @@ Another `state` is `down`.
 - For initscripts this means to call `ifdown {{name}}`.
 
 This is the opposite of the `up` state. It also will always issue the command
-to deactivate the profile, even it if seemingly is currently not active. As such,
-`down` always changes the system.
+to deactivate the profile, even it if seemingly is currently not active. As
+such, `down` always changes the system.
 
 For NetworkManager, a `wait` argument is supported like for `up` state.
 
@@ -239,18 +245,19 @@ For NetworkManager, a `wait` argument is supported like for `up` state.
 
 ```yaml
 network_connections:
-  - name: "Wired0"
-    type: "ethernet"
-    interface_name: "eth0"
+  - name: Wired0
+    type: ethernet
+    interface_name: eth0
     ip:
       dhcp4: yes
 
-  - name: "Wired0"
+  - name: Wired0
+    state: up
 ```
 
-As said, the `name` identifies a unique profile. However, you can refer to the same
-profile multiple times. Thus above example makes perfectly sense to create a profile and
-activate it within the same play.
+As said, the `name` identifies a unique profile. However, you can refer to the
+same profile multiple times. Therefore it is possible to create a profile and
+activate it separately.
 
 ### `ip`
 
@@ -258,8 +265,8 @@ The IP configuration supports the following options:
 
 ```yaml
 network_connections:
-  - name: "eth0"
-    type: "ethernet"
+  - name: eth0
+    type: ethernet
     ip:
       route_metric4: 100
       dhcp4: no
@@ -341,8 +348,8 @@ integer giving the speed in Mb/s, the valid values of `duplex` are `half` and `f
 
 ```yaml
 network_connections:
-  - name: "eth0"
-    type: "ethernet"
+  - name: eth0
+    type: ethernet
 
     ethernet:
       autoneg: no
@@ -356,9 +363,9 @@ Device types like `bridge`, `bond`, `team` work similar:
 
 ```yaml
 network_connections:
-  - name: "br0"
+  - name: br0
     type: bridge
-    #interface_name: br0    # defaults to the connection name
+    #interface_name: br0  # defaults to the connection name
 ```
 
 Note that `team` is not supported on RHEL6 kernels.
@@ -368,7 +375,8 @@ For slaves of these virtual types, the special properites `slave_type` and
 
 ```yaml
 network_connections:
-  - name: br0
+  - name: internal-br0
+    interface_name: br0
     type: bridge
     ip:
       dhcp4: no
@@ -377,7 +385,7 @@ network_connections:
   - name: br0-bond0
     type: bond
     interface_name: bond0
-    master: br0
+    master: internal-br0
     slave_type: bridge
 
   - name: br0-bond0-eth1
@@ -473,7 +481,7 @@ operating system. This is usually `nm` except for RHEL 6 or CentOS 6 systems.
 ```yaml
 network_provider: nm
 network_connections:
-  - name: "eth0"
+  - name: eth0
     #...
 ```
 
@@ -511,7 +519,7 @@ so that the host is connected to a management LAN or VLAN. It strongly depends o
 - It seems difficult to change networking of the target host in a way that breaks the current
   SSH connection of ansible. If you want to do that, ansible-pull might be a solution.
   Alternatively, a combination of `async`/`poll` with changing the `ansible_host` midway
-  of the play.  
+  of the play.
   **TODO** The current role doesn't yet support to easily split the
   play in a pre-configure step, and a second step to activate the new configuration.
 
