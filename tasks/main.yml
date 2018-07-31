@@ -6,6 +6,7 @@
 # needed for ansible_facts.packages
 - name: Check which packages are installed
   package_facts:
+  no_log: true
 
 # Depending on the plugins, checking installed packages might be slow
 # for example subscription manager might slow this down
