@@ -1080,7 +1080,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                     enum_values=ArgValidator_DictConnection.VALID_SLAVE_TYPES,
                 ),
                 ArgValidatorStr("master"),
-                ArgValidatorStr("interface_name"),
+                ArgValidatorStr("interface_name", allow_empty=True),
                 ArgValidatorMac("mac"),
                 ArgValidatorNum(
                     "mtu", val_min=0, val_max=0xFFFFFFFF, default_value=None
@@ -1291,20 +1291,35 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                     )
 
             if "interface_name" in result:
-                if not Util.ifname_valid(result["interface_name"]):
+                # Ignore empty interface_name
+                if result["interface_name"] == "":
+                    del result["interface_name"]
+                elif not Util.ifname_valid(result["interface_name"]):
                     raise ValidationError(
                         name + ".interface_name",
                         "invalid 'interface_name' '%s'" % (result["interface_name"]),
                     )
             else:
-                if result["type"] in ["bridge", "bond", "team", "vlan", "macvlan"]:
+                if not result.get("mac"):
                     if not Util.ifname_valid(result["name"]):
                         raise ValidationError(
                             name + ".interface_name",
-                            'requires \'interface_name\' as "name" "%s" is not valid'
+                            '\'interface_name\' as "name" "%s" is not valid'
                             % (result["name"]),
                         )
                     result["interface_name"] = result["name"]
+
+            if "interface_name" not in result and result["type"] in [
+                "bond",
+                "bridge",
+                "macvlan",
+                "team",
+                "vlan",
+            ]:
+                raise ValidationError(
+                    name + ".interface_name",
+                    "type '%s' requires 'interface_name'" % (result["type"]),
+                )
 
             if result["type"] == "vlan":
                 if "vlan" not in result:

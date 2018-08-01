@@ -2,11 +2,12 @@
 """ Tests for network_connections Ansible module """
 # SPDX-License-Identifier: BSD-3-Clause
 
-import sys
-import os
-import unittest
-import socket
 import itertools
+import os
+import pprint as pprint_
+import socket
+import sys
+import unittest
 
 TESTS_BASEDIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(1, os.path.join(TESTS_BASEDIR, "..", "library"))
@@ -43,9 +44,8 @@ if nmutil:
 
 def pprint(msg, obj):
     print("PRINT: %s\n" % (msg))
-    import pprint
 
-    p = pprint.PrettyPrinter(indent=4)
+    p = pprint_.PrettyPrinter(indent=4)
     p.pprint(obj)
     if nmutil is not None and isinstance(obj, NM.Connection):
         obj.dump()
@@ -281,7 +281,7 @@ class TestValidator(unittest.TestCase):
                     "zone": None,
                     "master": None,
                     "ignore_errors": None,
-                    "interface_name": None,
+                    "interface_name": "5",
                     "check_iface_exists": True,
                     "slave_type": None,
                 },
@@ -324,7 +324,7 @@ class TestValidator(unittest.TestCase):
                     "zone": None,
                     "master": None,
                     "ignore_errors": None,
-                    "interface_name": None,
+                    "interface_name": "5",
                     "check_iface_exists": True,
                     "force_state_change": None,
                     "slave_type": None,
@@ -362,7 +362,7 @@ class TestValidator(unittest.TestCase):
                     "zone": None,
                     "master": None,
                     "ignore_errors": None,
-                    "interface_name": None,
+                    "interface_name": "5",
                     "check_iface_exists": True,
                     "force_state_change": None,
                     "slave_type": None,
@@ -379,6 +379,7 @@ class TestValidator(unittest.TestCase):
                         "NM_CONTROLLED": "no",
                         "ONBOOT": "no",
                         "TYPE": "Ethernet",
+                        "DEVICE": "5",
                     },
                     "keys": None,
                     "route": None,
@@ -488,7 +489,7 @@ class TestValidator(unittest.TestCase):
                     "master": None,
                     "mtu": None,
                     "ignore_errors": None,
-                    "interface_name": None,
+                    "interface_name": "prod1",
                     "type": "ethernet",
                     "slave_type": None,
                     "wait": None,
@@ -1185,7 +1186,7 @@ class TestValidator(unittest.TestCase):
                     "zone": None,
                     "master": None,
                     "ignore_errors": None,
-                    "interface_name": None,
+                    "interface_name": "5",
                     "check_iface_exists": True,
                     "force_state_change": None,
                     "slave_type": None,
@@ -1224,7 +1225,7 @@ class TestValidator(unittest.TestCase):
                     "zone": None,
                     "master": None,
                     "ignore_errors": None,
-                    "interface_name": None,
+                    "interface_name": "5",
                     "check_iface_exists": True,
                     "force_state_change": None,
                     "slave_type": None,
@@ -1250,6 +1251,7 @@ class TestValidator(unittest.TestCase):
                         "NM_CONTROLLED": "no",
                         "ONBOOT": "yes",
                         "TYPE": "Ethernet",
+                        "DEVICE": "5",
                     },
                     "keys": None,
                     "route": None,
@@ -1301,7 +1303,7 @@ class TestValidator(unittest.TestCase):
                     "ethernet": {"autoneg": None, "duplex": None, "speed": 0},
                     "force_state_change": None,
                     "ignore_errors": None,
-                    "interface_name": None,
+                    "interface_name": "6643",
                     "ip": {
                         "address": [],
                         "auto6": True,
@@ -1376,7 +1378,14 @@ class TestValidator(unittest.TestCase):
                     "zone": None,
                 }
             ],
-            [{"name": "infiniband.1", "state": "up", "type": "infiniband"}],
+            [
+                {
+                    "name": "infiniband.1",
+                    "interface_name": "",
+                    "state": "up",
+                    "type": "infiniband",
+                }
+            ],
             initscripts_dict_expected=[
                 {
                     "ifcfg": {
@@ -1512,7 +1521,7 @@ class TestValidator(unittest.TestCase):
                     "zone": None,
                     "master": None,
                     "ignore_errors": None,
-                    "interface_name": None,
+                    "interface_name": "555",
                     "check_iface_exists": True,
                     "force_state_change": None,
                     "slave_type": None,
@@ -1543,6 +1552,7 @@ class TestValidator(unittest.TestCase):
                         "NM_CONTROLLED": "no",
                         "ONBOOT": "yes",
                         "TYPE": "Ethernet",
+                        "DEVICE": "555",
                     },
                     "keys": None,
                     "route": "192.168.45.0/24 metric 545\n192.168.46.0/30\n",
@@ -1604,7 +1614,7 @@ class TestValidator(unittest.TestCase):
                     "zone": "external",
                     "master": None,
                     "ignore_errors": None,
-                    "interface_name": None,
+                    "interface_name": "e556",
                     "check_iface_exists": True,
                     "force_state_change": None,
                     "slave_type": None,
@@ -1666,6 +1676,7 @@ class TestValidator(unittest.TestCase):
                         "ONBOOT": "yes",
                         "TYPE": "Ethernet",
                         "ZONE": "external",
+                        "DEVICE": "e556",
                     },
                     "keys": None,
                     "route": "192.168.40.0/24 metric 545\n192.168.46.0/30\n"
@@ -1680,6 +1691,80 @@ class TestValidator(unittest.TestCase):
         self.do_connections_check_invalid(
             [{"name": "b", "type": "ethernet", "mac": "aa:b"}]
         )
+
+    def test_interface_name_ethernet_default(self):
+        """ Use the profile name as interface_name for ethernet profiles """
+        cons_without_interface_name = [{"name": "eth0", "type": "ethernet"}]
+        connections = ARGS_CONNECTIONS.validate(cons_without_interface_name)
+        self.assertTrue(connections[0]["interface_name"] == "eth0")
+
+    def test_interface_name_ethernet_mac(self):
+        """ Do not set interface_name when mac is specified """
+        cons_without_interface_name = [
+            {"name": "eth0", "type": "ethernet", "mac": "3b:0b:88:16:6d:1a"}
+        ]
+        connections = ARGS_CONNECTIONS.validate(cons_without_interface_name)
+        self.assertTrue(connections[0]["interface_name"] is None)
+
+    def test_interface_name_ethernet_empty(self):
+        """ Allow not to restrict the profile to an interface """
+        network_connections = [
+            {"name": "internal_network", "type": "ethernet", "interface_name": ""}
+        ]
+        connections = ARGS_CONNECTIONS.validate(network_connections)
+
+        self.assertTrue(connections[0]["interface_name"] is None)
+
+    def test_interface_name_ethernet_None(self):
+        """ Check that inerface_name cannot be None """
+        network_connections = [
+            {"name": "internal_network", "type": "ethernet", "interface_name": None}
+        ]
+        self.assertRaises(
+            n.ValidationError, ARGS_CONNECTIONS.validate, network_connections
+        )
+
+    def test_interface_name_ethernet_explicit(self):
+        """ Use the explicitly provided interface name """
+        network_connections = [
+            {"name": "internal", "type": "ethernet", "interface_name": "eth0"}
+        ]
+        connections = ARGS_CONNECTIONS.validate(network_connections)
+        self.assertEquals(connections[0]["interface_name"], "eth0")
+
+    def test_interface_name_ethernet_invalid_profile(self):
+        """ Require explicit interface_name when the profile name is not a
+        valid interface_name """
+        network_connections = [{"name": "internal:main", "type": "ethernet"}]
+        self.assertRaises(
+            n.ValidationError, ARGS_CONNECTIONS.validate, network_connections
+        )
+        network_connections = [
+            {"name": "internal:main", "type": "ethernet", "interface_name": "eth0"}
+        ]
+        connections = ARGS_CONNECTIONS.validate(network_connections)
+        self.assertTrue(connections[0]["interface_name"] == "eth0")
+
+    def test_interface_name_ethernet_invalid_interface_name(self):
+        network_connections = [
+            {"name": "internal", "type": "ethernet", "interface_name": "invalid:name"}
+        ]
+        self.assertRaises(
+            n.ValidationError, ARGS_CONNECTIONS.validate, network_connections
+        )
+
+    def test_interface_name_bond_empty_interface_name(self):
+        network_connections = [
+            {"name": "internal", "type": "bond", "interface_name": "invalid:name"}
+        ]
+        self.assertRaises(
+            n.ValidationError, ARGS_CONNECTIONS.validate, network_connections
+        )
+
+    def test_interface_name_bond_profile_as_interface_name(self):
+        network_connections = [{"name": "internal", "type": "bond"}]
+        connections = ARGS_CONNECTIONS.validate(network_connections)
+        self.assertEquals(connections[0]["interface_name"], "internal")
 
 
 @my_test_skipIf(nmutil is None, "no support for NM (libnm via pygobject)")
