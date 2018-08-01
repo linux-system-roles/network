@@ -1,5 +1,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
+- hosts: all
+  tasks:
+    - debug:
+        msg: Inside ethernet tests
+    - debug:
+        var: network_provider
+
 - name: Test configuring ethernet devices
   hosts: all
   vars:
@@ -28,6 +35,12 @@
           address: 192.0.2.1/24
   roles:
     - linux-system-roles.network
+
+- hosts: all
+  tasks:
+    - debug:
+        var: network_provider
+
 # FIXME: assert profile present
 # FIXME: assert profile/device up + IP address
 - import_playbook: down-profile.yml

@@ -1,16 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
-- name: Define default provider as nm
-  set_fact:
-    network_provider_default: nm
+# get service facts, used in defaults/main.yml
+- name: Check which services are running
+  service_facts:
 
-- name: Override default provider to initscipts for older systems
-  set_fact:
-    network_provider_default: initscripts
-  when:
-    - ansible_distribution_major_version == "6"
-    - ansible_distribution == "CentOS" or ansible_distribution == "RedHat"
-
-# needed for ansible_facst.packages
+# needed for ansible_facts.packages
 - name: Check which packages are installed
   package_facts:
 
@@ -29,6 +22,10 @@
       name: "{{ network_service_name }}"
       state: started
       enabled: yes
+
+- name: Print network provider
+  debug:
+    msg: "Using network provider: {{ network_provider }}"
 
 - name: Configure networking connection profiles
   network_connections:
