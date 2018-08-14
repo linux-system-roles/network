@@ -1908,6 +1908,24 @@ class TestValidator(unittest.TestCase):
             {"actions": ["present"], "persistent_state": "present", "state": None},
         )
 
+    def test_invalid_persistent_state_up(self):
+        network_connections = [{"name": "internal", "persistent_state": "up"}]
+        self.assertRaises(
+            n.ValidationError, ARGS_CONNECTIONS.validate, network_connections
+        )
+
+    def test_invalid_persistent_state_down(self):
+        network_connections = [{"name": "internal", "persistent_state": "down"}]
+        self.assertRaises(
+            n.ValidationError, ARGS_CONNECTIONS.validate, network_connections
+        )
+
+    def test_invalid_state_test(self):
+        network_connections = [{"name": "internal", "state": "test"}]
+        self.assertRaises(
+            n.ValidationError, ARGS_CONNECTIONS.validate, network_connections
+        )
+
     def test_default_states_type(self):
         self.check_partial_connection_zero(
             {"name": "eth0", "type": "ethernet"},
@@ -1918,6 +1936,18 @@ class TestValidator(unittest.TestCase):
         self.check_partial_connection_zero(
             {"name": "eth0", "persistent_state": "present", "type": "ethernet"},
             {"actions": ["present"], "persistent_state": "present", "state": None},
+        )
+
+    def test_state_present(self):
+        self.check_partial_connection_zero(
+            {"name": "eth0", "state": "present", "type": "ethernet"},
+            {"actions": ["present"], "persistent_state": "present", "state": None},
+        )
+
+    def test_state_absent(self):
+        self.check_partial_connection_zero(
+            {"name": "eth0", "state": "absent"},
+            {"actions": ["absent"], "persistent_state": "absent", "state": None},
         )
 
     def test_persistent_state_absent(self):

@@ -610,8 +610,8 @@ class ArgValidator_DictMacvlan(ArgValidatorDict):
 
 class ArgValidator_DictConnection(ArgValidatorDict):
 
-    VALID_STATES = ["up", "down"]
     VALID_PERSISTENT_STATES = ["absent", "present"]
+    VALID_STATES = VALID_PERSISTENT_STATES + ["up", "down"]
     VALID_TYPES = [
         "ethernet",
         "infiniband",
@@ -701,7 +701,14 @@ class ArgValidator_DictConnection(ArgValidatorDict):
         """
         actions = []
         state = result.get("state")
-        persistent_state = result.get("persistent_state")
+        if state in self.VALID_PERSISTENT_STATES:
+            del result["state"]
+            persistent_state_default = state
+            state = None
+        else:
+            persistent_state_default = None
+
+        persistent_state = result.get("persistent_state", persistent_state_default)
 
         # default persistent_state to present (not done via default_value in the
         # ArgValidatorStr, the value will only be set at the end of
