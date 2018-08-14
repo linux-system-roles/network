@@ -1833,7 +1833,7 @@ class TestValidator(unittest.TestCase):
         self.assertTrue(connections[0]["interface_name"] is None)
 
     def test_interface_name_ethernet_None(self):
-        """ Check that inerface_name cannot be None """
+        """ Check that interface_name cannot be None """
         network_connections = [
             {"name": "internal_network", "type": "ethernet", "interface_name": None}
         ]
