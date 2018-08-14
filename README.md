@@ -205,12 +205,12 @@ The above example requires an existing profile to activate.
 
 - For initscripts it is the same as `ifup {{name}}`.
 
-State `up` also supports an optional integer argument `wait`. `wait: 0` will
+State `up` also supports an optional integer setting `wait`. `wait: 0` will
 only initiate the activation but not wait until the device is fully connected.
 Connection will complete in the background, for example after a DHCP lease was
 received. `wait: <SECONDS>` is a timeout for how long we give the device to
-activate. The default is `wait: -1` which uses a suitable timeout. Note that
-this argument only makes sense for NetworkManager.
+activate. The default is using a suitable timeout. Note that this setting is
+only supported by NetworkManager.
 **TODO** `wait` different from zero is not yet implemented.
 
 Note that state `up` always re-activates the profile and possibly changes the
