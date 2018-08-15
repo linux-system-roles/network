@@ -81,7 +81,7 @@ for NetworkManager, a connection can only be active at one device at a time.
   this role cannot handle a duplicate `name`. Specifying a `name` multiple
   times refers to the same connection profile.
 
-* For initscripts, the name determines the ifcfg file name `/etc/sysconfig/network-scripts/-ifcfg-$NAME`.
+* For initscripts, the name determines the ifcfg file name `/etc/sysconfig/network-scripts/ifcfg-$NAME`.
   Note that here too the name doesn't specify the `DEVICE` but a filename. As a consequence
   `'/'` is not a valid character for the name.
 
