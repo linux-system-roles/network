@@ -42,6 +42,23 @@ profile with a certain IP configuration without activating the profile. To
 apply the configuration to the actual networking interface, a command like
 `nmcli` needs to be used on the target system.
 
+### Warning
+
+The role replaces existing connections of the same names as those
+specified in the `network_connections` variable, and thus overwrites
+non-Ansible managed settings. Values of settings which are not
+specified in the `network_connections` variable are not
+preserved. Exceptions to this are:
+
+* Connections that have only the `state` setting specified, the role
+  then allows to activate or deactivate the connection without
+  otherwise changing it.
+
+* The `route_append_only` and `rule_append_only` settings which allow
+  to append to the current set of static routes and routing rules
+  instead of replacing them.
+
+See also [Limitations](#limitations).
 
 Variables
 ---------
