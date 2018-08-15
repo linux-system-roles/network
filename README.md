@@ -475,8 +475,8 @@ network_connections:
     parent: eth0-profile
     macvlan:
       mode: bridge
-      promiscuous: True
-      tap: False
+      promiscuous: yes
+      tap: no
     ip:
       address:
         - 192.168.1.1/24
