@@ -44,19 +44,20 @@ apply the configuration to the actual networking interface, a command like
 
 ### Warning
 
-The role replaces existing connections of the same names as those
-specified in the `network_connections` variable, and thus overwrites
-non-Ansible managed settings. Values of settings which are not
-specified in the `network_connections` variable are not
-preserved. Exceptions to this are:
+The role updates or creates all connection profiles on the target system as
+specified in the `network_connections` variable. Therefore, the role will
+remove settings from the specified profiles if the settings are only present on
+the system but not in the `network_connections` variable. The following
+exceptions apply:
 
-* Connections that have only the `state` setting specified, the role
-  then allows to activate or deactivate the connection without
-  otherwise changing it.
+* For profiles that only contain a `state` setting, the role will only activate
+  or deactivate the connection without changing its configuration.
 
-* The `route_append_only` and `rule_append_only` settings which allow
-  to append to the current set of static routes and routing rules
-  instead of replacing them.
+* The `route_append_only` setting allows to only add new routes to the
+  existing routes on the system.
+
+* The `rule_append_only` setting allows to preserve the current routing rules.
+  There is no support to specify routing rules at the moment.
 
 See also [Limitations](#limitations).
 
