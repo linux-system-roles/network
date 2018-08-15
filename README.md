@@ -28,7 +28,7 @@ that at least version 1.2 of NetworkManager's API is available. For
 `initscripts`, it requires the legacy network service as commonly available on
 Fedora/RHEL.
 
-For each host a list of networking profiles can be configure via the
+For each host a list of networking profiles can be configured via the
 `network_connections` variable.
 
 - For initscripts, profiles correspond to ifcfg files in `/etc/sysconfig/network-scripts/ifcfg-*`.
