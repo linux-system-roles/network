@@ -5,6 +5,7 @@
 import functools
 import os
 import socket
+import time
 import traceback
 
 # pylint: disable=import-error, no-name-in-module
@@ -983,18 +984,14 @@ class NMUtil:
 
     def connection_delete(self, connection, timeout=10):
 
-        c_uuid = connection.get_uuid()
+        # Do nothing, if the connection is already gone
+        if connection not in self.connection_list():
+            return
 
-        def delete_cb(connection, result, cb_args):
-            success = False
-            try:
-                success = connection.delete_finish(result)
-            except Exception as e:
-                if Util.error_is_cancelled(e):
-                    return
-                cb_args["error"] = str(e)
-            cb_args["success"] = success
-            Util.GMainLoop().quit()
+        if "update2" in dir(connection):
+            return self.volatilize_connection(connection, timeout)
+
+        delete_cb = Util.create_callback("delete_finish")
 
         cancellable = Util.create_cancellable()
         cb_args = {}
@@ -1010,23 +1007,73 @@ class NMUtil:
 
         # workaround libnm oddity. The connection may not yet be gone if the
         # connection was active and is deactivating. Wait.
-        wait_count = 0
-        while True:
-            connections = self.connection_list(uuid=c_uuid)
-            if not connections:
-                return
-            wait_count += 1
-            if wait_count > 10:
-                break
-            import time
+        c_uuid = connection.get_uuid()
+        gone = self.wait_till_connection_is_gone(c_uuid)
+        if not gone:
+            raise MyError(
+                "connection %s was supposedly deleted successfully, but it's still here"
+                % (c_uuid)
+            )
 
-            time.sleep(1)
+    def volatilize_connection(self, connection, timeout=10):
+        update2_cb = Util.create_callback("update2_finish")
+
+        cancellable = Util.create_cancellable()
+        cb_args = {}
+
+        connection.update2(
+            None,  # settings
+            Util.NM().SettingsUpdate2Flags.IN_MEMORY_ONLY
+            | Util.NM().SettingsUpdate2Flags.VOLATILE,  # flags
+            None,  # args
+            cancellable,
+            update2_cb,
+            cb_args,
+        )
+
+        if not Util.GMainLoop_run(timeout):
+            cancellable.cancel()
+            raise MyError("failure to volatilize connection: %s" % ("timeout"))
+
+        Util.GMainLoop_iterate_all()
+
+        # Do not check of success if the connection does not exist anymore This
+        # can happen if the connection was already volatile and set to down
+        # during the module call
+        if connection not in self.connection_list():
+            return
+
+        # update2_finish returns None on failure and a GLib.Variant of type
+        # a{sv} with the result otherwise (which can be empty)
+        if cb_args.get("success", None) is None:
+            raise MyError(
+                "failure to volatilize connection: %s: %r"
+                % (cb_args.get("error", "unknown error"), cb_args)
+            )
+
+    def wait_till_connection_is_gone(self, uuid, timeout=10):
+        """
+        Wait until a connection is gone or until the timeout elapsed
+
+        :param uuid: UUID of the connection that to wait for to be gone
+        :param timeout: Timeout in seconds to wait for
+        :returns: True when connection is gone, False when timeout elapsed
+        :rtype: bool
+        """
+        wait_time = 0
+        sleep_time = 0.1
+        while True:
+            connections = self.connection_list(uuid=uuid)
+            if not connections:
+                return True
+            wait_time += sleep_time
+            if wait_time > timeout:
+                break
+
+            time.sleep(sleep_time)
             Util.GMainLoop_iterate_all()
 
-        raise MyError(
-            "connection %s was supposedly deleted successfully, but it's still here"
-            % (c_uuid)
-        )
+        return False
 
     def connection_activate(self, connection, timeout=15, wait_time=None):
 
@@ -1073,7 +1120,6 @@ class NMUtil:
                 )
 
             already_retried = True
-            import time
 
             time.sleep(1)
 
