@@ -8,6 +8,10 @@
   package_facts:
   no_log: true
 
+- name: Print network provider
+  debug:
+    msg: "Using network provider: {{ network_provider }}"
+
 # Depending on the plugins, checking installed packages might be slow
 # for example subscription manager might slow this down
 # Therefore install packages only when rpm does not find them
@@ -23,10 +27,6 @@
       name: "{{ network_service_name }}"
       state: started
       enabled: yes
-
-- name: Print network provider
-  debug:
-    msg: "Using network provider: {{ network_provider }}"
 
 - name: Configure networking connection profiles
   network_connections:
