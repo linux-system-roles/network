@@ -122,8 +122,6 @@ The connection is completed, for example after a DHCP lease received.
 activate. The default is using a suitable timeout. Note that the `wait` option is
 only supported by NetworkManager.
 
-**TODO**: `wait` different from a `zero` value is not yet implemented.
-
 Note that `state: up` always re-activates the profile and possibly changes the
 networking configuration, even if the profile was already active before. As
 a consequence, `state: up` always changes the system.
@@ -143,26 +141,26 @@ Note that if the `state` option is unset, the connection profile’s runtime sta
 
 The `persistent_state` option identifies if a connection profile is in a persistent state. The `persistent_state` option can be set to the following values:
 
-*   `present` (default)
+#### `persistent_state: present` (default)
 
-    Note that if `persistent_state` is `present` and the connection profile contains
-    the `type` option, the profile will be created or updated. If the connection profile is
-    incomplete (no `type` option), the behavior is undefined. Also, the `present` value
-    does not directly result in a change in the network configuration. If the `state` option
-    is not set to `up`, the profile is only created or modified, not activated.
+Note that if `persistent_state` is `present` and the connection profile contains
+the `type` option, the profile will be created or updated. If the connection profile is
+incomplete (no `type` option), the behavior is undefined. Also, the `present` value
+does not directly result in a change in the network configuration. If the `state` option
+is not set to `up`, the profile is only created or modified, not activated.
 
-*   `absent`
+#### `persistent_state: absent`
 
-    The `absent` value ensures that the profile is not present on the target host. For
-    example, if a profile with `name` `eth0` exists, it will be deleted. In this case:
+The `absent` value ensures that the profile is not present on the target host. For
+example, if a profile with `name` `eth0` exists, it will be deleted. In this case:
 
-    - `NetworkManager` deletes all connection profiles with the corresponding `connection.id`.
-      Deleting a profile usually does not change the current networking configuration, unless
-      the profile was currently activated on a device. Deleting the currently
-      active connection profile disconnects the device. That makes the device eligible
-      to autoconnect another connection (for more details, see [rh#1401515](https://bugzilla.redhat.com/show_bug.cgi?id=1401515)).
+- `NetworkManager` deletes all connection profiles with the corresponding `connection.id`.
+    Deleting a profile usually does not change the current networking configuration, unless
+    the profile was currently activated on a device. Deleting the currently
+    active connection profile disconnects the device. That makes the device eligible
+    to autoconnect another connection (for more details, see [rh#1401515](https://bugzilla.redhat.com/show_bug.cgi?id=1401515)).
 
-    - ` initscripts` deletes the ifcfg file in most cases with no impact on the system unless a component relies on the sysconfig directory.
+- `initscripts` deletes the ifcfg file in most cases with no impact on the system unless a component relies on the sysconfig directory.
 
 **Note**: For profiles that only contain a `state` option, the `network` role only activates
 or deactivates the connection without changing its configuration.
@@ -182,7 +180,7 @@ The `type` option can be set to the following values:
 
 #### `type: ethernet`
 
-The `type:ethernet` should be specified as a dictionary with the following
+If the type is `ethernet`, then there can be an extra `ethernet` dictionary with the following
 items (options): `autoneg`, `speed` and `duplex`, which correspond to the
 settings of the `ethtool` utility with the same name.
 
@@ -192,7 +190,7 @@ settings of the `ethtool` utility with the same name.
 
 Note that the `speed` and `duplex` link settings are required when autonegotiation is disabled (autoneg:no).
 
-#### `type: bridge`, `type:bond`, `type: team`
+#### `type: bridge`, `type: bond`, `type: team`
 
 The `bridge`, `bond`, `team` device types work similar. Note that `team` is not supported in RHEL6 kernels.
 
@@ -469,7 +467,7 @@ network_connections:
       auto6: no
 ```
 
-Configuring macvlan:
+Configuring MACVLAN:
 
 ```yaml
 network_connections:
@@ -585,7 +583,7 @@ needs to be specified before the slave devices.
 When removing a profile for NetworkManager it also takes the connection
 down and possibly removes virtual interfaces. With the `initscripts` provider
 removing a profile does not change its current runtime state (this is a future
-deployment for NetworkManager as well).
+feature for NetworkManager as well).
 
 For NetworkManager, modifying a connection with autoconnect enabled
 may result in the activation of a new profile on a previously disconnected
