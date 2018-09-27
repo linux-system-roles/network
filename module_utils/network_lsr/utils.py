@@ -5,6 +5,7 @@
 import os
 import socket
 import sys
+import uuid
 
 # pylint: disable=import-error, no-name-in-module
 from ansible.module_utils.network_lsr import MyError
@@ -40,8 +41,7 @@ class Util:
 
     @classmethod
     def create_uuid(cls):
-        cls.NM()
-        return str(cls._uuid.uuid4())
+        return str(uuid.uuid4())
 
     @classmethod
     def NM(cls):
@@ -60,9 +60,6 @@ class Util:
             cls._Gio = Gio
             cls._GObject = GObject
             n = NM
-            import uuid
-
-            cls._uuid = uuid
         return n
 
     @classmethod
