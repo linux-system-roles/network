@@ -91,13 +91,15 @@ class ArgValidator:
         except Exception:  # pylint: disable=broad-except
             return self.default_value
 
-    def _validate_impl(self, value, name):
-        raise NotImplementedError()
+    def validate(self, value):
+        return self._validate(value, self.name)
 
-    def validate(self, value, name=None):
-        name = name or self.name or ""
+    def _validate(self, value, name):
         validated = self._validate_impl(value, name)
         return self._validate_post(value, name, validated)
+
+    def _validate_impl(self, value, name):
+        raise NotImplementedError()
 
     # pylint: disable=unused-argument,no-self-use
     def _validate_post(self, value, name, result):
@@ -227,7 +229,7 @@ class ArgValidatorDict(ArgValidator):
             if validator is None:
                 raise ValidationError(name, "invalid key '%s'" % (k))
             try:
-                vv = validator.validate(v, name + "." + k)
+                vv = validator._validate(v, name + "." + k)
             except ValidationError as e:
                 raise ValidationError(e.name, e.error_message)
             result[k] = vv
@@ -258,7 +260,7 @@ class ArgValidatorList(ArgValidator):
         result = []
         for (idx, v) in enumerate(value):
             try:
-                vv = self.nested.validate(v, name + "[" + str(idx) + "]")
+                vv = self.nested._validate(v, name + "[" + str(idx) + "]")
             except ValidationError as e:
                 raise ValidationError(e.name, e.error_message)
             result.append(vv)
