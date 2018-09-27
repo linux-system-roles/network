@@ -628,7 +628,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
     def __init__(self):
         ArgValidatorDict.__init__(
             self,
-            name="connections[?]",
+            name="connection",
             nested=[
                 ArgValidatorStr("name"),
                 ArgValidatorStr(
