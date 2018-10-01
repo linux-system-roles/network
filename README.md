@@ -77,7 +77,7 @@ network_connections:
 
 Options
 -------
-The `network_connections` variable is a list of dictionaries that includes the following options.
+The `network_connections` variable is a list of dictionaries that include the following options.
 List of required options:
 
 ### `name`
@@ -116,8 +116,8 @@ The `state` option identifies what is the runtime state of  each connection prof
 
 When the `state` option is set to `up`, you can also specify the `wait` option (optional):
 
-* `wait: 0` - initiates only the activation, but not wait until the device is fully connected.
-The connection is completed, for example after a DHCP lease received.
+* `wait: 0` - initiates only the activation, but does not wait until the device is fully connected.
+The connection will be completed in the background, for example after a DHCP lease was received.
 * `wait: <seconds>` is a timeout that enables you to decide how long you give the device to
 activate. The default is using a suitable timeout. Note that the `wait` option is
 only supported by NetworkManager.
@@ -196,8 +196,8 @@ The `bridge`, `bond`, `team` device types work similar. Note that `team` is not 
 
 For slaves, the `slave_type` and `master` properties must be set. Note that slaves should not have `ip` settings.
 
-The `master` refers to the `name` of a profile in the ansible
-Playbook. It is neither an interface-name nor a connection-id of
+The `master` refers to the `name` of a profile in the Ansible
+playbook. It is neither an interface-name nor a connection-id of
 NetworkManager.
 
 - For `NetworkManager`, `master` corresponds to the `connection.uuid`
@@ -370,7 +370,7 @@ network_connections:
     state: down
 ```
 
-Creating a present connection profile:
+Creating a persistent connection profile:
 
 ```yaml
 network_connections:
@@ -383,7 +383,7 @@ network_connections:
       dhcp4: yes
 ```
 
-Setting an absent connection profile:
+Deleting a connection profile:
 
 ```yaml
 network_connections:
