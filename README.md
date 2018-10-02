@@ -52,10 +52,10 @@ only present on the system but not in the `network_connections` variable.
 Variables
 ---------
 The `network` role is configured via variables starting  with  `network_` as the name prefix.
-List of required variables:
+List of variables:
 
 * `network_provider` - The `network_provider` variable allows to set a specific
-  provider (`nm` or `initscripts`) . Setting it to `network_provider_os_default`,
+  provider (`nm` or `initscripts`) . Setting it to `network_provider_os_default` (default),
   the provider is set depending on the operating system. This is usually `nm`
   except for RHEL 6 or CentOS 6 systems.
 
@@ -78,9 +78,9 @@ network_connections:
 Options
 -------
 The `network_connections` variable is a list of dictionaries that include the following options.
-List of required options:
+List of options:
 
-### `name`
+### `name` (required)
 
 The `name` option identifies the connection profile. It is not the name of the
 networking interface for which the profile applies, though we can associate
@@ -563,9 +563,9 @@ after disabling the NetworkManager service.
 Limitations
 -----------
 
-Ansible usually works via the network, for example via SSH. There are some limitations to be considered:
+As Ansible usually works via the network, for example via SSH, there are some limitations to be considered:
 
-The `network` role does not  support how to bootstrap networking configuration. One
+The `network` role does not support bootstraping networking configuration. One
 option may be [ansible-pull](https://docs.ansible.com/ansible/playbooks_intro.html#ansible-pull).
 Another option maybe be to initially auto-configure the host during installation
 (ISO based, kickstart, etc.), so that the host is connected to a management LAN
