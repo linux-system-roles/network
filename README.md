@@ -29,6 +29,9 @@ distribution. The `network` role works everywhere the required API is available.
 This means that `nm` requires at least NetworkManager's API version 1.2 available.
 For `initscripts`, the legacy network service is required as used in Fedora or RHEL.
 
+For each host a list of networking profiles can be configured via the
+`network_connections` variable.
+
 - For `initscripts`, profiles correspond to ifcfg files in the `/etc/sysconfig/network-scripts/ifcfg-*` directory.
 
 - For `NetworkManager`, profiles correspond to connection profiles as handled by
@@ -41,13 +44,13 @@ not on devices, but it uses the profile name by default as the interface name.
 It is also possible to create generic profiles, by creating for example a
 profile with a certain IP configuration without activating the profile. To
 apply the configuration to the actual networking interface, use the `nmcli`
-commands on the target system. For each host, a list of networking profiles can
-be configured via the `network_connections` variable.
+commands on the target system.
 
 **Warning**: The `network` role updates or creates all connection profiles on
 the target system as specified in the `network_connections` variable. Therefore,
 the `network` role removes options from the specified profiles if the options are
 only present on the system but not in the `network_connections` variable.
+Exceptions are mentioned below.
 
 Variables
 ---------
@@ -55,7 +58,7 @@ The `network` role is configured via variables starting  with  `network_` as the
 List of variables:
 
 * `network_provider` - The `network_provider` variable allows to set a specific
-  provider (`nm` or `initscripts`) . Setting it to `network_provider_os_default` (default),
+  provider (`nm` or `initscripts`) . Setting it to `{{ network_provider_os_default }}`,
   the provider is set depending on the operating system. This is usually `nm`
   except for RHEL 6 or CentOS 6 systems.
 
@@ -151,8 +154,8 @@ is not set to `up`, the profile is only created or modified, not activated.
 
 #### `persistent_state: absent`
 
-The `absent` value ensures that the profile is not present on the target host. For
-example, if a profile with `name` `eth0` exists, it will be deleted. In this case:
+The `absent` value ensures that the profile is not present on the
+target host. If a profile with the given `name` exists, it will be deleted. In this case:
 
 - `NetworkManager` deletes all connection profiles with the corresponding `connection.id`.
     Deleting a profile usually does not change the current networking configuration, unless
@@ -160,7 +163,7 @@ example, if a profile with `name` `eth0` exists, it will be deleted. In this cas
     active connection profile disconnects the device. That makes the device eligible
     to autoconnect another connection (for more details, see [rh#1401515](https://bugzilla.redhat.com/show_bug.cgi?id=1401515)).
 
-- `initscripts` deletes the ifcfg file in most cases with no impact on the system unless a component relies on the sysconfig directory.
+- `initscripts` deletes the ifcfg file in most cases with no impact on the runtime state of the system unless some component is watching the sysconfig directory.
 
 **Note**: For profiles that only contain a `state` option, the `network` role only activates
 or deactivates the connection without changing its configuration.
@@ -200,10 +203,10 @@ The `master` refers to the `name` of a profile in the Ansible
 playbook. It is neither an interface-name nor a connection-id of
 NetworkManager.
 
-- For `NetworkManager`, `master` corresponds to the `connection.uuid`
+- For NetworkManager, `master` will be converted to the `connection.uuid`
   of the corresponding profile.
 
-- For `initscripts`, `master` determines the `DEVICE` from the corresponding
+- For initscripts, the master is looked up as the `DEVICE` from the corresponding
   ifcfg file.
 
 As `master` refers to other profiles of the same or another play,
@@ -354,7 +357,7 @@ network_connections:
     state: up
 ```
 
-Setting a connection profile activated:
+Activating a preexisting connection profile:
 
 ```yaml
 network_connections:
@@ -362,7 +365,7 @@ network_connections:
     state: up
 ```
 
-Setting a connection profile deactivated:
+Deactivating a preexisting connection profile:
 
 ```yaml
 network_connections:
@@ -383,7 +386,7 @@ network_connections:
       dhcp4: yes
 ```
 
-Deleting a connection profile:
+Deleting a connection profile named `eth0` (if it exists):
 
 ```yaml
 network_connections:
@@ -404,7 +407,7 @@ network_connections:
       duplex: full
 ```
 
-Configuring a bridge connection type:
+Creating a bridge connection:
 
 ```yaml
 network_connections:
