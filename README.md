@@ -142,7 +142,7 @@ Note that if the `state` option is unset, the connection profile’s runtime sta
 
 ### `persistent_state`
 
-The `persistent_state` option identifies if a connection profile is in a persistent state. The `persistent_state` option can be set to the following values:
+The `persistent_state` option identifies if a connection profile is persistent (saved on disk). The `persistent_state` option can be set to the following values:
 
 #### `persistent_state: present` (default)
 
@@ -151,6 +151,10 @@ the `type` option, the profile will be created or updated. If the connection pro
 incomplete (no `type` option), the behavior is undefined. Also, the `present` value
 does not directly result in a change in the network configuration. If the `state` option
 is not set to `up`, the profile is only created or modified, not activated.
+
+For NetworkManager, the new connection profile is created with the `autoconnect`
+option enabled by default. Therefore, NetworkManager can activate the new
+profile on a currently disconnected device. ([rh#1401515](https://bugzilla.redhat.com/show_bug.cgi?id=1401515)).
 
 #### `persistent_state: absent`
 
@@ -227,10 +231,6 @@ role.
 
 
 ### `autoconnect`
-
-For NetworkManager, the new connection profile is created when the `autoconnect`
-option is enabled by default. Therefore, NetworkManager can activate the new
-profile on a currently disconnected device. ([rh#1401515](https://bugzilla.redhat.com/show_bug.cgi?id=1401515)).
 
 By default, profiles are created with autoconnect enabled.
 
