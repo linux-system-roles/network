@@ -2,7 +2,7 @@
 network_connections:  []
 
 # Use initscripts for RHEL/CentOS < 7, nm otherwise
-network_provider_os_default: "{{ 'initscripts' if ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version |version_compare('7', '<') else 'nm' }}"
+network_provider_os_default: "{{ 'initscripts' if ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('7', '<') else 'nm' }}"
 # If NetworkManager.service is running, assume that 'nm' is currently in-use,
 # otherwise initscripts
 network_provider_current: "{{ 'nm' if 'NetworkManager.service' in ansible_facts.services and ansible_facts.services['NetworkManager.service']['state'] == 'running' else 'initscripts' }}"
