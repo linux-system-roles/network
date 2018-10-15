@@ -91,13 +91,15 @@ class ArgValidator:
         except Exception:  # pylint: disable=broad-except
             return self.default_value
 
-    def _validate(self, value, name):
-        raise NotImplementedError()
+    def validate(self, value):
+        return self._validate(value, self.name)
 
-    def validate(self, value, name=None):
-        name = name or self.name or ""
-        validated = self._validate(value, name)
+    def _validate(self, value, name):
+        validated = self._validate_impl(value, name)
         return self._validate_post(value, name, validated)
+
+    def _validate_impl(self, value, name):
+        raise NotImplementedError()
 
     # pylint: disable=unused-argument,no-self-use
     def _validate_post(self, value, name, result):
@@ -117,7 +119,7 @@ class ArgValidatorStr(ArgValidator):
         self.enum_values = enum_values
         self.allow_empty = allow_empty
 
-    def _validate(self, value, name):
+    def _validate_impl(self, value, name):
         if not isinstance(value, Util.STRING_TYPE):
             raise ValidationError(name, "must be a string but is '%s'" % (value))
         value = str(value)
@@ -154,7 +156,7 @@ class ArgValidatorNum(ArgValidator):
         self.val_max = val_max
         self.numeric_type = numeric_type
 
-    def _validate(self, value, name):
+    def _validate_impl(self, value, name):
         v = None
         try:
             if isinstance(value, self.numeric_type):
@@ -185,7 +187,7 @@ class ArgValidatorBool(ArgValidator):
     def __init__(self, name, required=False, default_value=False):
         ArgValidator.__init__(self, name, required, default_value)
 
-    def _validate(self, value, name):
+    def _validate_impl(self, value, name):
         try:
             if isinstance(value, bool):
                 return value
@@ -212,7 +214,7 @@ class ArgValidatorDict(ArgValidator):
             self.nested = {}
         self.all_missing_during_validate = all_missing_during_validate
 
-    def _validate(self, value, name):
+    def _validate_impl(self, value, name):
         result = {}
         seen_keys = set()
         try:
@@ -227,7 +229,7 @@ class ArgValidatorDict(ArgValidator):
             if validator is None:
                 raise ValidationError(name, "invalid key '%s'" % (k))
             try:
-                vv = validator.validate(v, name + "." + k)
+                vv = validator._validate(v, name + "." + k)
             except ValidationError as e:
                 raise ValidationError(e.name, e.error_message)
             result[k] = vv
@@ -247,7 +249,7 @@ class ArgValidatorList(ArgValidator):
         ArgValidator.__init__(self, name, required=False, default_value=default_value)
         self.nested = nested
 
-    def _validate(self, value, name):
+    def _validate_impl(self, value, name):
 
         if isinstance(value, Util.STRING_TYPE):
             # we expect a list. However, for convenience allow to
@@ -258,7 +260,7 @@ class ArgValidatorList(ArgValidator):
         result = []
         for (idx, v) in enumerate(value):
             try:
-                vv = self.nested.validate(v, name + "[" + str(idx) + "]")
+                vv = self.nested._validate(v, name + "[" + str(idx) + "]")
             except ValidationError as e:
                 raise ValidationError(e.name, e.error_message)
             result.append(vv)
@@ -273,8 +275,8 @@ class ArgValidatorIP(ArgValidatorStr):
         self.family = family
         self.plain_address = plain_address
 
-    def _validate(self, value, name):
-        v = ArgValidatorStr._validate(self, value, name)
+    def _validate_impl(self, value, name):
+        v = ArgValidatorStr._validate_impl(self, value, name)
         try:
             addr, family = Util.parse_ip(v, self.family)
         except Exception:
@@ -293,8 +295,8 @@ class ArgValidatorMac(ArgValidatorStr):
         ArgValidatorStr.__init__(self, name, required, default_value, None)
         self.force_len = force_len
 
-    def _validate(self, value, name):
-        v = ArgValidatorStr._validate(self, value, name)
+    def _validate_impl(self, value, name):
+        v = ArgValidatorStr._validate_impl(self, value, name)
         try:
             addr = Util.mac_aton(v, self.force_len)
         except MyError:
@@ -323,7 +325,7 @@ class ArgValidatorIPAddr(ArgValidatorDict):
         )
         self.family = family
 
-    def _validate(self, value, name):
+    def _validate_impl(self, value, name):
         if isinstance(value, Util.STRING_TYPE):
             v = str(value)
             if not v:
@@ -336,7 +338,7 @@ class ArgValidatorIPAddr(ArgValidatorDict):
                     "value '%s' is not a valid IP%s address with prefix length"
                     % (value, Util.addr_family_to_v(self.family)),
                 )
-        v = ArgValidatorDict._validate(self, value, name)
+        v = ArgValidatorDict._validate_impl(self, value, name)
         return {
             "address": v["address"]["address"],
             "family": v["address"]["family"],
@@ -626,7 +628,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
     def __init__(self):
         ArgValidatorDict.__init__(
             self,
-            name="connections[?]",
+            name="connection",
             nested=[
                 ArgValidatorStr("name"),
                 ArgValidatorStr(
