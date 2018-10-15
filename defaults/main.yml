@@ -21,7 +21,12 @@ network_service_name_default_initscripts: network
 
 # initscripts requires bridge-utils to manage bridges, install it when the
 # 'bridge' type is used in network_connections
-_network_packages_default_initscripts_bridge: ["{% if ['bridge'] in network_connections|json_query('[*][type]') %}bridge-utils{% endif %}"]
+_network_packages_default_initscripts_bridge: ["{% if ['bridge'] in network_connections|json_query('[*][type]') and
+(
+   (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('7', '<=')) or
+   (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('28', '<='))
+)
+%}bridge-utils{% endif %}"]
 # convert _network_packages_default_initscripts_bridge to an empty list if it
 # contains only the empty string and add it to the default package list
 # |select() filters the list to include only values that evalueate to true (the empty string is false)
