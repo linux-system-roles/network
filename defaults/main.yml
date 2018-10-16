@@ -2,7 +2,7 @@
 network_connections:  []
 
 # Use initscripts for RHEL/CentOS < 7, nm otherwise
-network_provider_os_default: "{{ 'initscripts' if ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version |version_compare('7', '<') else 'nm' }}"
+network_provider_os_default: "{{ 'initscripts' if ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('7', '<') else 'nm' }}"
 # If NetworkManager.service is running, assume that 'nm' is currently in-use,
 # otherwise initscripts
 network_provider_current: "{{ 'nm' if 'NetworkManager.service' in ansible_facts.services and ansible_facts.services['NetworkManager.service']['state'] == 'running' else 'initscripts' }}"
@@ -21,12 +21,24 @@ network_service_name_default_initscripts: network
 
 # initscripts requires bridge-utils to manage bridges, install it when the
 # 'bridge' type is used in network_connections
-_network_packages_default_initscripts_bridge: ["{% if ['bridge'] in network_connections|json_query('[*][type]') %}bridge-utils{% endif %}"]
+_network_packages_default_initscripts_bridge: ["{% if ['bridge'] in network_connections|json_query('[*][type]') and
+(
+   (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('7', '<=')) or
+   (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('28', '<='))
+)
+%}bridge-utils{% endif %}"]
+_network_packages_default_initscripts_network_scripts: ["{%
+if (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('7', '<=')) or
+   (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('28', '<='))
+%}initscripts{% else %}network-scripts{% endif %}"]
 # convert _network_packages_default_initscripts_bridge to an empty list if it
 # contains only the empty string and add it to the default package list
 # |select() filters the list to include only values that evalueate to true (the empty string is false)
 # |list() converts the generator that |select() creates to a list
-network_packages_default_initscripts: "{{ ['ethtool'] + _network_packages_default_initscripts_bridge|select()|list() }}"
+network_packages_default_initscripts: "{{ ['ethtool']
++ _network_packages_default_initscripts_bridge|select()|list()
++ _network_packages_default_initscripts_network_scripts|select()|list()
+}}"
 
 
 # The user can explicitly set host variables "network_provider",
