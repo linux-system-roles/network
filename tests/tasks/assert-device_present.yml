@@ -2,7 +2,7 @@
 ---
 # need to run setup again when this is just a task to make sure ansible_interfaces is correct
 - setup:
-- assert:
-    name: "assert that {{ interface }} is present"
+- name: "assert that {{ interface }} is present"
+  assert:
     that: "{{ interface in ansible_interfaces }}"
     msg: "{{ interface }} is not in ansible_interfaces: {{ ansible_interfaces }}"

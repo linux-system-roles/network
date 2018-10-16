@@ -19,7 +19,9 @@
         type: "{{ type }}"
         interface: "{{ interface }}"
     - include_tasks: tasks/show-interfaces.yml
-    - include_tasks: tasks/manage-test-interface.yml state=present
+    - include_tasks: tasks/manage-test-interface.yml
+      vars:
+        state: present
     - include_tasks: tasks/assert-device_present.yml
 
 - name: Test static interface up
@@ -54,5 +56,7 @@
 - name: Remove interfaces
   hosts: all
   tasks:
-    - include_tasks: tasks/manage-test-interface.yml state=absent
+    - include_tasks: tasks/manage-test-interface.yml
+      vars:
+        state: absent
     - include_tasks: tasks/assert-device_absent.yml
