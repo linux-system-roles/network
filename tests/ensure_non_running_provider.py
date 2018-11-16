@@ -18,13 +18,16 @@ IGNORE = ["tests_unit.yml", "tests_helpers-and-asserts.yml"]
 OTHER_PLAYBOOK = """
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Run playbook '{tests_playbook}' with non-default provider
+  hosts: all
   vars:
       network_provider_current:
   tasks:
   # required for the code to set network_provider_current
-  - service_facts:
-  - set_fact:
+  - name: Get service facts
+    service_facts:
+  - name: Set network provider
+    set_fact:
       network_provider: "{{{{ 'initscripts' if network_provider_current == 'nm' else 'nm' }}}}"
 
 - import_playbook: "{tests_playbook}"

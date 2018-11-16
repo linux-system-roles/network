@@ -1,7 +1,10 @@
 - hosts: all
+  name: Run playbook 'tests_default.yml' with non-default provider
   tasks:
-  - service_facts: null
-  - set_fact:
+  - name: Get service facts
+    service_facts: null
+  - name: Set network provider
+    set_fact:
       network_provider: '{{ ''initscripts'' if network_provider_current == ''nm''
         else ''nm'' }}'
   vars:
