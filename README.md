@@ -317,7 +317,7 @@ The IP configuration supports the following options:
 
     Static route configuration can be specified via a list of routes given in the `route`
     option. The default value is an empty list. Each route is a dictionary with the following
-    entries: `network`, `prefix`, `gateway` and `metric`. `network` and `prefix` specify
+    entries: `network`, `prefix`, `gateway`, `device` and `metric`. `network` and `prefix` specify
     the destination network.
     Note that Classless inter-domain routing (CIDR) notation or network mask notation are not supported yet.
 
@@ -529,6 +529,7 @@ network_connections:
         - network: 198.51.100.64
           prefix: 26
           gateway: 198.51.100.6
+		  device: eth1
           metric: 4
       route_append_only: no
       rule_append_only: yes
