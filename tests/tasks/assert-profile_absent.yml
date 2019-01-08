@@ -8,7 +8,7 @@
     path: "{{ profile_path }}"
   register: profile_stat
 
-- name: "assert that {{ profile }} is absent"
+- name: "assert that profile '{{ profile }}' is absent"
   assert:
     that: not profile_stat.stat.exists
     msg: "profile {{ profile_path }} does exist"
