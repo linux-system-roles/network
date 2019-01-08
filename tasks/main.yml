@@ -2,6 +2,7 @@
 # get service facts, used in defaults/main.yml
 - name: Check which services are running
   service_facts:
+  no_log: true
 
 # needed for ansible_facts.packages
 - name: Check which packages are installed
