@@ -77,7 +77,7 @@ def main():
             with open(other_testfile, "w") as ofile:
                 ofile.write(nominal_other_testfile_data)
 
-        if other_testfile not in testsfiles:
+        if other_testfile not in testsfiles and not generate:
             missing.append(filename)
         else:
             with open(other_testfile) as ifile:
