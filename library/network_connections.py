@@ -1822,7 +1822,7 @@ class Cmd_nm(Cmd):
             # found
             if not con_cur:
                 self.log_error(
-                    idx, "Connection not found on system and 'type' not present"
+                    idx, "Connection not found on system and 'type' not specified"
                 )
             return
 
