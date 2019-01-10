@@ -96,20 +96,19 @@ class Util:
             return True
 
         GLib = cls.GLib()
-        result = []
+        timeout_reached = []
         loop = cls.GMainLoop()
 
         def _timeout_cb(unused):
-            result.append(1)
+            timeout_reached.append(1)
             loop.quit()
             return False
 
         timeout_id = GLib.timeout_add(int(timeout * 1000), _timeout_cb, None)
         loop.run()
-        if result:
-            return False
-        GLib.source_remove(timeout_id)
-        return True
+        if not timeout_reached:
+            GLib.source_remove(timeout_id)
+        return not timeout_reached
 
     @classmethod
     def GMainLoop_iterate(cls, may_block=False):
@@ -125,6 +124,29 @@ class Util:
     @classmethod
     def create_cancellable(cls):
         return cls.Gio().Cancellable.new()
+
+    @classmethod
+    def create_callback(cls, finish_method):
+        """
+        Create a callback that will return the result of the finish method and
+        quit the GMainLoop
+
+        :param finish_method str: Name of the finish method to call from the
+        source object in the callback
+        """
+
+        def callback(source_object, res, user_data):
+            success = None
+            try:
+                success = getattr(source_object, finish_method)(res)
+            except Exception as e:
+                if cls.error_is_cancelled(e):
+                    return
+                user_data["error"] = str(e)
+            user_data["success"] = success
+            cls.GMainLoop().quit()
+
+        return callback
 
     @classmethod
     def error_is_cancelled(cls, e):
