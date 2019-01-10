@@ -96,20 +96,19 @@ class Util:
             return True
 
         GLib = cls.GLib()
-        result = []
+        timeout_reached = []
         loop = cls.GMainLoop()
 
         def _timeout_cb(unused):
-            result.append(1)
+            timeout_reached.append(1)
             loop.quit()
             return False
 
         timeout_id = GLib.timeout_add(int(timeout * 1000), _timeout_cb, None)
         loop.run()
-        if result:
-            return False
-        GLib.source_remove(timeout_id)
-        return True
+        if not timeout_reached:
+            GLib.source_remove(timeout_id)
+        return not timeout_reached
 
     @classmethod
     def GMainLoop_iterate(cls, may_block=False):
