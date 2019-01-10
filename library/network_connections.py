@@ -1060,20 +1060,15 @@ class NMUtil:
         :returns: True when connection is gone, False when timeout elapsed
         :rtype: bool
         """
-        wait_time = 0
-        sleep_time = 0.1
-        while True:
-            connections = self.connection_list(uuid=uuid)
-            if not connections:
-                return True
-            wait_time += sleep_time
-            if wait_time > timeout:
-                break
 
-            time.sleep(sleep_time)
-            Util.GMainLoop_iterate_all()
+        def _poll_timeout_cb(unused):
+            if not self.connection_list(uuid=uuid):
+                Util.GMainLoop().quit()
 
-        return False
+        poll_timeout_id = Util.GLib().timeout_add(100, _poll_timeout_cb, None)
+        gone = Util.GMainLoop_run(timeout)
+        Util.GLib().source_remove(poll_timeout_id)
+        return gone
 
     def connection_activate(self, connection, timeout=15, wait_time=None):
 
