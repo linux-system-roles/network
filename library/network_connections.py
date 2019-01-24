@@ -437,7 +437,7 @@ class IfcfgUtil:
                 line = r["network"] + "/" + str(r["prefix"])
                 if r["gateway"]:
                     line += " via " + r["gateway"]
-				if r["device"]:
+                if r["device"]:
                     line += " dev " + r["device"]
                 if r["metric"] != -1:
                     line += " metric " + str(r["metric"])
