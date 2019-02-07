@@ -792,6 +792,7 @@ class NMUtil:
         elif connection["type"] == "team":
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, NM.SETTING_TEAM_SETTING_NAME)
         elif connection["type"] == "vlan":
+            s_con.set_property(NM.SETTING_CONNECTION_TYPE, NM.SETTING_VLAN_SETTING_NAME)
             s_vlan = self.connection_ensure_setting(con, NM.SettingVlan)
             s_vlan.set_property(NM.SETTING_VLAN_ID, connection["vlan"]["id"])
             s_vlan.set_property(
@@ -801,6 +802,9 @@ class NMUtil:
                 ),
             )
         elif connection["type"] == "macvlan":
+            s_con.set_property(
+                NM.SETTING_CONNECTION_TYPE, NM.SETTING_MACVLAN_SETTING_NAME
+            )
             # convert mode name to a number (which is actually expected by nm)
             mode = connection["macvlan"]["mode"]
             try:
