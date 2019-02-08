@@ -749,11 +749,15 @@ class NMUtil:
         )
 
         if connection["type"] == "ethernet":
-            s_con.set_property(NM.SETTING_CONNECTION_TYPE, "802-3-ethernet")
+            s_con.set_property(
+                NM.SETTING_CONNECTION_TYPE, NM.SETTING_WIRED_SETTING_NAME
+            )
             s_wired = self.connection_ensure_setting(con, NM.SettingWired)
             s_wired.set_property(NM.SETTING_WIRED_MAC_ADDRESS, connection["mac"])
         elif connection["type"] == "infiniband":
-            s_con.set_property(NM.SETTING_CONNECTION_TYPE, "infiniband")
+            s_con.set_property(
+                NM.SETTING_CONNECTION_TYPE, NM.SETTING_INFINIBAND_SETTING_NAME
+            )
             s_infiniband = self.connection_ensure_setting(con, NM.SettingInfiniband)
             s_infiniband.set_property(
                 NM.SETTING_INFINIBAND_MAC_ADDRESS, connection["mac"]
@@ -774,18 +778,21 @@ class NMUtil:
                         ),
                     )
         elif connection["type"] == "bridge":
-            s_con.set_property(NM.SETTING_CONNECTION_TYPE, "bridge")
+            s_con.set_property(
+                NM.SETTING_CONNECTION_TYPE, NM.SETTING_BRIDGE_SETTING_NAME
+            )
             s_bridge = self.connection_ensure_setting(con, NM.SettingBridge)
             s_bridge.set_property(NM.SETTING_BRIDGE_STP, False)
         elif connection["type"] == "bond":
-            s_con.set_property(NM.SETTING_CONNECTION_TYPE, "bond")
+            s_con.set_property(NM.SETTING_CONNECTION_TYPE, NM.SETTING_BOND_SETTING_NAME)
             s_bond = self.connection_ensure_setting(con, NM.SettingBond)
             s_bond.add_option("mode", connection["bond"]["mode"])
             if connection["bond"]["miimon"] is not None:
                 s_bond.add_option("miimon", str(connection["bond"]["miimon"]))
         elif connection["type"] == "team":
-            s_con.set_property(NM.SETTING_CONNECTION_TYPE, "team")
+            s_con.set_property(NM.SETTING_CONNECTION_TYPE, NM.SETTING_TEAM_SETTING_NAME)
         elif connection["type"] == "vlan":
+            s_con.set_property(NM.SETTING_CONNECTION_TYPE, NM.SETTING_VLAN_SETTING_NAME)
             s_vlan = self.connection_ensure_setting(con, NM.SettingVlan)
             s_vlan.set_property(NM.SETTING_VLAN_ID, connection["vlan"]["id"])
             s_vlan.set_property(
@@ -795,6 +802,9 @@ class NMUtil:
                 ),
             )
         elif connection["type"] == "macvlan":
+            s_con.set_property(
+                NM.SETTING_CONNECTION_TYPE, NM.SETTING_MACVLAN_SETTING_NAME
+            )
             # convert mode name to a number (which is actually expected by nm)
             mode = connection["macvlan"]["mode"]
             try:
