@@ -250,6 +250,12 @@ profile.
 
 - For `initscripts`,  `mac` is the currently configured MAC address of the device (`HWADDR`).
 
+### `mtu`
+
+The `mtu` option denotes the maximum transmission unit for the profile's
+device. The maximum value depends on the device. For virtual devices, the
+maximum value of the `mtu` option depends on the underlying device.
+
 ### `interface_name`
 
 For the `ethernet` and `infiniband`  types, the `interface_name` option restricts the profile to
