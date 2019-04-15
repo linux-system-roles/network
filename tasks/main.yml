@@ -23,11 +23,26 @@
   when:
     - not network_packages is subset(ansible_facts.packages.keys())
 
-- name: Enable network service
+- name: Enable and start NetworkManager
   service:
       name: "{{ network_service_name }}"
       state: started
       enabled: yes
+  when:
+    - network_provider == "nm"
+
+- name: Enable network service
+  service:
+      name: "{{ network_service_name }}"
+      enabled: yes
+  when:
+    -  network_provider == "initscripts"
+
+- name: Ensure initscripts network file dependency is present
+  copy:
+    dest: /etc/sysconfig/network
+    content: "# Created by network system role"
+    force: false
 
 - name: Configure networking connection profiles
   network_connections:
