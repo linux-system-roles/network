@@ -38,6 +38,12 @@
   when:
     -  network_provider == "initscripts"
 
+- name: Ensure initscripts network file dependency is present
+  copy:
+    dest: /etc/sysconfig/network
+    content: "# Created by network system role"
+    force: false
+
 - name: Configure networking connection profiles
   network_connections:
       provider:            "{{ network_provider           | mandatory }}"
