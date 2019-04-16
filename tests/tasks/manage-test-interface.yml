@@ -11,6 +11,11 @@
 # - include: get-current_interfaces.yml
 - include: show-interfaces.yml
 
+- name: Install iproute
+  package:
+    name: iproute
+    state: present
+
 # veth
 - name: Create veth interface {{ interface }}
   shell: ip link add {{ interface }} type veth peer name peer{{ interface }}
