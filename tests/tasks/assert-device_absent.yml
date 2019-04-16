@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-# need to run setup again when this is just a task to ensure ansible_interfaces
-# is current
-- setup:
+- include: get-interface_stat.yml
 - name: "assert that interface {{ interface }} is absent"
   assert:
-    that: "{{ not interface in ansible_interfaces }}"
-    msg: "{{ interface }} is in ansible_interfaces: {{ ansible_interfaces }}"
+    that: not interface_stat.stat.exists
+    msg: "{{ interface }} exists"

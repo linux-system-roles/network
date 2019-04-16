@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: "Get stat for interface {{ interface }}"
+  stat:
+    get_attributes: false
+    get_checksum: false
+    get_mime: false
+    path: "/sys/class/net/{{ interface }}"
+  register: interface_stat
