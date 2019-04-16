@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- command: ls -1
+  args:
+    chdir: /sys/class/net
+  register: _current_interfaces
+- set_fact:
+    current_interfaces: "{{ _current_interfaces.stdout_lines }}"

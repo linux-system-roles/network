@@ -5,13 +5,17 @@
   tasks:
     - name: Install EPEL on enterprise Linux for python2-mock
       command: yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
+      args:
+        warn: false
       when:
         - ansible_distribution in ['RedHat', 'CentOS']
         - ansible_distribution_major_version in ['6', '7']
 
-    - package:
+    - name: Install dependencies
+      package:
         name: "{{ item }}"
         state: present
+      # Ignore error because some package names might not be available
       ignore_errors: true
       loop:
         - NetworkManager-libnm
@@ -23,49 +27,60 @@
 - hosts: all
   name: execute python unit tests
   tasks:
-    - copy:
+    - name: Copy python modules
+      copy:
         src: "{{ item }}"
         dest: /tmp/test-unit-1/
+        local_follow: false
       loop:
       - ../library/network_connections.py
       - test_network_connections.py
       - ../module_utils/network_lsr
 
-    - file:
+    - name: Create helpers directory
+      file:
         state: directory
         dest: /tmp/test-unit-1/helpers
 
-    - copy:
+    - name: Copy helpers
+      copy:
         src: "{{ item }}"
         dest: /tmp/test-unit-1/helpers
         mode: 0755
       with_fileglob:
         - helpers/*
 
-    - command: python2 --version
+    - name: Check if python2 is available
+      command: python2 --version
       ignore_errors: true
       register: python2_available
 
-    - command: python2 /tmp/test-unit-1/test_network_connections.py --verbose
+    - name: Run python2 unit tests
+      command: python2 /tmp/test-unit-1/test_network_connections.py --verbose
       when: python2_available is succeeded
       register: python2_result
 
-    - command: python3 --version
+    - name: Check if python3 is available
+      command: python3 --version
       ignore_errors: true
       register: python3_available
 
-    - command: python3 /tmp/test-unit-1/test_network_connections.py --verbose
+    - name: Run python3 unit tests
+      command: python3 /tmp/test-unit-1/test_network_connections.py --verbose
       when: python3_available is succeeded
       register: python3_result
 
-    - debug:
+    - name: Show python2 unit test results
+      debug:
         var: python2_result.stderr_lines
       when: python2_result is succeeded
 
-    - debug:
+    - name: Show python3 unit test results
+      debug:
         var: python3_result.stderr_lines
       when: python3_result is succeeded
 
-    - fail:
+    - name: Ensure that at least one python unit test ran
+      fail:
         msg: Tests did not run with python2 or python3
       when: not (python2_available is succeeded or python3_available is succeeded)
