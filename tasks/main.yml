@@ -43,6 +43,8 @@
     dest: /etc/sysconfig/network
     content: "# Created by network system role"
     force: false
+  when:
+    - network_provider == "initscripts"
 
 - name: Configure networking connection profiles
   network_connections:
