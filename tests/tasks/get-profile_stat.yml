@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: "Get stat for network-scripts"
+  stat:
+    get_attributes: false
+    get_checksum: false
+    get_mime: false
+    path: "/etc/sysconfig/network-scripts"
+  register: network_scripts_stat
+- name: Set profile path (network-scripts)
+  set_fact:
+    profile_path: /etc/sysconfig/network-scripts/ifcfg-{{ profile }}
+  when:
+    - network_scripts_stat.stat.exists
+- name: Set profile path (NetworkManager system-connections)
+  set_fact:
+    profile_path: /etc/NetworkManager/system-connections/{{ profile }}
+  when:
+    - not network_scripts_stat.stat.exists
+- name: stat profile file
+  stat:
+    get_attributes: false
+    get_checksum: false
+    get_mime: false
+    path: "{{ profile_path }}"
+  register: profile_stat
