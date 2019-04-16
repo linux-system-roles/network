@@ -26,6 +26,7 @@
     - copy:
         src: "{{ item }}"
         dest: /tmp/test-unit-1/
+        local_follow: false
       loop:
       - ../library/network_connections.py
       - test_network_connections.py
