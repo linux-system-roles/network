@@ -28,7 +28,8 @@ OTHER_PLAYBOOK = """
     service_facts:
   - name: Set network provider
     set_fact:
-      network_provider: "{{{{ 'initscripts' if network_provider_current == 'nm' else 'nm' }}}}"
+      network_provider: '{{{{ "initscripts" if network_provider_current == "nm"
+                                  else "nm" }}}}'
 
 - import_playbook: "{tests_playbook}"
   when:
@@ -47,7 +48,7 @@ def generate_nominal_other_playbook(tests_playbook):
     nominal_other_testfile_data = OTHER_PLAYBOOK.format(tests_playbook=tests_playbook)
     nominal = yaml.safe_load(nominal_other_testfile_data)
     nominal[0]["vars"]["network_provider_current"] = get_current_provider_code()
-    return yaml.dump(nominal, default_flow_style=False)
+    return yaml.dump(nominal, default_flow_style=False, explicit_start=True, width=80)
 
 
 def main():

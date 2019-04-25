@@ -1,3 +1,4 @@
+---
 - hosts: all
   name: Run playbook 'tests_ethernet.yml' with non-default provider
   tasks:
@@ -5,8 +6,8 @@
     service_facts: null
   - name: Set network provider
     set_fact:
-      network_provider: '{{ ''initscripts'' if network_provider_current == ''nm''
-        else ''nm'' }}'
+      network_provider: '{{ "initscripts" if network_provider_current == "nm" else
+        "nm" }}'
   vars:
     network_provider_current: '{{ ''nm'' if ''NetworkManager.service'' in ansible_facts.services
       and ansible_facts.services[''NetworkManager.service''][''state''] == ''running''
