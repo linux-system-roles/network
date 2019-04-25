@@ -7,7 +7,13 @@ galaxy_info:
   min_ansible_version: 2.5
   galaxy_tags: [ 'system', 'network', 'networking', 'redhat', 'rhel', 'fedora', 'centos' ]
   platforms:
-  - name: Fedora
-    versions: [ 27, 28, 29 ]
-  - name: EL
-    versions: [ 6, 7 ]
+    - name: Fedora
+      versions:
+        - 28
+        - 29
+        - 30
+    - name: EL
+      versions:
+        - 6
+        - 7
+        - 8
