@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 galaxy_info:
-  author: Thomas Haller <thaller@redhat.com>
+  author: Thomas Haller <thaller@redhat.com>, Till Maas <till@redhat.com>
   description: Configure networking
   company: Red Hat, Inc.
   license: BSD-3-Clause
