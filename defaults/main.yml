@@ -1,11 +1,19 @@
 # SPDX-License-Identifier: BSD-3-Clause
-network_connections:  []
+---
+network_connections: []
 
 # Use initscripts for RHEL/CentOS < 7, nm otherwise
-network_provider_os_default: "{{ 'initscripts' if ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('7', '<') else 'nm' }}"
+network_provider_os_default: "{{
+    'initscripts' if ansible_distribution in ['RedHat', 'CentOS'] and
+        ansible_distribution_major_version is version('7', '<')
+    else 'nm' }}"
 # If NetworkManager.service is running, assume that 'nm' is currently in-use,
 # otherwise initscripts
-network_provider_current: "{{ 'nm' if 'NetworkManager.service' in ansible_facts.services and ansible_facts.services['NetworkManager.service']['state'] == 'running' else 'initscripts' }}"
+network_provider_current: "{{
+    'nm' if 'NetworkManager.service' in ansible_facts.services and
+        ansible_facts.services['NetworkManager.service']['state'] == 'running'
+        else 'initscripts'
+    }}"
 # Default to the auto-detected value
 network_provider: "{{ network_provider_current }}"
 
@@ -15,7 +23,10 @@ network_provider: "{{ network_provider_current }}"
 # - python-gobject-base or python2-gobject-base on Fedora 27
 # - python3-gobject-base on Fedora 28+
 network_service_name_default_nm: NetworkManager
-network_packages_default_nm: [ ethtool, NetworkManager, "python{{ ansible_python['version']['major'] | replace('2', '') }}-gobject-base"]
+network_packages_default_nm:
+  - ethtool
+  - NetworkManager
+  - "python{{ ansible_python['version']['major'] | replace('2', '') }}-gobject-base"
 
 network_service_name_default_initscripts: network
 
@@ -33,7 +44,8 @@ if (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_
 %}initscripts{% else %}network-scripts{% endif %}"]
 # convert _network_packages_default_initscripts_bridge to an empty list if it
 # contains only the empty string and add it to the default package list
-# |select() filters the list to include only values that evalueate to true (the empty string is false)
+# |select() filters the list to include only values that evaluate to true
+#     (the empty string is false)
 # |list() converts the generator that |select() creates to a list
 network_packages_default_initscripts: "{{ ['ethtool']
 + _network_packages_default_initscripts_bridge|select()|list()
@@ -57,12 +69,14 @@ network_packages_default_initscripts: "{{ ['ethtool']
 # apply. These values are hard-coded in this file, but they also could
 # be overwritten as host variables or via vars/*.yml.
 _network_provider_setup:
-    nm:
-        service_name: "{{ network_service_name_default_nm }}"
-        packages:     "{{ network_packages_default_nm }}"
-    initscripts:
-        service_name: "{{ network_service_name_default_initscripts }}"
-        packages:     "{{ network_packages_default_initscripts }}"
+  nm:
+    service_name: "{{ network_service_name_default_nm }}"
+    packages: "{{ network_packages_default_nm }}"
+  initscripts:
+    service_name: "{{ network_service_name_default_initscripts }}"
+    packages: "{{ network_packages_default_initscripts }}"
 
-network_packages:     "{{ _network_provider_setup[network_provider]['packages'] }}"
-network_service_name: "{{ _network_provider_setup[network_provider]['service_name'] }}"
+network_packages: "{{
+    _network_provider_setup[network_provider]['packages'] }}"
+network_service_name: "{{
+    _network_provider_setup[network_provider]['service_name'] }}"

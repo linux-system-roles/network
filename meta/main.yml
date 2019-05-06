@@ -1,13 +1,27 @@
 # SPDX-License-Identifier: BSD-3-Clause
+---
 galaxy_info:
-  author: Thomas Haller <thaller@redhat.com>
+  author: Thomas Haller <thaller@redhat.com>, Till Maas <till@redhat.com>
   description: Configure networking
   company: Red Hat, Inc.
   license: BSD-3-Clause
   min_ansible_version: 2.5
-  galaxy_tags: [ 'system', 'network', 'networking', 'redhat', 'rhel', 'fedora', 'centos' ]
+  galaxy_tags:
+    - centos
+    - fedora
+    - network
+    - networking
+    - redhat
+    - rhel
+    - system
   platforms:
-  - name: Fedora
-    versions: [ 27, 28, 29 ]
-  - name: EL
-    versions: [ 6, 7 ]
+    - name: Fedora
+      versions:
+        - 28
+        - 29
+        - 30
+    - name: EL
+      versions:
+        - 6
+        - 7
+        - 8
