@@ -13,7 +13,7 @@ import yaml
 
 OTHER_PROVIDER_SUFFIX = "_other_provider.yml"
 
-IGNORE = ["tests_unit.yml", "tests_helpers-and-asserts.yml"]
+IGNORE = ["tests_unit.yml", "tests_helpers-and-asserts.yml", "tests_states.yml"]
 
 OTHER_PLAYBOOK = """
 # SPDX-License-Identifier: BSD-3-Clause
