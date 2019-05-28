@@ -1,0 +1,49 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    interface: statebr
+    profile: "{{ interface }}"
+    network_provider: nm
+  tasks:
+    - debug:
+        msg: Inside states tests
+    - include_tasks: tasks/show-interfaces.yml
+    - include_tasks: tasks/assert-device_absent.yml
+
+    # create test profile
+    - include_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: statebr
+            state: up
+            type: bridge
+            ip:
+              dhcp4: false
+              auto6: false
+    - include_tasks: tasks/assert-device_present.yml
+    - include_tasks: tasks/assert-profile_present.yml
+
+    # test case (remove profile but keep it up)
+    # I can remove a profile but keep the configuration active.
+    - include_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: statebr
+            persistent_state: absent
+    - include_tasks: tasks/assert-device_present.yml
+    - include_tasks: tasks/assert-profile_absent.yml
+
+    # test case
+    # I can set a profile down that is up and absent.
+    - name: Set down
+      include_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: statebr
+            state: down
+    - include_tasks: tasks/assert-device_absent.yml
+    - include_tasks: tasks/assert-profile_absent.yml
