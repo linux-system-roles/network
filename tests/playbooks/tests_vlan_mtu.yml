@@ -1,0 +1,62 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    type: veth
+    interface: lsr101
+    vlan_interface: lsr101.90
+  tasks:
+    - include_tasks: tasks/show-interfaces.yml
+    - include_tasks: tasks/manage-test-interface.yml
+      vars:
+        state: present
+    - include_tasks: tasks/assert-device_present.yml
+    - name: "TEST: I can configure the MTU for a vlan inteface without autoconnect."
+      import_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: "{{ interface }}"
+            type: ethernet
+            state: up
+            mtu: 1492
+            autoconnect: false
+            ip:
+              dhcp4: false
+              auto6: false
+
+          - name: "{{ vlan_interface }}"
+            parent: "{{ interface }}"
+            type: vlan
+            vlan_id: 90
+            mtu: 1280
+            state: up
+            autoconnect: false
+            ip:
+              dhcp4: false
+              auto6: false
+    - include_tasks: tasks/assert-device_present.yml
+      vars:
+        interface: "{{ vlan_interface }}"
+    - include_tasks: tasks/assert-profile_present.yml
+      vars:
+        profile: "{{ item }}"
+      loop:
+        -  "{{ interface }}"
+        -  "{{ vlan_interface }}"
+
+    - name: "CLEANUP: remove profiles"
+      import_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: "{{ interface }}"
+            persistent_state: absent
+            state: down
+          - name: "{{ vlan_interface }}"
+            persistent_state: absent
+            state: down
+      ignore_errors: true
+    - include_tasks: tasks/manage-test-interface.yml
+      vars:
+        state: absent
