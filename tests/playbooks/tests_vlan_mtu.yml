@@ -19,11 +19,11 @@
           - name: "{{ interface }}"
             type: ethernet
             state: up
+            autoconnect: "no"
             mtu: 1492
-            autoconnect: false
             ip:
-              dhcp4: false
-              auto6: false
+              dhcp4: "no"
+              auto6: "no"
 
           - name: "{{ vlan_interface }}"
             parent: "{{ interface }}"
@@ -31,10 +31,10 @@
             vlan_id: 90
             mtu: 1280
             state: up
-            autoconnect: false
+            autoconnect: "no"
             ip:
-              dhcp4: false
-              auto6: false
+              dhcp4: "no"
+              auto6: "no"
     - include_tasks: tasks/assert-device_present.yml
       vars:
         interface: "{{ vlan_interface }}"
