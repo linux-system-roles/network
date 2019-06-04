@@ -1,8 +1,10 @@
 ---
-# empty playbook to gather facts for import_playbook when clause
+# set network provider and gather facts
 - hosts: all
-  vars:
-    network_provider: nm
+  tasks:
+    - name: Set network provider to 'nm'
+      set_fact:
+        network_provider: nm
 
 # workaround for: https://github.com/ansible/ansible/issues/27973
 # There is no way in Ansible to abort a playbook hosts with specific OS
