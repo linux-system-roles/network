@@ -12,7 +12,9 @@
         state: present
     - include_tasks: tasks/assert-device_present.yml
     - name: "TEST: I can configure the MTU for a vlan interface without autoconnect."
-      import_role:
+      debug:
+        msg: "##################################################"
+    - import_role:
         name: linux-system-roles.network
       vars:
         network_connections:
@@ -45,8 +47,10 @@
         -  "{{ interface }}"
         -  "{{ vlan_interface }}"
 
-    - name: "CLEANUP: remove profiles"
-      import_role:
+    - name: "TEARDOWN: remove profiles."
+      debug:
+        msg: "##################################################"
+    - import_role:
         name: linux-system-roles.network
       vars:
         network_connections:
