@@ -1349,7 +1349,7 @@ class RunEnvironment:
 class RunEnvironmentAnsible(RunEnvironment):
 
     ARGS = {
-        "ignore_errors": {"required": False, "default": False, "type": "str"},
+        "ignore_errors": {"required": False, "default": False, "type": "bool"},
         "force_state_change": {"required": False, "default": False, "type": "bool"},
         "provider": {"required": True, "default": None, "type": "str"},
         "connections": {"required": False, "default": None, "type": "list"},
