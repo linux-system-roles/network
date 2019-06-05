@@ -7,6 +7,7 @@
       command: yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
       args:
         warn: false
+        creates: /etc/yum.repos.d/epel.repo
       when:
         - ansible_distribution in ['RedHat', 'CentOS']
         - ansible_distribution_major_version in ['6', '7']
@@ -54,6 +55,7 @@
       command: python2 --version
       ignore_errors: true
       register: python2_available
+      when: true
 
     - name: Run python2 unit tests
       command: python2 /tmp/test-unit-1/test_network_connections.py --verbose
@@ -64,6 +66,7 @@
       command: python3 --version
       ignore_errors: true
       register: python3_available
+      when: true
 
     - name: Run python3 unit tests
       command: python3 /tmp/test-unit-1/test_network_connections.py --verbose
