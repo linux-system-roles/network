@@ -34,7 +34,7 @@
         local_follow: false
       loop:
       - ../library/network_connections.py
-      - test_network_connections.py
+      - unit/test_network_connections.py
       - ../module_utils/network_lsr
 
     - name: Create helpers directory
@@ -48,7 +48,7 @@
         dest: /tmp/test-unit-1/helpers
         mode: 0755
       with_fileglob:
-        - helpers/*
+        - unit/helpers/*
 
     - name: Check if python2 is available
       command: python2 --version
