@@ -20,6 +20,7 @@ from ansible.module_utils.network_lsr.argument_validator import (
 
 # pylint: disable=import-error
 from ansible.module_utils.network_lsr.utils import Util
+from ansible.module_utils.network_lsr import nm_provider
 
 DOCUMENTATION = """
 ---
@@ -360,15 +361,36 @@ class IfcfgUtil:
             ifcfg["MTU"] = str(connection["mtu"])
 
         if "ethernet" in connection:
+            ethtool_options = ""
             if connection["ethernet"]["autoneg"] is not None:
                 if connection["ethernet"]["autoneg"]:
-                    s = "autoneg on"
+                    ethtool_options = "autoneg on"
                 else:
-                    s = "autoneg off speed %s duplex %s" % (
+                    ethtool_options = "autoneg off speed %s duplex %s" % (
                         connection["ethernet"]["speed"],
                         connection["ethernet"]["duplex"],
                     )
-                ifcfg["ETHTOOL_OPTS"] = s
+
+            ethernet_features = connection["ethernet"]["features"]
+            configured_features = []
+            for feature, setting in ethernet_features.items():
+                value = ""
+                if setting:
+                    value = "on"
+                elif setting is not None:
+                    value = "off"
+
+                if value:
+                    configured_features.append("%s %s" % (feature, value))
+
+            if configured_features:
+                ethtool_options += "-K %s %s" % (
+                    connection["interface_name"],
+                    " ".join(configured_features),
+                )
+
+            if ethtool_options:
+                ifcfg["ETHTOOL_OPTS"] = ethtool_options
 
         if connection["master"] is not None:
             m = ArgUtil.connection_find_master(connection["master"], connections, idx)
@@ -836,6 +858,31 @@ class NMUtil:
                 s_wired.set_property(
                     NM.SETTING_WIRED_SPEED, connection["ethernet"]["speed"]
                 )
+
+            ethernet_features = connection["ethernet"]["features"]
+
+            # Change ethtools settings only if setting is already present or
+            # if any feature is not default
+            s_ethtool = con.get_setting(NM.SettingEthtool)
+            if not s_ethtool and set(ethernet_features.values()) != set([None]):
+                s_ethtool = NM.SettingEthtool.new()
+                con.add_setting(s_ethtool)
+
+            if s_ethtool:
+                for feature, setting in ethernet_features.items():
+                    try:
+                        nm_feature = nm_provider.get_nm_ethtool_feature(feature)
+                    except AttributeError:
+                        nm_feature = None
+
+                    if setting is None:
+                        # Only set features to default value that NM knows
+                        if nm_feature:
+                            s_ethtool.set_feature(nm_feature, NM.Ternary.DEFAULT)
+                    elif setting:
+                        s_ethtool.set_feature(nm_feature, NM.Ternary.TRUE)
+                    else:
+                        s_ethtool.set_feature(nm_feature, NM.Ternary.FALSE)
 
         if connection["mtu"]:
             if connection["type"] == "infiniband":
