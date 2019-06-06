@@ -521,6 +521,92 @@ class ArgValidator_DictEthernet(ArgValidatorDict):
         return result
 
 
+class ArgValidator_DictEthtool(ArgValidatorDict):
+    def __init__(self):
+        ArgValidatorDict.__init__(
+            self,
+            name="ethtool",
+            nested=[ArgValidator_DictEthtoolFeatures()],
+            default_value=ArgValidator.MISSING,
+        )
+
+        self.default_value = dict(
+            [(k, v.default_value) for k, v in self.nested.items()]
+        )
+
+
+class ArgValidator_DictEthtoolFeatures(ArgValidatorDict):
+    # List of features created with:
+    # nmcli connection modify "virbr0" ethtool.feature- on |& \
+    #   sed -e 's_[,:]_\n_g'  | \ # split output in newlines
+    #   grep ^\ f | \ # select only lines starting with " f"
+    #   tr -d " ." | \ # remove spaces and fullstops
+    #   sed -e 's,feature-,ArgValidatorBool(",' \ # add Python code
+    #       -e 's/$/", default_value=None)],/'
+    def __init__(self):
+        ArgValidatorDict.__init__(
+            self,
+            name="features",
+            nested=[
+                ArgValidatorBool("esp-hw-offload", default_value=None),
+                ArgValidatorBool("esp-tx-csum-hw-offload", default_value=None),
+                ArgValidatorBool("fcoe-mtu", default_value=None),
+                ArgValidatorBool("gro", default_value=None),
+                ArgValidatorBool("gso", default_value=None),
+                ArgValidatorBool("highdma", default_value=None),
+                ArgValidatorBool("hw-tc-offload", default_value=None),
+                ArgValidatorBool("l2-fwd-offload", default_value=None),
+                ArgValidatorBool("loopback", default_value=None),
+                ArgValidatorBool("lro", default_value=None),
+                ArgValidatorBool("ntuple", default_value=None),
+                ArgValidatorBool("rx", default_value=None),
+                ArgValidatorBool("rxhash", default_value=None),
+                ArgValidatorBool("rxvlan", default_value=None),
+                ArgValidatorBool("rx-all", default_value=None),
+                ArgValidatorBool("rx-fcs", default_value=None),
+                ArgValidatorBool("rx-gro-hw", default_value=None),
+                ArgValidatorBool("rx-udp_tunnel-port-offload", default_value=None),
+                ArgValidatorBool("rx-vlan-filter", default_value=None),
+                ArgValidatorBool("rx-vlan-stag-filter", default_value=None),
+                ArgValidatorBool("rx-vlan-stag-hw-parse", default_value=None),
+                ArgValidatorBool("sg", default_value=None),
+                ArgValidatorBool("tls-hw-record", default_value=None),
+                ArgValidatorBool("tls-hw-tx-offload", default_value=None),
+                ArgValidatorBool("tso", default_value=None),
+                ArgValidatorBool("tx", default_value=None),
+                ArgValidatorBool("txvlan", default_value=None),
+                ArgValidatorBool("tx-checksum-fcoe-crc", default_value=None),
+                ArgValidatorBool("tx-checksum-ipv4", default_value=None),
+                ArgValidatorBool("tx-checksum-ipv6", default_value=None),
+                ArgValidatorBool("tx-checksum-ip-generic", default_value=None),
+                ArgValidatorBool("tx-checksum-sctp", default_value=None),
+                ArgValidatorBool("tx-esp-segmentation", default_value=None),
+                ArgValidatorBool("tx-fcoe-segmentation", default_value=None),
+                ArgValidatorBool("tx-gre-csum-segmentation", default_value=None),
+                ArgValidatorBool("tx-gre-segmentation", default_value=None),
+                ArgValidatorBool("tx-gso-partial", default_value=None),
+                ArgValidatorBool("tx-gso-robust", default_value=None),
+                ArgValidatorBool("tx-ipxip4-segmentation", default_value=None),
+                ArgValidatorBool("tx-ipxip6-segmentation", default_value=None),
+                ArgValidatorBool("tx-nocache-copy", default_value=None),
+                ArgValidatorBool("tx-scatter-gather", default_value=None),
+                ArgValidatorBool("tx-scatter-gather-fraglist", default_value=None),
+                ArgValidatorBool("tx-sctp-segmentation", default_value=None),
+                ArgValidatorBool("tx-tcp6-segmentation", default_value=None),
+                ArgValidatorBool("tx-tcp-ecn-segmentation", default_value=None),
+                ArgValidatorBool("tx-tcp-mangleid-segmentation", default_value=None),
+                ArgValidatorBool("tx-tcp-segmentation", default_value=None),
+                ArgValidatorBool("tx-udp-segmentation", default_value=None),
+                ArgValidatorBool("tx-udp_tnl-csum-segmentation", default_value=None),
+                ArgValidatorBool("tx-udp_tnl-segmentation", default_value=None),
+                ArgValidatorBool("tx-vlan-stag-hw-insert", default_value=None),
+            ],
+        )
+        self.default_value = dict(
+            [(k, v.default_value) for k, v in self.nested.items()]
+        )
+
+
 class ArgValidator_DictBond(ArgValidatorDict):
 
     VALID_MODES = [
@@ -668,6 +754,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidatorBool("ignore_errors", default_value=None),
                 ArgValidator_DictIP(),
                 ArgValidator_DictEthernet(),
+                ArgValidator_DictEthtool(),
                 ArgValidator_DictBond(),
                 ArgValidator_DictInfiniband(),
                 ArgValidator_DictVlan(),

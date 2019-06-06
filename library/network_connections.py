@@ -20,6 +20,7 @@ from ansible.module_utils.network_lsr.argument_validator import (
 
 # pylint: disable=import-error
 from ansible.module_utils.network_lsr.utils import Util
+from ansible.module_utils.network_lsr import nm_provider
 
 DOCUMENTATION = """
 ---
@@ -361,16 +362,39 @@ class IfcfgUtil:
         if connection["mtu"]:
             ifcfg["MTU"] = str(connection["mtu"])
 
+        ethtool_options = ""
         if "ethernet" in connection:
             if connection["ethernet"]["autoneg"] is not None:
                 if connection["ethernet"]["autoneg"]:
-                    s = "autoneg on"
+                    ethtool_options = "autoneg on"
                 else:
-                    s = "autoneg off speed %s duplex %s" % (
+                    ethtool_options = "autoneg off speed %s duplex %s" % (
                         connection["ethernet"]["speed"],
                         connection["ethernet"]["duplex"],
                     )
-                ifcfg["ETHTOOL_OPTS"] = s
+
+        ethtool_features = connection["ethtool"]["features"]
+        configured_features = []
+        for feature, setting in ethtool_features.items():
+            value = ""
+            if setting:
+                value = "on"
+            elif setting is not None:
+                value = "off"
+
+            if value:
+                configured_features.append("%s %s" % (feature, value))
+
+        if configured_features:
+            if ethtool_options:
+                ethtool_options += " ; "
+            ethtool_options += "-K %s %s" % (
+                connection["interface_name"],
+                " ".join(configured_features),
+            )
+
+        if ethtool_options:
+            ifcfg["ETHTOOL_OPTS"] = ethtool_options
 
         if connection["master"] is not None:
             m = ArgUtil.connection_find_master(connection["master"], connections, idx)
@@ -838,6 +862,20 @@ class NMUtil:
                 s_wired.set_property(
                     NM.SETTING_WIRED_SPEED, connection["ethernet"]["speed"]
                 )
+
+        if hasattr(NM, "SettingEthtool"):
+            s_ethtool = self.connection_ensure_setting(con, NM.SettingEthtool)
+
+            for feature, setting in connection["ethtool"]["features"].items():
+                nm_feature = nm_provider.get_nm_ethtool_feature(feature)
+
+                if setting is None:
+                    if nm_feature:
+                        s_ethtool.set_feature(nm_feature, NM.Ternary.DEFAULT)
+                elif setting:
+                    s_ethtool.set_feature(nm_feature, NM.Ternary.TRUE)
+                else:
+                    s_ethtool.set_feature(nm_feature, NM.Ternary.FALSE)
 
         if connection["mtu"]:
             if connection["type"] == "infiniband":
@@ -1830,7 +1868,9 @@ class Cmd_nm(Cmd):
         Cmd.run_prepare(self)
 
         names = {}
-        for connection in self.connections:
+        for idx, connection in enumerate(self.connections):
+            self._check_ethtool_setting_support(idx, connection)
+
             name = connection["name"]
             if not name:
                 assert connection["persistent_state"] == "absent"
@@ -1871,6 +1911,37 @@ class Cmd_nm(Cmd):
                 self.nmutil.destroy_checkpoint(self._checkpoint)
             finally:
                 self._checkpoint = None
+
+    def _check_ethtool_setting_support(self, idx, connection):
+        """ Check if SettingEthtool support is needed and available
+
+        If any feature is specified, the SettingEthtool setting needs to be
+        available. Also NM needs to know about each specified setting. Do not
+        check if NM knows about any defaults.
+
+        """
+        NM = Util.NM()
+
+        # If the profile is not completely specified, for example if only the
+        # runtime change is specified, the ethtool subtree might be missing.
+        # Then no checks are required.
+        if "ethtool" not in connection:
+            return
+
+        ethtool_features = connection["ethtool"]["features"]
+        specified_features = dict(
+            [(k, v) for k, v in ethtool_features.items() if v is not None]
+        )
+
+        if specified_features and not hasattr(NM, "SettingEthtool"):
+            self.log_fatal(idx, "ethtool.features specified but not supported by NM")
+
+        for feature, setting in specified_features.items():
+            nm_feature = nm_provider.get_nm_ethtool_feature(feature)
+            if not nm_feature:
+                self.log_fatal(
+                    idx, "ethtool feature %s specified but not support by NM" % feature
+                )
 
     def run_action_absent(self, idx):
         seen = set()

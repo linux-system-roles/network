@@ -1,0 +1,13 @@
+---
+# set network provider and gather facts
+- hosts: all
+  tasks:
+    - name: Set network provider to 'initscripts'
+      set_fact:
+        network_provider: initscripts
+
+# workaround for: https://github.com/ansible/ansible/issues/27973
+# There is no way in Ansible to abort a playbook hosts with specific OS
+# releases Therefore we include the playbook with the tests only if the hosts
+# would support it.
+- import_playbook: playbooks/tests_ethtool_features.yml

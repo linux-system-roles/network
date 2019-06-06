@@ -339,6 +339,68 @@ The IP configuration supports the following options:
 
 **Note:** Slaves to the bridge, bond or team devices cannot specify `ip` settings.
 
+### `ethtool`
+
+The ethtool settings allow to enable or disable varios features. The names
+correspond to the names used by the `ethtool` utility. Depending on the actual
+kernel and device, changing some features might not be supported.
+
+```yaml
+  ethtool:
+    features:
+      esp-hw-offload: yes|no  # optional
+      esp-tx-csum-hw-offload: yes|no  # optional
+      fcoe-mtu: yes|no  # optional
+      gro: yes|no  # optional
+      gso: yes|no  # optional
+      highdma: yes|no  # optional
+      hw-tc-offload: yes|no  # optional
+      l2-fwd-offload: yes|no  # optional
+      loopback: yes|no  # optional
+      lro: yes|no  # optional
+      ntuple: yes|no  # optional
+      rx: yes|no  # optional
+      rx-all: yes|no  # optional
+      rx-fcs: yes|no  # optional
+      rx-gro-hw: yes|no  # optional
+      rx-udp_tunnel-port-offload: yes|no  # optional
+      rx-vlan-filter: yes|no  # optional
+      rx-vlan-stag-filter: yes|no  # optional
+      rx-vlan-stag-hw-parse: yes|no  # optional
+      rxhash: yes|no  # optional
+      rxvlan: yes|no  # optional
+      sg: yes|no  # optional
+      tls-hw-record: yes|no  # optional
+      tls-hw-tx-offload: yes|no  # optional
+      tso: yes|no  # optional
+      tx: yes|no  # optional
+      tx-checksum-fcoe-crc: yes|no  # optional
+      tx-checksum-ip-generic: yes|no  # optional
+      tx-checksum-ipv4: yes|no  # optional
+      tx-checksum-ipv6: yes|no  # optional
+      tx-checksum-sctp: yes|no  # optional
+      tx-esp-segmentation: yes|no  # optional
+      tx-fcoe-segmentation: yes|no  # optional
+      tx-gre-csum-segmentation: yes|no  # optional
+      tx-gre-segmentation: yes|no  # optional
+      tx-gso-partial: yes|no  # optional
+      tx-gso-robust: yes|no  # optional
+      tx-ipxip4-segmentation: yes|no  # optional
+      tx-ipxip6-segmentation: yes|no  # optional
+      tx-nocache-copy: yes|no  # optional
+      tx-scatter-gather: yes|no  # optional
+      tx-scatter-gather-fraglist: yes|no  # optional
+      tx-sctp-segmentation: yes|no  # optional
+      tx-tcp-ecn-segmentation: yes|no  # optional
+      tx-tcp-mangleid-segmentation: yes|no  # optional
+      tx-tcp-segmentation: yes|no  # optional
+      tx-tcp6-segmentation: yes|no  # optional
+      tx-udp-segmentation: yes|no  # optional
+      tx-udp_tnl-csum-segmentation: yes|no  # optional
+      tx-udp_tnl-segmentation: yes|no  # optional
+      tx-vlan-stag-hw-insert: yes|no  # optional
+      txvlan: yes|no  # optional
+```
 
 Examples of Options
 -------------------
