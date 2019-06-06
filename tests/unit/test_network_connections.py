@@ -10,8 +10,8 @@ import sys
 import unittest
 
 TESTS_BASEDIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(1, os.path.join(TESTS_BASEDIR, "..", "library"))
-sys.path.insert(1, os.path.join(TESTS_BASEDIR, "..", "module_utils"))
+sys.path.insert(1, os.path.join(TESTS_BASEDIR, "../..", "library"))
+sys.path.insert(1, os.path.join(TESTS_BASEDIR, "../..", "module_utils"))
 
 try:
     from unittest import mock
@@ -23,7 +23,7 @@ sys.modules["ansible.module_utils.basic"] = mock.Mock()
 sys.modules["ansible.module_utils"] = mock.Mock()
 sys.modules["ansible.module_utils.network_lsr"] = __import__("network_lsr")
 
-# pylint: disable=import-error
+# pylint: disable=import-error, wrong-import-position
 import network_lsr
 import network_connections as n
 
