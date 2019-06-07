@@ -486,13 +486,15 @@ class ArgValidator_DictEthernet(ArgValidatorDict):
                 ArgValidatorNum(
                     "speed", val_min=0, val_max=0xFFFFFFFF, default_value=0
                 ),
-                ArgValidatorStr("duplex", enum_values=["half", "full"]),
+                ArgValidatorStr(
+                    "duplex", enum_values=["half", "full"], default_value=None
+                ),
             ],
             default_value=ArgValidator.MISSING,
         )
 
     def get_default_ethernet(self):
-        return {"autoneg": None, "speed": 0, "duplex": None}
+        return dict([(k, v.default_value) for k, v in self.nested.items()])
 
     def _validate_post(self, value, name, result):
         has_speed_or_duplex = result["speed"] != 0 or result["duplex"] is not None
