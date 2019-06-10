@@ -2,6 +2,8 @@
 ---
 - hosts: all
   name: Setup for test running
+  tags:
+    - 'tests::tier1'
   tasks:
     - name: Install EPEL on enterprise Linux for python2-mock
       # yamllint disable-line rule:line-length
@@ -28,6 +30,8 @@
 
 - hosts: all
   name: execute python unit tests
+  tags:
+    - 'tests::tier1'
   tasks:
     - name: Copy python modules
       copy:

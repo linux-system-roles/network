@@ -1,6 +1,8 @@
 ---
 # set network provider and gather facts
 - hosts: all
+  tags:
+    - 'tests::tier1'
   tasks:
     - name: Set network provider to 'initscripts'
       set_fact:

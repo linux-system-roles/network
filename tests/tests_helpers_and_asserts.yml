@@ -2,6 +2,8 @@
 ---
 - name: Check that creating and removing test devices and assertions work
   hosts: all
+  tags:
+    - 'tests::tier1'
   tasks:
     - name: test veth interface management
       include_tasks: tasks/create_and_remove_interface.yml

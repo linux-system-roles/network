@@ -1,6 +1,16 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
+- name: Save host state
+  hosts: all
+  tags:
+    - 'tests::tier1'
+    - 'tests::tier1::cleanup'
+  tasks:
+    - import_tasks: save_state.yml
+
 - hosts: all
+  tags:
+    - 'tests::tier1'
   tasks:
     - debug:
         msg: Inside ethernet tests
@@ -9,6 +19,9 @@
 
 - name: Test configuring ethernet devices
   hosts: all
+  tags:
+    - 'tests::tier1'
+    - 'tests::net::veth'
   vars:
     type: veth
     interface: lsr27
@@ -26,6 +39,9 @@
 
 - name: Test static interface up
   hosts: all
+  tags:
+    - 'tests::tier1'
+    - 'tests::net::reconf'
   vars:
     network_connections:
       - name: "{{ interface }}"
@@ -41,22 +57,33 @@
     - include_tasks: tasks/assert_output_in_stderr_without_warnings.yml
 
 - hosts: all
+  tags:
+    - 'tests::tier1'
   tasks:
     - debug:
         var: network_provider
 
 # FIXME: assert profile present
 # FIXME: assert profile/device up + IP address
-- import_playbook: down_profile.yml
+- import_playbook: down-profile.yml
+  tags:
+    - 'tests::tier1'
   vars:
     profile: "{{ interface }}"
 # FIXME: assert profile/device down
-- import_playbook: remove_profile.yml
+- import_playbook: remove-profile.yml
+  tags:
+    - 'tests::tier1'
   vars:
     profile: "{{ interface }}"
 # FIXME: assert profile away
 - name: Remove interfaces
   hosts: all
+  tags:
+    - 'tests::tier1'
+    - 'tests::cleanup'
+    - 'tests::tier1::cleanup'
+    - 'tests::net::veth::cleanup'
   tasks:
     - include_tasks: tasks/manage_test_interface.yml
       vars:

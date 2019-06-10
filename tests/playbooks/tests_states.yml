@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
 - hosts: all
+  tags:
+    - 'tests::tier1'
   vars:
     interface: statebr
     profile: "{{ interface }}"
@@ -22,8 +24,10 @@
             ip:
               dhcp4: false
               auto6: false
-    - include_tasks: tasks/assert_device_present.yml
-    - include_tasks: tasks/assert_profile_present.yml
+      tags:
+        - 'tests::net::bridge'
+    - include_tasks: tasks/assert-device_present.yml
+    - include_tasks: tasks/assert-profile_present.yml
 
     # test case (remove profile but keep it up)
     # I can remove a profile but keep the configuration active.
