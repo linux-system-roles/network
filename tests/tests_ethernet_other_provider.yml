@@ -1,6 +1,8 @@
 ---
 - hosts: all
   name: Run playbook 'tests_ethernet.yml' with non-default provider
+  tags:
+    - 'tests::tier1'
   tasks:
   - name: Get service facts
     service_facts: null

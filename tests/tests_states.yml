@@ -1,6 +1,8 @@
 ---
 # empty playbook to gather facts for import_playbook when clause
 - hosts: all
+  tags:
+    - 'tests::tier1'
 
 # workaround for: https://github.com/ansible/ansible/issues/27973
 # There is no way in Ansible to abort a playbook hosts with specific OS

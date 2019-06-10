@@ -1,0 +1,3 @@
+restore_services:
+  - NetworkManager
+  - network

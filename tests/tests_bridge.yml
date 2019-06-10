@@ -1,7 +1,17 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
+- name: Save host state
+  hosts: all
+  tags:
+    - 'tests::tier1'
+    - 'tests::tier1::cleanup'
+  tasks:
+    - import_tasks: save_state.yml
+
 - name: Test configuring bridges
   hosts: all
+  tags:
+    - 'tests::tier1'
   vars:
     interface: LSR-TST-br31
 
@@ -14,6 +24,9 @@
 
 - name: Add test bridge
   hosts: all
+  tags:
+    - 'tests::tier1'
+    - 'tests::net::bridge'
   vars:
     network_connections:
       - name: "{{ interface }}"
@@ -27,24 +40,40 @@
     - linux-system-roles.network
 
 - import_playbook: run-tasks.yml
+  tags:
+    - 'tests::tier1'
   vars:
     task: tasks/assert-device_present.yml
 
 - import_playbook: run-tasks.yml
+  tags:
+    - 'tests::tier1'
   vars:
     profile: "{{ interface }}"
     task: tasks/assert-profile_present.yml
 
 - import_playbook: down-profile.yml
+  tags:
+    - 'tests::tier1'
+    - 'tests::cleanup'
+    - 'tests::tier1::cleanup'
+    - 'tests::net::bridge::cleanup'
   vars:
     profile: "{{ interface }}"
 # FIXME: assert profile/device down
 
 - import_playbook: remove-profile.yml
+  tags:
+    - 'tests::tier1'
+    - 'tests::cleanup'
+    - 'tests::tier1::cleanup'
+    - 'tests::net::bridge::cleanup'
   vars:
     profile: "{{ interface }}"
 
 - import_playbook: run-tasks.yml
+  tags:
+    - 'tests::tier1'
   vars:
     profile: "{{ interface }}"
     task: tasks/assert-profile_absent.yml
@@ -53,3 +82,25 @@
 #- import_playbook: run-tasks.yml
 #  vars:
 #    task: tasks/assert-device_absent.yml
+
+- name: Remove test bridge
+  hosts: all
+  tags:
+    - 'tests::tier1'
+    - 'tests::cleanup'
+    - 'tests::tier1::cleanup'
+    - 'tests::net::bridge::cleanup'
+  vars:
+    network_connections:
+      name: "{{ interface }}"
+      persistent_state: absent
+  roles:
+    - linux-system-roles.network
+
+- name: Restore host state
+  hosts: all
+  tags:
+    - 'tests::tier1'
+    - 'tests::tier1::cleanup'
+  tasks:
+    - import_tasks: restore_state.yml

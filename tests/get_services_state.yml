@@ -1,0 +1,4 @@
+- name: Get initial state of services
+  tags: tests::cleanup
+  service_facts:
+  register: initial_state

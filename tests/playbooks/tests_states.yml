@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
 - hosts: all
+  tags:
+    - 'tests::tier1'
   vars:
     interface: statebr
     profile: "{{ interface }}"
@@ -22,6 +24,8 @@
             ip:
               dhcp4: false
               auto6: false
+      tags:
+        - 'tests::net::bridge'
     - include_tasks: tasks/assert-device_present.yml
     - include_tasks: tasks/assert-profile_present.yml
 
@@ -47,3 +51,28 @@
             state: down
     - include_tasks: tasks/assert-device_absent.yml
     - include_tasks: tasks/assert-profile_absent.yml
+
+  pre_tasks:
+    - name: Save host state
+      tags:
+        - 'tests::tier1::cleanup'
+      import_tasks: save_state.yml
+
+  post_tasks:
+    - name: Remove test profile
+      tags:
+        - 'tests::cleanup'
+        - 'tests::tier1::cleanup'
+        - 'tests::net::bridge::cleanup'
+      import_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: statebr
+            state: down
+            persistent_state: absent
+
+    - name: Restore host state
+      tags:
+        - 'tests::tier1::cleanup'
+      import_tasks: restore_state.yml

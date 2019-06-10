@@ -2,6 +2,8 @@
 ---
 - hosts: all
   name: Setup for test running
+  tags:
+    - 'tests::tier1'
   tasks:
     - name: Install EPEL on enterprise Linux for python2-mock
       command: yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
@@ -27,6 +29,8 @@
 
 - hosts: all
   name: execute python unit tests
+  tags:
+    - 'tests::tier1'
   tasks:
     - name: Copy python modules
       copy:

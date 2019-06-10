@@ -2,6 +2,8 @@
 ---
 - name: Check that creating and removing test devices and assertions work
   hosts: all
+  tags:
+    - 'tests::tier1'
   tasks:
     - name: test veth interface management
       include_tasks: tasks/create-and-remove-interface.yml
@@ -14,6 +16,18 @@
       vars:
         type: dummy
         interface: dummy1298
+
+  pre_tasks:
+    - name: Save host state
+      tags:
+        - 'tests::tier1::cleanup'
+      import_tasks: save_state.yml
+
+  post_tasks:
+    - name: Restore host state
+      tags:
+        - 'tests::tier1::cleanup'
+      import_tasks: restore_state.yml
 
 # FIXME: when: does not seem to work with include_tasks, therefore this cannot be safely tested for now
 #    - name: test tap interfaces
