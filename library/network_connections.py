@@ -1061,6 +1061,56 @@ class NMUtil:
                 % (cb_args.get("error", "unknown error"), cb_args)
             )
 
+    def create_checkpoint(self):
+        """ Create a new checkpoint """
+        checkpoint = self._call_checkpoint(
+            "create",
+            [],  # devices, empty list is all devices
+            60,  # timeout in seconds, FIXME: Make it an option
+            Util.NM().CheckpointCreateFlags.DELETE_NEW_CONNECTIONS
+            | Util.NM().CheckpointCreateFlags.DISCONNECT_NEW_DEVICES,
+        )
+
+        if checkpoint:
+            return checkpoint.get_path()
+
+    def destroy_checkpoint(self, path):
+        """ Destroy the specified checkpoint """
+        self._call_checkpoint("destroy", path)
+
+    def rollback_checkpoint(self, path):
+        """ Rollback the specified checkpoint """
+        self._call_checkpoint("rollback", path)
+
+    def _call_checkpoint(self, action, *args):
+        action_name = "checkpoint_" + action
+        finish = action_name + "_finish"
+        callback = Util.create_callback(finish)
+        cancellable = Util.create_cancellable()
+        user_data = {}
+
+        mainloop_timeout = 10
+
+        action_method = getattr(self.nmclient, action_name)
+        fullargs = []
+        fullargs += args
+        fullargs += (cancellable, callback, user_data)
+
+        action_method(*fullargs)
+
+        if not Util.GMainLoop_run(mainloop_timeout):
+            cancellable.cancel()
+            raise MyError("failure to %s checkpoint: timeout" % action)
+
+        success = user_data.get("success", None)
+        if success is not None:
+            return success
+        else:
+            raise MyError(
+                "failure to %s checkpoint: %s: %r"
+                % (action, user_data.get("error", "unknown error"), user_data)
+            )
+
     def wait_till_connection_is_gone(self, uuid, timeout=10):
         """
         Wait until a connection is gone or until the timeout elapsed
@@ -1680,11 +1730,11 @@ class Cmd:
                             self.run_action_down(idx)
                         else:
                             assert False
-                except Exception as e:
-                    self.log_warn(
-                        idx, "failure: %s [[%s]]" % (e, traceback.format_exc())
-                    )
+                except Exception as error:
+                    self.finish_run_error(idx, action, error)
                     raise
+
+        self.finish_run_success()
 
     def run_prepare(self):
         for idx, connection in enumerate(self.connections):
@@ -1734,6 +1784,25 @@ class Cmd:
                         % (connection["interface_name"], connection["mac"]),
                     )
 
+    def finish_run_success(self):
+        """ Hook for after all changes where made successfuly """
+
+    def finish_run_error(self, idx, action, error):
+        """ Hook if configuring a profile results in an error
+
+        :param idx: Index of the connection that triggered the error
+        :param action: Action that triggered the error
+        :param error: The error
+
+        :type idx: int
+        :type action: str
+        :type error: Exception
+
+        """
+        self.log_warn(
+            idx, "failure: %s (%s) [[%s]]" % (error, action, traceback.format_exc())
+        )
+
     def run_action_absent(self, idx):
         raise NotImplementedError()
 
@@ -1768,6 +1837,9 @@ class Cmd_nm(Cmd):
 
     def run_prepare(self):
         Cmd.run_prepare(self)
+
+        self._checkpoint = self.nmutil.create_checkpoint()
+
         names = {}
         for connection in self.connections:
             name = connection["name"]
@@ -1788,6 +1860,14 @@ class Cmd_nm(Cmd):
                 names[name] = {"nm.exists": exists, "nm.uuid": uuid}
             connection["nm.exists"] = exists
             connection["nm.uuid"] = uuid
+
+    def finish_run_error(self, idx, action, error):
+        Cmd.finish_run_error(self, idx, action, error)
+        self.nmutil.rollback_checkpoint(self._checkpoint)
+
+    def finish_run_success(self):
+        Cmd.finish_run_success(self)
+        self.nmutil.destroy_checkpoint(self._checkpoint)
 
     def run_action_absent(self, idx):
         seen = set()
