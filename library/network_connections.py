@@ -39,6 +39,8 @@ options: Documentation needs to be written. Note that the network_connections
 
 ###############################################################################
 
+DEFAULT_ACTIVATION_TIMEOUT = 90
+
 
 class CheckMode:
     PREPARE = "prepare"
@@ -1061,6 +1063,36 @@ class NMUtil:
                 % (cb_args.get("error", "unknown error"), cb_args)
             )
 
+    def create_checkpoint(self, timeout):
+        """ Create a new checkpoint """
+        checkpoint = Util.call_async_method(
+            self.nmclient,
+            "checkpoint_create",
+            [
+                [],  # devices, empty list is all devices
+                timeout,
+                Util.NM().CheckpointCreateFlags.DELETE_NEW_CONNECTIONS
+                | Util.NM().CheckpointCreateFlags.DISCONNECT_NEW_DEVICES,
+            ],
+        )
+
+        if checkpoint:
+            return checkpoint.get_path()
+        return None
+
+    def destroy_checkpoint(self, path):
+        """ Destroy the specified checkpoint """
+        Util.call_async_method(self.nmclient, "checkpoint_destroy", [path])
+
+    def rollback_checkpoint(self, path):
+        """ Rollback the specified checkpoint """
+        Util.call_async_method(
+            self.nmclient,
+            "checkpoint_rollback",
+            [path],
+            mainloop_timeout=DEFAULT_ACTIVATION_TIMEOUT,
+        )
+
     def wait_till_connection_is_gone(self, uuid, timeout=10):
         """
         Wait until a connection is gone or until the timeout elapsed
@@ -1667,6 +1699,9 @@ class Cmd:
                 self.log_fatal(idx, str(e))
         self.run_prepare()
         while self.check_mode_next() != CheckMode.DONE:
+            if self.check_mode == CheckMode.REAL_RUN:
+                self.start_transaction()
+
             for idx, connection in enumerate(self.connections):
                 try:
                     for action in connection["actions"]:
@@ -1680,11 +1715,13 @@ class Cmd:
                             self.run_action_down(idx)
                         else:
                             assert False
-                except Exception as e:
-                    self.log_warn(
-                        idx, "failure: %s [[%s]]" % (e, traceback.format_exc())
-                    )
+                except Exception as error:
+                    if self.check_mode == CheckMode.REAL_RUN:
+                        self.rollback_transaction(idx, action, error)
                     raise
+
+            if self.check_mode == CheckMode.REAL_RUN:
+                self.finish_transaction()
 
     def run_prepare(self):
         for idx, connection in enumerate(self.connections):
@@ -1734,6 +1771,28 @@ class Cmd:
                         % (connection["interface_name"], connection["mac"]),
                     )
 
+    def start_transaction(self):
+        """ Hook before making changes """
+
+    def finish_transaction(self):
+        """ Hook for after all changes where made successfuly """
+
+    def rollback_transaction(self, idx, action, error):
+        """ Hook if configuring a profile results in an error
+
+        :param idx: Index of the connection that triggered the error
+        :param action: Action that triggered the error
+        :param error: The error
+
+        :type idx: int
+        :type action: str
+        :type error: Exception
+
+        """
+        self.log_warn(
+            idx, "failure: %s (%s) [[%s]]" % (error, action, traceback.format_exc())
+        )
+
     def run_action_absent(self, idx):
         raise NotImplementedError()
 
@@ -1755,6 +1814,7 @@ class Cmd_nm(Cmd):
         Cmd.__init__(self, **kwargs)
         self._nmutil = None
         self.validate_one_type = ArgValidator_ListConnections.VALIDATE_ONE_MODE_NM
+        self._checkpoint = None
 
     @property
     def nmutil(self):
@@ -1768,6 +1828,7 @@ class Cmd_nm(Cmd):
 
     def run_prepare(self):
         Cmd.run_prepare(self)
+
         names = {}
         for connection in self.connections:
             name = connection["name"]
@@ -1788,6 +1849,28 @@ class Cmd_nm(Cmd):
                 names[name] = {"nm.exists": exists, "nm.uuid": uuid}
             connection["nm.exists"] = exists
             connection["nm.uuid"] = uuid
+
+    def start_transaction(self):
+        Cmd.start_transaction(self)
+        self._checkpoint = self.nmutil.create_checkpoint(
+            len(self.connections) * DEFAULT_ACTIVATION_TIMEOUT
+        )
+
+    def rollback_transaction(self, idx, action, error):
+        Cmd.rollback_transaction(self, idx, action, error)
+        if self._checkpoint:
+            try:
+                self.nmutil.rollback_checkpoint(self._checkpoint)
+            finally:
+                self._checkpoint = None
+
+    def finish_transaction(self):
+        Cmd.finish_transaction(self)
+        if self._checkpoint:
+            try:
+                self.nmutil.destroy_checkpoint(self._checkpoint)
+            finally:
+                self._checkpoint = None
 
     def run_action_absent(self, idx):
         seen = set()
@@ -1941,7 +2024,7 @@ class Cmd_nm(Cmd):
 
             wait_time = connection["wait"]
             if wait_time is None:
-                wait_time = 90
+                wait_time = DEFAULT_ACTIVATION_TIMEOUT
 
             try:
                 self.nmutil.connection_activate_wait(ac, wait_time)
