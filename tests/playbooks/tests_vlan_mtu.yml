@@ -84,10 +84,10 @@
     - name: Save host state
       tags:
         - 'tests::tier1::cleanup'
-      import_tasks: save_state.yml
+      import_tasks: "../save_state.yml"
 
   post_tasks:
     - name: Restore host state
       tags:
         - 'tests::tier1::cleanup'
-      import_tasks: restore_state.yml
+      import_tasks: "../restore_state.yml"
