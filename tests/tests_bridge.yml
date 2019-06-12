@@ -90,12 +90,9 @@
     - 'tests::cleanup'
     - 'tests::tier1::cleanup'
     - 'tests::net::bridge::cleanup'
-  vars:
-    network_connections:
-      name: "{{ interface }}"
-      persistent_state: absent
-  roles:
-    - linux-system-roles.network
+  tasks:
+    - command: 'ip link delete "{{ interface }}"'
+      ignore_errors: yes
 
 - name: Restore host state
   hosts: all
