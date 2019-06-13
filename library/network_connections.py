@@ -1299,7 +1299,14 @@ class NMUtil:
             finally:
                 ac.handler_disconnect(ac_id)
 
+    def reapply(self, interface, connection):
+        device = self.nmclient.get_device_by_iface(interface)
+        if not device:
+            return False
 
+        version_id = 0
+        flags = 0
+        return Util.call_async(device, "reapply", [connection, version_id, flags])
 ###############################################################################
 
 
@@ -1934,6 +1941,13 @@ class Cmd_nm(Cmd):
         )
         self.connections_data_set_changed(idx)
         if self.check_mode == CheckMode.REAL_RUN:
+            if connection["interface_name"]:
+                try:
+                    self.nmutil.reapply(connection["interface_name"], con)
+                    self.log_info(idx, "connection reapplied")
+                    return
+                except MyError as error:
+                    self.log_info(idx, "connection reapply failed: %s" % (error))
             try:
                 ac = self.nmutil.connection_activate(con)
             except MyError as e:
