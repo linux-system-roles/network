@@ -11,3 +11,18 @@
 
 - name: Restore services
   import_tasks: restore_services_state.yml
+
+- name: restart NetworkManager
+  tags:
+    - 'tests::cleanup'
+  service:
+    name: NetworkManager
+    state: "{{ 'restarted' if 
+                   initial_state.ansible_facts.services[sname]['state'] 
+                   == 'running' else 'stopped' }}"
+  when:
+    - sname in final_state.ansible_facts.services
+    - sname in initial_state.ansible_facts.services
+    - final_state.ansible_facts.services[sname]['state'] == 'running'
+  vars:
+    sname: NetworkManager.service
