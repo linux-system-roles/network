@@ -122,6 +122,43 @@ class Util:
         return c
 
     @classmethod
+    def call_async_method(cls, object_, action, args, mainloop_timeout=10):
+        """ Asynchronously call a NetworkManager method """
+        cancellable = cls.create_cancellable()
+        async_action = action + "_async"
+        # NM does not use a uniform naming for the async methods,
+        # for checkpoints it is:
+        # NMClient.checkpoint_create() and NMClient.checkpoint_create_finish(),
+        # but for reapply it is:
+        # NMDevice.reapply_async() and NMDevice.reapply_finish()
+        # NMDevice.reapply() is a synchronous version
+        # Therefore check if there is a method if an `async` suffix and use the
+        # one without the suffix otherwise
+        if not hasattr(object_, async_action):
+            async_action = action
+        finish = action + "_finish"
+        user_data = {}
+
+        fullargs = []
+        fullargs += args
+        fullargs += (cancellable, cls.create_callback(finish), user_data)
+
+        getattr(object_, async_action)(*fullargs)
+
+        if not cls.GMainLoop_run(mainloop_timeout):
+            cancellable.cancel()
+            raise MyError("failure to call %s.%s(): timeout" % object_, async_action)
+
+        success = user_data.get("success", None)
+        if success is not None:
+            return success
+
+        raise MyError(
+            "failure to %s checkpoint: %s: %r"
+            % (action, user_data.get("error", "unknown error"), user_data)
+        )
+
+    @classmethod
     def create_cancellable(cls):
         return cls.Gio().Cancellable.new()
 
