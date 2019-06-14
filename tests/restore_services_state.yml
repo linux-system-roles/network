@@ -10,8 +10,8 @@
     - name: Restore state of services
       service:
         name: "{{ item }}"
-        state: "{{ 'started' if 
-                   initial_state.ansible_facts.services[sname]['state'] 
+        state: "{{ 'started' if
+                   initial_state.ansible_facts.services[sname]['state']
                    == 'running' else 'stopped' }}"
       when:
          - sname in final_state.ansible_facts.services
