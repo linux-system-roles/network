@@ -343,9 +343,19 @@ class IfcfgUtil:
         elif connection["type"] == "bond":
             ifcfg["TYPE"] = "Bond"
             ifcfg["BONDING_MASTER"] = "yes"
-            opts = ["mode=%s" % (connection["bond"]["mode"])]
-            if connection["bond"]["miimon"] is not None:
-                opts.append(" miimon=%s" % (connection["bond"]["miimon"]))
+            opts = []
+            valid_opts = [
+                "mode",
+                "miimon",
+                "use_carrier",
+                "updelay",
+                "downdelay",
+                "primary_reselect",
+                "primary",
+            ]
+            for opt_key in valid_opts:
+                if connection["bond"][opt_key] is not None:
+                    opts.append("%s=%s" % (opt_key, connection["bond"][opt_key]))
             ifcfg["BONDING_OPTS"] = " ".join(opts)
         elif connection["type"] == "team":
             ifcfg["DEVICETYPE"] = "Team"

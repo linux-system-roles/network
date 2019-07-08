@@ -619,12 +619,25 @@ class ArgValidator_DictBond(ArgValidatorDict):
         "balance-alb",
     ]
 
+    VALID_RESELECT = ["always", "better", "failure"]
+
     def __init__(self):
         ArgValidatorDict.__init__(
             self,
             name="bond",
             nested=[
                 ArgValidatorStr("mode", enum_values=ArgValidator_DictBond.VALID_MODES),
+                ArgValidatorNum(
+                    "use_carrier", val_min=0, val_max=1, default_value=None
+                ),
+                ArgValidatorNum("updelay", default_value=None),
+                ArgValidatorNum("downdelay", default_value=None),
+                ArgValidatorStr("primary", default_value=None),
+                ArgValidatorStr(
+                    "primary_reselect",
+                    enum_values=ArgValidator_DictBond.VALID_RESELECT,
+                    default_value=None,
+                ),
                 ArgValidatorNum(
                     "miimon", val_min=0, val_max=1000000, default_value=None
                 ),
