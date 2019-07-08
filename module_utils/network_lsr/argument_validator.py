@@ -630,8 +630,12 @@ class ArgValidator_DictBond(ArgValidatorDict):
                 ArgValidatorNum(
                     "use_carrier", val_min=0, val_max=1, default_value=None
                 ),
-                ArgValidatorNum("updelay", default_value=None),
-                ArgValidatorNum("downdelay", default_value=None),
+                ArgValidatorNum(
+                    "updelay", val_min=0, numeric_type=int, default_value=None
+                ),
+                ArgValidatorNum(
+                    "downdelay", val_min=0, numeric_type=int, default_value=None
+                ),
                 ArgValidatorStr("primary", default_value=None),
                 ArgValidatorStr(
                     "primary_reselect",
