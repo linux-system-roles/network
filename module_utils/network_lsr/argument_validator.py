@@ -646,7 +646,15 @@ class ArgValidator_DictBond(ArgValidatorDict):
         )
 
     def get_default_bond(self):
-        return {"mode": ArgValidator_DictBond.VALID_MODES[0], "miimon": None}
+        return {
+            "mode": ArgValidator_DictBond.VALID_MODES[0],
+            "miimon": None,
+            "use_carrier": None,
+            "updelay": None,
+            "downdelay": None,
+            "primary": None,
+            "primary_reselect": None,
+        }
 
 
 class ArgValidator_DictInfiniband(ArgValidatorDict):
