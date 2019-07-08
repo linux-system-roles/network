@@ -51,6 +51,16 @@ ABSENT_STATE = "absent"
 
 DEFAULT_ACTIVATION_TIMEOUT = 90
 
+# Valid keys for the BONDING_OPTS parameter on a Bond interface
+VALID_BONDING_OPTS = [
+    "mode",
+    "miimon",
+    "use_carrier",
+    "updelay",
+    "downdelay",
+    "primary_reselect",
+]
+
 
 class CheckMode:
     PREPARE = "prepare"
@@ -339,9 +349,14 @@ class IfcfgUtil:
         elif connection["type"] == "bond":
             ifcfg["TYPE"] = "Bond"
             ifcfg["BONDING_MASTER"] = "yes"
-            opts = ["mode=%s" % (connection["bond"]["mode"])]
-            if connection["bond"]["miimon"] is not None:
-                opts.append(" miimon=%s" % (connection["bond"]["miimon"]))
+            opts = []
+            for opt_key in VALID_BONDING_OPTS:
+                if connection["bond"][opt_key] is not None:
+                    opts.append("%s=%s" % (opt_key, connection["bond"][opt_key]))
+            if connection["bond"]["primary"] is not None:
+                opts.append("primary=%s" % (ArgUtil.connection_find_master(
+                    connection["bond"]["primary"], connections
+                )))
             ifcfg["BONDING_OPTS"] = " ".join(opts)
         elif connection["type"] == "team":
             ifcfg["DEVICETYPE"] = "Team"
@@ -804,9 +819,9 @@ class NMUtil:
         elif connection["type"] == "bond":
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, NM.SETTING_BOND_SETTING_NAME)
             s_bond = self.connection_ensure_setting(con, NM.SettingBond)
-            s_bond.add_option("mode", connection["bond"]["mode"])
-            if connection["bond"]["miimon"] is not None:
-                s_bond.add_option("miimon", str(connection["bond"]["miimon"]))
+            for opt_key in VALID_BONDING_OPTS:
+                if connection["bond"][opt_key] is not None:
+                    s_bond.add_option(opt_key, str(connection["bond"][opt_key]))
         elif connection["type"] == "team":
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, NM.SETTING_TEAM_SETTING_NAME)
         elif connection["type"] == "vlan":

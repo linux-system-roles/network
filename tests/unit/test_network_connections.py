@@ -1305,7 +1305,15 @@ class TestValidator(unittest.TestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
-                    "bond": {"mode": "balance-rr", "miimon": None},
+                    "bond": {
+                        "mode": "balance-rr",
+                        "miimon": None,
+                        "use_carrier": None,
+                        "updelay": None,
+                        "downdelay": None,
+                        "primary_reselect": None,
+                        "primary": None,
+                    },
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -1352,7 +1360,15 @@ class TestValidator(unittest.TestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
-                    "bond": {"mode": "active-backup", "miimon": None},
+                    "bond": {
+                        "mode": "active-backup",
+                        "miimon": None,
+                        "use_carrier": None,
+                        "updelay": None,
+                        "downdelay": None,
+                        "primary_reselect": None,
+                        "primary": None,
+                    },
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -1446,6 +1462,98 @@ class TestValidator(unittest.TestCase):
                 }
             ],
             [{"name": "5", "type": "ethernet", "mac": "AA:bb:cC:DD:ee:FF"}],
+        )
+
+    def test_bond_primary(self):
+        """
+        Test that bonded interfaces can specify a primary interface.
+        """
+        self.maxDiff = None
+        bond0_expected = dict(self.default_connection_settings)
+        bond0_expected.update({
+            "actions": ["present"],
+            "bond": {
+                "mode": "active-backup",
+                "miimon": None,
+                "primary": "eth_int",
+                "primary_reselect": None,
+                "updelay": None,
+                "downdelay": None,
+                "use_carrier": None,
+            },
+            "interface_name": "bond0",
+            "name": "bond_int",
+            "persistent_state": "present",
+            "state": None,
+            "type": "bond",
+        })
+        eth0_expected = dict(self.default_connection_settings)
+        eth0_expected.update({
+            "actions": ["present"],
+            "interface_name": "eth0",
+            "master": "bond_int",
+            "name": "eth_int",
+            "persistent_state": "present",
+            "slave_type": "bond",
+            "state": None,
+            "type": "ethernet",
+        })
+
+        self.do_connections_validate(
+            [bond0_expected, eth0_expected],
+            [
+                {
+                    "name": "bond_int",
+                    "interface_name": "bond0",
+                    "type": "bond",
+                    "bond": {
+                        "mode": "active-backup",
+                        "primary": "eth_int"
+                    }
+                },
+                {
+                    "name": "eth_int",
+                    "interface_name": "eth0",
+                    "type": "ethernet",
+                    "master": "bond_int",
+                    "slave_type": "bond"
+                }
+            ],
+            initscripts_dict_expected=[
+                {
+                    "ifcfg": {
+                        "BONDING_MASTER": "yes",
+                        "BONDING_OPTS": "mode=active-backup primary=eth0",
+                        "BOOTPROTO": "dhcp",
+                        "DEVICE": "bond0",
+                        "IPV6INIT": "yes",
+                        "IPV6_AUTOCONF": "yes",
+                        "NM_CONTROLLED": "no",
+                        "ONBOOT": "yes",
+                        "TYPE": "Bond",
+                    },
+                    "keys": None,
+                    "route": None,
+                    "route6": None,
+                    "rule": None,
+                    "rule6": None,
+                },
+                {
+                    "ifcfg": {
+                        "DEVICE": "eth0",
+                        "MASTER": "bond0",
+                        "NM_CONTROLLED": "no",
+                        "ONBOOT": "yes",
+                        "SLAVE": "yes",
+                        "TYPE": "Ethernet",
+                    },
+                    "keys": None,
+                    "route": None,
+                    "route6": None,
+                    "rule": None,
+                    "rule6": None,
+                }
+            ]
         )
 
     def test_ethernet_speed_settings(self):
