@@ -46,7 +46,7 @@ before_install:
   # for the concrette role, or set specific environment variables. To decide
   # what to set or install in which environment, the value of LSRENV should be
   # helpfull:
-  - if [ -f .travis/before_install.sh ]; then .travis/before_install.sh; fi
+  - if [ -f .travis/before_install.sh ]; then source .travis/before_install.sh; fi
 
 install:
   - pip install molecule docker tox tox-travis
