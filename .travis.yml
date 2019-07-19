@@ -28,7 +28,7 @@ before_install:
   - ./.travis/preinstall
 
 install:
-  - pip install molecule docker tox tox-travis
+  - pip install tox tox-travis
 
 script:
   - ./.travis/runtox
