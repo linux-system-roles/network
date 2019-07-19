@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -ex
+
+SCRIPTDIR=$(dirname $0)
+CONFIG=${SCRIPTDIR}/config.sh
+
+if [[ -f ${CONFIG} ]]; then
+  . ${CONFIG}
+fi
+
+tox "$@"

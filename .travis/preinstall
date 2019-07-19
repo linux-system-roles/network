@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -ex
+
+SCRIPTDIR=$(dirname $0)
+CONFIG=${SCRIPTDIR}/config.sh
+
+if [[ -f ${CONFIG} ]]; then
+  . ${CONFIG}
+fi
+
+if [[ "x${LSR_EXTRA_PACKAGES}" != "x" ]]; then
+  sudo apt-get install -y ${LSR_EXTRA_PACKAGES}
+fi

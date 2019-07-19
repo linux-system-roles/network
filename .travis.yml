@@ -1,55 +1,33 @@
 ---
-dist: xenial
 language: python
-env:
-  global:
-    - LSR_NEED_PYLINTERS="/^linux-system-roles\/(network|selinux|storage)$/"
 matrix:
   include:
     - python: 2.6
-      dist: trusty
-      # Use LSRENV to save the unique value (here the desired Python
-      # interpreter version) to distinguish between Travis jobs. This can be
-      # usefull if some role wish to perform a specific action depending on the
-      # job environment:
-      env: LSRENV=2.6
-      # Skip the jobs where only Python linters are run if the role does not
-      # contain any Python code:
-      if: repo =~ env(LSR_NEED_PYLINTERS)
+      # If the role contains python code that should be linted and tested, say
+      # this by setting LSR_USE_PYTHON environment variable to the value that
+      # evaluates as true in the role's repository settings page at
+      # https://travis-ci.org/
+      if: env(LSR_USE_PYTHON) IS NOT blank
     - python: 2.7
-      env: LSRENV=2.7
-      if: repo =~ env(LSR_NEED_PYLINTERS)
+      if: env(LSR_USE_PYTHON) IS NOT blank
     - python: 3.5
-      env: LSRENV=3.5
-      # Under 3.5, we run Molecule
     - python: 3.6
-      env: LSRENV=3.6
-      if: repo =~ env(LSR_NEED_PYLINTERS)
+      if: env(LSR_USE_PYTHON) IS NOT blank
     - python: 3.7
-      env: LSRENV=3.7
-      if: repo =~ env(LSR_NEED_PYLINTERS)
+      if: env(LSR_USE_PYTHON) IS NOT blank
     - python: 3.7-dev
-      env: LSRENV=3.7-dev
-      if: repo =~ env(LSR_NEED_PYLINTERS)
+      if: env(LSR_USE_PYTHON) IS NOT blank
     - python: 3.8-dev
-      env: LSRENV=3.8-dev
-      if: repo =~ env(LSR_NEED_PYLINTERS)
-    #- python: nightly
-    #  env: LSRENV=nightly
-    #  if: repo =~ env(LSR_NEED_PYLINTERS)
+      if: env(LSR_USE_PYTHON) IS NOT blank
 
 services:
   - docker
 
 before_install:
-  # In .travis/before_install.sh can be commands that install packages specific
-  # for the concrette role, or set specific environment variables. To decide
-  # what to set or install in which environment, the value of LSRENV should be
-  # helpfull:
-  - if [ -f .travis/before_install.sh ]; then source .travis/before_install.sh; fi
+  - ./.travis/preinstall
 
 install:
   - pip install molecule docker tox tox-travis
 
 script:
-  - tox
+  - ./.travis/runtox
