@@ -10,5 +10,6 @@ if [[ -f ${CONFIG} ]]; then
 fi
 
 if [[ "x${LSR_EXTRA_PACKAGES}" != "x" ]]; then
+  sudo apt-get update
   sudo apt-get install -y ${LSR_EXTRA_PACKAGES}
 fi
