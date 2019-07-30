@@ -1,4 +1,3 @@
-export LSR_PYLINT_DIRS='library/network_connections.py module_utils/network_lsr tests/unit/test_network_connections.py'
 export LSR_MOLECULE_DEPS='-rmolecule_requirements.txt'
 
 case "x${TRAVIS_PYTHON_VERSION}" in

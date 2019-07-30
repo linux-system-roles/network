@@ -16,8 +16,7 @@ ignore-patterns=
 
 # Python code to execute, usually for sys.path manipulation such as
 # pygtk.require().
-init-hook="from pylint.config import find_pylintrc; import os, sys; sys.path.append(os.path.dirname(find_pylintrc()) + '/library'); sys.path.append(os.path.dirname(find_pylintrc()) + '/module_utils'); sys.path.append(os.path.dirname(find_pylintrc()) + '/tests')"
-
+#init-hook=
 
 # Use multiple processes to speed up Pylint.
 jobs=1
@@ -56,7 +55,7 @@ confidence=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
-disable=
+disable=wrong-import-position
 #disable=print-statement,
 #        parameter-unpacking,
 #        unpacking-in-except,
@@ -246,7 +245,7 @@ indent-after-paren=4
 indent-string='    '
 
 # Maximum number of characters on a single line.
-max-line-length=100
+max-line-length=88
 
 # Maximum number of lines in a module
 max-module-lines=1000
