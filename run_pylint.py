@@ -129,7 +129,7 @@ def main():
 
     args, include_pattern, exclude_pattern = probe_args()
     if "-h" in args or "--help" in args:
-        sys.stdout.write(__doc__)
+        print_line(__doc__)
         return 0
     files = probe_dir(
         os.getcwd(), re.compile(include_pattern), re.compile(exclude_pattern)
