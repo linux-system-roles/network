@@ -20,9 +20,8 @@ Usage: python run_pylint.py ARGUMENTS
 
 Run pylint with ARGUMENTS followed by the list of python files contained in the
 working directory and its subdirectories.  As a python file is recognized a
-file that match the regular expression .*\\.py[iw]?$.  Files and directories
-that match the regular expression ^\\..* are skipped.  Symbolic links are also
-skipped.
+file that match INCPAT.  Files and directories that match EXPAT are skipped.
+Symbolic links are also skipped.
 
 There are several cases when argument from ARGUMENTS is not passed to pylint
 but it is handled by run_pylint.py instead:
@@ -30,14 +29,27 @@ but it is handled by run_pylint.py instead:
   1. if -h or --help is contained in ARGUMENTS, this help screen is printed to
      the standard output and run_pylint.py exits with 0;
   2. if --include followed by a PATTERN is contained in ARGUMENTS, the PATTERN
-     is used to recognize whether the file is a python file or not, instead of
-     default .*\\.py[iw]?$;
+     is used instead of INCPAT to recognize whether the file is a python file
+     or not;
   3. if --exclude followed by a PATTERN is contained in ARGUMENTS, the PATTERN
-     is used to recognize whether the file or directory should be skipped (i.e.
-     instead of default ^\\..*, the PATTERN is used).
+     is used instead of EXPAT to recognize whether the file or directory should
+     be skipped.
 
 Exclusion takes a priority over inclusion, i.e. if a file or directory can be
 both included and excluded, it is excluded.
+
+The default value of INCPAT is .*\\.py[iw]?$.  For EXPAT, it is ^\\..*.
+
+Environment variables:
+
+  RUN_PYLINT_INCLUDE
+    overrides default value of INCPAT;
+
+  RUN_PYLINT_EXCLUDE
+    overrides default value of EXPAT;
+
+  RUN_PYLINT_DISABLED
+    if set to an arbitrary non-empty value, pylint will be not executed
 """
 
 import os
@@ -69,11 +81,15 @@ def probe_args():
     Analyze the command line arguments and return a tuple containing a list of
     pylint arguments, pattern string to recognize files to be included, and
     pattern string to recognize files and directories to be skipped.
+
+    Default values of pattern strings are taken from RUN_PYLINT_INCLUDE and
+    RUN_PYLINT_EXCLUDE environment variables. In the case they are not defined,
+    .*\\.py[iw]?$ and ^\\..* are used, respectively.
     """
 
     args = []
-    include_pattern = r".*\.py[iw]?$"
-    exclude_pattern = r"^\..*"
+    include_pattern = os.getenv("RUN_PYLINT_INCLUDE", r".*\.py[iw]?$")
+    exclude_pattern = os.getenv("RUN_PYLINT_EXCLUDE", r"^\..*")
     i, nargs = 1, len(sys.argv)
     while i < nargs:
         arg = sys.argv[i]
@@ -130,6 +146,8 @@ def main():
     args, include_pattern, exclude_pattern = probe_args()
     if "-h" in args or "--help" in args:
         print_line(__doc__)
+        return 0
+    if os.getenv("RUN_PYLINT_DISABLED", "") != "":
         return 0
     files = probe_dir(
         os.getcwd(), re.compile(include_pattern), re.compile(exclude_pattern)
