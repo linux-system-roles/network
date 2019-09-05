@@ -4,7 +4,7 @@ network_connections: []
 
 # Use initscripts for RHEL/CentOS < 7, nm otherwise
 network_provider_os_default: "{{
-    'initscripts' if ansible_distribution in ['RedHat', 'CentOS'] and
+    'initscripts' if ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux'] and
         ansible_distribution_major_version is version('7', '<')
     else 'nm' }}"
 # If NetworkManager.service is running, assume that 'nm' is currently in-use,
@@ -34,12 +34,12 @@ network_service_name_default_initscripts: network
 # 'bridge' type is used in network_connections
 _network_packages_default_initscripts_bridge: ["{% if ['bridge'] in network_connections|json_query('[*][type]') and
 (
-   (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('7', '<=')) or
+   (ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux'] and ansible_distribution_major_version is version('7', '<=')) or
    (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('28', '<='))
 )
 %}bridge-utils{% endif %}"]
 _network_packages_default_initscripts_network_scripts: ["{%
-if (ansible_distribution in ['RedHat', 'CentOS'] and ansible_distribution_major_version is version('7', '<=')) or
+if (ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux'] and ansible_distribution_major_version is version('7', '<=')) or
    (ansible_distribution == 'Fedora' and ansible_distribution_major_version is version('28', '<='))
 %}initscripts{% else %}network-scripts{% endif %}"]
 # convert _network_packages_default_initscripts_bridge to an empty list if it
