@@ -10,10 +10,6 @@ if [[ -f ${CONFIG} ]]; then
 fi
 
 tox "$@"
-if [[ "x${LSR_MSCENARIOS}" != "x" ]]; then
-  for X in ${LSR_MSCENARIOS}; do
-    LSR_MSCENARIO=${X} tox -e molecule_lint
-    LSR_MSCENARIO=${X} tox -e molecule_syntax
-    LSR_MSCENARIO=${X} tox -e molecule_test
-  done
-fi
+for X in ${LSR_MSCENARIOS}; do
+  LSR_MSCENARIO=${X} tox -e molecule
+done

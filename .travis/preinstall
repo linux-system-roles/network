@@ -9,7 +9,7 @@ if [[ -f ${CONFIG} ]]; then
   . ${CONFIG}
 fi
 
-if [[ "x${LSR_EXTRA_PACKAGES}" != "x" ]]; then
+if [[ "${LSR_EXTRA_PACKAGES}" ]]; then
   sudo apt-get update
   sudo apt-get install -y ${LSR_EXTRA_PACKAGES}
 fi
