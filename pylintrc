@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 # This file was generated using `pylint --generate-rcfile > pylintrc` command. 
 [MASTER]
 

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 export LSR_MOLECULE_DEPS='-rmolecule_requirements.txt'
 
 case "${TRAVIS_PYTHON_VERSION}" in
