@@ -4,22 +4,12 @@ matrix:
   include:
     - python: 2.6
       dist: trusty
-      # If the role contains python code that should be linted and tested, say
-      # this by setting LSR_USE_PYTHON environment variable to the value that
-      # evaluates as true in the role's repository settings page at
-      # https://travis-ci.org/
-      if: env(LSR_USE_PYTHON) IS NOT blank
     - python: 2.7
-      if: env(LSR_USE_PYTHON) IS NOT blank
     - python: 3.5
     - python: 3.6
-      if: env(LSR_USE_PYTHON) IS NOT blank
     - python: 3.7
-      if: env(LSR_USE_PYTHON) IS NOT blank
     - python: 3.7-dev
-      if: env(LSR_USE_PYTHON) IS NOT blank
     - python: 3.8-dev
-      if: env(LSR_USE_PYTHON) IS NOT blank
 
 services:
   - docker
