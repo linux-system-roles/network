@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 ---
+dist: xenial
 language: python
 matrix:
   include:
