@@ -1,0 +1,16 @@
+#!/bin/bash
+# SPDX-License-Identifier: MIT
+
+set -ex
+
+SCRIPTDIR=$(dirname $0)
+CONFIG=${SCRIPTDIR}/config.sh
+
+if [[ -f ${CONFIG} ]]; then
+  . ${CONFIG}
+fi
+
+tox "$@"
+for X in ${LSR_MSCENARIOS}; do
+  LSR_MSCENARIO=${X} tox -e molecule
+done

@@ -1,0 +1,18 @@
+#!/bin/bash
+# SPDX-License-Identifier: MIT
+
+set -ex
+
+SCRIPTDIR=$(dirname $0)
+CONFIG=${SCRIPTDIR}/config.sh
+
+if [[ -f ${CONFIG} ]]; then
+  . ${CONFIG}
+fi
+
+if [[ "${LSR_EXTRA_PACKAGES}" ]]; then
+  sudo apt-get update
+  for P in ${LSR_EXTRA_PACKAGES}; do
+    sudo apt-get install -y ${P} || :
+  done
+fi
