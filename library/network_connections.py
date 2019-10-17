@@ -1373,7 +1373,7 @@ class NMUtil:
 ###############################################################################
 
 
-class RunEnvironment:
+class RunEnvironment(object):
     def __init__(self):
         self._check_mode = None
 
@@ -1538,7 +1538,7 @@ class RunEnvironmentAnsible(RunEnvironment):
 ###############################################################################
 
 
-class Cmd:
+class Cmd(object):
     def __init__(
         self,
         run_env,
