@@ -373,6 +373,16 @@ class ArgValidatorIPRoute(ArgValidatorDict):
                 ArgValidatorNum(
                     "metric", default_value=-1, val_min=-1, val_max=0xFFFFFFFF
                 ),
+                ArgValidatorNum(
+                    "table", default_value=None, val_min=1, val_max=253
+                ),
+                ArgValidatorStr(
+                    "dev", default_value=None
+                ),
+                ArgValidatorStr(
+                    "scope", enum_values=["host", "link", "global"], default_value=None
+                ),
+
             ],
         )
         self.family = family

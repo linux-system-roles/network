@@ -465,7 +465,12 @@ class IfcfgUtil:
                     line += " via " + r["gateway"]
                 if r["metric"] != -1:
                     line += " metric " + str(r["metric"])
-
+                if r["dev"]:
+                    line += " dev " + str(r["dev"])
+                if r["scope"]:
+                    line += " scope " + str(r["scope"])
+                if r["table"]:
+                    line += " table " + str(r["table"])
                 if r["family"] == socket.AF_INET:
                     route4.append(line)
                 else:
