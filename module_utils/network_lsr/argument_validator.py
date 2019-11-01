@@ -451,6 +451,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
                     nested=ArgValidatorStr("dns_search[?]"),
                     default_value=list,
                 ),
+                ArgValidatorBool("zeroconf_routes", default_value=None),
             ],
             default_value=lambda: {
                 "dhcp4": True,

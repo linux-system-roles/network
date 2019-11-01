@@ -318,9 +318,13 @@ The IP configuration supports the following options:
 
     Static route configuration can be specified via a list of routes given in the `route`
     option. The default value is an empty list. Each route is a dictionary with the following
-    entries: `network`, `prefix`, `gateway` and `metric`. `network` and `prefix` specify
+    entries: `network`, `prefix`, `gateway`, `dev`, `scope` and `metric`. `network` and `prefix` specify
     the destination network.
     Note that Classless inter-domain routing (CIDR) notation or network mask notation are not supported yet.
+
+* `zeroconf_routes`
+
+    By default, RHEL initscripts add zeroconf routes for each configured interface. If you want to avoid setting up those routes, set this parameter to False.
 
 * `route_append_only`
 

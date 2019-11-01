@@ -428,6 +428,11 @@ class IfcfgUtil:
                 ifcfg["BOOTPROTO"] = "static"
             else:
                 ifcfg["BOOTPROTO"] = "none"
+
+            if ip["zeroconf_routes"] == False:
+                ifcfg["NOZEROCONF"] = "yes"
+            elif ip["zeroconf_routes"] == True:
+                ifcfg["NOZEROCONF"] = ""
             for i in range(0, len(addrs4)):
                 addr = addrs4[i]
                 ifcfg["IPADDR" + ("" if i == 0 else str(i))] = addr["address"]
