@@ -709,7 +709,7 @@ class TestValidator(unittest.TestCase):
                         "gateway4": None,
                         "dns": [],
                         "rule": [],
-                        "zeroconf_routes": None
+                        "zeroconf_routes": None,
                     },
                     "mac": "52:54:00:44:9f:ba",
                     "master": None,
@@ -1289,7 +1289,7 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                         "route": [],
                         "rule": [],
-                        "zeroconf_routes": None
+                        "zeroconf_routes": None,
                     },
                     "mac": None,
                     "master": None,
@@ -1336,7 +1336,7 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                         "route": [],
                         "rule": [],
-                        "zeroconf_routes": None
+                        "zeroconf_routes": None,
                     },
                     "mac": None,
                     "master": None,

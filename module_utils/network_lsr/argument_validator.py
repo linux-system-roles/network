@@ -525,7 +525,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 "rule_append_only": False,
                 "dns": [],
                 "dns_search": [],
-                "zeroconf_routes": None
+                "zeroconf_routes": None,
             },
         )
 
