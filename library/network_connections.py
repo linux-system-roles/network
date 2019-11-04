@@ -429,9 +429,9 @@ class IfcfgUtil:
             else:
                 ifcfg["BOOTPROTO"] = "none"
 
-            if ip["zeroconf_routes"] == False:
+            if ip["zeroconf_routes"]:
                 ifcfg["NOZEROCONF"] = "yes"
-            elif ip["zeroconf_routes"] == True:
+            elif ip["zeroconf_routes"]:
                 ifcfg["NOZEROCONF"] = ""
             for i in range(0, len(addrs4)):
                 addr = addrs4[i]
@@ -496,7 +496,7 @@ class IfcfgUtil:
 
             for r in ip["rule"]:
                 if r["from"]:
-                   line = "from " + r["from"]["address"] + "/" + str(r["from_prefix"])
+                    line = "from " + r["from"]["address"] + "/" + str(r["from_prefix"])
                 if r["to"]:
                     line += " to " + r["to"]["address"] + "/" + str(r["to_prefix"])
                 if r["table"] or r["lookup"]:
@@ -505,14 +505,16 @@ class IfcfgUtil:
                     else:
                         line += " table " + r["lookup"]
                 for k in r:
-                    if (k != 'from' and
-                        k != 'to' and
-                        k != 'from_prefix' and
-                        k != 'to_prefix' and
-                        k != 'lookup' and
-                        k != 'table' and
-                        r[k] is not None):
-                            line += " "+k+" " + str(r[k])
+                    if (
+                        k != "from"
+                        and k != "to"
+                        and k != "from_prefix"
+                        and k != "to_prefix"
+                        and k != "lookup"
+                        and k != "table"
+                        and r[k] is not None
+                    ):
+                        line += " " + k + " " + str(r[k])
                 rule4.append(line.lstrip())
 
             rule4_file = cls._ifcfg_route_merge(

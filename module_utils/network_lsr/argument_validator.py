@@ -374,16 +374,13 @@ class ArgValidatorIPRoute(ArgValidatorDict):
                 ArgValidatorNum(
                     "metric", default_value=-1, val_min=-1, val_max=0xFFFFFFFF
                 ),
-                ArgValidatorNum(
-                    "table", default_value=None, val_min=1, val_max=253
-                ),
+                ArgValidatorNum("table", default_value=None, val_min=1, val_max=253),
                 ArgValidatorStr(
-                    "dev", default_value=None, enum_values=listdir('/sys/class/net/')
+                    "dev", default_value=None, enum_values=listdir("/sys/class/net/")
                 ),
                 ArgValidatorStr(
                     "scope", enum_values=["host", "link", "global"], default_value=None
                 ),
-
             ],
         )
         self.family = family
@@ -414,6 +411,7 @@ class ArgValidatorIPRoute(ArgValidatorDict):
 
         return result
 
+
 class ArgValidatorIPRule(ArgValidatorDict):
     def __init__(self, name, family=None, required=False, default_value=None):
         ArgValidatorDict.__init__(
@@ -430,27 +428,19 @@ class ArgValidatorIPRule(ArgValidatorDict):
                 ),
                 ArgValidatorNum("to_prefix", default_value=32, val_min=0, val_max=32),
                 ArgValidatorStr(
-                    "iif", default_value=None, enum_values=listdir('/sys/class/net/')
+                    "iif", default_value=None, enum_values=listdir("/sys/class/net/")
                 ),
                 ArgValidatorStr(
-                    "oif", default_value=None, enum_values=listdir('/sys/class/net/')
+                    "oif", default_value=None, enum_values=listdir("/sys/class/net/")
                 ),
-                ArgValidatorNum(
-                    "tos", default_value=None, val_min=0, val_max=255
-                ),
-                ArgValidatorNum(
-                    "dsfield", default_value=None, val_min=0, val_max=255
-                ),
-                ArgValidatorNum(
-                    "fwmark", default_value=None, val_min=0, val_max=65535
-                ),
+                ArgValidatorNum("tos", default_value=None, val_min=0, val_max=255),
+                ArgValidatorNum("dsfield", default_value=None, val_min=0, val_max=255),
+                ArgValidatorNum("fwmark", default_value=None, val_min=0, val_max=65535),
                 # Not implemented
                 # ArgValidatorRange(
                 #     "uidrange", default_value=None, val_min=0, val_max=65535
                 # ),
-                ArgValidatorNum(
-                    "ipproto", default_value=None, val_min=0, val_max=255
-                ),
+                ArgValidatorNum("ipproto", default_value=None, val_min=0, val_max=255),
                 # ArgValidatorRange(
                 #     "sport", default_value=None, val_min=0, val_max=65535
                 # ),
@@ -460,19 +450,14 @@ class ArgValidatorIPRule(ArgValidatorDict):
                 ArgValidatorNum(
                     "priority", default_value=None, val_min=0, val_max=32767
                 ),
-                ArgValidatorStr(
-                    "table", default_value="main"
-                ),
-                ArgValidatorNum(
-                    "protocol", default_value=None, val_min=1, val_max=255
-                ),
+                ArgValidatorStr("table", default_value="main"),
+                ArgValidatorNum("protocol", default_value=None, val_min=1, val_max=255),
                 ArgValidatorNum(
                     "suppress_prefixlength", default_value=None, val_min=0, val_max=32
                 ),
                 ArgValidatorIP(
                     "nat", family=family, required=False, plain_address=False
                 ),
-
             ],
         )
         self.family = family
@@ -481,6 +466,7 @@ class ArgValidatorIPRule(ArgValidatorDict):
         # Inspection of parameters not implemented.
 
         return result
+
 
 class ArgValidator_DictIP(ArgValidatorDict):
     def __init__(self):
@@ -534,10 +520,12 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 "route_metric6": None,
                 "address": [],
                 "route": [],
+                "rule": [],
                 "route_append_only": False,
                 "rule_append_only": False,
                 "dns": [],
                 "dns_search": [],
+                "zeroconf_routes": None
             },
         )
 
