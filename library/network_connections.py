@@ -492,8 +492,36 @@ class IfcfgUtil:
                 content_current["route6"] if content_current else None,
             )
 
+            rule4 = []
+
+            for r in ip["rule"]:
+                if r["from"]:
+                   line = "from " + r["from"]["address"] + "/" + str(r["from_prefix"])
+                if r["to"]:
+                    line += " to " + r["to"]["address"] + "/" + str(r["to_prefix"])
+                if r["table"] or r["lookup"]:
+                    if r["table"] is not None and r["table"] != "":
+                        line += " table " + r["table"]
+                    else:
+                        line += " table " + r["lookup"]
+                for k in r:
+                    if (k != 'from' and
+                        k != 'to' and
+                        k != 'from_prefix' and
+                        k != 'to_prefix' and
+                        k != 'lookup' and
+                        k != 'table' and
+                        r[k] is not None):
+                            line += " "+k+" " + str(r[k])
+                rule4.append(line.lstrip())
+
+            rule4_file = cls._ifcfg_route_merge(
+                rule4,
+                ip["rule_append_only"] and content_current,
+                content_current["rule"] if content_current else None,
+            )
+
         if ip["rule_append_only"] and content_current:
-            rule4_file = content_current["rule"]
             rule6_file = content_current["rule6"]
 
         for key in list(ifcfg.keys()):

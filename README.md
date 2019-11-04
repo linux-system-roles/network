@@ -335,10 +335,24 @@ The IP configuration supports the following options:
     If `route_append_only` is set to `no` (default), the current routes are replaced.
     Note that setting `route_append_only`  to `yes` without setting `route` has the effect of preserving the current static routes.
 
+* `rule`
+
+    Static rule configuration can be specified by a list of rules given in the `rule`
+    option. The default value is an empty list. Each rule is a dictionary with the following
+    entries: `type`, `from`, `from_prefix`, `to`, `to_prefix`, `iif`, `oif`, `tos`, `dsfield`, 
+    `fwmark`, `ipproto`, `sport`, `dport`, `priority`, `table`, `protocol`, `suppress_prefixlength`,
+    `suppress_ifgroup`, `realms`, `nat`. Field not supported yet are `uidrange`, and `sport`, `dport`
+    support only numbers, not ranges.
+
+    Please note that if you don't use `priority` parameter, your rules might be appended to the runtime
+    configuration multiple times. Once you reboot the machine (without using `priority`), the rule list would
+    become fine (without duplicates).
+
+    This is not a feature of this role, but of RHEL's networking scripts.
+
 * `rule_append_only`
 
     The `rule_append_only` boolean option allows to preserve the current routing rules.
-    Note that specifying routing rules is not supported yet.
 
 **Note:** When `route_append_only` or `rule_append_only` is not specified, the `network` role deletes the current routes or routing rules.
 

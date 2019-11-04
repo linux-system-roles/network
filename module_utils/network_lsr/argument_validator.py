@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import socket
+from os import listdir
 
 # pylint: disable=import-error, no-name-in-module
 from ansible.module_utils.network_lsr import MyError
@@ -377,7 +378,7 @@ class ArgValidatorIPRoute(ArgValidatorDict):
                     "table", default_value=None, val_min=1, val_max=253
                 ),
                 ArgValidatorStr(
-                    "dev", default_value=None
+                    "dev", default_value=None, enum_values=listdir('/sys/class/net/')
                 ),
                 ArgValidatorStr(
                     "scope", enum_values=["host", "link", "global"], default_value=None
@@ -413,6 +414,73 @@ class ArgValidatorIPRoute(ArgValidatorDict):
 
         return result
 
+class ArgValidatorIPRule(ArgValidatorDict):
+    def __init__(self, name, family=None, required=False, default_value=None):
+        ArgValidatorDict.__init__(
+            self,
+            name,
+            required,
+            nested=[
+                ArgValidatorIP(
+                    "from", family=family, required=False, plain_address=False
+                ),
+                ArgValidatorNum("from_prefix", default_value=32, val_min=0, val_max=32),
+                ArgValidatorIP(
+                    "to", family=family, required=False, plain_address=False
+                ),
+                ArgValidatorNum("to_prefix", default_value=32, val_min=0, val_max=32),
+                ArgValidatorStr(
+                    "iif", default_value=None, enum_values=listdir('/sys/class/net/')
+                ),
+                ArgValidatorStr(
+                    "oif", default_value=None, enum_values=listdir('/sys/class/net/')
+                ),
+                ArgValidatorNum(
+                    "tos", default_value=None, val_min=0, val_max=255
+                ),
+                ArgValidatorNum(
+                    "dsfield", default_value=None, val_min=0, val_max=255
+                ),
+                ArgValidatorNum(
+                    "fwmark", default_value=None, val_min=0, val_max=65535
+                ),
+                # Not implemented
+                # ArgValidatorRange(
+                #     "uidrange", default_value=None, val_min=0, val_max=65535
+                # ),
+                ArgValidatorNum(
+                    "ipproto", default_value=None, val_min=0, val_max=255
+                ),
+                # ArgValidatorRange(
+                #     "sport", default_value=None, val_min=0, val_max=65535
+                # ),
+                # ArgValidatorDport(
+                #     "dport", default_value=None, val_min=0, val_max=65535
+                # ),
+                ArgValidatorNum(
+                    "priority", default_value=None, val_min=0, val_max=32767
+                ),
+                ArgValidatorStr(
+                    "table", default_value="main"
+                ),
+                ArgValidatorNum(
+                    "protocol", default_value=None, val_min=1, val_max=255
+                ),
+                ArgValidatorNum(
+                    "suppress_prefixlength", default_value=None, val_min=0, val_max=32
+                ),
+                ArgValidatorIP(
+                    "nat", family=family, required=False, plain_address=False
+                ),
+
+            ],
+        )
+        self.family = family
+
+    def _validate_post(self, value, name, result):
+        # Inspection of parameters not implemented.
+
+        return result
 
 class ArgValidator_DictIP(ArgValidatorDict):
     def __init__(self):
@@ -438,6 +506,9 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 ),
                 ArgValidatorList(
                     "route", nested=ArgValidatorIPRoute("route[?]"), default_value=list
+                ),
+                ArgValidatorList(
+                    "rule", nested=ArgValidatorIPRule("rule[?]"), default_value=list
                 ),
                 ArgValidatorBool("route_append_only"),
                 ArgValidatorBool("rule_append_only"),
