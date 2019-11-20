@@ -1,16 +1,38 @@
 #!/bin/bash
 # SPDX-License-Identifier: MIT
 
-set -ex
+# Run tox. Additionally, if LSR_MSCENARIOS is defined, run `tox -e molecule`
+# for every scenario from LSR_MSCENARIOS and for every Ansible version from
+# LSR_ANSIBLES.
+#
+# LSR_MSCENARIOS is a space separated list of molecule scenarios.
+# LSR_ANSIBLES is a space separated list of Ansible package names with versions
+# in pip format, i.e 'ansible ansible==2.6 ansible==2.7 ansible=2.8'.
+#
+# LSR_MSCENARIOS and LSR_ANSIBLES can be set in .travis/config.sh or as
+# environment variables.
 
-SCRIPTDIR=$(dirname $0)
-CONFIG=${SCRIPTDIR}/config.sh
+ME=$(basename $0)
+SCRIPTDIR=$(readlink -f $(dirname $0))
+BANNERSIZE=90
 
-if [[ -f ${CONFIG} ]]; then
-  . ${CONFIG}
+# Include library and config.
+. ${SCRIPTDIR}/utils.sh
+. ${SCRIPTDIR}/config.sh
+
+lsr_banner "tox" ${BANNERSIZE}
+(set -x; tox); E=$?
+
+if lsr_check_python_version python -le '3.4'; then
+  lsr_info "${ME}: Only Python >= 3.5 is allowed to install Ansible. Skipping."
+  exit $E
 fi
 
-tox "$@"
-for X in ${LSR_MSCENARIOS}; do
-  LSR_MSCENARIO=${X} tox -e molecule
+for X in ${LSR_ANSIBLES}; do
+  for Y in ${LSR_MSCENARIOS}; do
+    lsr_banner "[${X}] tox -e molecule -- -s ${Y}" ${BANNERSIZE}
+    (set -x; LSR_ANSIBLE_DEP="${X}" LSR_MSCENARIO=${Y} tox -e molecule) || E=$?
+  done
 done
+
+exit $E
