@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 ---
 extends: default
 rules:
@@ -7,6 +8,5 @@ rules:
   brackets:
     max-spaces-inside: 1
     level: error
-  line-length: disable
   truthy: disable
   document-start: disable
