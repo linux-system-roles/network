@@ -23,7 +23,6 @@ network_provider: "{{ network_provider_current }}"
 # The python-gobject-base package depends on the python version and
 # distribution:
 # - python-gobject-base on RHEL7 (no python2-gobject-base :-/)
-# - python-gobject-base or python2-gobject-base on Fedora 27
 # - python3-gobject-base on Fedora 28+
 network_service_name_default_nm: NetworkManager
 network_packages_default_nm:
@@ -38,20 +37,12 @@ network_service_name_default_initscripts: network
 # 'bridge' type is used in network_connections
 _network_packages_default_initscripts_bridge: ["{%
 if ['bridge'] in network_connections|json_query('[*][type]') and
-(
-   (ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux'] and
-    ansible_distribution_major_version is version('7', '<='))
-or
-   (ansible_distribution == 'Fedora' and
-    ansible_distribution_major_version is version('28', '<='))
-)
+   ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux'] and
+   ansible_distribution_major_version is version('7', '<=')
 %}bridge-utils{% endif %}"]
 _network_packages_default_initscripts_network_scripts: ["{%
-if (ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux'] and
-    ansible_distribution_major_version is version('7', '<='))
-or
-   (ansible_distribution == 'Fedora' and
-   ansible_distribution_major_version is version('28', '<='))
+if ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux'] and
+    ansible_distribution_major_version is version('7', '<=')
 %}initscripts{% else %}network-scripts{% endif %}"]
 # convert _network_packages_default_initscripts_bridge to an empty list if it
 # contains only the empty string and add it to the default package list
