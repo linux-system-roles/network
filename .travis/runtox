@@ -16,7 +16,6 @@ ME=$(basename $0)
 SCRIPTDIR=$(readlink -f $(dirname $0))
 BANNERSIZE=90
 
-# Include library and config.
 . ${SCRIPTDIR}/utils.sh
 . ${SCRIPTDIR}/config.sh
 

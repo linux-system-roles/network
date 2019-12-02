@@ -10,7 +10,6 @@ ME=$(basename $0)
 SCRIPTDIR=$(readlink -f $(dirname $0))
 TOPDIR=$(readlink -f ${SCRIPTDIR}/..)
 
-# Include library.
 . ${SCRIPTDIR}/utils.sh
 
 if [[ ! -d ${TOPDIR}/tests/unit ]]; then

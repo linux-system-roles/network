@@ -11,7 +11,6 @@ set -e
 
 SCRIPTDIR=$(readlink -f $(dirname $0))
 
-# Include library.
 . ${SCRIPTDIR}/utils.sh
 
 # Add python3-selinux package (needed by Molecule on selinux enabled systems,
@@ -21,7 +20,6 @@ if lsr_compare_pythons python -eq /usr/bin/python3; then
   LSR_EXTRA_PACKAGES='python3-selinux'
 fi
 
-# Include config.
 . ${SCRIPTDIR}/config.sh
 
 # Install extra dependencies.

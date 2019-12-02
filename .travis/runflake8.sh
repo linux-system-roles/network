@@ -14,7 +14,6 @@ set -e
 ME=$(basename $0)
 SCRIPTDIR=$(readlink -f $(dirname $0))
 
-# Include library and config.
 . ${SCRIPTDIR}/utils.sh
 . ${SCRIPTDIR}/config.sh
 
