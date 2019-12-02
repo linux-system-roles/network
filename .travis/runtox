@@ -21,18 +21,25 @@ BANNERSIZE=90
 . ${SCRIPTDIR}/config.sh
 
 lsr_banner "tox" ${BANNERSIZE}
-(set -x; tox); E=$?
+(set -x; tox); error_code=$?
 
 if lsr_check_python_version python -le '3.4'; then
   lsr_info "${ME}: Only Python >= 3.5 is allowed to install Ansible. Skipping."
-  exit $E
+  exit $error_code
 fi
 
-for X in ${LSR_ANSIBLES}; do
-  for Y in ${LSR_MSCENARIOS}; do
-    lsr_banner "[${X}] tox -e molecule -- -s ${Y}" ${BANNERSIZE}
-    (set -x; LSR_ANSIBLE_DEP="${X}" LSR_MSCENARIO=${Y} tox -e molecule) || E=$?
+for ansible_dependency in ${LSR_ANSIBLES}; do
+  for molecule_scenario in ${LSR_MSCENARIOS}; do
+    lsr_banner \
+      "[${ansible_dependency}] tox -e molecule -- -s ${molecule_scenario}" \
+      ${BANNERSIZE}
+    (
+      set -x
+      LSR_ANSIBLE_DEP="${ansible_dependency}" \
+      LSR_MSCENARIO=${molecule_scenario} \
+      tox -e molecule
+    ) || error_code=$?
   done
 done
 
-exit $E
+exit $error_code
