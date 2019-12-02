@@ -14,9 +14,9 @@ SCRIPTDIR=$(readlink -f $(dirname $0))
 # Include library.
 . ${SCRIPTDIR}/utils.sh
 
-# Add python3-selinux package (it turned out that in some circumstances, i.e
-# if selinux policy is enforcing, selinux is required by molecule even if
-# running simple test).
+# Add python3-selinux package (needed by Molecule on selinux enabled systems,
+# because Molecule is using `copy` and `file` Ansible modules to setup the
+# container).
 if lsr_compare_pythons python -eq /usr/bin/python3; then
   LSR_EXTRA_PACKAGES='python3-selinux'
 fi
