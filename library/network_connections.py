@@ -346,6 +346,10 @@ class IfcfgUtil:
             opts = ["mode=%s" % (connection["bond"]["mode"])]
             if connection["bond"]["miimon"] is not None:
                 opts.append(" miimon=%s" % (connection["bond"]["miimon"]))
+            if connection["bond"]["xmit_hash_policy"] is not None:
+                opts.append(
+                    " xmit_hash_policy=%s" % (connection["bond"]["xmit_hash_policy"])
+                )
             ifcfg["BONDING_OPTS"] = " ".join(opts)
         elif connection["type"] == "team":
             ifcfg["DEVICETYPE"] = "Team"
@@ -815,6 +819,10 @@ class NMUtil:
             s_bond.add_option("mode", connection["bond"]["mode"])
             if connection["bond"]["miimon"] is not None:
                 s_bond.add_option("miimon", str(connection["bond"]["miimon"]))
+            if connection["bond"]["xmit_hash_policy"] is not None:
+                s_bond.add_option(
+                    "xmit_hash_policy", str(connection["bond"]["xmit_hash_policy"])
+                )
         elif connection["type"] == "team":
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, NM.SETTING_TEAM_SETTING_NAME)
         elif connection["type"] == "vlan":
