@@ -619,6 +619,15 @@ class ArgValidator_DictBond(ArgValidatorDict):
         "balance-alb",
     ]
 
+    VALID_XMIT_HASH_POLICIES = [
+        "0",
+        "layer2",
+        "1",
+        "layer3+4",
+        "2",
+        "layer2+3",
+    ]
+
     def __init__(self):
         ArgValidatorDict.__init__(
             self,
@@ -628,12 +637,21 @@ class ArgValidator_DictBond(ArgValidatorDict):
                 ArgValidatorNum(
                     "miimon", val_min=0, val_max=1000000, default_value=None
                 ),
+                ArgValidatorStr(
+                    "xmit_hash_policy",
+                    enum_values=ArgValidator_DictBond.VALID_XMIT_HASH_POLICIES,
+                    default_value=None,
+                ),
             ],
             default_value=ArgValidator.MISSING,
         )
 
     def get_default_bond(self):
-        return {"mode": ArgValidator_DictBond.VALID_MODES[0], "miimon": None}
+        return {
+            "mode": ArgValidator_DictBond.VALID_MODES[0],
+            "miimon": None,
+            "xmit_hash_policy": None,
+        }
 
 
 class ArgValidator_DictInfiniband(ArgValidatorDict):

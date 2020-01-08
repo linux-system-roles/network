@@ -1225,7 +1225,11 @@ class TestValidator(unittest.TestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
-                    "bond": {"mode": "balance-rr", "miimon": None},
+                    "bond": {
+                        "mode": "balance-rr",
+                        "miimon": None,
+                        "xmit_hash_policy": None,
+                    },
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -1270,7 +1274,11 @@ class TestValidator(unittest.TestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
-                    "bond": {"mode": "active-backup", "miimon": None},
+                    "bond": {
+                        "mode": "active-backup",
+                        "miimon": None,
+                        "xmit_hash_policy": None,
+                    },
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
