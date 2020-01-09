@@ -1,4 +1,11 @@
 # SPDX-License-Identifier: MIT
-export LSR_MOLECULE_DEPS='-rmolecule_requirements.txt'
+#
+# Use this file to specify custom configuration for a project. Generally, this
+# involves the modification of the content of LSR_* environment variables, see
+#
+#   * .travis/preinstall:
+#
+#       - LSR_EXTRA_PACKAGES
+#
 
-LSR_EXTRA_PACKAGES='python3-selinux'
+export LSR_MOLECULE_DEPS='-rmolecule_requirements.txt'
