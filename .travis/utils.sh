@@ -134,3 +134,12 @@ function lsr_compare_pythons() {
   lsr_compare_versions \
     $(lsr_get_python_version $1) $2 $(lsr_get_python_version $3)
 }
+
+##
+# lsr_venv_python_matches_system_python
+#
+# Exit with 0 if virtual environment Python version matches the system Python
+# version.
+function lsr_venv_python_matches_system_python() {
+  lsr_compare_pythons python -eq /usr/bin/python3
+}
