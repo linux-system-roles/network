@@ -1,7 +1,7 @@
 #                                                         -*- coding: utf-8 -*-
 # SPDX-License-Identifier: MIT
 #
-# Copyright (c) 2019 Red Hat, Inc.
+# Copyright (c) 2019-2020 Red Hat, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@
 """
 Probe directory tree for python files and pass them to pylint.
 
-Usage: python run_pylint.py ARGUMENTS
+Usage: python custom_pylint.py ARGUMENTS
 
 Run pylint with ARGUMENTS followed by the list of python files contained in the
 working directory and its subdirectories.  As a python file is recognized a

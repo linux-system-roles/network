@@ -10,6 +10,12 @@
 # Environment variables that not start with LSR_* but have influence on CI
 # process:
 #
+#   * .travis/runpylint.sh:
+#
+#       - RUN_PYLINT_INCLUDE
+#       - RUN_PYLINT_EXCLUDE
+#       - RUN_PYLINT_DISABLED
+#
 #   * .travis/runblack.sh:
 #
 #       - RUN_BLACK_INCLUDE
