@@ -26,5 +26,3 @@
 #
 #       - RUN_FLAKE8_DISABLED
 #
-
-export LSR_MOLECULE_DEPS='-rmolecule_requirements.txt'
