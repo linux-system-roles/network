@@ -13,7 +13,6 @@ ME=$(basename $0)
 SCRIPTDIR=$(readlink -f $(dirname $0))
 TOPDIR=$(readlink -f ${SCRIPTDIR}/..)
 
-# Include library and config:
 . ${SCRIPTDIR}/utils.sh
 . ${SCRIPTDIR}/config.sh
 

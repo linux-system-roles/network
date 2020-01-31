@@ -7,6 +7,11 @@
 #
 #       - LSR_EXTRA_PACKAGES
 #
+#   * .travis/runtox:
+#
+#       - LSR_ANSIBLES
+#       - LSR_MSCENARIOS
+#
 # Environment variables that not start with LSR_* but have influence on CI
 # process:
 #
