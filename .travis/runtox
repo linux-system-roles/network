@@ -1,16 +1,45 @@
 #!/bin/bash
 # SPDX-License-Identifier: MIT
 
-set -ex
+# Run tox. Additionally, if LSR_MSCENARIOS is defined, run `tox -e molecule`
+# for every scenario from LSR_MSCENARIOS and for every Ansible version from
+# LSR_ANSIBLES.
+#
+# LSR_MSCENARIOS is a space separated list of molecule scenarios.
+# LSR_ANSIBLES is a space separated list of Ansible package names with versions
+# in pip format, i.e 'ansible ansible==2.6 ansible==2.7 ansible=2.8'.
+#
+# LSR_MSCENARIOS and LSR_ANSIBLES can be set in .travis/config.sh or as
+# environment variables.
 
-SCRIPTDIR=$(dirname $0)
-CONFIG=${SCRIPTDIR}/config.sh
+ME=$(basename $0)
+SCRIPTDIR=$(readlink -f $(dirname $0))
+BANNERSIZE=90
 
-if [[ -f ${CONFIG} ]]; then
-  . ${CONFIG}
+. ${SCRIPTDIR}/utils.sh
+. ${SCRIPTDIR}/config.sh
+
+lsr_banner "tox" ${BANNERSIZE}
+(set -x; tox); error_code=$?
+
+# Exit prematurely if the environment is not suitable for running
+# Molecule tests.
+if ! lsr_venv_python_matches_system_python; then
+  exit $error_code
 fi
 
-tox "$@"
-for X in ${LSR_MSCENARIOS}; do
-  LSR_MSCENARIO=${X} tox -e molecule
+for ansible_dependency in ${LSR_ANSIBLES}; do
+  for molecule_scenario in ${LSR_MSCENARIOS}; do
+    lsr_banner \
+      "[${ansible_dependency}] tox -e molecule -- -s ${molecule_scenario}" \
+      ${BANNERSIZE}
+    (
+      set -x
+      LSR_ANSIBLE_DEP="${ansible_dependency}" \
+      LSR_MSCENARIO=${molecule_scenario} \
+      tox -e molecule
+    ) || error_code=$?
+  done
 done
+
+exit $error_code
