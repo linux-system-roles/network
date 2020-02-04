@@ -12,6 +12,11 @@
 #       - LSR_ANSIBLES
 #       - LSR_MSCENARIOS
 #
+#   * .travis/runcoveralls.sh:
+#
+#       - LSR_PUBLISH_COVERAGE
+#       - LSR_TESTSDIR
+#
 # Environment variables that not start with LSR_* but have influence on CI
 # process:
 #
@@ -31,3 +36,6 @@
 #
 #       - RUN_FLAKE8_DISABLED
 #
+
+# Allow publishing coverage reports:
+export LSR_PUBLISH_COVERAGE=yes
