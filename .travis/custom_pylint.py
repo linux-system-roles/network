@@ -29,7 +29,8 @@ Usage: python custom_pylint.py ARGUMENTS
 Run pylint with ARGUMENTS followed by the list of python files contained in the
 working directory and its subdirectories.  As a python file is recognized a
 file that match INCPAT.  Files and directories that match EXPAT are skipped.
-Symbolic links are also skipped.
+Symbolic links are also skipped.  It is assumed that files to be pylinted are
+specified only with INCPAT and EXPAT.
 
 There are several cases when argument from ARGUMENTS is not passed to pylint
 but it is handled by run_pylint.py instead:
@@ -139,8 +140,6 @@ def show_files(files):
     Print `files` to the standard output, one item per line, in a blue color.
     """
 
-    if not files:
-        return
     print_line(blue("%s: files to be checked:" % sys.argv[0]))
     for f in files:
         print_line(blue("    %s" % f))
@@ -160,6 +159,8 @@ def main():
     files = probe_dir(
         os.getcwd(), re.compile(include_pattern), re.compile(exclude_pattern)
     )
+    if not files:
+        return 0
     show_files(files)
     args.extend(files)
     sys.argv[0] = "pylint"
