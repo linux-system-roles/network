@@ -24,6 +24,7 @@ IGNORE = [
     "tests_default_nm.yml",
     "tests_default_initscripts.yml",
     "tests_default.yml",
+    "tests_802_1x_nm.yml",
 ]
 
 OTHER_PLAYBOOK = """

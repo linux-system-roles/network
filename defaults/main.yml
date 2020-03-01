@@ -20,16 +20,23 @@ network_provider_current: "{{
 # Default to the auto-detected value
 network_provider: "{{ network_provider_current }}"
 
+# wpa_supplicant is required if any 802.1x connections are defined
+wpa_supplicant_required: "{{ network_connections |
+      json_query('[*][\"802.1x\"]') | flatten | count > 0 }}"
+_network_packages_default_802_1x: ["{% if wpa_supplicant_required
+      %}wpa_supplicant{% endif %}"]
+
 # The python-gobject-base package depends on the python version and
 # distribution:
 # - python-gobject-base on RHEL7 (no python2-gobject-base :-/)
 # - python3-gobject-base on Fedora 28+
+_network_packages_default_gobject_packages: ["python{{
+      ansible_python['version']['major'] | replace('2', '')}}-gobject-base"]
+
 network_service_name_default_nm: NetworkManager
-network_packages_default_nm:
-  - ethtool
-  - NetworkManager
-  - "python{{ ansible_python['version']['major'] | replace('2', '')
-           }}-gobject-base"
+network_packages_default_nm: "{{ ['ethtool', 'NetworkManager']
+      + _network_packages_default_gobject_packages|select()|list()
+      + _network_packages_default_802_1x|select()|list()}}"
 
 network_service_name_default_initscripts: network
 

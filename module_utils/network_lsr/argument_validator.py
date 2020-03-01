@@ -2,6 +2,7 @@
 # vim: fileencoding=utf8
 # SPDX-License-Identifier: BSD-3-Clause
 
+import posixpath
 import socket
 
 # pylint: disable=import-error, no-name-in-module
@@ -698,6 +699,59 @@ class ArgValidator_DictMacvlan(ArgValidatorDict):
         return result
 
 
+class ArgValidatorPath(ArgValidatorStr):
+    """
+    Valides that the value is a valid posix absolute path
+    """
+
+    def __init__(self, name, required=False, default_value=None):
+        ArgValidatorStr.__init__(self, name, required, default_value, None)
+
+    def _validate_impl(self, value, name):
+        ArgValidatorStr._validate_impl(self, value, name)
+
+        if posixpath.isabs(value) is False:
+            raise ValidationError(
+                name, "value '%s' is not a valid posix absolute path" % (value),
+            )
+        return value
+
+
+class ArgValidator_Dict802_1X(ArgValidatorDict):
+
+    VALID_EAP_TYPES = ["tls"]
+
+    VALID_PRIVATE_KEY_FLAGS = ["none", "agent-owned", "not-saved", "not-required"]
+
+    def __init__(self):
+        ArgValidatorDict.__init__(
+            self,
+            name="802.1x",
+            nested=[
+                ArgValidatorStr(
+                    "eap",
+                    enum_values=ArgValidator_Dict802_1X.VALID_EAP_TYPES,
+                    default_value="tls",
+                ),
+                ArgValidatorStr("identity", required=True),
+                ArgValidatorPath("private-key", required=True),
+                ArgValidatorStr("private-key-password"),
+                ArgValidatorList(
+                    "private-key-password-flags",
+                    nested=ArgValidatorStr(
+                        "private-key-password-flags[?]",
+                        enum_values=ArgValidator_Dict802_1X.VALID_PRIVATE_KEY_FLAGS,
+                    ),
+                    default_value=None,
+                ),
+                ArgValidatorPath("client-cert", required=True),
+                ArgValidatorPath("ca-cert"),
+                ArgValidatorBool("system-ca-certs", default_value=False),
+            ],
+            default_value=None,
+        )
+
+
 class ArgValidator_DictConnection(ArgValidatorDict):
 
     VALID_PERSISTENT_STATES = ["absent", "present"]
@@ -759,6 +813,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidator_DictInfiniband(),
                 ArgValidator_DictVlan(),
                 ArgValidator_DictMacvlan(),
+                ArgValidator_Dict802_1X(),
                 # deprecated options:
                 ArgValidatorStr(
                     "infiniband_transport_mode",
@@ -1207,4 +1262,19 @@ class ArgValidator_ListConnections(ArgValidatorList):
                     idx,
                     "profile references a master '%s' which has 'interface_name' "
                     "missing" % (connection["master"]),
+                )
+
+        # check if 802.1x connection is valid
+        if connection["802.1x"]:
+            if mode == self.VALIDATE_ONE_MODE_INITSCRIPTS:
+                raise ValidationError.from_connection(
+                    idx,
+                    "802.1x authentication is not supported by initscripts. "
+                    "Configure 802.1x in /etc/wpa_supplicant.conf "
+                    "if you need to use initscripts.",
+                )
+
+            if connection["type"] != "ethernet":
+                raise ValidationError.from_connection(
+                    idx, "802.1x settings only allowed for ethernet interfaces."
                 )
