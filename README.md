@@ -409,6 +409,58 @@ kernel and device, changing some features might not be supported.
       txvlan: yes|no  # optional
 ```
 
+### `802.1x`
+
+Configures 802.1x authentication for an interface.
+
+Currently, NetworkManager is the only supported provider and EAP-TLS is the only supported EAP method.
+
+SSL certificates and keys must be deployed on the host prior to running the role.
+
+* `eap`
+
+    The allowed EAP method to be used when authenticating to the network with 802.1x.
+
+    Currently, `tls` is the default and the only accepted value.
+
+* `identity` (required)
+
+    Identity string for EAP authentication methods.
+
+* `private-key` (required)
+
+    Absolute path to the client's PEM or PKCS#12 encoded private key used for 802.1x authentication.
+
+ * `private-key-password`
+
+    Password to the private key specified in `private-key`.
+
+ * `private-key-password-flags`
+
+    List of flags to configure how the private key password is managed.
+
+    Multiple flags may be specified.
+
+    Valid flags are:
+    - `none`
+    - `agent-owned`
+    - `not-saved`
+    - `not-required`
+
+    See NetworkManager documentation on "Secret flag types" more details (`man 5 nm-settings`).
+
+ * `client-cert` (required)
+
+    Absolute path to the client's PEM encoded certificate used for 802.1x authentication.
+
+ * `ca-cert`
+
+    Absolute path to the PEM encoded certificate authority used to verify the EAP server.
+
+  * `system-ca-certs`
+
+    If set to `True`, NetworkManager will use the system's trusted ca certificates to verify the EAP server.
+
 Examples of Options
 -------------------
 
@@ -601,6 +653,23 @@ network_connections:
           metric: 4
       route_append_only: no
       rule_append_only: yes
+```
+
+Configuring 802.1x:
+
+```yaml
+network_connections:
+  - name: eth0
+    type: ethernet
+    802.1x:
+      identity: myhost
+      eap: tls
+      private-key: /etc/pki/tls/client.key
+      # recommend vault encrypting the private key password
+      # see https://docs.ansible.com/ansible/latest/user_guide/vault.html
+      private-key-password: "p@55w0rD"
+      client-cert: /etc/pki/tls/client.pem
+      ca-cert: /etc/pki/tls/cacert.pem
 ```
 
 ### Invalid and Wrong Configuration

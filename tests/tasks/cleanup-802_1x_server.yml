@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Remove test interfaces
+  shell: |
+    ip netns delete ns1
+    ip link delete veth1-br
+    ip link delete veth2-br
+    ip link delete br1
+
+- name: Kill hostapd process
+  shell: pkill hostapd

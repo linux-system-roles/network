@@ -32,6 +32,17 @@
   when:
     - network_provider == "nm"
 
+# If any 802.1x connections are used, the wpa_supplicant
+# service is required to be running
+- name: Enable and start wpa_supplicant
+  service:
+    name: wpa_supplicant
+    state: started
+    enabled: true
+  when:
+    - network_provider == "nm"
+    - wpa_supplicant_required
+
 - name: Enable network service
   service:
     name: "{{ network_service_name }}"

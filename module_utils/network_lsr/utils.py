@@ -39,6 +39,33 @@ class Util:
                 raise MyError("failure calling %s: exit with %s" % (argv, p.returncode))
         return out
 
+    @staticmethod
+    def path_to_glib_bytes(path):
+        """
+        Converts a path to a GLib.Bytes object that can be accepted by NM
+        """
+        return Util.GLib().Bytes.new(("file://%s\x00" % path).encode("utf-8"))
+
+    @staticmethod
+    def convert_passwd_flags_nm(secret_flags):
+        """
+        Converts an array of "secret flags" strings
+        to an integer represantion understood by NetworkManager
+        """
+
+        flag_int = 0
+
+        if "none" in secret_flags:
+            flag_int += 0
+        if "agent-owned" in secret_flags:
+            flag_int += 1
+        if "not-saved" in secret_flags:
+            flag_int += 2
+        if "not-required" in secret_flags:
+            flag_int += 4
+
+        return flag_int
+
     @classmethod
     def create_uuid(cls):
         return str(uuid.uuid4())

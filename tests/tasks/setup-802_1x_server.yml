@@ -1,0 +1,80 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Install EPEL on enterprise Linux for hostapd
+  # yamllint disable-line rule:line-length
+  command: yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
+  args:
+    warn: false
+    creates: /etc/yum.repos.d/epel.repo
+  when:
+    - ansible_distribution in ['RedHat', 'CentOS']
+
+- name: Install hostapd
+  package:
+    name: hostapd
+    state: present
+
+- name: Copy server certificates
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/pki/tls/{{ item }}"
+  with_items:
+    - server.key
+    - dh.pem
+    - server.pem
+    - cacert.pem
+
+- name: Create test interfaces
+  shell: |
+    ip link add veth1 type veth peer name veth1-br
+    ip link add veth2 type veth peer name veth2-br
+
+    ip link add br1 type bridge
+    ip link set br1 up
+
+    ip netns add ns1
+
+    ip link set veth1 netns ns1
+
+    ip netns exec ns1 ip addr add 203.0.113.1/24 dev veth1
+
+    ip link set veth1-br up
+    ip link set veth2-br up
+
+    ip link set veth1-br master br1
+    ip link set veth2-br master br1
+
+    ip netns exec ns1 ip link set veth1 up
+    ip link set veth2 up
+
+    # Enable forwarding of EAP 802.1x messages through software bridge "br1".
+    echo 8 > /sys/class/net/br1/bridge/group_fwd_mask
+
+- name: Create hostapd config
+  copy:
+    content: |
+      interface=veth1
+      driver=wired
+      debug=2
+      ieee8021x=1
+      eap_reauth_period=3600
+      eap_server=1
+      use_pae_group_addr=1
+      eap_user_file=/etc/hostapd/hostapd.eap_user
+      ca_cert=/etc/pki/tls/cacert.pem
+      dh_file=/etc/pki/tls/dh.pem
+      server_cert=/etc/pki/tls/server.pem
+      private_key=/etc/pki/tls/server.key
+      private_key_passwd=test
+      logger_syslog=-1
+      logger_syslog_level=0
+    dest: /etc/hostapd/wired.conf
+
+- name: Create eap_user_file config
+  copy:
+    content: |
+      * TLS
+    dest: /etc/hostapd/hostapd.eap_user
+
+- name: Run hostapd in namespace
+  shell: ip netns exec ns1 hostapd -B /etc/hostapd/wired.conf && sleep 5

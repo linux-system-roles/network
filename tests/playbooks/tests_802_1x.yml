@@ -1,0 +1,106 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    interface: 802-1x-test
+  tasks:
+    - name: "INIT: 802.1x tests"
+      debug:
+        msg: "##################################################"
+    - include_tasks: tasks/setup-802_1x_server.yml
+    - name: Copy client certs
+      copy:
+        src: "{{ item }}"
+        dest: "/etc/pki/tls/{{ item }}"
+        mode: 0644
+      with_items:
+        - client.key
+        - client.key.nocrypt
+        - client.pem
+        - cacert.pem
+    - block:
+        - name: "TEST: 802.1x profile with private key password and ca cert"
+          debug:
+            msg: "##################################################"
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                interface_name: veth2
+                state: up
+                type: ethernet
+                ip:
+                  address:
+                    - 203.0.113.2/24
+                  dhcp4: "no"
+                  auto6: "no"
+                802.1x:
+                  identity: myhost
+                  eap: tls
+                  private-key: /etc/pki/tls/client.key
+                  private-key-password: test
+                  private-key-password-flags:
+                    - none
+                  client-cert: /etc/pki/tls/client.pem
+                  ca-cert: /etc/pki/tls/cacert.pem
+        - name: "TEST: I can ping the EAP server"
+          shell: ping -c1 203.0.113.1
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                persistent_state: absent
+                state: absent
+        - name: >-
+            TEST: 802.1x profile with unencrypted private key and
+            system ca certs
+          debug:
+            msg: "##################################################"
+        - name: Copy cacert to system truststore
+          copy:
+            src: cacert.pem
+            dest: /etc/pki/ca-trust/source/anchors/cacert.pem
+            mode: 0644
+        - name: Update ca trust
+          shell: update-ca-trust
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                interface_name: veth2
+                state: up
+                type: ethernet
+                ip:
+                  address:
+                    - 203.0.113.2/24
+                  dhcp4: "no"
+                  auto6: "no"
+                802.1x:
+                  identity: myhost
+                  eap: tls
+                  private-key: /etc/pki/tls/client.key.nocrypt
+                  client-cert: /etc/pki/tls/client.pem
+                  private-key-password-flags:
+                    - not-required
+                  system-ca-certs: True
+        - name: "TEST: I can ping the EAP server"
+          shell: ping -c1 203.0.113.1
+      always:
+        - block:
+            - import_role:
+                name: linux-system-roles.network
+              vars:
+                network_connections:
+                  - name: "{{ interface }}"
+                    persistent_state: absent
+                    state: absent
+                  - name: br1
+                    persistent_state: absent
+                    state: absent
+              ignore_errors: true
+            - include_tasks: tasks/cleanup-802_1x_server.yml
+          tags:
+            - "tests::cleanup"

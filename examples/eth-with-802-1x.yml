@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: network-test
+  vars:
+    network_connections:
+      - name: eth0
+        type: ethernet
+        802.1x:
+          identity: myhost
+          eap: tls
+          private-key: /etc/pki/tls/client.key
+          # recommend vault encrypting the private key password
+          # see https://docs.ansible.com/ansible/latest/user_guide/vault.html
+          private-key-password: "p@55w0rD"
+          client-cert: /etc/pki/tls/client.pem
+          ca-cert: /etc/pki/tls/cacert.pem
+
+  # certs have to be deployed first
+  pre_tasks:
+    - name: copy certs/keys for 802.1x auth
+      copy:
+        src: "{{ item }}"
+        dest: "/etc/pki/tls/{{ item }}"
+      with_items:
+        - client.key
+        - client.pem
+        - cacert.pem
+  roles:
+    - linux-system-roles.network

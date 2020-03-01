@@ -1,0 +1,15 @@
+---
+# set network provider and gather facts
+- hosts: all
+  tasks:
+    - name: Set network provider to 'nm'
+      set_fact:
+        network_provider: nm
+
+# workaround for: https://github.com/ansible/ansible/issues/27973
+# There is no way in Ansible to abort a playbook hosts with specific OS
+# releases Therefore we include the playbook with the tests only if the hosts
+# would support it.
+# The test requires NetworkManager, therefore it cannot run on RHEL/CentOS 6
+- import_playbook: playbooks/tests_802_1x.yml
+  when: ansible_distribution_major_version != '6'
