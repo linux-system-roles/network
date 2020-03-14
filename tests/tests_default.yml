@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- name: Test executing the role with default parameters
-  hosts: all
+- hosts: all
+  name: Test executing the role with default parameters
   roles:
     - linux-system-roles.network
