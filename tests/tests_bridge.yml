@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- name: Test configuring bridges
-  hosts: all
+- hosts: all
+  name: Test configuring bridges
   vars:
     interface: LSR-TST-br31
 
@@ -12,8 +12,8 @@
     - include_tasks: tasks/show-interfaces.yml
     - include_tasks: tasks/assert-device_absent.yml
 
-- name: Add test bridge
-  hosts: all
+- hosts: all
+  name: Add test bridge
   vars:
     network_connections:
       - name: "{{ interface }}"
@@ -48,8 +48,4 @@
   vars:
     profile: "{{ interface }}"
     task: tasks/assert-profile_absent.yml
-
 # FIXME: Devices might still be left when profile is absent
-#- import_playbook: run-tasks.yml
-#  vars:
-#    task: tasks/assert-device_absent.yml
