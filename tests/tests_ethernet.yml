@@ -7,14 +7,14 @@
     - debug:
         var: network_provider
 
-- name: Test configuring ethernet devices
-  hosts: all
+- hosts: all
+  name: Test configuring ethernet devices
   vars:
     type: veth
     interface: lsr27
 
   tasks:
-    - name: "set type={{ type }} and interface={{ interface }}"
+    - name: "Set type={{ type }} and interface={{ interface }}"
       set_fact:
         type: "{{ type }}"
         interface: "{{ interface }}"
@@ -24,8 +24,8 @@
         state: present
     - include_tasks: tasks/assert-device_present.yml
 
-- name: Test static interface up
-  hosts: all
+- hosts: all
+  name: Test static interface up
   vars:
     network_connections:
       - name: "{{ interface }}"
