@@ -348,7 +348,7 @@ The IP configuration supports the following options:
 
 ### `ethtool`
 
-The ethtool settings allow to enable or disable varios features. The names
+The ethtool settings allow to enable or disable various features. The names
 correspond to the names used by the `ethtool` utility. Depending on the actual
 kernel and device, changing some features might not be supported.
 
