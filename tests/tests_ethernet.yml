@@ -52,9 +52,10 @@
 - import_playbook: remove-profile.yml
   vars:
     profile: "{{ interface }}"
+
 # FIXME: assert profile away
-- name: Remove interfaces
-  hosts: all
+- hosts: all
+  name: Remove interfaces
   tasks:
     - include_tasks: tasks/manage-test-interface.yml
       vars:
