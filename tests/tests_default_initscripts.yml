@@ -5,5 +5,5 @@
     - name: Set network provider to 'initscripts'
       set_fact:
         network_provider: initscripts
-        
+
 - import_playbook: tests_default.yml

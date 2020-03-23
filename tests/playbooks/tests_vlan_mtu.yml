@@ -11,7 +11,8 @@
       vars:
         state: present
     - include_tasks: tasks/assert-device_present.yml
-    - name: "TEST: I can configure the MTU for a vlan interface without autoconnect."
+    - name: >-
+        TEST: I can configure the MTU for a vlan interface without autoconnect.
       debug:
         msg: "##################################################"
     - import_role:
@@ -44,8 +45,8 @@
       vars:
         profile: "{{ item }}"
       loop:
-        -  "{{ interface }}"
-        -  "{{ vlan_interface }}"
+        - "{{ interface }}"
+        - "{{ vlan_interface }}"
 
     - name: "TEARDOWN: remove profiles."
       debug:

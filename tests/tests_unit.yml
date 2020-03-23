@@ -4,6 +4,7 @@
   name: Setup for test running
   tasks:
     - name: Install EPEL on enterprise Linux for python2-mock
+      # yamllint disable-line rule:line-length
       command: yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
       args:
         warn: false
@@ -34,9 +35,9 @@
         dest: /tmp/test-unit-1/
         local_follow: false
       loop:
-      - ../library/network_connections.py
-      - unit/test_network_connections.py
-      - ../module_utils/network_lsr
+        - ../library/network_connections.py
+        - unit/test_network_connections.py
+        - ../module_utils/network_lsr
 
     - name: Create helpers directory
       file:
@@ -86,4 +87,5 @@
     - name: Ensure that at least one python unit test ran
       fail:
         msg: Tests did not run with python2 or python3
-      when: not (python2_available is succeeded or python3_available is succeeded)
+      when: not python2_available is succeeded and
+        not python3_available is succeeded
