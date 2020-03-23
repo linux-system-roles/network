@@ -15,7 +15,8 @@
         type: dummy
         interface: dummy1298
 
-# FIXME: when: does not seem to work with include_tasks, therefore this cannot be safely tested for now
+# FIXME: when: does not seem to work with include_tasks, therefore this cannot
+# be safely tested for now
 #    - name: test tap interfaces
 #      include_tasks: tasks/create-and-remove-interface.yml
 #      vars:
@@ -23,5 +24,5 @@
 #        - interface: tap1298
 #      when: ansible_distribution_major_version > 6
 #      # ip tuntap does not exist on RHEL6
-#      # FIXME: Maybe use some other tool to manage devices, openvpn can do this,
-#      # but it is in EPEL
+#      # FIXME: Maybe use some other tool to manage devices, openvpn can do
+#      # this, but it is in EPEL

@@ -16,11 +16,15 @@
     # be its own task
     - name: set more facts
       set_fact:
-        coverage_file: ansible-coverage-{{ coverage_module }}-{{ test_playbook|replace('.yml', '') }}
+        coverage_file:
+          # yamllint disable-line rule:line-length
+          ansible-coverage-{{ coverage_module }}-{{ test_playbook|replace('.yml', '') }}
 
     - name: debug info
       debug:
-        msg: Getting coverage for '{{ coverage_module }}' with '{{ test_playbook }}'
+        msg:
+          # yamllint disable-line rule:line-length
+          Getting coverage for '{{ coverage_module }}' with '{{ test_playbook }}'
 
     # combine data in case old data is left there
     - command: "{{ coverage }} combine"
@@ -48,7 +52,8 @@
 
 - import_playbook: "{{ test_playbook }}"
   vars:
-    ansible_python_interpreter: "{{ coverage }} run -p --include *ansible_module_{{ coverage_module }}.py"
+    ansible_python_interpreter:
+      "{{ coverage }} run -p --include *ansible_module_{{ coverage_module }}.py"
 
 - name: Gather coverage data
   hosts: all
