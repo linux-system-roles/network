@@ -1,0 +1,9 @@
+---
+- hosts: all
+  name: Run playbook 'tests_ethernet.yml' with initscripts as provider
+  tasks:
+    - name: Set network provider to 'initscripts'
+      set_fact:
+        network_provider: initscripts
+
+- import_playbook: playbooks/tests_ethernet.yml
