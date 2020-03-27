@@ -17,6 +17,7 @@ This role can be used to configure:
 - VLAN interfaces
 - MacVLAN interfaces
 - Infiniband interfaces
+- Wireless (WiFi) interfaces
 - IP configuration
 - 802.1x authentication
 
@@ -63,10 +64,12 @@ List of variables:
   provider (`nm` or `initscripts`) . Setting it to `{{ network_provider_os_default }}`,
   the provider is set depending on the operating system. This is usually `nm`
   except for RHEL 6 or CentOS 6 systems.
-
 * `network_connections` - The connection profiles are configured as `network_connections`,
   which is a list of dictionaries that include specific options.
-
+* `network_allow_restart` - Certain configurations require the role to restart network services.
+  For example, if a wireless connection is configured and NetworkManager-wifi is not installed,
+  NetworkManager must be restarted prior to the connection being configured. Setting this to
+  `no` will prevent the role from restarting network service.
 
 Examples of Variables
 ---------------------
@@ -78,6 +81,7 @@ network_provider: nm
 network_connections:
   - name: eth0
     #...
+network_allow_restart: yes
 ```
 
 Options
@@ -186,6 +190,7 @@ The `type` option can be set to the following values:
   - `vlan`
   - `macvlan`
   - `infiniband`
+  - `wireless`
 
 #### `type: ethernet`
 
@@ -232,6 +237,19 @@ role.
 Similar to `master` and `vlan`, the `parent` references the connection profile in the ansible
 role.
 
+#### `type: wireless`
+
+The `wireless` type supports WPA-PSK (password) authentication and WPA-EAP (802.1x) authentication.
+
+`nm` (NetworkManager) is the only supported `network_provider` for this type.
+
+If WPA-EAP is used, ieee802_1x settings must be defined in the [ieee802_1x](#-`ieee802_1x`) option.
+
+The following options are supported:
+
+* `ssid`: the SSID of the wireless network (required)
+* `key_mgmt`: `wpa-psk` or `wpa-eap` (required)
+* `password`: password for the network (required if `wpa-psk` is used)
 
 ### `autoconnect`
 
@@ -640,6 +658,20 @@ network_connections:
     ip:
       address:
         - 192.168.1.1/24
+```
+
+Configuring a wireless connection:
+
+```yaml
+network_connections:
+  - name: wlan0
+    type: wireless
+    wireless:
+      ssid: "My WPA2-PSK Network"
+      key_mgmt: "wpa-psk"
+      # recommend vault encrypting the wireless password
+      # see https://docs.ansible.com/ansible/latest/user_guide/vault.html
+      password: "p@55w0rD"
 ```
 
 Setting the IP configuration:

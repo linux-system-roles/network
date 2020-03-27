@@ -2,6 +2,8 @@
 ---
 network_connections: []
 
+network_allow_restart: no
+
 # Use initscripts for RHEL/CentOS < 7, nm otherwise
 network_provider_os_default: "{{
     'initscripts' if ansible_distribution in [
@@ -20,10 +22,25 @@ __network_provider_current: "{{
 # Default to the auto-detected value
 network_provider: "{{ __network_provider_current }}"
 
-# wpa_supplicant is required if any ieee802_1x connections are defined
-__network_wpa_supplicant_required: "{{ network_connections |
+# check if any 802.1x connections are defined
+__network_ieee802_1x_connections_defined: "{{ network_connections |
       selectattr('ieee802_1x', 'defined') | list | count > 0 }}"
-__network_packages_default_802_1x: ["{% if __network_wpa_supplicant_required
+
+# check if any wireless connections are defined
+__network_wireless_connections_defined: "{{
+      ['wireless'] in network_connections|json_query('[*][type]') }}"
+
+# NetworkManager-wireless is required for wireless connections
+__network_packages_default_wireless: ["{%
+      if __network_wireless_connections_defined
+      %}NetworkManager-wifi{% endif %}"]
+
+# wpa_supplicant is required if any 802.1x or wireless connections are defined
+__network_wpa_supplicant_required: "{{
+      __network_ieee802_1x_connections_defined or
+      __network_wireless_connections_defined }}"
+__network_packages_default_wpa_supplicant: ["{%
+      if __network_wpa_supplicant_required
       %}wpa_supplicant{% endif %}"]
 
 # The python-gobject-base package depends on the python version and
@@ -36,7 +53,8 @@ __network_packages_default_gobject_packages: ["python{{
 __network_service_name_default_nm: NetworkManager
 __network_packages_default_nm: "{{['NetworkManager']
       + __network_packages_default_gobject_packages|select()|list()
-      + __network_packages_default_802_1x|select()|list()}}"
+      + __network_packages_default_wpa_supplicant|select()|list()
+      + __network_packages_default_wireless|select()|list()}}"
 
 __network_service_name_default_initscripts: network
 

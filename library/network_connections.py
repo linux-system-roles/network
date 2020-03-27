@@ -836,6 +836,28 @@ class NMUtil:
                 NM.SETTING_MACVLAN_PARENT,
                 ArgUtil.connection_find_master(connection["parent"], connections, idx),
             )
+        elif connection["type"] == "wireless":
+            s_con.set_property(
+                NM.SETTING_CONNECTION_TYPE, NM.SETTING_WIRELESS_SETTING_NAME
+            )
+            s_wireless = self.connection_ensure_setting(con, NM.SettingWireless)
+            s_wireless.set_property(
+                NM.SETTING_WIRELESS_SSID,
+                Util.GLib().Bytes.new(connection["wireless"]["ssid"].encode("utf-8")),
+            )
+
+            s_wireless_sec = self.connection_ensure_setting(
+                con, NM.SettingWirelessSecurity
+            )
+            s_wireless_sec.set_property(
+                NM.SETTING_WIRELESS_SECURITY_KEY_MGMT,
+                connection["wireless"]["key_mgmt"],
+            )
+
+            if connection["wireless"]["key_mgmt"] == "wpa-psk":
+                s_wireless_sec.set_property(
+                    NM.SETTING_WIRELESS_SECURITY_PSK, connection["wireless"]["password"]
+                )
         else:
             raise MyError("unsupported type %s" % (connection["type"]))
 
