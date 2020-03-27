@@ -21,8 +21,8 @@
         state: up
         type: bridge
         ip:
-          dhcp4: no
-          auto6: yes
+          dhcp4: false
+          auto6: true
   roles:
     - linux-system-roles.network
 
@@ -52,4 +52,4 @@
 # FIXME: Devices might still be left when profile is absent
 # - import_playbook: run-tasks.yml
 #   vars:
-#     task: tasks/assert-device_absent.yml
+#    task: tasks/assert-device_absent.yml
