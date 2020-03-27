@@ -1,0 +1,91 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Install EPEL on enterprise Linux for hostapd
+  # yamllint disable-line rule:line-length
+  command: yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
+  args:
+    warn: false
+    creates: /etc/yum.repos.d/epel.repo
+  when:
+    - ansible_distribution in ['RedHat', 'CentOS']
+
+- name: Install packages required to set up mock wifi network
+  package:
+    name:
+      - hostapd
+      - NetworkManager
+      - wpa_supplicant
+    state: present
+
+- name: Ensure NetworkManager is running
+  service:
+    name: NetworkManager
+    state: started
+
+- name: Copy server certificates
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/pki/tls/{{ item }}"
+  with_items:
+    - server.key
+    - dh.pem
+    - server.pem
+    - cacert.pem
+
+- name: Create hostapd config
+  copy:
+    content: |
+      interface=wlan1
+      driver=nl80211
+      ctrl_interface=/var/run/hostapd
+      ctrl_interface_group=0
+      ssid=mock_wifi
+      country_code=EN
+      hw_mode=g
+      channel=7
+      auth_algs=3
+      wpa=3
+      ieee8021x=1
+      eapol_version=1
+      wpa_key_mgmt=WPA-EAP WPA-PSK
+      wpa_passphrase=p@55w0rD
+      eap_reauth_period=3600
+      eap_server=1
+      use_pae_group_addr=1
+      eap_user_file=/etc/hostapd/hostapd.eap_user
+      ca_cert=/etc/pki/tls/cacert.pem
+      dh_file=/etc/pki/tls/dh.pem
+      server_cert=/etc/pki/tls/server.pem
+      private_key=/etc/pki/tls/server.key
+      private_key_passwd=test
+      logger_syslog=-1
+      logger_syslog_level=0
+    dest: /etc/hostapd/wireless.conf
+
+- name: Create eap_user_file config
+  copy:
+    content: |
+      * TLS
+    dest: /etc/hostapd/hostapd.eap_user
+
+- name: Load mac80211_hwsim kernel module to mock a wifi network
+  shell: modprobe mac80211_hwsim && sleep 5
+
+- name: Restart NetworkManager and wpa_supplicant
+  service:
+    name: "{{ item }}"
+    state: restarted
+  with_items:
+    - NetworkManager
+    - wpa_supplicant
+
+- name: Configure wlan0 and wlan1 (mock wifi interfaces)
+  shell: |
+    ip link set up wlan0
+    ip link set up wlan1
+    nmcli device set wlan1 managed off
+    ip add add 203.0.113.1/24 dev wlan1
+    sleep 5
+
+- name: Start hostapd
+  shell: hostapd -B /etc/hostapd/wireless.conf && sleep 5

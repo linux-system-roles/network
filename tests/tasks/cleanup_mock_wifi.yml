@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Unload mac80211_hwsim module
+  shell: modprobe -r mac80211_hwsim
+
+- name: Kill hostapd process
+  shell: pkill hostapd

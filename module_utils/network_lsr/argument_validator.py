@@ -115,10 +115,26 @@ class ArgValidatorStr(ArgValidator):
         default_value=None,
         enum_values=None,
         allow_empty=False,
+        min_length=None,
+        max_length=None,
     ):
         ArgValidator.__init__(self, name, required, default_value)
         self.enum_values = enum_values
         self.allow_empty = allow_empty
+
+        if max_length is not None:
+            if not isinstance(max_length, int):
+                raise ValueError("max_length must be an integer")
+            elif max_length < 0:
+                raise ValueError("max_length must be a positive integer")
+        self.max_length = max_length
+
+        if min_length is not None:
+            if not isinstance(min_length, int):
+                raise ValueError("min_length must be an integer")
+            elif min_length < 0:
+                raise ValueError("min_length must be a positive integer")
+        self.min_length = min_length
 
     def _validate_impl(self, value, name):
         if not isinstance(value, Util.STRING_TYPE):
@@ -132,7 +148,35 @@ class ArgValidatorStr(ArgValidator):
             )
         if not self.allow_empty and not value:
             raise ValidationError(name, "cannot be empty")
+        if not self._validate_string_max_length(value):
+            raise ValidationError(
+                name, "maximum length is %s characters" % (self.max_length)
+            )
+        if not self._validate_string_min_length(value):
+            raise ValidationError(
+                name, "minimum length is %s characters" % (self.min_length)
+            )
         return value
+
+    def _validate_string_max_length(self, value):
+        """
+        Ensures that the length of string `value` is less than or equal to
+        the maximum length
+        """
+        if self.max_length is not None:
+            return len(str(value)) <= self.max_length
+        else:
+            return True
+
+    def _validate_string_min_length(self, value):
+        """
+        Ensures that the length of string `value` is more than or equal to
+         the minimum length
+        """
+        if self.min_length is not None:
+            return len(str(value)) >= self.min_length
+        else:
+            return True
 
 
 class ArgValidatorNum(ArgValidator):
@@ -887,6 +931,42 @@ class ArgValidator_Dict802_1X(ArgValidatorDict):
         return result
 
 
+class ArgValidator_DictWireless(ArgValidatorDict):
+
+    VALID_KEY_MGMT = [
+        "wpa-psk",
+        "wpa-eap",
+    ]
+
+    def __init__(self):
+        ArgValidatorDict.__init__(
+            self,
+            name="wireless",
+            nested=[
+                ArgValidatorStr("ssid", max_length=32),
+                ArgValidatorStr(
+                    "key_mgmt", enum_values=ArgValidator_DictWireless.VALID_KEY_MGMT
+                ),
+                ArgValidatorStr("password", default_value=None, max_length=63),
+            ],
+            default_value=None,
+        )
+
+    def _validate_post(self, value, name, result):
+        if result["key_mgmt"] == "wpa-psk":
+            if result["password"] is None:
+                raise ValidationError(
+                    name, "must supply a password if using 'wpa-psk' key management",
+                )
+        else:
+            if result["password"] is not None:
+                raise ValidationError(
+                    name, "password only allowed if using 'wpa-psk' key management",
+                )
+
+        return result
+
+
 class ArgValidator_DictConnection(ArgValidatorDict):
 
     VALID_PERSISTENT_STATES = ["absent", "present"]
@@ -899,6 +979,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
         "bond",
         "vlan",
         "macvlan",
+        "wireless",
     ]
     VALID_SLAVE_TYPES = ["bridge", "bond", "team"]
 
@@ -949,6 +1030,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidator_DictVlan(),
                 ArgValidator_DictMacvlan(),
                 ArgValidator_Dict802_1X(),
+                ArgValidator_DictWireless(),
                 # deprecated options:
                 ArgValidatorStr(
                     "infiniband_transport_mode",
@@ -1081,9 +1163,42 @@ class ArgValidator_DictConnection(ArgValidatorDict):
         self.VALID_FIELDS = valid_fields
         return result
 
+    def _validate_post_wireless(self, value, name, result):
+        """
+        Validate wireless settings
+        """
+        if "type" in result:
+            if result["type"] == "wireless":
+                if "wireless" in result:
+                    if (
+                        result["wireless"]["key_mgmt"] == "wpa-eap"
+                        and "ieee802_1x" not in result
+                    ):
+                        raise ValidationError(
+                            name + ".wireless",
+                            "key management set to wpa-eap but no "
+                            "'ieee802_1x' settings defined",
+                        )
+                else:
+                    raise ValidationError(
+                        name + ".wireless",
+                        "must define 'wireless' settings for 'type' 'wireless'",
+                    )
+
+            else:
+                if "wireless" in result:
+                    raise ValidationError(
+                        name + ".wireless",
+                        "'wireless' settings are not allowed for 'type' '%s'"
+                        % (result["type"]),
+                    )
+
+        return result
+
     def _validate_post(self, value, name, result):
         result = self._validate_post_state(value, name, result)
         result = self._validate_post_fields(value, name, result)
+        result = self._validate_post_wireless(value, name, result)
 
         if "type" in result:
 
@@ -1299,6 +1414,15 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                         % (result["type"]),
                     )
 
+            if "ieee802_1x" in result and result["type"] not in [
+                "ethernet",
+                "wireless",
+            ]:
+                raise ValidationError(
+                    name + ".ieee802_1x",
+                    "802.1x settings only allowed for ethernet or wireless interfaces.",
+                )
+
         for k in self.VALID_FIELDS:
             if k in result:
                 continue
@@ -1409,7 +1533,12 @@ class ArgValidator_ListConnections(ArgValidatorList):
                     "if you need to use initscripts.",
                 )
 
-            if connection["type"] != "ethernet":
+        # check if wireless connection is valid
+        if connection["type"] == "wireless":
+            if mode == self.VALIDATE_ONE_MODE_INITSCRIPTS:
                 raise ValidationError.from_connection(
-                    idx, "802.1x settings only allowed for ethernet interfaces."
+                    idx,
+                    "Wireless WPA auth is not supported by initscripts. "
+                    "Configure wireless connection in /etc/wpa_supplicant.conf "
+                    "if you need to use initscripts.",
                 )

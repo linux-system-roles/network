@@ -61,10 +61,15 @@ NM_ONLY_TESTS = {
         MINIMUM_VERSION: "'1.20.0'",
         "comment": "# NetworkManager 1.20.0 introduced ethtool settings support",
     },
+    "playbooks/tests_802_1x_updated.yml": {},
+    "playbooks/tests_802_1x.yml": {},
     "playbooks/tests_reapply.yml": {},
     "playbooks/tests_states.yml": {},
-    "playbooks/tests_802_1x.yml": {},
-    "playbooks/tests_802_1x_updated.yml": {},
+    # mac80211_hwsim (used for tests_wireless) only seems to be available
+    # and working on RHEL/CentOS 7
+    "playbooks/tests_wireless.yml": {
+        EXTRA_RUN_CONDITION: "ansible_distribution_major_version == '7'",
+    },
 }
 
 IGNORE = [
