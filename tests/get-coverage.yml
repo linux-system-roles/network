@@ -30,7 +30,7 @@
     - command: "{{ coverage }} combine"
       environment:
         COVERAGE_FILE: "{{ coverage_file }}"
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: remove old data
       file:
@@ -68,4 +68,4 @@
     - fetch:
         src: "{{ coverage_file }}"
         dest: "{{ destdir }}"
-        flat: no
+        flat: false
