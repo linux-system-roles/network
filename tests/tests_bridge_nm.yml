@@ -8,4 +8,4 @@
       set_fact:
         network_provider: nm
 
-- import_playbook: playbooks/tests_bridge.yml   
+- import_playbook: playbooks/tests_bridge.yml
