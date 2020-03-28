@@ -33,8 +33,8 @@
                 ip:
                   address:
                     - 203.0.113.2/24
-                  dhcp4: "no"
-                  auto6: "no"
+                  dhcp4: false
+                  auto6: false
                 802.1x:
                   identity: myhost
                   eap: tls
@@ -76,8 +76,8 @@
                 ip:
                   address:
                     - 203.0.113.2/24
-                  dhcp4: "no"
-                  auto6: "no"
+                  dhcp4: false
+                  auto6: false
                 802.1x:
                   identity: myhost
                   eap: tls
@@ -85,7 +85,7 @@
                   client-cert: /etc/pki/tls/client.pem
                   private-key-password-flags:
                     - not-required
-                  system-ca-certs: True
+                  system-ca-certs: true
         - name: "TEST: I can ping the EAP server"
           shell: ping -c1 203.0.113.1
       always:
