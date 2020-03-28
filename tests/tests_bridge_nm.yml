@@ -1,3 +1,6 @@
+# BSD
+---
+
 - hosts: all
   name: Run playbook 'tests_bridge.yml' with nm as provider
   tasks:
