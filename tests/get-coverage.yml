@@ -39,15 +39,15 @@
 
     - name: find coverage file to delete
       find:
-              path: "{{ playbook_dir }}"
-              patterns: ".coverage.*"
-              hidden: yes
+        path: "{{ playbook_dir }}"
+        patterns: ".coverage.*"
+        hidden: yes
       register: files_to_delete
 
     - name: remove old data
       file:
-         path: "{{ item.path }}"
-         state: absent
+        path: "{{ item.path }}"
+        state: absent
       with_items: "{{ files_to_delete.files }}"
 
     - name: copy coveragerc
