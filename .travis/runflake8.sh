@@ -4,13 +4,14 @@
 # A shell wrapper around flake8. The purpose of this wrapper is to get to user
 # an opportunity to disable running flake8 via config.sh.
 
-# The first script argument is a path to Python interpreter, the rest of
-# arguments are passed to flake8.
+# The given command line arguments are passed to flake8.
 
 # Environment variables:
 #
 #   RUN_FLAKE8_DISABLED
 #     if set to an arbitrary non-empty value, flake8 will be not executed
+#   RUN_FLAKE8_IGNORE
+#     list of issues to ignore - see flake8 docs
 
 set -e
 
@@ -25,10 +26,7 @@ if [[ "${RUN_FLAKE8_DISABLED}" ]]; then
   exit 0
 fi
 
-# Sanitize path in case if running within tox (see
-# https://github.com/tox-dev/tox/issues/1463):
-ENVPYTHON=$(readlink -f $1)
-shift
-
 set -x
-${ENVPYTHON} -m flake8 "$@"
+python -m flake8 \
+  ${RUN_FLAKE8_IGNORE:+--ignore} ${RUN_FLAKE8_IGNORE:-} \
+  "$@"

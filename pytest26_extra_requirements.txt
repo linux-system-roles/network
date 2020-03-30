@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: MIT
+
+# Write extra requirements for running pytest with python2.6 here:
+# NOTE: If your pytests need ansible, use the requirements from
+# ansible26_requirements.txt, either by listing it like this:
+# -ransible26_requirements.txt
+# or by listing the dependencies from that file explicitly
