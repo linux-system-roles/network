@@ -136,14 +136,35 @@ function lsr_compare_pythons() {
 }
 
 ##
+# lsr_get_system_python
+#
+# Return the system python, or /usr/bin/python3 if nothing
+# else can be found in a standard location.
+function lsr_get_system_python() {
+  local syspython=$(command -pv python3)
+  if [[ -z "$syspython" ]]; then
+    syspython=$(command -pv python)
+  fi
+  if [[ -z "$syspython" ]]; then
+    syspython=$(command -pv python2)
+  fi
+  if [[ -z "$syspython" ]]; then
+    lsr_error Could not determine system python path
+  fi
+  echo $syspython
+}
+
+##
 # lsr_venv_python_matches_system_python [$1] [$2]
 #
 #   $1 - command or full path to venv Python interpreter (default: python)
 #   $2 - command or full path to the system Python interpreter
-#        (default: /usr/bin/python3)
+#        (default: system python as determined by lsr_get_system_python())
 #
 # Exit with 0 if virtual environment Python version matches the system Python
 # version.
 function lsr_venv_python_matches_system_python() {
-  lsr_compare_pythons ${1:-python} -eq ${2:-/usr/bin/python3}
+  local syspython="${2:-$(lsr_get_system_python)}"
+
+  lsr_compare_pythons ${1:-python} -eq $syspython
 }
