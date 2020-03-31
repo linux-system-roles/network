@@ -10,8 +10,7 @@
 #       which set them by including config.sh). Now, they take effect also when
 #       running tox locally.
 
-# First argument to the script is a path to environment python, the rest of
-# arguments are passed to custom_pylint.py.
+# The given command line arguments are passed to custom_pylint.py.
 
 set -e
 
@@ -20,10 +19,5 @@ SCRIPTDIR=$(readlink -f $(dirname $0))
 
 . ${SCRIPTDIR}/config.sh
 
-# Sanitize path in case if running within tox (see
-# https://github.com/tox-dev/tox/issues/1463):
-ENVPYTHON=$(readlink -f $1)
-shift
-
 set -x
-${ENVPYTHON} ${SCRIPTDIR}/custom_pylint.py "$@"
+python ${SCRIPTDIR}/custom_pylint.py "$@"

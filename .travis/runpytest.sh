@@ -8,8 +8,7 @@
 # running pytest if there are no unit tests and filters out --cov*/--no-cov*
 # arguments if there is nothing to be analyzed with coverage.
 
-# First argument to the script is a path to environment python, the rest of
-# arguments are passed to pytest.
+# The given command line arguments are passed to pytest.
 
 set -e
 
@@ -23,11 +22,6 @@ if [[ ! -d ${TOPDIR}/tests/unit ]]; then
   lsr_info "${ME}: No unit tests found. Skipping."
   exit 0
 fi
-
-# Sanitize path in case if running within tox (see
-# https://github.com/tox-dev/tox/issues/1463):
-ENVPYTHON=$(readlink -f $1)
-shift
 
 PYTEST_OPTS=()
 PYTEST_OPTS_NOCOV=()
@@ -58,4 +52,4 @@ if [[ "${USE_COV}" == "no" ]]; then
 fi
 
 set -x
-${ENVPYTHON} -m pytest "${PYTEST_OPTS[@]}"
+python -m pytest "${PYTEST_OPTS[@]}"

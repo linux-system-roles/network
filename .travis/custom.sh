@@ -16,12 +16,7 @@ TOPDIR=$(readlink -f ${SCRIPTDIR}/..)
 . ${SCRIPTDIR}/utils.sh
 . ${SCRIPTDIR}/config.sh
 
-# Sanitize arguments (see https://github.com/tox-dev/tox/issues/1463):
-ENVPYTHON=$(readlink -f $1)
-SYSPYTHON=$(readlink -f $2)
-shift 2
-
 # Write your custom commands here that should be run when `tox -e custom`:
-if [[ -z "${TRAVIS}" ]] || lsr_check_python_version ${ENVPYTHON} -eq '3.6'; then
+if [[ -z "${TRAVIS}" ]] || lsr_check_python_version python -eq '3.6'; then
   (set -x; cd ${TOPDIR}/tests; ${ENVPYTHON} ./ensure_non_running_provider.py)
 fi
