@@ -168,3 +168,13 @@ function lsr_venv_python_matches_system_python() {
 
   lsr_compare_pythons ${1:-python} -eq $syspython
 }
+
+# set TOPDIR
+ME=${ME:-$(basename $0)}
+SCRIPTDIR=${SCRIPTDIR:-$(readlink -f $(dirname $0))}
+TOPDIR=$(readlink -f ${SCRIPTDIR}/..)
+
+# Local Variables:
+# mode: Shell-script
+# sh-basic-offset: 2
+# End:
