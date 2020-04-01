@@ -20,6 +20,7 @@
 #       - RUN_PYLINT_INCLUDE
 #       - RUN_PYLINT_EXCLUDE
 #       - RUN_PYLINT_DISABLED
+#       - RUN_PYLINT_SETUP_MODULE_UTILS
 #
 #   * .travis/runblack.sh:
 #
@@ -31,3 +32,6 @@
 #
 #       - RUN_FLAKE8_DISABLED
 #
+#   * .travis/runpytest.sh:
+#
+#       - RUN_PYTEST_SETUP_MODULE_UTILS

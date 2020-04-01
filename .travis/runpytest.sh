@@ -10,16 +10,28 @@
 
 # The given command line arguments are passed to pytest.
 
+# Environment variables:
+#
+#   RUN_PYTEST_SETUP_MODULE_UTILS
+#     if set to an arbitrary non-empty value, the environment will be
+#     configured so that tests of the module_utils/ code will be run
+#     correctly
+
 set -e
 
 ME=$(basename $0)
 SCRIPTDIR=$(readlink -f $(dirname $0))
 
 . ${SCRIPTDIR}/utils.sh
+. ${SCRIPTDIR}/config.sh
 
 if [[ ! -d ${TOPDIR}/tests/unit ]]; then
   lsr_info "${ME}: No unit tests found. Skipping."
   exit 0
+fi
+
+if [[ "${RUN_PYTEST_SETUP_MODULE_UTILS}" ]]; then
+  lsr_setup_module_utils
 fi
 
 PYTEST_OPTS=()
