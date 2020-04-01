@@ -12,6 +12,12 @@
 #       - LSR_ANSIBLES
 #       - LSR_MSCENARIOS
 #
+#   * .travis/runcoveralls.sh:
+#
+#       - LSR_PUBLISH_COVERAGE
+#       - LSR_TESTSDIR
+#       - function lsr_runcoveralls_hook
+#
 # Environment variables that not start with LSR_* but have influence on CI
 # process:
 #
@@ -35,3 +41,4 @@
 #   * .travis/runpytest.sh:
 #
 #       - RUN_PYTEST_SETUP_MODULE_UTILS
+LSR_PUBLISH_COVERAGE=normal
