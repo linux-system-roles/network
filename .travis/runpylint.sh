@@ -12,12 +12,24 @@
 
 # The given command line arguments are passed to custom_pylint.py.
 
+# Environment variables:
+#
+#   RUN_PYLINT_SETUP_MODULE_UTILS
+#     if set to an arbitrary non-empty value, the environment will be
+#     configured so that linting of the module_utils/ code will be run
+#     correctly
+
 set -e
 
 ME=$(basename $0)
 SCRIPTDIR=$(readlink -f $(dirname $0))
 
 . ${SCRIPTDIR}/config.sh
+
+if [[ "${RUN_PYLINT_SETUP_MODULE_UTILS}" ]]; then
+  . ${SCRIPTDIR}/utils.sh
+  lsr_setup_module_utils
+fi
 
 set -x
 python ${SCRIPTDIR}/custom_pylint.py "$@"

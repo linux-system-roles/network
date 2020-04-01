@@ -169,6 +169,25 @@ function lsr_venv_python_matches_system_python() {
   lsr_compare_pythons ${1:-python} -eq $syspython
 }
 
+##
+# lsr_setup_module_utils [$1] [$2]
+#
+#   $1 - path to the ansible/module_utils/ directory in the venv
+#        assumes ansible has been installed in the venv
+#        defaults to env var $SRC_MODULE_UTILS_DIR
+#   $2 - path to the local module_utils/ directory for the role
+#        defaults to env var $DEST_MODULE_UTILS_DIR
+#
+# Exit with 0 if virtual environment Python version matches the system Python
+# version.
+function lsr_setup_module_utils() {
+  local srcdir=${1:-$SRC_MODULE_UTILS_DIR}
+  local destdir=${2:-$DEST_MODULE_UTILS_DIR}
+  if [ -n "$srcdir" -a -d "$srcdir" -a -n "$destdir" -a -d "$destdir" ]; then
+    bash $TOPDIR/tests/setup_module_utils.sh "$srcdir" "$destdir"
+  fi
+}
+
 # set TOPDIR
 ME=${ME:-$(basename $0)}
 SCRIPTDIR=${SCRIPTDIR:-$(readlink -f $(dirname $0))}
