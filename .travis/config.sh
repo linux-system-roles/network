@@ -33,10 +33,16 @@
 #       - RUN_BLACK_INCLUDE
 #       - RUN_BLACK_EXCLUDE
 #       - RUN_BLACK_DISABLED
+#       - RUN_BLACK_EXTRA_ARGS
 #
 #   * .travis/runflake8.sh:
 #
 #       - RUN_FLAKE8_DISABLED
+#       - RUN_FLAKE8_EXTRA_ARGS
+#
+#   * .travis/runsyspycmd.sh:
+#
+#       - function lsr_runsyspycmd_hook
 #
 #   * .travis/runpytest.sh:
 #
