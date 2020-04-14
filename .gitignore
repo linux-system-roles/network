@@ -9,4 +9,5 @@
 /tests/tmp_merge_coveragerc
 /tests/total-*coveragedata
 /.tox
+/.vagrant
 /.vscode
