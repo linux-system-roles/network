@@ -53,7 +53,8 @@
 - import_playbook: "{{ test_playbook }}"
   vars:
     ansible_python_interpreter:
-      "{{ coverage }} run -p --include *ansible_module_{{ coverage_module }}.py"
+      # yamllint disable-line rule:line-length
+      "{{ coverage }} run -p --include /*/modules/network_connections.py,/*/module_utils/network_lsr/*"
 
 - name: Gather coverage data
   hosts: all
