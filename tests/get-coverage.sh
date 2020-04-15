@@ -38,28 +38,25 @@ ansible-playbook -i "${host}", get-coverage.yml -e "test_playbook=${playbook} de
 #COVERAGE_FILE=remote-coverage coverage combine remote-coverage/tests_*/*/root/.coverage
 ./merge-coverage.sh coverage "${coverage_data}"-tmp $(find "${remote_coverage_dir}" -type f | tr , _)
 
-# When https://github.com/nedbat/coveragepy/pull/49 is merged, this can be simplified:
-if false
-then
-cat > tmp_merge_coveragerc <<EOF
-[paths]
-source =
-    .
-    /tmp/ansible_*/
-EOF
-else
 cat > tmp_merge_coveragerc <<EOF
 [paths]
 source =
     .
 EOF
-for file in $(COVERAGE_FILE="${coverage_data}"-tmp coverage report | grep -o "/tmp/ansible_[^/]*" | sort -u)
+# example path with Ansible 2.9.6:
+# /tmp/ansible_network_connections_payload_psugdf6r/ansible_network_connections_payload.zip/ansible/modules/network_connections.py
+# /tmp/ansible_network_connections_payload_psugdf6r/ansible_network_connections_payload.zip/ansible/module_utils/network_lsr/__init__.py
+# /tmp/ansible_network_connections_payload_psugdf6r/ansible_network_connections_payload.zip/ansible/module_utils/network_lsr/argument_validator.py
+# /tmp/ansible_network_connections_payload_psugdf6r/ansible_network_connections_payload.zip/ansible/module_utils/network_lsr/utils.py
+# /tmp/ansible_network_connections_payload_psugdf6r/ansible_network_connections_payload.zip/ansible/module_utils/network_lsr/nm_provider.py
+for file in $(echo 'SELECT path FROM file;' | sqlite3 "${coverage_data}"-tmp | sed s,/module.*.py,, | sort -u)
 do
     echo "    ${file}" >> tmp_merge_coveragerc
 done
-fi
 
 COVERAGE_FILE="${coverage_data}" coverage combine --rcfile tmp_merge_coveragerc "${coverage_data}"-tmp
+
+test -n "${DEBUG}" && cat tmp_merge_coveragerc
 rm tmp_merge_coveragerc
 
 COVERAGE_FILE="${coverage_data}" coverage report ||:
