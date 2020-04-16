@@ -14,17 +14,18 @@ import yaml
 OTHER_PROVIDER_SUFFIX = "_other_provider.yml"
 
 IGNORE = [
+    "tests_802_1x_nm.yml",
+    "tests_default_initscripts.yml",
+    "tests_default_nm.yml",
+    "tests_default.yml",
+    "tests_ethtool_features_initscripts.yml",
+    "tests_ethtool_features_nm.yml",
     "tests_helpers-and-asserts.yml",
+    "tests_regression_nm.yml",
     "tests_states.yml",
     "tests_unit.yml",
     "tests_vlan_mtu_initscripts.yml",
     "tests_vlan_mtu_nm.yml",
-    "tests_ethtool_features_initscripts.yml",
-    "tests_ethtool_features_nm.yml",
-    "tests_default_nm.yml",
-    "tests_default_initscripts.yml",
-    "tests_default.yml",
-    "tests_802_1x_nm.yml",
 ]
 
 OTHER_PLAYBOOK = """

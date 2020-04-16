@@ -1,0 +1,73 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# This test is supposed to check that checkpoints are properly cleaned-up after
+# failures in the module. This test currently uses the initscripts provider to
+# mark a device as unmanaged for NM and then tries to activiate it using NM.
+# This failed without removing the checkpoint.
+---
+- hosts: all
+  vars:
+    interface: cptstbr
+    profile: "{{ interface }}"
+    network_provider: nm
+  pre_tasks:
+    - debug:
+        msg: Inside states tests
+    - include_tasks: tasks/show-interfaces.yml
+    - include_tasks: tasks/assert-device_absent.yml
+  roles:
+    - linux-system-roles.network
+  tasks:
+    - block:
+        # create test profile
+        - include_role:
+            name: linux-system-roles.network
+          vars:
+            network_provider: initscripts
+            network_connections:
+              - name: "{{ interface }}"
+                state: up
+                type: bridge
+                ip:
+                  dhcp4: false
+                  auto6: false
+        - include_tasks: tasks/assert-device_present.yml
+        - include_tasks: tasks/assert-profile_present.yml
+        # Use internal module directly for speedup
+        - network_connections:
+            provider: nm
+            connections:
+              - name: "{{ interface }}"
+                state: up
+                type: bridge
+                ip:
+                  dhcp4: false
+                  auto6: false
+          ignore_errors: true
+          register: error_trigger
+        - assert:
+            fail_msg: The module call did not fail. Therefore the test
+              condition was not triggered. This test needs to be adjusted or
+              dropped.
+            that: error_trigger.failed
+        # yamllint disable-line rule:line-length
+        - command: gdbus introspect --system --dest org.freedesktop.NetworkManager --object-path /org/freedesktop/NetworkManager/Checkpoint --recurse
+          register: checkpoints
+        - debug:
+            var: checkpoints
+        - name: Assert that no checkpoints are left
+          assert:
+            fail_msg: Checkpoints not cleaned up
+            that: checkpoints.stdout_lines | length == 2
+      always:
+        - block:
+            # Use internal module directly for speedup
+            - network_connections:
+                provider: nm
+                connections:
+                  - name: "{{ interface }}"
+                    persistent_state: absent
+                    state: down
+            - command: ip link del "{{ interface }}"
+          ignore_errors: true
+          tags:
+            - "tests::cleanup"

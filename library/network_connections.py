@@ -1474,6 +1474,7 @@ class RunEnvironmentAnsible(RunEnvironment):
         RunEnvironment.__init__(self)
         self._run_results = []
         self._log_idx = 0
+        self.on_failure = None
 
         from ansible.module_utils.basic import AnsibleModule
 
@@ -1570,6 +1571,9 @@ class RunEnvironmentAnsible(RunEnvironment):
     def fail_json(
         self, connections, msg, changed=False, warn_traceback=False, **kwargs
     ):
+        if self.on_failure:
+            self.on_failure()
+
         traceback_msg = None
         if warn_traceback:
             traceback_msg = "exception: %s" % (traceback.format_exc())
@@ -1876,6 +1880,10 @@ class Cmd(object):
             idx, "failure: %s (%s) [[%s]]" % (error, action, traceback.format_exc())
         )
 
+    def on_failure(self):
+        """ Hook to do any cleanup on failure before exiting """
+        pass
+
     def run_action_absent(self, idx):
         raise NotImplementedError()
 
@@ -1943,17 +1951,20 @@ class Cmd_nm(Cmd):
 
     def rollback_transaction(self, idx, action, error):
         Cmd.rollback_transaction(self, idx, action, error)
-        if self._checkpoint:
-            try:
-                self.nmutil.rollback_checkpoint(self._checkpoint)
-            finally:
-                self._checkpoint = None
+        self.on_failure()
 
     def finish_transaction(self):
         Cmd.finish_transaction(self)
         if self._checkpoint:
             try:
                 self.nmutil.destroy_checkpoint(self._checkpoint)
+            finally:
+                self._checkpoint = None
+
+    def on_failure(self):
+        if self._checkpoint:
+            try:
+                self.nmutil.rollback_checkpoint(self._checkpoint)
             finally:
                 self._checkpoint = None
 
@@ -2408,6 +2419,7 @@ def main():
             force_state_change=params["force_state_change"],
         )
         connections = cmd.connections
+        run_env_ansible.on_failure = cmd.on_failure
         cmd.run()
     except Exception as e:
         run_env_ansible.fail_json(
