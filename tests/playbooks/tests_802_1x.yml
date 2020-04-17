@@ -96,10 +96,10 @@
                 network_connections:
                   - name: "{{ interface }}"
                     persistent_state: absent
-                    state: absent
+                    state: down
                   - name: br1
                     persistent_state: absent
-                    state: absent
+                    state: down
               ignore_errors: true
             - include_tasks: tasks/cleanup-802_1x_server.yml
           tags:
