@@ -21,6 +21,7 @@ IGNORE = [
     "tests_ethtool_features_initscripts.yml",
     "tests_ethtool_features_nm.yml",
     "tests_helpers-and-asserts.yml",
+    "tests_reapply_nm.yml",
     "tests_regression_nm.yml",
     "tests_states.yml",
     "tests_unit.yml",
