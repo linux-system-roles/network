@@ -1414,6 +1414,13 @@ class NMUtil:
             finally:
                 ac.handler_disconnect(ac_id)
 
+    def reapply(self, device, connection=None):
+        version_id = 0
+        flags = 0
+        return Util.call_async_method(
+            device, "reapply", [connection, version_id, flags]
+        )
+
 
 ###############################################################################
 
@@ -2144,6 +2151,9 @@ class Cmd_nm(Cmd):
         )
         self.connections_data_set_changed(idx)
         if self.check_mode == CheckMode.REAL_RUN:
+            if self._try_reapply(idx, con):
+                return
+
             try:
                 ac = self.nmutil.connection_activate(con)
             except MyError as e:
@@ -2157,6 +2167,33 @@ class Cmd_nm(Cmd):
                 self.nmutil.connection_activate_wait(ac, wait_time)
             except MyError as e:
                 self.log_error(idx, "up connection failed while waiting: %s" % (e))
+
+    def _try_reapply(self, idx, con):
+        """ Try to reapply a connection
+
+        If there is exactly one active connection with the same UUID activated
+        on exactly one device, ask the device to reapply the connection.
+
+        :returns: `True`, when the connection was reapplied, `False` otherwise
+        :rtype: bool
+        """
+        NM = Util.NM()
+
+        acons = list(self.nmutil.active_connection_list(connections=[con]))
+        if len(acons) != 1:
+            return False
+
+        active_connection = acons[0]
+        if active_connection.get_state() == NM.ActiveConnectionState.ACTIVATED:
+            devices = active_connection.get_devices()
+            if len(devices) == 1:
+                try:
+                    self.nmutil.reapply(devices[0])
+                    self.log_info(idx, "connection reapplied")
+                    return True
+                except MyError as error:
+                    self.log_info(idx, "connection reapply failed: %s" % (error))
+        return False
 
     def run_action_down(self, idx):
         connection = self.connections[idx]

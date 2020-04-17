@@ -1,0 +1,66 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# This test should check whether the NMDevice.reapply method is called by the
+# role. This is probably a good candidate to test with pytest directly instead
+# of via Ansible. Until there is better test support for this, just check the
+# log output for the respective log message.
+---
+- hosts: all
+  vars:
+    interface: rpltstbr
+    profile: "{{ interface }}"
+    network_provider: nm
+  pre_tasks:
+    - debug:
+        msg: Inside states tests
+    - include_tasks: tasks/show-interfaces.yml
+    - include_tasks: tasks/assert-device_absent.yml
+  roles:
+    - linux-system-roles.network
+  tasks:
+    - block:
+        # create test profile
+        - include_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                state: up
+                type: bridge
+                ip:
+                  dhcp4: false
+                  auto6: false
+        - include_tasks: tasks/assert-device_present.yml
+        - include_tasks: tasks/assert-profile_present.yml
+        # Use internal module to get output
+        - network_connections:
+            provider: nm
+            connections:
+              - name: "{{ interface }}"
+                state: up
+                type: bridge
+                ip:
+                  address:
+                    - 192.0.2.72/31
+                  dhcp4: false
+                  auto6: false
+          ignore_errors: true
+          register: test_module_run
+        - debug:
+            var: test_module_run
+        - name: Assert that reapply is found in log output
+          assert:
+            fail_msg: Reapply not found in log output
+            that: "{{ 'connection reapplied' in test_module_run.warnings[2] }}"
+      always:
+        - block:
+            # Use internal module directly for speedup
+            - network_connections:
+                provider: nm
+                connections:
+                  - name: "{{ interface }}"
+                    persistent_state: absent
+                    state: down
+            - command: ip link del "{{ interface }}"
+          ignore_errors: true
+          tags:
+            - "tests::cleanup"
