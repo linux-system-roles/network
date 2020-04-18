@@ -11,5 +11,5 @@ SCRIPTDIR=$(readlink -f $(dirname $0))
 
 # Write your custom commands here that should be run when `tox -e custom`:
 if [[ -z "${TRAVIS}" ]] || lsr_check_python_version python -eq '3.6'; then
-  (set -x; cd ${TOPDIR}/tests; ${ENVPYTHON} ./ensure_non_running_provider.py)
+    (set -x; cd ${TOPDIR}/tests; ${ENVPYTHON} ./ensure_provider_tests.py)
 fi

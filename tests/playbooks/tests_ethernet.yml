@@ -45,11 +45,11 @@
 
 # FIXME: assert profile present
 # FIXME: assert profile/device up + IP address
-- import_playbook: down-profile.yml
+- import_playbook: down_profile.yml
   vars:
     profile: "{{ interface }}"
 # FIXME: assert profile/device down
-- import_playbook: remove-profile.yml
+- import_playbook: remove_profile.yml
   vars:
     profile: "{{ interface }}"
 # FIXME: assert profile away
