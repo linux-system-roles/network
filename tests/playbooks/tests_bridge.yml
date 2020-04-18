@@ -26,30 +26,30 @@
   roles:
     - linux-system-roles.network
 
-- import_playbook: run-tasks.yml
+- import_playbook: run_tasks.yml
   vars:
     task: tasks/assert-device_present.yml
 
-- import_playbook: run-tasks.yml
+- import_playbook: run_tasks.yml
   vars:
     profile: "{{ interface }}"
     task: tasks/assert-profile_present.yml
 
-- import_playbook: down-profile.yml
+- import_playbook: down_profile.yml
   vars:
     profile: "{{ interface }}"
 # FIXME: assert profile/device down
 
-- import_playbook: remove-profile.yml
+- import_playbook: remove_profile.yml
   vars:
     profile: "{{ interface }}"
 
-- import_playbook: run-tasks.yml
+- import_playbook: run_tasks.yml
   vars:
     profile: "{{ interface }}"
     task: tasks/assert-profile_absent.yml
 
 # FIXME: Devices might still be left when profile is absent
-# - import_playbook: run-tasks.yml
+# - import_playbook: run_tasks.yml
 #   vars:
 #     task: tasks/assert-device_absent.yml

@@ -3,7 +3,7 @@
 ---
 # set network provider and gather facts
 - hosts: all
-  name: Run playbook 'playbooks/tests_vlan_mtu.yml' with nm as provider
+  name: Run playbook 'playbooks/tests_states.yml' with nm as provider
   tasks:
     - name: Set network provider to 'nm'
       set_fact:
@@ -16,6 +16,6 @@
 # would support it.
 # The test requires or should run with NetworkManager, therefore it cannot run
 # on RHEL/CentOS 6
-- import_playbook: playbooks/tests_vlan_mtu.yml
+- import_playbook: playbooks/tests_states.yml
   when:
     - ansible_distribution_major_version != '6'
