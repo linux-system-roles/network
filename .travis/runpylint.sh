@@ -31,5 +31,8 @@ if [[ "${RUN_PYLINT_SETUP_MODULE_UTILS}" ]]; then
   lsr_setup_module_utils
 fi
 
+export RUN_PYLINT_DISABLED
+export RUN_PYLINT_EXCLUDE
+export RUN_PYLINT_INCLUDE
 set -x
 python ${SCRIPTDIR}/custom_pylint.py "$@"
