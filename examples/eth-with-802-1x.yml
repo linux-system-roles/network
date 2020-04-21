@@ -5,15 +5,15 @@
     network_connections:
       - name: eth0
         type: ethernet
-        802.1x:
+        ieee802_1x:
           identity: myhost
           eap: tls
-          private-key: /etc/pki/tls/client.key
+          private_key: /etc/pki/tls/client.key
           # recommend vault encrypting the private key password
           # see https://docs.ansible.com/ansible/latest/user_guide/vault.html
-          private-key-password: "p@55w0rD"
-          client-cert: /etc/pki/tls/client.pem
-          ca-cert: /etc/pki/tls/cacert.pem
+          private_key_password: "p@55w0rD"
+          client_cert: /etc/pki/tls/client.pem
+          ca_cert: /etc/pki/tls/cacert.pem
 
   # certs have to be deployed first
   pre_tasks:

@@ -154,7 +154,7 @@ class TestValidator(unittest.TestCase):
             },
             "mac": None,
             "master": None,
-            "802.1x": None,
+            "ieee802_1x": None,
             "mtu": None,
             "name": "5",
             "parent": None,
@@ -251,7 +251,7 @@ class TestValidator(unittest.TestCase):
                 continue
             if "type" not in connection:
                 continue
-            if connection["type"] in ["macvlan"] or connection["802.1x"]:
+            if connection["type"] in ["macvlan"] or connection["ieee802_1x"]:
                 # initscripts do not support this type. Skip the test.
                 continue
             content_current = kwargs.get("initscripts_content_current", None)
@@ -397,7 +397,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": None,
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "5",
                     "parent": None,
@@ -448,7 +448,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": None,
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "5",
                     "parent": None,
@@ -493,7 +493,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": None,
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "5",
                     "parent": None,
@@ -581,7 +581,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": "52:54:00:44:9f:ba",
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": 1450,
                     "name": "prod1",
                     "parent": None,
@@ -643,7 +643,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": None,
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "prod1",
                     "parent": None,
@@ -707,7 +707,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": "52:54:00:44:9f:ba",
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": 1450,
                     "name": "prod1",
                     "parent": None,
@@ -763,7 +763,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": None,
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "prod.100",
                     "parent": "prod1",
@@ -846,7 +846,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": "52:54:00:44:9f:ba",
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": 1450,
                     "name": "prod1",
                     "parent": None,
@@ -902,7 +902,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": None,
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "prod.100",
                     "parent": "prod1",
@@ -980,7 +980,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": "33:24:10:24:2f:b9",
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": 1450,
                     "name": "eth0-parent",
                     "parent": None,
@@ -1031,7 +1031,7 @@ class TestValidator(unittest.TestCase):
                     "mac": None,
                     "macvlan": {"mode": "bridge", "promiscuous": True, "tap": False},
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "veth0.0",
                     "parent": "eth0-parent",
@@ -1082,7 +1082,7 @@ class TestValidator(unittest.TestCase):
                     "mac": None,
                     "macvlan": {"mode": "passthru", "promiscuous": False, "tap": True},
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "veth0.1",
                     "parent": "eth0-parent",
@@ -1168,7 +1168,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": None,
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "prod2",
                     "parent": None,
@@ -1205,7 +1205,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": None,
                     "master": "prod2",
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "prod2-slave1",
                     "parent": None,
@@ -1266,7 +1266,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": None,
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "bond1",
                     "parent": None,
@@ -1312,7 +1312,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": None,
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "bond1",
                     "parent": None,
@@ -1368,7 +1368,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": "aa:bb:cc:dd:ee:ff",
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "5",
                     "parent": None,
@@ -1412,7 +1412,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": None,
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "5",
                     "parent": None,
@@ -1484,7 +1484,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": None,
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "6643-master",
                     "parent": None,
@@ -1521,7 +1521,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": None,
                     "master": "6643-master",
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "6643",
                     "parent": None,
@@ -1574,7 +1574,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": None,
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "infiniband.1",
                     "parent": None,
@@ -1645,7 +1645,7 @@ class TestValidator(unittest.TestCase):
                     "mac": "11:22:33:44:55:66:77:88:99:00:"
                     "11:22:33:44:55:66:77:88:99:00",
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "infiniband.2",
                     "parent": None,
@@ -1736,7 +1736,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": None,
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "555",
                     "parent": None,
@@ -1835,7 +1835,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": None,
                     "master": None,
-                    "802.1x": None,
+                    "ieee802_1x": None,
                     "mtu": None,
                     "name": "e556",
                     "parent": None,
@@ -1929,7 +1929,7 @@ class TestValidator(unittest.TestCase):
                     "ethtool": ETHTOOL_DEFAULTS,
                     "force_state_change": None,
                     "ignore_errors": None,
-                    "interface_name": "802.1x-1",
+                    "interface_name": "eth0",
                     "ip": {
                         "gateway6": None,
                         "gateway4": None,
@@ -1947,18 +1947,18 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": None,
                     "master": None,
-                    "802.1x": {
+                    "ieee802_1x": {
                         "identity": "myhost",
                         "eap": "tls",
-                        "private-key": "/etc/pki/tls/client.key",
-                        "private-key-password": "p@55w0rD",
-                        "private-key-password-flags": None,
-                        "client-cert": "/etc/pki/tls/client.pem",
-                        "ca-cert": "/etc/pki/tls/cacert.pem",
-                        "system-ca-certs": False,
+                        "private_key": "/etc/pki/tls/client.key",
+                        "private_key_password": "p@55w0rD",
+                        "private_key_password_flags": None,
+                        "client_cert": "/etc/pki/tls/client.pem",
+                        "ca_cert": "/etc/pki/tls/cacert.pem",
+                        "system_ca_certs": False,
                     },
                     "mtu": None,
-                    "name": "802.1x-1",
+                    "name": "eth0",
                     "parent": None,
                     "persistent_state": "present",
                     "slave_type": None,
@@ -1970,16 +1970,16 @@ class TestValidator(unittest.TestCase):
             ],
             [
                 {
-                    "name": "802.1x-1",
+                    "name": "eth0",
                     "state": "up",
                     "type": "ethernet",
-                    "802.1x": {
+                    "ieee802_1x": {
                         "identity": "myhost",
                         "eap": "tls",
-                        "private-key": "/etc/pki/tls/client.key",
-                        "private-key-password": "p@55w0rD",
-                        "client-cert": "/etc/pki/tls/client.pem",
-                        "ca-cert": "/etc/pki/tls/cacert.pem",
+                        "private_key": "/etc/pki/tls/client.key",
+                        "private_key_password": "p@55w0rD",
+                        "client_cert": "/etc/pki/tls/client.pem",
+                        "ca_cert": "/etc/pki/tls/cacert.pem",
                     },
                 }
             ],
@@ -1987,7 +1987,7 @@ class TestValidator(unittest.TestCase):
 
     def test_802_1x_2(self):
         """
-        Test private key without password and system-ca-certs
+        Test private key without password and system_ca_certs
         """
         self.maxDiff = None
         self.do_connections_validate(
@@ -2000,7 +2000,7 @@ class TestValidator(unittest.TestCase):
                     "ethtool": ETHTOOL_DEFAULTS,
                     "force_state_change": None,
                     "ignore_errors": None,
-                    "interface_name": "802.1x-2",
+                    "interface_name": "eth0",
                     "ip": {
                         "gateway6": None,
                         "gateway4": None,
@@ -2018,18 +2018,18 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": None,
                     "master": None,
-                    "802.1x": {
+                    "ieee802_1x": {
                         "identity": "myhost",
                         "eap": "tls",
-                        "private-key": "/etc/pki/tls/client.key",
-                        "private-key-password": None,
-                        "private-key-password-flags": ["not-required"],
-                        "client-cert": "/etc/pki/tls/client.pem",
-                        "ca-cert": None,
-                        "system-ca-certs": True,
+                        "private_key": "/etc/pki/tls/client.key",
+                        "private_key_password": None,
+                        "private_key_password_flags": ["not-required"],
+                        "client_cert": "/etc/pki/tls/client.pem",
+                        "ca_cert": None,
+                        "system_ca_certs": True,
                     },
                     "mtu": None,
-                    "name": "802.1x-2",
+                    "name": "eth0",
                     "parent": None,
                     "persistent_state": "present",
                     "slave_type": None,
@@ -2041,16 +2041,16 @@ class TestValidator(unittest.TestCase):
             ],
             [
                 {
-                    "name": "802.1x-2",
+                    "name": "eth0",
                     "state": "up",
                     "type": "ethernet",
-                    "802.1x": {
+                    "ieee802_1x": {
                         "identity": "myhost",
                         "eap": "tls",
-                        "private-key": "/etc/pki/tls/client.key",
-                        "client-cert": "/etc/pki/tls/client.pem",
-                        "private-key-password-flags": ["not-required"],
-                        "system-ca-certs": True,
+                        "private_key": "/etc/pki/tls/client.key",
+                        "client_cert": "/etc/pki/tls/client.pem",
+                        "private_key_password_flags": ["not-required"],
+                        "system_ca_certs": True,
                     },
                 }
             ],
@@ -2064,16 +2064,16 @@ class TestValidator(unittest.TestCase):
         self.do_connections_check_invalid(
             [
                 {
-                    "name": "802.1x-bad",
+                    "name": "eth0",
                     "state": "up",
                     "type": "ethernet",
-                    "802.1x": {
+                    "ieee802_1x": {
                         "identity": "myhost",
                         "eap": "tls",
-                        "private-key": "client.key",
-                        "client-cert": "client.pem",
-                        "private-key-password-flags": ["not-required"],
-                        "system-ca-certs": True,
+                        "private_key": "client.key",
+                        "client_cert": "client.pem",
+                        "private_key_password_flags": ["not-required"],
+                        "system_ca_certs": True,
                     },
                 }
             ]
@@ -2087,16 +2087,16 @@ class TestValidator(unittest.TestCase):
         self.do_connections_check_invalid(
             [
                 {
-                    "name": "802.1x-bad",
+                    "name": "eth0",
                     "state": "up",
                     "type": "ethernet",
-                    "802.1x": {
+                    "ieee802_1x": {
                         "identity": "myhost",
                         "eap": "tls",
-                        "private-key": "/etc/pki/tls/client.key",
-                        "client-cert": "/etc/pki/tls/client.pem",
-                        "private-key-password-flags": ["bad-flag"],
-                        "system-ca-certs": True,
+                        "private_key": "/etc/pki/tls/client.key",
+                        "client_cert": "/etc/pki/tls/client.pem",
+                        "private_key_password_flags": ["bad-flag"],
+                        "system_ca_certs": True,
                     },
                 }
             ]
@@ -2104,20 +2104,20 @@ class TestValidator(unittest.TestCase):
 
     def test_802_1x_initscripts(self):
         """
-        should fail to create 802.1x connection with initscripts
+        should fail to create ieee802_1x connection with initscripts
         """
         input_connections = [
             {
-                "name": "802.1x-is",
+                "name": "eth0",
                 "state": "up",
                 "type": "ethernet",
-                "802.1x": {
+                "ieee802_1x": {
                     "identity": "myhost",
                     "eap": "tls",
-                    "private-key": "/etc/pki/tls/client.key",
-                    "client-cert": "/etc/pki/tls/client.pem",
-                    "private-key-password-flags": ["not-required"],
-                    "system-ca-certs": True,
+                    "private_key": "/etc/pki/tls/client.key",
+                    "client_cert": "/etc/pki/tls/client.pem",
+                    "private_key_password_flags": ["not-required"],
+                    "system_ca_certs": True,
                 },
             }
         ]
@@ -2139,16 +2139,16 @@ class TestValidator(unittest.TestCase):
 
         input_connections = [
             {
-                "name": "802.1x-bond",
+                "name": "bond0",
                 "state": "up",
                 "type": "bond",
-                "802.1x": {
+                "ieee802_1x": {
                     "identity": "myhost",
                     "eap": "tls",
-                    "private-key": "/etc/pki/tls/client.key",
-                    "client-cert": "/etc/pki/tls/client.pem",
-                    "private-key-password-flags": ["not-required"],
-                    "system-ca-certs": True,
+                    "private_key": "/etc/pki/tls/client.key",
+                    "client_cert": "/etc/pki/tls/client.pem",
+                    "private_key_password_flags": ["not-required"],
+                    "system_ca_certs": True,
                 },
             }
         ]

@@ -974,49 +974,51 @@ class NMUtil:
                 else:
                     s_ip6.add_route(rr)
 
-        if connection["802.1x"]:
+        if connection["ieee802_1x"]:
             s_8021x = self.connection_ensure_setting(con, NM.Setting8021x)
 
-            s_8021x.set_property(NM.SETTING_802_1X_EAP, [connection["802.1x"]["eap"]])
             s_8021x.set_property(
-                NM.SETTING_802_1X_IDENTITY, connection["802.1x"]["identity"]
+                NM.SETTING_802_1X_EAP, [connection["ieee802_1x"]["eap"]]
+            )
+            s_8021x.set_property(
+                NM.SETTING_802_1X_IDENTITY, connection["ieee802_1x"]["identity"]
             )
 
             s_8021x.set_property(
                 NM.SETTING_802_1X_PRIVATE_KEY,
-                Util.path_to_glib_bytes(connection["802.1x"]["private-key"]),
+                Util.path_to_glib_bytes(connection["ieee802_1x"]["private_key"]),
             )
 
-            if connection["802.1x"]["private-key-password"]:
+            if connection["ieee802_1x"]["private_key_password"]:
                 s_8021x.set_property(
                     NM.SETTING_802_1X_PRIVATE_KEY_PASSWORD,
-                    connection["802.1x"]["private-key-password"],
+                    connection["ieee802_1x"]["private_key_password"],
                 )
 
-            if connection["802.1x"]["private-key-password-flags"]:
+            if connection["ieee802_1x"]["private_key_password_flags"]:
                 s_8021x.set_secret_flags(
                     NM.SETTING_802_1X_PRIVATE_KEY_PASSWORD,
                     Util.NM().SettingSecretFlags(
                         Util.convert_passwd_flags_nm(
-                            connection["802.1x"]["private-key-password-flags"]
+                            connection["ieee802_1x"]["private_key_password_flags"]
                         ),
                     ),
                 )
 
             s_8021x.set_property(
                 NM.SETTING_802_1X_CLIENT_CERT,
-                Util.path_to_glib_bytes(connection["802.1x"]["client-cert"]),
+                Util.path_to_glib_bytes(connection["ieee802_1x"]["client_cert"]),
             )
 
-            if connection["802.1x"]["ca-cert"]:
+            if connection["ieee802_1x"]["ca_cert"]:
                 s_8021x.set_property(
                     NM.SETTING_802_1X_CA_CERT,
-                    Util.path_to_glib_bytes(connection["802.1x"]["ca-cert"]),
+                    Util.path_to_glib_bytes(connection["ieee802_1x"]["ca_cert"]),
                 )
 
             s_8021x.set_property(
                 NM.SETTING_802_1X_SYSTEM_CA_CERTS,
-                connection["802.1x"]["system-ca-certs"],
+                connection["ieee802_1x"]["system_ca_certs"],
             )
 
         try:

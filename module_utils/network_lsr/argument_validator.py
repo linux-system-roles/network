@@ -726,7 +726,7 @@ class ArgValidator_Dict802_1X(ArgValidatorDict):
     def __init__(self):
         ArgValidatorDict.__init__(
             self,
-            name="802.1x",
+            name="ieee802_1x",
             nested=[
                 ArgValidatorStr(
                     "eap",
@@ -734,19 +734,19 @@ class ArgValidator_Dict802_1X(ArgValidatorDict):
                     default_value="tls",
                 ),
                 ArgValidatorStr("identity", required=True),
-                ArgValidatorPath("private-key", required=True),
-                ArgValidatorStr("private-key-password"),
+                ArgValidatorPath("private_key", required=True),
+                ArgValidatorStr("private_key_password"),
                 ArgValidatorList(
-                    "private-key-password-flags",
+                    "private_key_password_flags",
                     nested=ArgValidatorStr(
-                        "private-key-password-flags[?]",
+                        "private_key_password_flags[?]",
                         enum_values=ArgValidator_Dict802_1X.VALID_PRIVATE_KEY_FLAGS,
                     ),
                     default_value=None,
                 ),
-                ArgValidatorPath("client-cert", required=True),
-                ArgValidatorPath("ca-cert"),
-                ArgValidatorBool("system-ca-certs", default_value=False),
+                ArgValidatorPath("client_cert", required=True),
+                ArgValidatorPath("ca_cert"),
+                ArgValidatorBool("system_ca_certs", default_value=False),
             ],
             default_value=None,
         )
@@ -1265,7 +1265,7 @@ class ArgValidator_ListConnections(ArgValidatorList):
                 )
 
         # check if 802.1x connection is valid
-        if connection["802.1x"]:
+        if connection["ieee802_1x"]:
             if mode == self.VALIDATE_ONE_MODE_INITSCRIPTS:
                 raise ValidationError.from_connection(
                     idx,
