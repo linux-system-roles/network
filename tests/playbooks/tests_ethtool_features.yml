@@ -8,11 +8,11 @@
     - name: "INIT: Ethtool feeatures tests"
       debug:
         msg: "##################################################"
-    - include_tasks: tasks/show-interfaces.yml
-    - include_tasks: tasks/manage-test-interface.yml
+    - include_tasks: tasks/show_interfaces.yml
+    - include_tasks: tasks/manage_test_interface.yml
       vars:
         state: present
-    - include_tasks: tasks/assert-device_present.yml
+    - include_tasks: tasks/assert_device_present.yml
     - name: Install ethtool (test dependency)
       package:
         name: ethtool
@@ -112,7 +112,7 @@
                     persistent_state: absent
                     state: down
               ignore_errors: true
-            - include_tasks: tasks/manage-test-interface.yml
+            - include_tasks: tasks/manage_test_interface.yml
               vars:
                 state: absent
           tags:

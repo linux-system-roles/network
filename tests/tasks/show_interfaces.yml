@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- include: get-current_interfaces.yml
+- include: get_current_interfaces.yml
 - debug:
     msg: "current_interfaces: {{ current_interfaces }}"

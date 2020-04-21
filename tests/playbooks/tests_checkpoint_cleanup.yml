@@ -12,8 +12,8 @@
   pre_tasks:
     - debug:
         msg: Inside states tests
-    - include_tasks: tasks/show-interfaces.yml
-    - include_tasks: tasks/assert-device_absent.yml
+    - include_tasks: tasks/show_interfaces.yml
+    - include_tasks: tasks/assert_device_absent.yml
   roles:
     - linux-system-roles.network
   tasks:
@@ -30,8 +30,8 @@
                 ip:
                   dhcp4: false
                   auto6: false
-        - include_tasks: tasks/assert-device_present.yml
-        - include_tasks: tasks/assert-profile_present.yml
+        - include_tasks: tasks/assert_device_present.yml
+        - include_tasks: tasks/assert_profile_present.yml
         # Use internal module directly for speedup
         - network_connections:
             provider: nm

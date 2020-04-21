@@ -33,10 +33,10 @@ call_ansible() {
 
 remote_coverage_dir="$(mktemp -d /tmp/remote_coverage-XXXXXX)"
 trap "rm -rf '${remote_coverage_dir}'" EXIT
-ansible-playbook -i "${host}", get-coverage.yml -e "test_playbook=${playbook} destdir=${remote_coverage_dir}"
+ansible-playbook -i "${host}", get_coverage.yml -e "test_playbook=${playbook} destdir=${remote_coverage_dir}"
 
 #COVERAGE_FILE=remote-coverage coverage combine remote-coverage/tests_*/*/root/.coverage
-./merge-coverage.sh coverage "${coverage_data}"-tmp $(find "${remote_coverage_dir}" -type f | tr , _)
+./merge_coverage.sh coverage "${coverage_data}"-tmp $(find "${remote_coverage_dir}" -type f | tr , _)
 
 cat > tmp_merge_coveragerc <<EOF
 [paths]

@@ -8,8 +8,7 @@
     msg: "type needs to be dummy, tap or veth, not '{{ type }}'"
   when: type not in ["dummy", "tap", "veth"]
 
-# - include: get-current_interfaces.yml
-- include: show-interfaces.yml
+- include: show_interfaces.yml
 
 - name: Install iproute
   package:
