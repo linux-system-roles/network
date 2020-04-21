@@ -20,13 +20,13 @@ tox -e py26,py27,py36,py37 -- --cov-append
 
 for test_playbook in tests_*.yml
 do
-    ./get-coverage.sh "${testhost}" "${test_playbook}"
+    ./get_coverage.sh "${testhost}" "${test_playbook}"
 done
 
-./merge-coverage.sh coverage "total-remote-coveragedata" remote-coveragedata-*
+./merge_coverage.sh coverage "total-remote-coveragedata" remote-coveragedata-*
 ./covstats .coverage remote-coveragedata-* "total-remote-coveragedata"
 
-./merge-coverage.sh coverage "${coverage_data}" .coverage remote-coveragedata-*
+./merge_coverage.sh coverage "${coverage_data}" .coverage remote-coveragedata-*
 echo "Total coverage:"
 COVERAGE_FILE="${coverage_data}" coverage report ||:
 COVERAGE_FILE="${coverage_data}" coverage html --directory "htmlcov-${coverage_data}" ||:

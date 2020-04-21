@@ -8,8 +8,8 @@
   tasks:
     - debug:
         msg: Inside states tests
-    - include_tasks: tasks/show-interfaces.yml
-    - include_tasks: tasks/assert-device_absent.yml
+    - include_tasks: tasks/show_interfaces.yml
+    - include_tasks: tasks/assert_device_absent.yml
 
     # create test profile
     - include_role:
@@ -22,8 +22,8 @@
             ip:
               dhcp4: false
               auto6: false
-    - include_tasks: tasks/assert-device_present.yml
-    - include_tasks: tasks/assert-profile_present.yml
+    - include_tasks: tasks/assert_device_present.yml
+    - include_tasks: tasks/assert_profile_present.yml
 
     # test case (remove profile but keep it up)
     # I can remove a profile but keep the configuration active.
@@ -33,8 +33,8 @@
         network_connections:
           - name: statebr
             persistent_state: absent
-    - include_tasks: tasks/assert-device_present.yml
-    - include_tasks: tasks/assert-profile_absent.yml
+    - include_tasks: tasks/assert_device_present.yml
+    - include_tasks: tasks/assert_profile_absent.yml
 
     # test case
     # I can set a profile down that is up and absent.
@@ -45,5 +45,5 @@
         network_connections:
           - name: statebr
             state: down
-    - include_tasks: tasks/assert-device_absent.yml
-    - include_tasks: tasks/assert-profile_absent.yml
+    - include_tasks: tasks/assert_device_absent.yml
+    - include_tasks: tasks/assert_profile_absent.yml

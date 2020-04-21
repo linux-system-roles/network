@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- include_tasks: show_interfaces.yml
+- include_tasks: manage_test_interface.yml
+  vars:
+    state: absent
+- include_tasks: show_interfaces.yml
+- include_tasks: assert_device_absent.yml
+
+- include_tasks: manage_test_interface.yml
+  vars:
+    state: present
+- include_tasks: show_interfaces.yml
+- include_tasks: assert_device_present.yml
+
+- include_tasks: manage_test_interface.yml
+  vars:
+    state: absent
+- include_tasks: show_interfaces.yml
+- include_tasks: assert_device_absent.yml

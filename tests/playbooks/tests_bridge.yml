@@ -9,8 +9,8 @@
     - name: "set interface={{ interface }}"
       set_fact:
         interface: "{{ interface }}"
-    - include_tasks: tasks/show-interfaces.yml
-    - include_tasks: tasks/assert-device_absent.yml
+    - include_tasks: tasks/show_interfaces.yml
+    - include_tasks: tasks/assert_device_absent.yml
 
 - name: Add test bridge
   hosts: all
@@ -28,12 +28,12 @@
 
 - import_playbook: run_tasks.yml
   vars:
-    task: tasks/assert-device_present.yml
+    task: tasks/assert_device_present.yml
 
 - import_playbook: run_tasks.yml
   vars:
     profile: "{{ interface }}"
-    task: tasks/assert-profile_present.yml
+    task: tasks/assert_profile_present.yml
 
 - import_playbook: down_profile.yml
   vars:
@@ -47,9 +47,9 @@
 - import_playbook: run_tasks.yml
   vars:
     profile: "{{ interface }}"
-    task: tasks/assert-profile_absent.yml
+    task: tasks/assert_profile_absent.yml
 
 # FIXME: Devices might still be left when profile is absent
 # - import_playbook: run_tasks.yml
 #   vars:
-#     task: tasks/assert-device_absent.yml
+#     task: tasks/assert_device_absent.yml
