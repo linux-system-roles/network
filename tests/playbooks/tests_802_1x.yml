@@ -35,15 +35,15 @@
                     - 203.0.113.2/24
                   dhcp4: "no"
                   auto6: "no"
-                802.1x:
+                ieee802_1x:
                   identity: myhost
                   eap: tls
-                  private-key: /etc/pki/tls/client.key
-                  private-key-password: test
-                  private-key-password-flags:
+                  private_key: /etc/pki/tls/client.key
+                  private_key_password: test
+                  private_key_password_flags:
                     - none
-                  client-cert: /etc/pki/tls/client.pem
-                  ca-cert: /etc/pki/tls/cacert.pem
+                  client_cert: /etc/pki/tls/client.pem
+                  ca_cert: /etc/pki/tls/cacert.pem
         - name: "TEST: I can ping the EAP server"
           shell: ping -c1 203.0.113.1
         - import_role:
@@ -78,14 +78,14 @@
                     - 203.0.113.2/24
                   dhcp4: "no"
                   auto6: "no"
-                802.1x:
+                ieee802_1x:
                   identity: myhost
                   eap: tls
-                  private-key: /etc/pki/tls/client.key.nocrypt
-                  client-cert: /etc/pki/tls/client.pem
-                  private-key-password-flags:
+                  private_key: /etc/pki/tls/client.key.nocrypt
+                  client_cert: /etc/pki/tls/client.pem
+                  private_key_password_flags:
                     - not-required
-                  system-ca-certs: True
+                  system_ca_certs: True
         - name: "TEST: I can ping the EAP server"
           shell: ping -c1 203.0.113.1
       always:

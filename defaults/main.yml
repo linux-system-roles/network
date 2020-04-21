@@ -20,9 +20,9 @@ network_provider_current: "{{
 # Default to the auto-detected value
 network_provider: "{{ network_provider_current }}"
 
-# wpa_supplicant is required if any 802.1x connections are defined
+# wpa_supplicant is required if any ieee802_1x connections are defined
 wpa_supplicant_required: "{{ network_connections |
-      json_query('[*][\"802.1x\"]') | flatten | count > 0 }}"
+      json_query('[*][ieee802_1x]') | flatten | count > 0 }}"
 _network_packages_default_802_1x: ["{% if wpa_supplicant_required
       %}wpa_supplicant{% endif %}"]
 
