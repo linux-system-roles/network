@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: "Assert that warnings is empty"
+  assert:
+    that:
+      - "'warnings' not in __network_connections_result"
+    msg: "There are unexpected warnings"
+- name: "Assert that there is output in stderr"
+  assert:
+    that:
+      - "'stderr' in __network_connections_result"
+    msg: "There are no messages in stderr"

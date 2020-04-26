@@ -37,6 +37,8 @@
           address: 192.0.2.1/24
   roles:
     - linux-system-roles.network
+  tasks:
+    - include_tasks: tasks/assert_output_in_stderr_without_warnings.yml
 
 - hosts: all
   tasks:

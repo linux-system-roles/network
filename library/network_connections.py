@@ -1559,24 +1559,32 @@ class RunEnvironmentAnsible(RunEnvironment):
                 c["persistent_state"],
             )
             prefix = prefix + (", '%s'" % (c["name"]))
-        for r in rr["log"]:
-            yield (r[2], "[%03d] %s %s: %s" % (r[2], LogLevel.fmt(r[0]), prefix, r[1]))
+        for severity, msg, idx in rr["log"]:
+            yield (
+                idx,
+                "[%03d] %s %s: %s" % (idx, LogLevel.fmt(severity), prefix, msg),
+                severity,
+            )
 
-    def _complete_kwargs(self, connections, kwargs, traceback_msg=None):
-        if "warnings" in kwargs:
-            logs = list(kwargs["warnings"])
-        else:
-            logs = []
-
+    def _complete_kwargs(self, connections, kwargs, traceback_msg=None, fail=False):
+        warning_logs = kwargs.get("warnings", [])
+        debug_logs = []
         loglines = []
         for res in self._run_results:
             for idx, rr in enumerate(res):
                 loglines.extend(self._complete_kwargs_loglines(rr, connections, idx))
-        loglines.sort(key=lambda x: x[0])
-        logs.extend([x[1] for x in loglines])
+        loglines.sort(key=lambda log_line: log_line[0])
+        for idx, log_line, severity in loglines:
+            debug_logs.append(log_line)
+            if fail:
+                warning_logs.append(log_line)
+            elif severity >= LogLevel.WARN:
+                warning_logs.append(log_line)
         if traceback_msg is not None:
-            logs.append(traceback_msg)
-        kwargs["warnings"] = logs
+            warning_logs.append(traceback_msg)
+        kwargs["warnings"] = warning_logs
+        stderr = "\n".join(debug_logs) + "\n"
+        kwargs["stderr"] = stderr
         return kwargs
 
     def exit_json(self, connections, changed=False, **kwargs):
@@ -1595,7 +1603,7 @@ class RunEnvironmentAnsible(RunEnvironment):
         kwargs["msg"] = msg
         kwargs["changed"] = changed
         self.module.fail_json(
-            **self._complete_kwargs(connections, kwargs, traceback_msg)
+            **self._complete_kwargs(connections, kwargs, traceback_msg, fail=True)
         )
 
 

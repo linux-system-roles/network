@@ -50,7 +50,7 @@
         - name: Assert that reapply is found in log output
           assert:
             fail_msg: Reapply not found in log output
-            that: "{{ 'connection reapplied' in test_module_run.warnings[2] }}"
+            that: "{{ 'connection reapplied' in test_module_run.stderr }}"
       always:
         - block:
             # Use internal module directly for speedup
