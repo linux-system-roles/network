@@ -47,3 +47,31 @@
             state: down
     - include_tasks: tasks/assert_device_absent.yml
     - include_tasks: tasks/assert_profile_absent.yml
+
+    # test case (downing a non existent profile)
+    # I can set down and remove a non existent profile
+    # This will be rescued until issue 188 is fixed
+    - name: Verify that the play fails with the expected error message
+      block:
+        - name: Set down non existent profile
+          include_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: non_existent
+                state: down
+                persistent_state: absent
+
+        - name: 'UNREACH'
+          set_fact:
+            __network_test_failed: false
+
+      rescue:
+        - name: Role has failed when it should have
+          set_fact:
+            __network_test_failed: true
+
+      always:
+        - assert:
+            that: __network_test_failed
+            fail_msg: "The role did not fail when it should have"
