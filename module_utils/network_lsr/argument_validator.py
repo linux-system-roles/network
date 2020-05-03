@@ -747,6 +747,7 @@ class ArgValidator_Dict802_1X(ArgValidatorDict):
                 ArgValidatorPath("client_cert", required=True),
                 ArgValidatorPath("ca_cert"),
                 ArgValidatorBool("system_ca_certs", default_value=False),
+                ArgValidatorStr("domain_suffix_match", required=False),
             ],
             default_value=None,
         )
