@@ -1956,6 +1956,7 @@ class TestValidator(unittest.TestCase):
                         "client_cert": "/etc/pki/tls/client.pem",
                         "ca_cert": "/etc/pki/tls/cacert.pem",
                         "system_ca_certs": False,
+                        "domain_suffix_match": None,
                     },
                     "mtu": None,
                     "name": "eth0",
@@ -1987,7 +1988,8 @@ class TestValidator(unittest.TestCase):
 
     def test_802_1x_2(self):
         """
-        Test private key without password and system_ca_certs
+        Test 802.1x profile with unencrypted private key,
+        domain suffix match, and system ca certs
         """
         self.maxDiff = None
         self.do_connections_validate(
@@ -2027,6 +2029,7 @@ class TestValidator(unittest.TestCase):
                         "client_cert": "/etc/pki/tls/client.pem",
                         "ca_cert": None,
                         "system_ca_certs": True,
+                        "domain_suffix_match": "example.com",
                     },
                     "mtu": None,
                     "name": "eth0",
@@ -2051,6 +2054,7 @@ class TestValidator(unittest.TestCase):
                         "client_cert": "/etc/pki/tls/client.pem",
                         "private_key_password_flags": ["not-required"],
                         "system_ca_certs": True,
+                        "domain_suffix_match": "example.com",
                     },
                 }
             ],

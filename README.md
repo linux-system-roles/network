@@ -463,6 +463,10 @@ SSL certificates and keys must be deployed on the host prior to running the role
 
     If set to `True`, NetworkManager will use the system's trusted ca certificates to verify the EAP server.
 
+  * `domain_suffix_match`
+
+    If set, NetworkManager will ensure the domain name of the EAP server certificate matches this string.
+
 Examples of Options
 -------------------
 
@@ -672,6 +676,7 @@ network_connections:
       private_key_password: "p@55w0rD"
       client_cert: /etc/pki/tls/client.pem
       ca_cert: /etc/pki/tls/cacert.pem
+      domain_suffix_match: example.com
 ```
 
 ### Invalid and Wrong Configuration

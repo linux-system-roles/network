@@ -1021,6 +1021,12 @@ class NMUtil:
                 connection["ieee802_1x"]["system_ca_certs"],
             )
 
+            if connection["ieee802_1x"]["domain_suffix_match"]:
+                s_8021x.set_property(
+                    NM.SETTING_802_1X_DOMAIN_SUFFIX_MATCH,
+                    connection["ieee802_1x"]["domain_suffix_match"],
+                )
+
         try:
             con.normalize()
         except Exception as e:
