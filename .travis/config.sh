@@ -6,6 +6,11 @@
 #   * .travis/preinstall:
 #
 #       - LSR_EXTRA_PACKAGES
+
+if lsr_venv_python_matches_system_python; then
+  LSR_EXTRA_PACKAGES="${LSR_EXTRA_PACKAGES} python3-gi libnm0"
+fi
+
 #
 #   * .travis/runtox:
 #
