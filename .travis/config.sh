@@ -39,7 +39,7 @@
 #
 #       - RUN_FLAKE8_DISABLED
 #       - RUN_FLAKE8_EXTRA_ARGS
-if [[ "$(python2 -c "import sys; print(sys.version_info.major)")" == "2" ]]
+if [[ "$(python -c "import sys; print(sys.version_info.major)")" == "2" ]]
 then
     PYTHON2_EXCLUDES="tests/ensure_provider_tests.py"
     FLAKE8_DEFAULT_EXCLUDES=".svn,CVS,.bzr,.hg,.git,__pycache__,.tox,.eggs,*.egg"
