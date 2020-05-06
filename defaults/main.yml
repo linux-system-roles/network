@@ -10,13 +10,7 @@ network_provider_os_default: "{{
       'OracleLinux'
     ] and ansible_distribution_major_version is version('7', '<')
     else 'nm' }}"
-# If NetworkManager.service is running, assume that 'nm' is currently in-use,
-# otherwise initscripts
-__network_provider_current: "{{
-    'nm' if 'NetworkManager.service' in ansible_facts.services and
-        ansible_facts.services['NetworkManager.service']['state'] == 'running'
-        else 'initscripts'
-    }}"
+__network_provider_current: "{{ __network_current_provider.stdout }}"
 # Default to the auto-detected value
 network_provider: "{{ __network_provider_current }}"
 

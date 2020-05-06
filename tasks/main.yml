@@ -1,9 +1,16 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # get service facts, used in defaults/main.yml
 ---
-- name: Check which services are running
-  service_facts:
-  no_log: true
+# If NetworkManager is running, assume that 'nm' is currently in-use,
+# otherwise initscripts
+- name: Get current provider
+  shell: |
+    for f in /proc/*/exe;
+    do [[ "$(readlink -f "${f}")" == /usr/sbin/NetworkManager ]] \
+      && echo nm && break
+    done || echo -n initscripts
+  register: __network_current_provider
+  when: true
 
 # needed for ansible_facts.packages
 - name: Check which packages are installed
