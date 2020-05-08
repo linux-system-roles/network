@@ -14,7 +14,7 @@ This role can be used to configure:
 - Ethernet interfaces
 - Bridge interfaces
 - Bonded interfaces
-- VLAN  interfaces
+- VLAN interfaces
 - MacVLAN interfaces
 - Infiniband interfaces
 - IP configuration
@@ -466,6 +466,22 @@ SSL certificates and keys must be deployed on the host prior to running the role
   * `domain_suffix_match`
 
     If set, NetworkManager will ensure the domain name of the EAP server certificate matches this string.
+
+### `bond`
+
+The `bond` setting configures the options of bonded interfaces
+(type `bond`). It supports the following options:
+
+  * `mode`
+
+    Bonding mode.  See the
+    [kernel documentation](https://www.kernel.org/doc/Documentation/networking/bonding.txt)
+    or your distribution `nmcli` documentation for valid values.
+    NetworkManager defaults to `balance-rr`.
+
+  * `miimon`
+
+    Sets the MII link monitoring interval (in milliseconds)
 
 Examples of Options
 -------------------
