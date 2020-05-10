@@ -1,3 +1,13 @@
+#### How to reach us
+The mailing list for developers : systemroles@lists.fedorahosted.org
+
+[Subscribe to the mailing list here](https://lists.fedorahosted.org/admin/lists/systemroles.lists.fedorahosted.org/)
+
+[Archive of the mailing list](https://lists.fedorahosted.org/archives/list/systemroles@lists.fedorahosted.org/)
+
+If you are using IRC, join the `#systemroles` IRC channel on freenode
+
+
 #### Write a good commit message
 Here are a few rules to keep in mind while writing a commit message
 
