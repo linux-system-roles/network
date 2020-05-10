@@ -8,6 +8,7 @@ import pprint as pprint_
 import socket
 import sys
 import unittest
+import copy
 
 TESTS_BASEDIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(1, os.path.join(TESTS_BASEDIR, "../..", "library"))
@@ -69,57 +70,57 @@ VALIDATE_ONE_MODE_INITSCRIPTS = ARGS_CONNECTIONS.VALIDATE_ONE_MODE_INITSCRIPTS
 VALIDATE_ONE_MODE_NM = ARGS_CONNECTIONS.VALIDATE_ONE_MODE_NM
 
 ETHTOOL_FEATURES_DEFAULTS = {
-    "esp-hw-offload": None,
-    "esp-tx-csum-hw-offload": None,
-    "fcoe-mtu": None,
+    "esp_hw_offload": None,
+    "esp_tx_csum_hw_offload": None,
+    "fcoe_mtu": None,
     "gro": None,
     "gso": None,
     "highdma": None,
-    "hw-tc-offload": None,
-    "l2-fwd-offload": None,
+    "hw_tc_offload": None,
+    "l2_fwd_offload": None,
     "loopback": None,
     "lro": None,
     "ntuple": None,
     "rx": None,
-    "rx-all": None,
-    "rx-fcs": None,
-    "rx-gro-hw": None,
-    "rx-udp_tunnel-port-offload": None,
-    "rx-vlan-filter": None,
-    "rx-vlan-stag-filter": None,
-    "rx-vlan-stag-hw-parse": None,
+    "rx_all": None,
+    "rx_fcs": None,
+    "rx_gro_hw": None,
+    "rx_udp_tunnel_port_offload": None,
+    "rx_vlan_filter": None,
+    "rx_vlan_stag_filter": None,
+    "rx_vlan_stag_hw_parse": None,
     "rxhash": None,
     "rxvlan": None,
     "sg": None,
-    "tls-hw-record": None,
-    "tls-hw-tx-offload": None,
+    "tls_hw_record": None,
+    "tls_hw_tx_offload": None,
     "tso": None,
     "tx": None,
-    "tx-checksum-fcoe-crc": None,
-    "tx-checksum-ip-generic": None,
-    "tx-checksum-ipv4": None,
-    "tx-checksum-ipv6": None,
-    "tx-checksum-sctp": None,
-    "tx-esp-segmentation": None,
-    "tx-fcoe-segmentation": None,
-    "tx-gre-csum-segmentation": None,
-    "tx-gre-segmentation": None,
-    "tx-gso-partial": None,
-    "tx-gso-robust": None,
-    "tx-ipxip4-segmentation": None,
-    "tx-ipxip6-segmentation": None,
-    "tx-nocache-copy": None,
-    "tx-scatter-gather": None,
-    "tx-scatter-gather-fraglist": None,
-    "tx-sctp-segmentation": None,
-    "tx-tcp-ecn-segmentation": None,
-    "tx-tcp-mangleid-segmentation": None,
-    "tx-tcp-segmentation": None,
-    "tx-tcp6-segmentation": None,
-    "tx-udp-segmentation": None,
-    "tx-udp_tnl-csum-segmentation": None,
-    "tx-udp_tnl-segmentation": None,
-    "tx-vlan-stag-hw-insert": None,
+    "tx_checksum_fcoe_crc": None,
+    "tx_checksum_ip_generic": None,
+    "tx_checksum_ipv4": None,
+    "tx_checksum_ipv6": None,
+    "tx_checksum_sctp": None,
+    "tx_esp_segmentation": None,
+    "tx_fcoe_segmentation": None,
+    "tx_gre_csum_segmentation": None,
+    "tx_gre_segmentation": None,
+    "tx_gso_partial": None,
+    "tx_gso_robust": None,
+    "tx_ipxip4_segmentation": None,
+    "tx_ipxip6_segmentation": None,
+    "tx_nocache_copy": None,
+    "tx_scatter_gather": None,
+    "tx_scatter_gather_fraglist": None,
+    "tx_sctp_segmentation": None,
+    "tx_tcp_ecn_segmentation": None,
+    "tx_tcp_mangleid_segmentation": None,
+    "tx_tcp_segmentation": None,
+    "tx_tcp6_segmentation": None,
+    "tx_udp_segmentation": None,
+    "tx_udp_tnl_csum_segmentation": None,
+    "tx_udp_tnl_segmentation": None,
+    "tx_vlan_stag_hw_insert": None,
     "txvlan": None,
 }
 
@@ -2474,6 +2475,76 @@ class TestValidator(unittest.TestCase):
                 "interface_name": "eth0",
             },
         )
+
+    def _test_ethtool_changes(self, input_features, expected_features):
+        """
+        When passing a dictionary 'input_features' with each feature and their
+        value to change, and a dictionary 'expected_features' with the expected
+        result in the configuration, the expected and resulting connection are
+        created and validated.
+        """
+        custom_ethtool_features = copy.deepcopy(ETHTOOL_FEATURES_DEFAULTS)
+        custom_ethtool_features.update(expected_features)
+        expected_ethtool = {"features": custom_ethtool_features}
+        input_connection = {
+            "ethtool": {"features": input_features},
+            "name": "5",
+            "persistent_state": "present",
+            "type": "ethernet",
+        }
+
+        expected_connection = {
+            "actions": ["present"],
+            "ethtool": expected_ethtool,
+            "interface_name": "5",
+            "persistent_state": "present",
+            "state": None,
+            "type": "ethernet",
+        }
+        self.check_one_connection_with_defaults(input_connection, expected_connection)
+
+    def test_set_ethtool_feature(self):
+        """
+        When passing the name of an non-deprecated ethtool feature, their
+        current version is updated.
+        """
+        input_features = {"tx_tcp_segmentation": "yes"}
+        expected_feature_changes = {"tx_tcp_segmentation": True}
+        self._test_ethtool_changes(input_features, expected_feature_changes)
+
+    def test_set_deprecated_ethtool_feature(self):
+        """
+        When passing a deprecated name, their current version is updated.
+        """
+        input_features = {"tx-tcp-segmentation": "yes"}
+        expected_feature_changes = {"tx_tcp_segmentation": True}
+        self._test_ethtool_changes(input_features, expected_feature_changes)
+
+    def test_invalid_ethtool_settings(self):
+        """
+        When both the deprecated and current version of a feature are stated,
+        a Validation Error is raised.
+        """
+        input_features = {"tx-tcp-segmentation": "yes", "tx_tcp_segmentation": "yes"}
+        features_validator = (
+            network_lsr.argument_validator.ArgValidator_DictEthtoolFeatures()
+        )
+        self.assertValidationError(features_validator, input_features)
+
+    def test_deprecated_ethtool_names(self):
+        """
+        Test that for each validator in
+        ArgValidator_DictEthtoolFeatures.nested there is another non-deprecated
+        validator that has the name from the deprecated_by attribute"
+        """
+        validators = (
+            network_lsr.argument_validator.ArgValidator_DictEthtoolFeatures().nested
+        )
+        for name, validator in validators.items():
+            if isinstance(
+                validator, network_lsr.argument_validator.ArgValidatorDeprecated
+            ):
+                assert validator.deprecated_by in validators.keys()
 
 
 @my_test_skipIf(nmutil is None, "no support for NM (libnm via pygobject)")

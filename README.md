@@ -357,57 +357,57 @@ kernel and device, changing some features might not be supported.
 ```yaml
   ethtool:
     features:
-      esp-hw-offload: yes|no  # optional
-      esp-tx-csum-hw-offload: yes|no  # optional
-      fcoe-mtu: yes|no  # optional
+      esp_hw_offload: yes|no  # optional
+      esp_tx_csum_hw_offload: yes|no  # optional
+      fcoe_mtu: yes|no  # optional
       gro: yes|no  # optional
       gso: yes|no  # optional
       highdma: yes|no  # optional
-      hw-tc-offload: yes|no  # optional
-      l2-fwd-offload: yes|no  # optional
+      hw_tc_offload: yes|no  # optional
+      l2_fwd_offload: yes|no  # optional
       loopback: yes|no  # optional
       lro: yes|no  # optional
       ntuple: yes|no  # optional
       rx: yes|no  # optional
-      rx-all: yes|no  # optional
-      rx-fcs: yes|no  # optional
-      rx-gro-hw: yes|no  # optional
-      rx-udp_tunnel-port-offload: yes|no  # optional
-      rx-vlan-filter: yes|no  # optional
-      rx-vlan-stag-filter: yes|no  # optional
-      rx-vlan-stag-hw-parse: yes|no  # optional
+      rx_all: yes|no  # optional
+      rx_fcs: yes|no  # optional
+      rx_gro_hw: yes|no  # optional
+      rx_udp_tunnel_port_offload: yes|no  # optional
+      rx_vlan_filter: yes|no  # optional
+      rx_vlan_stag_filter: yes|no  # optional
+      rx_vlan_stag_hw_parse: yes|no  # optional
       rxhash: yes|no  # optional
       rxvlan: yes|no  # optional
       sg: yes|no  # optional
-      tls-hw-record: yes|no  # optional
-      tls-hw-tx-offload: yes|no  # optional
+      tls_hw_record: yes|no  # optional
+      tls_hw_tx_offload: yes|no  # optional
       tso: yes|no  # optional
       tx: yes|no  # optional
-      tx-checksum-fcoe-crc: yes|no  # optional
-      tx-checksum-ip-generic: yes|no  # optional
-      tx-checksum-ipv4: yes|no  # optional
-      tx-checksum-ipv6: yes|no  # optional
-      tx-checksum-sctp: yes|no  # optional
-      tx-esp-segmentation: yes|no  # optional
-      tx-fcoe-segmentation: yes|no  # optional
-      tx-gre-csum-segmentation: yes|no  # optional
-      tx-gre-segmentation: yes|no  # optional
-      tx-gso-partial: yes|no  # optional
-      tx-gso-robust: yes|no  # optional
-      tx-ipxip4-segmentation: yes|no  # optional
-      tx-ipxip6-segmentation: yes|no  # optional
-      tx-nocache-copy: yes|no  # optional
-      tx-scatter-gather: yes|no  # optional
-      tx-scatter-gather-fraglist: yes|no  # optional
-      tx-sctp-segmentation: yes|no  # optional
-      tx-tcp-ecn-segmentation: yes|no  # optional
-      tx-tcp-mangleid-segmentation: yes|no  # optional
-      tx-tcp-segmentation: yes|no  # optional
-      tx-tcp6-segmentation: yes|no  # optional
-      tx-udp-segmentation: yes|no  # optional
-      tx-udp_tnl-csum-segmentation: yes|no  # optional
-      tx-udp_tnl-segmentation: yes|no  # optional
-      tx-vlan-stag-hw-insert: yes|no  # optional
+      tx_checksum_fcoe_crc: yes|no  # optional
+      tx_checksum_ip_generic: yes|no  # optional
+      tx_checksum_ipv4: yes|no  # optional
+      tx_checksum_ipv6: yes|no  # optional
+      tx_checksum_sctp: yes|no  # optional
+      tx_esp_segmentation: yes|no  # optional
+      tx_fcoe_segmentation: yes|no  # optional
+      tx_gre_csum_segmentation: yes|no  # optional
+      tx_gre_segmentation: yes|no  # optional
+      tx_gso_partial: yes|no  # optional
+      tx_gso_robust: yes|no  # optional
+      tx_ipxip4_segmentation: yes|no  # optional
+      tx_ipxip6_segmentation: yes|no  # optional
+      tx_nocache_copy: yes|no  # optional
+      tx_scatter_gather: yes|no  # optional
+      tx_scatter_gather_fraglist: yes|no  # optional
+      tx_sctp_segmentation: yes|no  # optional
+      tx_tcp_ecn_segmentation: yes|no  # optional
+      tx_tcp_mangleid_segmentation: yes|no  # optional
+      tx_tcp_segmentation: yes|no  # optional
+      tx_tcp6_segmentation: yes|no  # optional
+      tx_udp_segmentation: yes|no  # optional
+      tx_udp_tnl_csum_segmentation: yes|no  # optional
+      tx_udp_tnl_segmentation: yes|no  # optional
+      tx_vlan_stag_hw_insert: yes|no  # optional
       txvlan: yes|no  # optional
 ```
 

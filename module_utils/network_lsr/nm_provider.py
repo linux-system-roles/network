@@ -17,7 +17,7 @@ def get_nm_ethtool_feature(name):
         :rtype: str
     """
 
-    name = ETHTOOL_FEATURE_PREFIX + name.upper().replace("-", "_")
+    name = ETHTOOL_FEATURE_PREFIX + name.upper()
 
     feature = getattr(Util.NM(), name, None)
     return feature

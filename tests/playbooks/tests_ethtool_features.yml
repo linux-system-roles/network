@@ -79,6 +79,72 @@
               - >-
                   'tx-tcp-segmentation: off' in
                   ethtool_features.stdout_lines | map('trim')
+        - name: >-
+            TEST: I can enable tx_tcp_segmentation (using underscores).
+          debug:
+            msg: "##################################################"
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                state: up
+                type: ethernet
+                ip:
+                  dhcp4: "no"
+                  auto6: "no"
+                ethtool:
+                  features:
+                    tx_tcp_segmentation: "yes"
+        - name: Get current device features
+          command: "ethtool --show-features {{ interface }}"
+          register: ethtool_features
+        - name:
+          debug:
+            var: ethtool_features.stdout_lines
+        - name: Assert device features
+          assert:
+            that:
+              - >-
+                  'tx-tcp-segmentation: on' in
+                  ethtool_features.stdout_lines | map('trim')
+        - name: I cannot change tx_tcp_segmentation and tx-tcp-segmentation at
+                the same time.
+          block:
+            - name: >-
+                TEST: Change feature with both underscores and dashes.
+              debug:
+                msg: "##################################################"
+            - network_connections:
+                provider: "{{ network_provider | mandatory }}"
+                connections:
+                  - name: "{{ interface }}"
+                    state: up
+                    type: ethernet
+                    ip:
+                      dhcp4: "no"
+                      auto6: "no"
+                    ethtool:
+                      features:
+                        tx_tcp_segmentation: "no"
+                        tx-tcp-segmentation: "no"
+              register: __network_connections_result
+          rescue:
+            - name: Show network_connections result
+              debug:
+                var: __network_connections_result
+            - assert:
+                that:
+                  - '{{  "fatal error: configuration error:
+                      connections[0].ethtool.features: duplicate key
+                      ''tx_tcp_segmentation''" in
+                      __network_connections_result.msg }}'
+          always:
+            - name: Check failure
+              debug:
+                var: __network_connections_result
+            - assert:
+                that: "{{ __network_connections_result.failed == true }}"
         - name: "TEST: I can reset features to their original value."
           debug:
             msg: "##################################################"
