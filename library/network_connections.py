@@ -369,6 +369,7 @@ class IfcfgUtil:
         ethtool_features = connection["ethtool"]["features"]
         configured_features = []
         for feature, setting in ethtool_features.items():
+            feature = feature.replace("_", "-")
             value = ""
             if setting:
                 value = "on"
