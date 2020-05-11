@@ -41,7 +41,7 @@
     enabled: true
   when:
     - network_provider == "nm"
-    - wpa_supplicant_required
+    - __network_wpa_supplicant_required
 
 - name: Enable network service
   service:

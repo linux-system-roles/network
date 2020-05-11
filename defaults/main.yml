@@ -12,42 +12,42 @@ network_provider_os_default: "{{
     else 'nm' }}"
 # If NetworkManager.service is running, assume that 'nm' is currently in-use,
 # otherwise initscripts
-network_provider_current: "{{
+__network_provider_current: "{{
     'nm' if 'NetworkManager.service' in ansible_facts.services and
         ansible_facts.services['NetworkManager.service']['state'] == 'running'
         else 'initscripts'
     }}"
 # Default to the auto-detected value
-network_provider: "{{ network_provider_current }}"
+network_provider: "{{ __network_provider_current }}"
 
 # wpa_supplicant is required if any ieee802_1x connections are defined
-wpa_supplicant_required: "{{ network_connections |
+__network_wpa_supplicant_required: "{{ network_connections |
       selectattr('ieee802_1x', 'defined') | list | count > 0 }}"
-_network_packages_default_802_1x: ["{% if wpa_supplicant_required
+__network_packages_default_802_1x: ["{% if __network_wpa_supplicant_required
       %}wpa_supplicant{% endif %}"]
 
 # The python-gobject-base package depends on the python version and
 # distribution:
 # - python-gobject-base on RHEL7 (no python2-gobject-base :-/)
 # - python3-gobject-base on Fedora 28+
-_network_packages_default_gobject_packages: ["python{{
+__network_packages_default_gobject_packages: ["python{{
       ansible_python['version']['major'] | replace('2', '')}}-gobject-base"]
 
-network_service_name_default_nm: NetworkManager
-network_packages_default_nm: "{{['NetworkManager']
-      + _network_packages_default_gobject_packages|select()|list()
-      + _network_packages_default_802_1x|select()|list()}}"
+__network_service_name_default_nm: NetworkManager
+__network_packages_default_nm: "{{['NetworkManager']
+      + __network_packages_default_gobject_packages|select()|list()
+      + __network_packages_default_802_1x|select()|list()}}"
 
-network_service_name_default_initscripts: network
+__network_service_name_default_initscripts: network
 
 # initscripts requires bridge-utils to manage bridges, install it when the
 # 'bridge' type is used in network_connections
-_network_packages_default_initscripts_bridge: ["{%
+__network_packages_default_initscripts_bridge: ["{%
 if ['bridge'] in network_connections|json_query('[*][type]') and
    ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux'] and
    ansible_distribution_major_version is version('7', '<=')
 %}bridge-utils{% endif %}"]
-_network_packages_default_initscripts_network_scripts: ["{%
+__network_packages_default_initscripts_network_scripts: ["{%
 if ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux'] and
     ansible_distribution_major_version is version('7', '<=')
 %}initscripts{% else %}network-scripts{% endif %}"]
@@ -56,9 +56,9 @@ if ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux'] and
 # |select() filters the list to include only values that evaluate to true
 #     (the empty string is false)
 # |list() converts the generator that |select() creates to a list
-network_packages_default_initscripts: "{{
-_network_packages_default_initscripts_bridge|select()|list()
-+ _network_packages_default_initscripts_network_scripts|select()|list()
+__network_packages_default_initscripts: "{{
+__network_packages_default_initscripts_bridge|select()|list()
++ __network_packages_default_initscripts_network_scripts|select()|list()
 }}"
 
 
@@ -67,25 +67,25 @@ _network_packages_default_initscripts_bridge|select()|list()
 #
 # Usually, the user only wants to select the "network_provider"
 # (or not set it at all and let it be autodetected via the
-# internal variable "{{ network_provider_current }}". Hence,
+# internal variable "{{ __network_provider_current }}". Hence,
 # depending on the "network_provider", a different set of
 # service-name and packages is chosen.
 #
-# That is done via the internal "_network_provider_setup" dictionary.
+# That is done via the internal "__network_provider_setup" dictionary.
 # If the user doesn't explicitly set "network_service_name" or
 # "network_packages" (which he usually wouldn't), then the defaults
-# from "network_service_name_default_*" and "network_packages_default_*"
+# from "__network_service_name_default_*" and "__network_packages_default_*"
 # apply. These values are hard-coded in this file, but they also could
 # be overwritten as host variables or via vars/*.yml.
-_network_provider_setup:
+__network_provider_setup:
   nm:
-    service_name: "{{ network_service_name_default_nm }}"
-    packages: "{{ network_packages_default_nm }}"
+    service_name: "{{ __network_service_name_default_nm }}"
+    packages: "{{ __network_packages_default_nm }}"
   initscripts:
-    service_name: "{{ network_service_name_default_initscripts }}"
-    packages: "{{ network_packages_default_initscripts }}"
+    service_name: "{{ __network_service_name_default_initscripts }}"
+    packages: "{{ __network_packages_default_initscripts }}"
 
 network_packages: "{{
-    _network_provider_setup[network_provider]['packages'] }}"
+    __network_provider_setup[network_provider]['packages'] }}"
 network_service_name: "{{
-    _network_provider_setup[network_provider]['service_name'] }}"
+    __network_provider_setup[network_provider]['service_name'] }}"
