@@ -54,14 +54,16 @@
               dropped.
             that: error_trigger.failed
         # yamllint disable-line rule:line-length
-        - command: gdbus introspect --system --dest org.freedesktop.NetworkManager --object-path /org/freedesktop/NetworkManager/Checkpoint --recurse
-          register: checkpoints
+        - command: busctl --system tree --list org.freedesktop.NetworkManager
+          register: nm_dbus_objects
         - debug:
-            var: checkpoints
+            var: nm_dbus_objects
         - name: Assert that no checkpoints are left
           assert:
             fail_msg: Checkpoints not cleaned up
-            that: checkpoints.stdout_lines | length == 2
+            that: >
+              '/org/freedesktop/NetworkManager/Checkpoint/' not in
+              nm_dbus_objects.stdout_lines
       always:
         - block:
             # Use internal module directly for speedup
