@@ -18,6 +18,10 @@
     - linux-system-roles.network
   tasks:
     - block:
+        # Workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1832897
+        - package:
+            name: dbus-tools
+            state: present
         # create test profile
         - include_role:
             name: linux-system-roles.network
