@@ -779,3 +779,7 @@ feature. At the beginning of the play we could create a checkpoint and if we los
 connectivity due to an error, NetworkManager would automatically rollback after
 timeout. The limitations is that this would only work with NetworkManager, and
 it is not clear that rollback will result in a working configuration.
+
+
+*Want to contribute? Take a look at our [contributing
+guidelines](https://github.com/linux-system-roles/network/blob/master/contributing.md)!*
