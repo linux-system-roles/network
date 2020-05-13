@@ -34,7 +34,7 @@ _network_packages_default_gobject_packages: ["python{{
       ansible_python['version']['major'] | replace('2', '')}}-gobject-base"]
 
 network_service_name_default_nm: NetworkManager
-network_packages_default_nm: "{{ ['ethtool', 'NetworkManager']
+network_packages_default_nm: "{{['NetworkManager']
       + _network_packages_default_gobject_packages|select()|list()
       + _network_packages_default_802_1x|select()|list()}}"
 
@@ -56,8 +56,8 @@ if ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux'] and
 # |select() filters the list to include only values that evaluate to true
 #     (the empty string is false)
 # |list() converts the generator that |select() creates to a list
-network_packages_default_initscripts: "{{ ['ethtool']
-+ _network_packages_default_initscripts_bridge|select()|list()
+network_packages_default_initscripts: "{{
+_network_packages_default_initscripts_bridge|select()|list()
 + _network_packages_default_initscripts_network_scripts|select()|list()
 }}"
 

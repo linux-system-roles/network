@@ -2503,10 +2503,9 @@ class TestNM(unittest.TestCase):
 
 
 class TestUtils(unittest.TestCase):
-    def test_check_output(self):
-        res = Util.check_output(["echo", "test"])
-        self.assertEqual(res, "test\n")
-        self.assertRaises(n.MyError, Util.check_output, ["false"])
+    def test_mac_ntoa(self):
+        mac_bytes = b"\xaa\xbb\xcc\xdd\xee\xff"
+        self.assertEqual(Util.mac_ntoa(mac_bytes), "aa:bb:cc:dd:ee:ff")
 
     def test_convert_passwd_flags_nm(self):
         test_cases = [
@@ -2528,10 +2527,9 @@ class TestUtils(unittest.TestCase):
 
 class TestSysUtils(unittest.TestCase):
     def test_link_read_permaddress(self):
-        # Manipulate PATH to use ethtool mock script to avoid hard dependency on
-        # ethtool
-        os.environ["PATH"] = TESTS_BASEDIR + "/helpers:" + os.environ["PATH"]
-        self.assertEqual(SysUtil._link_read_permaddress("lo"), "23:00:00:00:00:00")
+        self.assertEqual(SysUtil._link_read_permaddress("lo"), "00:00:00:00:00:00")
+        self.assertEqual(SysUtil._link_read_permaddress("fakeiface"), None)
+        self.assertEqual(SysUtil._link_read_permaddress("morethansixteenchars"), None)
 
 
 if __name__ == "__main__":
