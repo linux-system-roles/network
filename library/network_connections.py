@@ -2,13 +2,17 @@
 # -*- coding: utf-8 -*-
 # SPDX-License-Identifier: BSD-3-Clause
 
+import errno
 import functools
 import os
+import re
+import shlex
 import socket
 import time
 import traceback
 
 # pylint: disable=import-error, no-name-in-module
+from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_lsr import MyError
 
 # pylint: disable=import-error
@@ -107,7 +111,6 @@ class SysUtil:
             out = Util.check_output(["ethtool", "-P", ifname])
         except MyError:
             return None
-        import re
 
         m = re.match("^Permanent address: ([0-9A-Fa-f:]*)\n$", out)
         if not m:
@@ -220,8 +223,6 @@ class IfcfgUtil:
     def KeyValid(cls, name):
         r = getattr(cls, "_CHECKSTR_VALID_KEY", None)
         if r is None:
-            import re
-
             r = re.compile("^[a-zA-Z][a-zA-Z0-9_]*$")
             cls._CHECKSTR_VALID_KEY = r
         return bool(r.match(name))
@@ -231,8 +232,6 @@ class IfcfgUtil:
 
         r = getattr(cls, "_re_ValueEscape", None)
         if r is None:
-            import re
-
             r = re.compile("^[a-zA-Z_0-9-.]*$")
             cls._re_ValueEscape = r
 
@@ -507,9 +506,6 @@ class IfcfgUtil:
     def ifcfg_parse_line(cls, line):
         r1 = getattr(cls, "_re_parse_line1", None)
         if r1 is None:
-            import re
-            import shlex
-
             r1 = re.compile("^[ \t]*([a-zA-Z_][a-zA-Z_0-9]*)=(.*)$")
             cls._re_parse_line1 = r1
             cls._shlex = shlex
@@ -596,8 +592,6 @@ class IfcfgUtil:
                 try:
                     os.unlink(path)
                 except OSError as e:
-                    import errno
-
                     if e.errno != errno.ENOENT:
                         raise
             else:
@@ -1490,9 +1484,6 @@ class RunEnvironmentAnsible(RunEnvironment):
         self._run_results = []
         self._log_idx = 0
         self.on_failure = None
-
-        from ansible.module_utils.basic import AnsibleModule
-
         module = AnsibleModule(argument_spec=self.ARGS, supports_check_mode=True)
         self.module = module
 

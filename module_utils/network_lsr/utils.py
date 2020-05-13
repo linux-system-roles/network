@@ -4,6 +4,7 @@
 
 import os
 import socket
+import subprocess
 import sys
 import uuid
 
@@ -28,8 +29,6 @@ class Util:
     def check_output(argv):
         # subprocess.check_output is python 2.7.
         with open("/dev/null", "wb") as DEVNULL:
-            import subprocess
-
             env = os.environ.copy()
             env["LANG"] = "C"
             p = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=DEVNULL, env=env)
