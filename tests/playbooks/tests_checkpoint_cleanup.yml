@@ -74,7 +74,7 @@
                     persistent_state: absent
                     state: down
             - file:
-                dest: /etc/sysconfig/network-scripts/ifcfg-cptstbr
+                dest: "/etc/sysconfig/network-scripts/ifcfg-{{ interface }}"
                 state: absent
             - command: ip link del "{{ interface }}"
           ignore_errors: true
