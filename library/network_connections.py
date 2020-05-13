@@ -13,18 +13,20 @@ import traceback
 
 # pylint: disable=import-error, no-name-in-module
 from ansible.module_utils.basic import AnsibleModule
+from ansible.module_utils.network_lsr import ethtool
 from ansible.module_utils.network_lsr import MyError
 
-# pylint: disable=import-error
 from ansible.module_utils.network_lsr.argument_validator import (
     ArgUtil,
     ArgValidator_ListConnections,
     ValidationError,
 )
 
-# pylint: disable=import-error
 from ansible.module_utils.network_lsr.utils import Util
 from ansible.module_utils.network_lsr import nm_provider
+
+# pylint: enable=import-error, no-name-in-module
+
 
 DOCUMENTATION = """
 ---
@@ -107,15 +109,7 @@ class SysUtil:
 
     @staticmethod
     def _link_read_permaddress(ifname):
-        try:
-            out = Util.check_output(["ethtool", "-P", ifname])
-        except MyError:
-            return None
-
-        m = re.match("^Permanent address: ([0-9A-Fa-f:]*)\n$", out)
-        if not m:
-            return None
-        return Util.mac_norm(m.group(1))
+        return ethtool.get_perm_addr(ifname)
 
     @staticmethod
     def _link_infos_fetch():

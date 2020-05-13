@@ -2,9 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # vim: fileencoding=utf8
 
-import os
 import socket
-import subprocess
 import sys
 import uuid
 
@@ -24,19 +22,6 @@ class Util:
             if pred is None or pred(v):
                 return v
         return default
-
-    @staticmethod
-    def check_output(argv):
-        # subprocess.check_output is python 2.7.
-        with open("/dev/null", "wb") as DEVNULL:
-            env = os.environ.copy()
-            env["LANG"] = "C"
-            p = subprocess.Popen(argv, stdout=subprocess.PIPE, stderr=DEVNULL, env=env)
-            # FIXME: Can we assume this to always be UTF-8?
-            out = p.communicate()[0].decode("UTF-8")
-            if p.returncode != 0:
-                raise MyError("failure calling %s: exit with %s" % (argv, p.returncode))
-        return out
 
     @staticmethod
     def path_to_glib_bytes(path):
@@ -275,7 +260,8 @@ class Util:
     def mac_ntoa(mac):
         if mac is None:
             return None
-        return ":".join(["%02x" % c for c in mac])
+        # bytearray() is needed for python2 compatibility
+        return ":".join(["%02x" % c for c in bytearray(mac)])
 
     @staticmethod
     def mac_norm(mac_str, force_len=None):
