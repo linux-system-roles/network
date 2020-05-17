@@ -7,17 +7,7 @@
     - name: "INIT: 802.1x tests"
       debug:
         msg: "##################################################"
-    - include_tasks: tasks/setup_802_1x_server.yml
-    - name: Copy client certs
-      copy:
-        src: "{{ item }}"
-        dest: "/etc/pki/tls/{{ item }}"
-        mode: 0644
-      with_items:
-        - client.key
-        - client.key.nocrypt
-        - client.pem
-        - cacert.pem
+    - include_tasks: tasks/setup_802.1x.yml
     - block:
         - name: "TEST: 802.1x profile with private key password and ca cert"
           debug:
@@ -96,52 +86,8 @@
               - name: "{{ interface }}"
                 persistent_state: absent
                 state: absent
-        - name: >-
-            TEST: 802.1x profile with unencrypted private key and ca_path
-          debug:
-            msg: "##################################################"
-        - name: Create directory for ca_path test
-          file:
-            path: "/etc/pki/tls/my_ca_certs"
-            state: directory
-            mode: 0755
-        - name: Copy cacert to ca_path
-          copy:
-            src: "cacert.pem"
-            dest: "/etc/pki/tls/my_ca_certs/cacert.pem"
-            mode: 0644
-        - name: Hash cacert
-          command: openssl x509 -hash -noout
-            -in /etc/pki/tls/my_ca_certs/cacert.pem
-          register: cacert_hash
-        - name: Add symlink for cacert
-          file:
-            state: link
-            path: "/etc/pki/tls/my_ca_certs/{{ cacert_hash.stdout }}.0"
-            src: cacert.pem
-        - import_role:
-            name: linux-system-roles.network
-          vars:
-            network_connections:
-              - name: "{{ interface }}"
-                interface_name: veth2
-                state: up
-                type: ethernet
-                ip:
-                  address:
-                    - 203.0.113.2/24
-                  dhcp4: "no"
-                  auto6: "no"
-                ieee802_1x:
-                  identity: myhost
-                  eap: tls
-                  private_key: /etc/pki/tls/client.key.nocrypt
-                  client_cert: /etc/pki/tls/client.pem
-                  private_key_password_flags:
-                    - not-required
-                  ca_path: /etc/pki/tls/my_ca_certs
-        - name: "TEST: I can ping the EAP server"
-          command: ping -c1 203.0.113.1
+
+        - include_tasks: tasks/test_802.1x_capath.yml
       always:
         - block:
             - import_role:
@@ -170,6 +116,7 @@
                 state: absent
                 path: "{{ item }}"
               with_items:
+                - /etc/pki/tls/my_ca_certs
                 - /etc/pki/ca-trust/source/anchors/cacert.pem
             - name: Update ca trust
               command: update-ca-trust

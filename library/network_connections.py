@@ -1005,6 +1005,11 @@ class NMUtil:
                     Util.path_to_glib_bytes(connection["ieee802_1x"]["ca_cert"]),
                 )
 
+            if connection["ieee802_1x"]["ca_path"]:
+                s_8021x.set_property(
+                    NM.SETTING_802_1X_CA_PATH, connection["ieee802_1x"]["ca_path"],
+                )
+
             s_8021x.set_property(
                 NM.SETTING_802_1X_SYSTEM_CA_CERTS,
                 connection["ieee802_1x"]["system_ca_certs"],
@@ -2085,6 +2090,30 @@ class Cmd_nm(Cmd):
                 "connection %s, %s already up to date"
                 % (con_cur.get_id(), con_cur.get_uuid()),
             )
+
+        if (
+            self.check_mode == CheckMode.REAL_RUN
+            and connection["ieee802_1x"] is not None
+            and connection["ieee802_1x"].get("ca_path")
+        ):
+            # It seems that NM on Fedora 31
+            # (NetworkManager-1.20.4-1.fc31.x86_64) does need some time so that
+            # the D-Bus information is actually up-to-date.
+            time.sleep(0.1)
+            Util.GMainLoop_iterate_all()
+            updated_connection = Util.first(
+                self.nmutil.connection_list(
+                    name=connection["name"], uuid=connection["nm.uuid"]
+                )
+            )
+            ca_path = updated_connection.get_setting_802_1x().props.ca_path
+            if not ca_path:
+                self.log_fatal(
+                    idx,
+                    "ieee802_1x.ca_path specified but not supported by "
+                    "NetworkManager. Please update NetworkManager or use "
+                    "ieee802_1x.ca_cert.",
+                )
 
         seen = set()
         if con_cur is not None:
