@@ -1,0 +1,11 @@
+- include_tasks: tasks/setup_802_1x_server.yml
+- name: Copy client certs
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/pki/tls/{{ item }}"
+    mode: 0644
+  with_items:
+    - client.key
+    - client.key.nocrypt
+    - client.pem
+    - cacert.pem

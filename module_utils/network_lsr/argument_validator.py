@@ -871,11 +871,20 @@ class ArgValidator_Dict802_1X(ArgValidatorDict):
                 ),
                 ArgValidatorPath("client_cert", required=True),
                 ArgValidatorPath("ca_cert"),
+                ArgValidatorPath("ca_path"),
                 ArgValidatorBool("system_ca_certs", default_value=False),
                 ArgValidatorStr("domain_suffix_match", required=False),
             ],
             default_value=None,
         )
+
+    def _validate_post(self, value, name, result):
+        if result["system_ca_certs"] is True and result["ca_path"] is not None:
+            raise ValidationError(
+                name,
+                "ca_path will be ignored by NetworkManager if system_ca_certs is used",
+            )
+        return result
 
 
 class ArgValidator_DictConnection(ArgValidatorDict):

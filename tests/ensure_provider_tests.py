@@ -61,6 +61,7 @@ NM_ONLY_TESTS = {
     "playbooks/tests_reapply.yml": {},
     "playbooks/tests_states.yml": {},
     "playbooks/tests_802_1x.yml": {},
+    "playbooks/tests_802_1x_updated.yml": {},
 }
 
 IGNORE = [

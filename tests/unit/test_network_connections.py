@@ -1956,6 +1956,7 @@ class TestValidator(unittest.TestCase):
                         "private_key_password_flags": None,
                         "client_cert": "/etc/pki/tls/client.pem",
                         "ca_cert": "/etc/pki/tls/cacert.pem",
+                        "ca_path": None,
                         "system_ca_certs": False,
                         "domain_suffix_match": None,
                     },
@@ -2029,6 +2030,7 @@ class TestValidator(unittest.TestCase):
                         "private_key_password_flags": ["not-required"],
                         "client_cert": "/etc/pki/tls/client.pem",
                         "ca_cert": None,
+                        "ca_path": None,
                         "system_ca_certs": True,
                         "domain_suffix_match": "example.com",
                     },
@@ -2056,6 +2058,79 @@ class TestValidator(unittest.TestCase):
                         "private_key_password_flags": ["not-required"],
                         "system_ca_certs": True,
                         "domain_suffix_match": "example.com",
+                    },
+                }
+            ],
+        )
+
+    def test_802_1x_3(self):
+        """
+        Test 802.1x profile with unencrypted private key and ca_path
+        """
+        self.maxDiff = None
+        self.do_connections_validate(
+            [
+                {
+                    "actions": ["present", "up"],
+                    "autoconnect": True,
+                    "check_iface_exists": True,
+                    "ethernet": ETHERNET_DEFAULTS,
+                    "ethtool": ETHTOOL_DEFAULTS,
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": "eth0",
+                    "ip": {
+                        "gateway6": None,
+                        "gateway4": None,
+                        "route_metric4": None,
+                        "auto6": True,
+                        "dhcp4": True,
+                        "address": [],
+                        "route_append_only": False,
+                        "rule_append_only": False,
+                        "route": [],
+                        "dns": [],
+                        "dns_search": [],
+                        "route_metric6": None,
+                        "dhcp4_send_hostname": None,
+                    },
+                    "mac": None,
+                    "master": None,
+                    "ieee802_1x": {
+                        "identity": "myhost",
+                        "eap": "tls",
+                        "private_key": "/etc/pki/tls/client.key",
+                        "private_key_password": None,
+                        "private_key_password_flags": ["not-required"],
+                        "client_cert": "/etc/pki/tls/client.pem",
+                        "ca_cert": None,
+                        "ca_path": "/etc/pki/tls/my_ca_certs",
+                        "system_ca_certs": False,
+                        "domain_suffix_match": None,
+                    },
+                    "mtu": None,
+                    "name": "eth0",
+                    "parent": None,
+                    "persistent_state": "present",
+                    "slave_type": None,
+                    "state": "up",
+                    "type": "ethernet",
+                    "wait": None,
+                    "zone": None,
+                }
+            ],
+            [
+                {
+                    "name": "eth0",
+                    "state": "up",
+                    "type": "ethernet",
+                    "ieee802_1x": {
+                        "identity": "myhost",
+                        "eap": "tls",
+                        "private_key": "/etc/pki/tls/client.key",
+                        "client_cert": "/etc/pki/tls/client.pem",
+                        "private_key_password_flags": ["not-required"],
+                        "ca_path": "/etc/pki/tls/my_ca_certs",
                     },
                 }
             ],
@@ -2101,6 +2176,30 @@ class TestValidator(unittest.TestCase):
                         "private_key": "/etc/pki/tls/client.key",
                         "client_cert": "/etc/pki/tls/client.pem",
                         "private_key_password_flags": ["bad-flag"],
+                        "system_ca_certs": True,
+                    },
+                }
+            ]
+        )
+
+    def test_802_1x_ca_path_and_system_ca_certs(self):
+        """
+        should fail if ca_path and system_ca_certs are used together
+        """
+        self.maxDiff = None
+        self.do_connections_check_invalid(
+            [
+                {
+                    "name": "eth0",
+                    "state": "up",
+                    "type": "ethernet",
+                    "ieee802_1x": {
+                        "identity": "myhost",
+                        "eap": "tls",
+                        "private_key": "/etc/pki/tls/client.key",
+                        "client_cert": "/etc/pki/tls/client.pem",
+                        "private_key_password_flags": ["not-required"],
+                        "ca_path": "/etc/pki/my_ca_certs",
                         "system_ca_certs": True,
                     },
                 }

@@ -459,6 +459,12 @@ SSL certificates and keys must be deployed on the host prior to running the role
 
     Absolute path to the PEM encoded certificate authority used to verify the EAP server.
 
+ * `ca_path`
+
+    Absolute path to directory containing additional pem encoded ca certificates used to
+    verify the EAP server. Can be used instead of or in addition to ca_cert. Cannot be
+    used if system_ca_certs is enabled.
+
   * `system_ca_certs`
 
     If set to `True`, NetworkManager will use the system's trusted ca certificates to verify the EAP server.

@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  tasks:
+    - name: Update NetworkManager
+      package:
+        name: NetworkManager
+        state: latest
+    - name: Restart NetworkManager
+      service:
+        name: NetworkManager
+        state: restarted
+- import_playbook: tests_802_1x.yml
