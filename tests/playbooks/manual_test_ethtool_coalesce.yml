@@ -1,0 +1,115 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    interface: "{{ network_interface_name1 }}"
+    type: "{{ network_interface_type1 }}"
+  tasks:
+    - name: "INIT: Ethtool coalesce tests"
+      debug:
+        msg: "##################################################"
+    - include_tasks: tasks/show_interfaces.yml
+    - include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: present
+    - include_tasks: tasks/assert_device_present.yml
+    - name: Install ethtool (test dependency)
+      package:
+        name: ethtool
+        state: present
+    - block:
+        - name: >-
+            TEST: I can create a profile without changing the ethtool coalesce.
+          debug:
+            msg: "##################################################"
+        - name: Get current device coalesce
+          command: "ethtool --show-coalesce {{ interface }}"
+          register: original_ethtool_coalesce
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                state: up
+                type: ethernet
+                ip:
+                  dhcp4: "no"
+                  auto6: "no"
+        - name: Get current device coalesce
+          command: "ethtool --show-coalesce {{ interface }}"
+          register: ethtool_coalesce
+        - name: "ASSERT: The profile does not change the ethtool coalesce"
+          assert:
+            that:
+              - original_ethtool_coalesce.stdout == ethtool_coalesce.stdout
+        - name: >-
+            TEST: I can set rx-frames and adaptive-tx.
+          debug:
+            msg: "##################################################"
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                state: up
+                type: ethernet
+                ip:
+                  dhcp4: "no"
+                  auto6: "no"
+                ethtool:
+                  coalesce:
+                    rx_frames: 1
+                    tx_frames: 1
+        - name: Get current device coalesce
+          command: "ethtool --show-coalesce {{ interface }}"
+          register: ethtool_coalesce
+        - name:
+          debug:
+            var: ethtool_coalesce.stdout_lines
+        - name: Assert device coalesce
+          assert:
+            that:
+              - >-
+                  'rx-frames: 1' in
+                  ethtool_coalesce.stdout_lines
+              - >-
+                  'tx-frames: 1' in
+                  ethtool_coalesce.stdout_lines
+        - name: "TEST: I can reset coalesce to their original value."
+          debug:
+            msg: "##################################################"
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                state: up
+                type: ethernet
+                ip:
+                  dhcp4: "no"
+                  auto6: "no"
+        - name: Get current device coalesce
+          command: "ethtool --show-coalesce {{ interface }}"
+          register: ethtool_coalesce
+        # Resetting the ethtools only works with NetworkManager
+        - name: "ASSERT: The profile does not change the ethtool coalesce"
+          assert:
+            that:
+              - original_ethtool_coalesce.stdout == ethtool_coalesce.stdout
+          when:
+            network_provider == 'nm'
+      always:
+        - block:
+            - import_role:
+                name: linux-system-roles.network
+              vars:
+                network_connections:
+                  - name: "{{ interface }}"
+                    persistent_state: absent
+                    state: down
+              ignore_errors: true
+            - include_tasks: tasks/manage_test_interface.yml
+              vars:
+                state: absent
+          tags:
+            - "tests::cleanup"

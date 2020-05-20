@@ -9,6 +9,8 @@ import socket
 from ansible.module_utils.network_lsr import MyError  # noqa:E501
 from ansible.module_utils.network_lsr.utils import Util  # noqa:E501
 
+UINT32_MAX = 0xFFFFFFFF
+
 
 class ArgUtil:
     @staticmethod
@@ -584,7 +586,10 @@ class ArgValidator_DictEthtool(ArgValidatorDict):
         ArgValidatorDict.__init__(
             self,
             name="ethtool",
-            nested=[ArgValidator_DictEthtoolFeatures()],
+            nested=[
+                ArgValidator_DictEthtoolFeatures(),
+                ArgValidator_DictEthtoolCoalesce(),
+            ],
             default_value=ArgValidator.MISSING,
         )
 
@@ -797,6 +802,87 @@ class ArgValidator_DictEthtoolFeatures(ArgValidatorDict):
                 for name, validator in self.nested.items()
                 if not isinstance(validator, ArgValidatorDeprecated)
             ]
+        )
+
+
+class ArgValidator_DictEthtoolCoalesce(ArgValidatorDict):
+    def __init__(self):
+        ArgValidatorDict.__init__(
+            self,
+            name="coalesce",
+            nested=[
+                ArgValidatorBool("adaptive_rx", default_value=None),
+                ArgValidatorBool("adaptive_tx", default_value=None),
+                ArgValidatorNum(
+                    "pkt_rate_high", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "pkt_rate_low", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "rx_frames", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "rx_frames_high", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "rx_frames_irq", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "rx_frames_low", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "rx_usecs", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "rx_usecs_high", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "rx_usecs_irq", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "rx_usecs_low", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "sample_interval",
+                    val_min=0,
+                    val_max=UINT32_MAX,
+                    default_value=None,
+                ),
+                ArgValidatorNum(
+                    "stats_block_usecs",
+                    val_min=0,
+                    val_max=UINT32_MAX,
+                    default_value=None,
+                ),
+                ArgValidatorNum(
+                    "tx_frames", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "tx_frames_high", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "tx_frames_irq", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "tx_frames_low", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "tx_usecs", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "tx_usecs_high", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "tx_usecs_irq", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "tx_usecs_low", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+            ],
+        )
+        self.default_value = dict(
+            [(k, v.default_value) for k, v in self.nested.items()]
         )
 
 

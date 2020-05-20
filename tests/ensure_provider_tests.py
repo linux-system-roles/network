@@ -68,6 +68,12 @@ NM_ONLY_TESTS = {
         MINIMUM_VERSION: "'1.20.0'",
         "comment": "# NetworKmanager 1.20.0 added support for forgetting profiles",
     },
+    "playbooks/tests_ethtool_coalesce.yml": {
+        MINIMUM_VERSION: "'1.25.1'",
+        "comment": "# NetworkManager 1.25.1 introduced ethtool coalesce support",
+    },
+    "playbooks/tests_802_1x_updated.yml": {},
+    "playbooks/tests_802_1x.yml": {},
     "playbooks/tests_reapply.yml": {},
     # team interface is not supported on Fedora
     "playbooks/tests_team.yml": {
