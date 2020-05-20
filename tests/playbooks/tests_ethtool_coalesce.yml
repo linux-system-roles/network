@@ -1,0 +1,102 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    interface: testnic1
+    type: veth
+  tasks:
+    - debug:
+        msg: "this is: playbooks/tests_ethtool_.coalesceyml"
+      tags:
+        - always
+
+    - name: "INIT: Ethtool coalesce tests"
+      debug:
+        msg: "##################################################"
+    - include_tasks: tasks/show_interfaces.yml
+    - include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: present
+    - include_tasks: tasks/assert_device_present.yml
+    - name: Install ethtool (test dependency)
+      package:
+        name: ethtool
+        state: present
+
+    - block:
+        - name: >-
+            TEST: I can create a profile without any coalescing option.
+          debug:
+            msg: "##################################################"
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                type: ethernet
+                autoconnect: no
+                ip:
+                  dhcp4: no
+                  auto6: no
+        - name: Get profile's coalescing options
+          command: nmcli -g ethtool.coalesce-rx-frames c show {{ interface }}
+          register: no_coalesce
+        - name: "ASSERT: The profile does not contain coalescing options"
+          assert:
+            that: no_coalesce.stdout == ""
+        - name: >-
+            TEST: I can set rx-frames.
+          debug:
+            msg: "##################################################"
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                type: ethernet
+                autoconnect: no
+                ip:
+                  dhcp4: no
+                  auto6: no
+                ethtool:
+                  coalesce:
+                    rx_frames: 128
+        - name: Get profile's coalescing options
+          command: nmcli -g ethtool.coalesce-rx-frames c show {{ interface }}
+          register: with_coalesce
+        - name: Assert coalesce options set in profile
+          assert:
+            that: with_coalesce.stdout == '128'
+        - name: "TEST: I can clear coalescing options"
+          debug:
+            msg: "##################################################"
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                type: ethernet
+                autoconnect: no
+                ip:
+                  dhcp4: no
+                  auto6: no
+        - name: Get profile's coalescing options
+          command: nmcli -g ethtool.coalesce-rx-frames c show {{ interface }}
+          register: profile
+        - name: "ASSERT: The profile does reset coalescing options"
+          assert:
+            that: no_coalesce.stdout == ""
+      always:
+        - block:
+            - import_role:
+                name: linux-system-roles.network
+              vars:
+                network_connections:
+                  - name: "{{ interface }}"
+                    persistent_state: absent
+              ignore_errors: true
+            - include_tasks: tasks/manage_test_interface.yml
+              vars:
+                state: absent
+          tags:
+            - "tests::cleanup"
