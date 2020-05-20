@@ -1,0 +1,97 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    interface: lsrcoalesce1
+    type: veth
+  tasks:
+    - block:
+        - name: >-
+            TEST: I can create a profile without any coalescing option.
+          debug:
+            msg: "##################################################"
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                type: "{{ type }}"
+                autoconnect: no
+                ip:
+                  dhcp4: no
+                  auto6: no
+        - name: Get profile's coalescing options
+          command: >
+              grep ^ETHTOOL_OPTS
+              /etc/sysconfig/network-scripts/ifcfg-{{ interface }}
+          register: no_coalesce
+          failed_when: profile.rc not in [0, 1]
+        - name: "ASSERT: The profile does not contain coalescing options"
+          assert:
+            that: no_coalesce.stdout == ""
+        - name: >-
+            TEST: I can set rx-frames and tx-frames.
+          debug:
+            msg: "##################################################"
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                type: "{{ type }}"
+                autoconnect: no
+                ip:
+                  dhcp4: no
+                  auto6: no
+                ethtool:
+                  coalesce:
+                    rx_frames: 128
+                    tx_frames: 64
+        - name: Get profile's coalescing options
+          command: >
+              grep ^ETHTOOL_OPTS
+              /etc/sysconfig/network-scripts/ifcfg-{{ interface }}
+          register: with_coalesce
+        - name: Assert coalesce options set in profile
+          assert:
+            that:
+              - >-
+                  'ETHTOOL_OPTS=\"-C lsrcoalesce1 rx-frames 128 tx-frames 64\"'
+                  == with_coalesce.stdout
+        - name: "TEST: I can clear coalescing options"
+          debug:
+            msg: "##################################################"
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                type: "{{ type }}"
+                autoconnect: no
+                ip:
+                  dhcp4: no
+                  auto6: no
+        - name: Get profile's coalescing options
+          command: >
+              grep ^ETHTOOL_OPTS
+              /etc/sysconfig/network-scripts/ifcfg-{{ interface }}
+          register: profile
+          failed_when: profile.rc not in [0, 1]
+        - name: "ASSERT: The profile does reset coalescing options"
+          assert:
+            that:
+              - no_coalesce.stdout == profile.stdout
+      always:
+        - block:
+            - import_role:
+                name: linux-system-roles.network
+              vars:
+                network_connections:
+                  - name: "{{ interface }}"
+                    persistent_state: absent
+              ignore_errors: true
+            - include_tasks: tasks/manage_test_interface.yml
+              vars:
+                state: absent
+          tags:
+            - "tests::cleanup"
