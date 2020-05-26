@@ -42,7 +42,7 @@
             network_connections:
               - name: "{{ interface }}"
                 persistent_state: absent
-                state: absent
+                state: down
         - name: >-
             TEST: 802.1x profile with unencrypted private key,
             domain suffix match, and system ca certs
@@ -85,7 +85,7 @@
             network_connections:
               - name: "{{ interface }}"
                 persistent_state: absent
-                state: absent
+                state: down
 
         - include_tasks: tasks/test_802.1x_capath.yml
       always:
