@@ -1064,14 +1064,18 @@ class ArgValidator_DictConnection(ArgValidatorDict):
         """
         actions = []
         state = result.get("state")
-        if state in self.VALID_PERSISTENT_STATES:
-            del result["state"]
-            persistent_state_default = state
-            state = None
-        else:
-            persistent_state_default = None
+        persistent_state = result.get("persistent_state")
 
-        persistent_state = result.get("persistent_state", persistent_state_default)
+        if state in self.VALID_PERSISTENT_STATES:
+            if persistent_state:
+                raise ValidationError(
+                    name,
+                    "State cannot be '{0}' if persistent_state is specified".format(
+                        state
+                    ),
+                )
+            persistent_state = state
+            state = None
 
         # default persistent_state to present (not done via default_value in the
         # ArgValidatorStr, the value will only be set at the end of
