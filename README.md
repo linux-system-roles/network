@@ -372,7 +372,7 @@ The IP configuration supports the following options:
 
 The ethtool settings allow to enable or disable various features. The names
 correspond to the names used by the `ethtool` utility. Depending on the actual
-kernel and device, changing some features might not be supported.
+kernel and device, changing some options might not be supported.
 
 ```yaml
   ethtool:
@@ -429,6 +429,29 @@ kernel and device, changing some features might not be supported.
       tx_udp_tnl_segmentation: yes|no  # optional
       tx_vlan_stag_hw_insert: yes|no  # optional
       txvlan: yes|no  # optional
+    coalesce:
+      adaptive_rx: yes|no  # optional
+      adaptive_tx: yes|no  # optional
+      pkt_rate_high: 0  # optional mininum=0 maximum=0xffffffff
+      pkt_rate_low: 0  # optional mininum=0 maximum=0xffffffff
+      rx_frames: 0  # optional mininum=0 maximum=0xffffffff
+      rx_frames_high: 0  # optional mininum=0 maximum=0xffffffff
+      rx_frames_irq: 0  # optional mininum=0 maximum=0xffffffff
+      rx_frames_low: 0  # optional mininum=0 maximum=0xffffffff
+      rx_usecs: 0  # optional mininum=0 maximum=0xffffffff
+      rx_usecs_high: 0  # optional mininum=0 maximum=0xffffffff
+      rx_usecs_irq: 0  # optional mininum=0 maximum=0xffffffff
+      rx_usecs_low: 0  # optional mininum=0 maximum=0xffffffff
+      sample_interval: 0  # optional mininum=0 maximum=0xffffffff
+      stats_block_usecs: 0  # optional mininum=0 maximum=0xffffffff
+      tx_frames: 0  # optional mininum=0 maximum=0xffffffff
+      tx_frames_high: 0  # optional mininum=0 maximum=0xffffffff
+      tx_frames_irq: 0  # optional mininum=0 maximum=0xffffffff
+      tx_frames_low: 0  # optional mininum=0 maximum=0xffffffff
+      tx_usecs: 0  # optional mininum=0 maximum=0xffffffff
+      tx_usecs_high: 0  # optional mininum=0 maximum=0xffffffff
+      tx_usecs_irq: 0  # optional mininum=0 maximum=0xffffffff
+      tx_usecs_low: 0  # optional mininum=0 maximum=0xffffffff
 ```
 
 ### `ieee802_1x`
