@@ -1471,6 +1471,7 @@ class RunEnvironmentAnsible(RunEnvironment):
         "force_state_change": {"required": False, "default": False, "type": "bool"},
         "provider": {"required": True, "default": None, "type": "str"},
         "connections": {"required": False, "default": None, "type": "list"},
+        "__debug_flags": {"required": False, "default": "", "type": "str"},
     }
 
     def __init__(self):
@@ -1604,6 +1605,7 @@ class Cmd(object):
         is_check_mode=False,
         ignore_errors=False,
         force_state_change=False,
+        debug_flags="",
     ):
         self.run_env = run_env
         self.validate_one_type = None
@@ -1617,6 +1619,7 @@ class Cmd(object):
         self._connections_data = None
         self._check_mode = CheckMode.PREPARE
         self._is_changed_modified_system = False
+        self._debug_flags = debug_flags
 
     def run_command(self, argv, encoding=None):
         return self.run_env.run_command(argv, encoding=encoding)
@@ -1953,9 +1956,12 @@ class Cmd_nm(Cmd):
 
     def start_transaction(self):
         Cmd.start_transaction(self)
-        self._checkpoint = self.nmutil.create_checkpoint(
-            len(self.connections) * DEFAULT_ACTIVATION_TIMEOUT
-        )
+        if "disable-checkpoints" in self._debug_flags:
+            pass
+        else:
+            self._checkpoint = self.nmutil.create_checkpoint(
+                len(self.connections) * DEFAULT_ACTIVATION_TIMEOUT
+            )
 
     def rollback_transaction(self, idx, action, error):
         Cmd.rollback_transaction(self, idx, action, error)
@@ -2455,6 +2461,7 @@ def main():
             is_check_mode=run_env_ansible.module.check_mode,
             ignore_errors=params["ignore_errors"],
             force_state_change=params["force_state_change"],
+            debug_flags=params["__debug_flags"],
         )
         connections = cmd.connections
         run_env_ansible.on_failure = cmd.on_failure

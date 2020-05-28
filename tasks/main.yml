@@ -64,6 +64,7 @@
     ignore_errors: "{{ network_ignore_errors | default(omit) }}"
     force_state_change: "{{ network_force_state_change | default(omit) }}"
     connections: "{{ network_connections | default([]) }}"
+    __debug_flags: "{{ __network_debug_flags | default(omit) }}"
   register: __network_connections_result
 
 - name: Show debug messages
