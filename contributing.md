@@ -220,6 +220,20 @@ You may want to read this for a more detailed explanation (and links to other po
 how to write a good commit message). This content is licensed under 
 [CC-BY-SA](https://creativecommons.org/licenses/by-sa/4.0/).
 
+### Debugging
+
+When using the `nm` provider, NetworkManager create a checkpoint and reverts the changes
+on failures. This makes it hard to debug the error. To disable this, set the Ansible
+variable `__network_debug_flags to include the value `disable-checkpoints`. Also tests
+clean up by default in case there are failures. They should be tagged as
+`tests::cleanup` and can be skipped. To use both, run the test playbooks like this:
+
+```bash
+ansible-playbook --skip-tags tests::cleanup \
+    -e "__network_debug_flags=disable-checkpoints" \
+    -i testhost, tests/playbooks/tests_802_1x.yml
+```
+
 ### Continuous integration
 
 The [continuous integration](https://en.wikipedia.org/wiki/Continuous_integration) (CI)
