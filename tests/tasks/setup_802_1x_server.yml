@@ -14,10 +14,14 @@
     name: hostapd
     state: present
 
+- name: Create directory for test certificates
+  file:
+    state: directory
+    path: /etc/pki/tls/hostapd_test
 - name: Copy server certificates
   copy:
     src: "{{ item }}"
-    dest: "/etc/pki/tls/{{ item }}"
+    dest: "/etc/pki/tls/hostapd_test/{{ item }}"
   with_items:
     - server.key
     - dh.pem
@@ -61,10 +65,10 @@
       eap_server=1
       use_pae_group_addr=1
       eap_user_file=/etc/hostapd/hostapd.eap_user
-      ca_cert=/etc/pki/tls/cacert.pem
-      dh_file=/etc/pki/tls/dh.pem
-      server_cert=/etc/pki/tls/server.pem
-      private_key=/etc/pki/tls/server.key
+      ca_cert=/etc/pki/tls/hostapd_test/cacert.pem
+      dh_file=/etc/pki/tls/hostapd_test/dh.pem
+      server_cert=/etc/pki/tls/hostapd_test/server.pem
+      private_key=/etc/pki/tls/hostapd_test/server.key
       private_key_passwd=test
       logger_syslog=-1
       logger_syslog_level=0
