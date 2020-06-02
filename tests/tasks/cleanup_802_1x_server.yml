@@ -9,3 +9,11 @@
 
 - name: Kill hostapd process
   shell: pkill hostapd
+- name: Remove certs and config
+  file:
+    state: absent
+    path: "{{ item }}"
+  with_items:
+    - /etc/pki/tls/hostapd_test
+    - /etc/hostapd/wired.conf
+    - /etc/hostapd/hostapd.eap_user
