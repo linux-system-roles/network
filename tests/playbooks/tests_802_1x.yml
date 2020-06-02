@@ -45,7 +45,7 @@
                   client_cert: /etc/pki/tls/client.pem
                   ca_cert: /etc/pki/tls/cacert.pem
         - name: "TEST: I can ping the EAP server"
-          shell: ping -c1 203.0.113.1
+          command: ping -c1 203.0.113.1
         - import_role:
             name: linux-system-roles.network
           vars:
@@ -64,7 +64,7 @@
             dest: /etc/pki/ca-trust/source/anchors/cacert.pem
             mode: 0644
         - name: Update ca trust
-          shell: update-ca-trust
+          command: update-ca-trust
         - import_role:
             name: linux-system-roles.network
           vars:
@@ -88,7 +88,60 @@
                   system_ca_certs: True
                   domain_suffix_match: example.com
         - name: "TEST: I can ping the EAP server"
-          shell: ping -c1 203.0.113.1
+          command: ping -c1 203.0.113.1
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                persistent_state: absent
+                state: absent
+        - name: >-
+            TEST: 802.1x profile with unencrypted private key and ca_path
+          debug:
+            msg: "##################################################"
+        - name: Create directory for ca_path test
+          file:
+            path: "/etc/pki/tls/my_ca_certs"
+            state: directory
+            mode: 0755
+        - name: Copy cacert to ca_path
+          copy:
+            src: "cacert.pem"
+            dest: "/etc/pki/tls/my_ca_certs/cacert.pem"
+            mode: 0644
+        - name: Hash cacert
+          command: openssl x509 -hash -noout
+            -in /etc/pki/tls/my_ca_certs/cacert.pem
+          register: cacert_hash
+        - name: Add symlink for cacert
+          file:
+            state: link
+            path: "/etc/pki/tls/my_ca_certs/{{ cacert_hash.stdout }}.0"
+            src: cacert.pem
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                interface_name: veth2
+                state: up
+                type: ethernet
+                ip:
+                  address:
+                    - 203.0.113.2/24
+                  dhcp4: "no"
+                  auto6: "no"
+                ieee802_1x:
+                  identity: myhost
+                  eap: tls
+                  private_key: /etc/pki/tls/client.key.nocrypt
+                  client_cert: /etc/pki/tls/client.pem
+                  private_key_password_flags:
+                    - not-required
+                  ca_path: /etc/pki/tls/my_ca_certs
+        - name: "TEST: I can ping the EAP server"
+          command: ping -c1 203.0.113.1
       always:
         - block:
             - import_role:
