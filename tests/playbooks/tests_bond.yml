@@ -1,0 +1,96 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    master_profile: bond0
+    master_device: nm-bond
+    slave1_profile: bond0.0
+    dhcp_interface1: test1
+    slave2_profile: bond0.1
+    dhcp_interface2: test2
+  tasks:
+    - name: "INIT Prepare setup"
+      debug:
+        msg: "##################################################"
+    - import_tasks: tasks/create_test_interfaces_with_dhcp.yml
+    - import_tasks: tasks/assert_device_present.yml
+      vars:
+        interface: "{{ dhcp_interface1 }}"
+    - import_tasks: tasks/assert_device_present.yml
+      vars:
+        interface: "{{ dhcp_interface2 }}"
+    - block:
+        - name: "TEST Add Bond with 2 slaves"
+          debug:
+            msg: "##################################################"
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              # Create a bond master
+              - name: "{{ master_profile }}"
+                state: up
+                type: bond
+                interface_name: "{{ master_device }}"
+                bond:
+                  mode: active-backup
+                  miimon: 110
+              # add an ethernet to the bond
+              - name: "{{ slave1_profile }}"
+                state: up
+                type: ethernet
+                interface_name: "{{ dhcp_interface1 }}"
+                master: "{{ master_profile }}"
+              # add a second ethernet to the bond
+              - name: "{{ slave2_profile }}"
+                state: up
+                type: ethernet
+                interface_name: "{{ dhcp_interface2 }}"
+                master: "{{ master_profile }}"
+        - import_tasks: tasks/assert_device_present.yml
+          vars:
+            interface: "{{ master_device }}"
+        - include_tasks: tasks/assert_profile_present.yml
+          vars:
+            profile: "{{ item }}"
+          loop:
+            - "{{ master_profile }}"
+            - "{{ slave1_profile }}"
+            - "{{ slave2_profile }}"
+        - command: grep 'Polling Interval' /proc/net/bonding/{{ master_device }}
+          name: "** TEST check polling interval"
+          register: result
+          until: "'110' in result.stdout"
+        - command: ip -4 a s {{ master_device }}
+          name: "** TEST check IPv4"
+          register: result
+          until: "'192.0.2' in result.stdout"
+          retries: 20
+          delay: 2
+        - command: ip -6 a s {{ master_device }}
+          name: "** TEST check IPv6"
+          register: result
+          until: "'2001' in result.stdout"
+          retries: 20
+          delay: 2
+      always:
+        - block:
+            - import_role:
+                name: linux-system-roles.network
+              vars:
+                network_connections:
+                  - name: "{{ slave2_profile }}"
+                    persistent_state: absent
+                    state: down
+                  - name: "{{ slave1_profile }}"
+                    persistent_state: absent
+                    state: down
+                  - name: "{{ master_profile }}"
+                    persistent_state: absent
+                    state: down
+              ignore_errors: true
+            - command: ip link del {{ master_device }}
+              ignore_errors: true
+            - import_tasks: tasks/remove_test_interfaces_with_dhcp.yml
+          tags:
+            - "tests::cleanup"
