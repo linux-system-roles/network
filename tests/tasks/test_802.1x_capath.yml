@@ -79,13 +79,15 @@
         - __NM_capath_ignored_NVRs
 
     - name: Assert role behavior
+      vars:
+        expected_failure: __network_NM_NVR.stdout in __NM_capath_ignored_NVRs
+        failure: __network_connections_result.failed
       assert:
-        that: __network_connections_result.failed ==
-          (__network_NM_NVR.stdout in __NM_capath_ignored_NVRs)
-        msg: "Role {{ __network_connections_result.failed and 'failed'
-            or 'did not fail' }} but was expected
-            {{ (__network_NM_NVR.stdout in __NM_capath_ignored_NVRs)
-            and '' or 'not' }} to fail. NM NVR: {{ __network_NM_NVR.stdout }}"
+        that: (failure and expected_failure) or
+          (not failure and not expected_failure)
+        msg: "Role {{ failure and 'failed' or 'did not fail' }} but was expected
+          {{ expected_failure and '' or 'not' }} to fail.
+          NM NVR: {{ __network_NM_NVR.stdout }}"
 
     - name: Assert ping succeeded
       assert:
