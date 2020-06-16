@@ -88,6 +88,14 @@
         msg: "Role {{ failure and 'failed' or 'did not fail' }} but was expected
           {{ expected_failure and '' or 'not' }} to fail.
           NM NVR: {{ __network_NM_NVR.stdout }}"
+    - name: Assert role failure
+      assert:
+        that: "
+          'ieee802_1x.ca_path specified but not supported by NetworkManager'
+          in __network_connections_result.stderr"
+      when:
+        - __network_connections_result.failed
+
 
     - name: Assert ping succeeded
       assert:
