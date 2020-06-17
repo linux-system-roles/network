@@ -1829,23 +1829,27 @@ class Cmd(object):
             if self.check_mode == CheckMode.REAL_RUN:
                 self.start_transaction()
 
-            for idx, connection in enumerate(self.connections):
-                try:
-                    for action in connection["actions"]:
-                        if action == "absent":
-                            self.run_action_absent(idx)
-                        elif action == "present":
-                            self.run_action_present(idx)
-                        elif action == "up":
-                            self.run_action_up(idx)
-                        elif action == "down":
-                            self.run_action_down(idx)
-                        else:
-                            assert False
-                except Exception as error:
-                    if self.check_mode == CheckMode.REAL_RUN:
-                        self.rollback_transaction(idx, action, error)
-                    raise
+            # Reasoning for this order:
+            # For down/up profiles might need to be present, so do this first
+            # Put profile down before removing it if necessary
+            # To ensure up does not depend on anything that might be removed,
+            # do it last
+            for action in ("present", "down", "absent", "up"):
+                for idx, connection in enumerate(self.connections):
+                    try:
+                        if action in connection["actions"]:
+                            if action == "absent":
+                                self.run_action_absent(idx)
+                            elif action == "present":
+                                self.run_action_present(idx)
+                            elif action == "up":
+                                self.run_action_up(idx)
+                            elif action == "down":
+                                self.run_action_down(idx)
+                    except Exception as error:
+                        if self.check_mode == CheckMode.REAL_RUN:
+                            self.rollback_transaction(idx, action, error)
+                        raise
 
             if self.check_mode == CheckMode.REAL_RUN:
                 self.finish_transaction()
