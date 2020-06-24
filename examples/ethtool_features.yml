@@ -16,4 +16,4 @@
               features:
                 gro: "no"
                 gso: "yes"
-                tx-sctp-segmentation: "no"
+                tx_sctp_segmentation: "no"

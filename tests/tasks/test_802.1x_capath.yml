@@ -1,0 +1,104 @@
+---
+- name: >-
+    TEST: 802.1x profile with unencrypted private key and ca_path
+  debug:
+    msg: "##################################################"
+- set_fact:
+    # Fixed versions/NVRs:
+    # 1.25.2
+    # NetworkManager-1.24.2-1.fc33
+    # NetworkManager-1.22.14-1.fc32
+    # NetworkManager-1.20.12-1.fc31
+    # 1.18.8
+    __NM_capath_ignored_NVRs:
+      - NetworkManager-1.18.0-5.el7.x86_64
+      - NetworkManager-1.18.4-3.el7.x86_64
+      - NetworkManager-1.20.0-3.el8.x86_64
+      - NetworkManager-1.22.8-4.el8.x86_64
+      - NetworkManager-1.20.4-1.fc31.x86_64
+      - NetworkManager-1.22.10-1.fc32.x86_64
+      - NetworkManager-1.22.12-1.fc32.x86_64
+- name: Create directory for ca_path test
+  file:
+    path: "/etc/pki/tls/my_ca_certs"
+    state: directory
+    mode: 0755
+- name: Copy cacert to ca_path
+  copy:
+    src: "cacert.pem"
+    dest: "/etc/pki/tls/my_ca_certs/cacert.pem"
+    mode: 0644
+- name: Hash cacert
+  command: openssl x509 -hash -noout
+    -in /etc/pki/tls/my_ca_certs/cacert.pem
+  register: cacert_hash
+- name: Add symlink for cacert
+  file:
+    state: link
+    path: "/etc/pki/tls/my_ca_certs/{{ cacert_hash.stdout }}.0"
+    src: cacert.pem
+- name: Get NetworkManager version
+  command:
+    cmd: rpm -qa NetworkManager
+    warn: false
+  register: __network_NM_NVR
+- block:
+    - import_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: "{{ interface | default('802-1x-test') }}"
+            interface_name: veth2
+            state: up
+            type: ethernet
+            ip:
+              address:
+                - 203.0.113.2/24
+              dhcp4: "no"
+              auto6: "no"
+            ieee802_1x:
+              identity: myhost_capath
+              eap: tls
+              private_key: /etc/pki/tls/client.key.nocrypt
+              client_cert: /etc/pki/tls/client.pem
+              private_key_password_flags:
+                - not-required
+              ca_path: /etc/pki/tls/my_ca_certs
+    - name: "TEST: I can ping the EAP server"
+      command: ping -c1 203.0.113.1
+    - name: trigger failure in case the role did not fail
+      fail:
+        msg: after test
+  rescue:
+    - debug:
+        var: "{{ item }}"
+      with_items:
+        - ansible_failed_result
+        - ansible_failed_task
+        - __network_NM_NVR.stdout
+        - __NM_capath_ignored_NVRs
+
+    - name: Assert role behavior
+      vars:
+        expected_failure: __network_NM_NVR.stdout in __NM_capath_ignored_NVRs
+        failure: __network_connections_result.failed
+      assert:
+        that: (failure and expected_failure) or
+          (not failure and not expected_failure)
+        msg: "Role {{ failure and 'failed' or 'did not fail' }} but was expected
+          {{ expected_failure and '' or 'not' }} to fail.
+          NM NVR: {{ __network_NM_NVR.stdout }}"
+    - name: Assert role failure
+      assert:
+        that: "
+          'ieee802_1x.ca_path specified but not supported by NetworkManager'
+          in __network_connections_result.stderr"
+      when:
+        - __network_connections_result.failed
+
+
+    - name: Assert ping succeeded
+      assert:
+        that:
+          - "not 'cmd' in ansible_failed_result"
+...

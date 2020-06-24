@@ -3,31 +3,34 @@
 - hosts: network-test
   vars:
     network_connections:
-
-      # Create a bond master
+      # Specify the bond profile
       - name: bond0
         state: up
         type: bond
         interface_name: bond0
+        # ip configuration (optional)
+        ip:
+          address:
+            - "192.0.2.24/24"
+            - "2001:db8::23/64"
         # bond configuration settings: (optional)
         bond:
           mode: active-backup
           miimon: 110
 
-      # enslave an ethernet to the bond
-      - name: slave1
+      # add an ethernet profile to the bond
+      - name: member1
         state: up
         type: ethernet
         interface_name: eth1
         master: bond0
 
-      # enslave a second ethernet to the bond
-      - name: slave2
+      # add a second ethernet profile to the bond
+      - name: member2
         state: up
         type: ethernet
         interface_name: eth2
         master: bond0
-
   roles:
     - linux-system-roles.network
 ...

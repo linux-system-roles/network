@@ -23,6 +23,22 @@
     state: present
   when:
     - not network_packages is subset(ansible_facts.packages.keys())
+  register: __network_package_install
+
+# If network packages have changed and wireless connections are required,
+# NetworkManager must be restarted
+- name: Restart NetworkManager
+  service:
+    name: NetworkManager
+    state: restarted
+  when:
+    - __network_wireless_connections_defined
+    - network_provider == "nm"
+    - network_allow_restart
+    # ansible-lint wants this to be a handler, but this is not appropriate as
+    # NetworkManager must be restarted prior to the connections being created.
+    # see (https://docs.ansible.com/ansible-lint/rules/default_rules.html)
+    - __network_package_install.changed  # noqa 503
 
 - name: Enable and start NetworkManager
   service:

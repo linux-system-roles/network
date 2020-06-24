@@ -115,10 +115,26 @@ class ArgValidatorStr(ArgValidator):
         default_value=None,
         enum_values=None,
         allow_empty=False,
+        min_length=None,
+        max_length=None,
     ):
         ArgValidator.__init__(self, name, required, default_value)
         self.enum_values = enum_values
         self.allow_empty = allow_empty
+
+        if max_length is not None:
+            if not isinstance(max_length, int):
+                raise ValueError("max_length must be an integer")
+            elif max_length < 0:
+                raise ValueError("max_length must be a positive integer")
+        self.max_length = max_length
+
+        if min_length is not None:
+            if not isinstance(min_length, int):
+                raise ValueError("min_length must be an integer")
+            elif min_length < 0:
+                raise ValueError("min_length must be a positive integer")
+        self.min_length = min_length
 
     def _validate_impl(self, value, name):
         if not isinstance(value, Util.STRING_TYPE):
@@ -132,7 +148,35 @@ class ArgValidatorStr(ArgValidator):
             )
         if not self.allow_empty and not value:
             raise ValidationError(name, "cannot be empty")
+        if not self._validate_string_max_length(value):
+            raise ValidationError(
+                name, "maximum length is %s characters" % (self.max_length)
+            )
+        if not self._validate_string_min_length(value):
+            raise ValidationError(
+                name, "minimum length is %s characters" % (self.min_length)
+            )
         return value
+
+    def _validate_string_max_length(self, value):
+        """
+        Ensures that the length of string `value` is less than or equal to
+        the maximum length
+        """
+        if self.max_length is not None:
+            return len(str(value)) <= self.max_length
+        else:
+            return True
+
+    def _validate_string_min_length(self, value):
+        """
+        Ensures that the length of string `value` is more than or equal to
+         the minimum length
+        """
+        if self.min_length is not None:
+            return len(str(value)) >= self.min_length
+        else:
+            return True
 
 
 class ArgValidatorNum(ArgValidator):
@@ -199,6 +243,12 @@ class ArgValidatorBool(ArgValidator):
         raise ValidationError(name, "must be an boolean but is '%s'" % (value))
 
 
+class ArgValidatorDeprecated:
+    def __init__(self, name, deprecated_by):
+        self.name = name
+        self.deprecated_by = deprecated_by
+
+
 class ArgValidatorDict(ArgValidator):
     def __init__(
         self,
@@ -222,26 +272,33 @@ class ArgValidatorDict(ArgValidator):
             items = list(value.items())
         except AttributeError:
             raise ValidationError(name, "invalid content is not a dictionary")
-        for (k, v) in items:
-            if k in seen_keys:
-                raise ValidationError(name, "duplicate key '%s'" % (k))
-            seen_keys.add(k)
-            validator = self.nested.get(k, None)
-            if validator is None:
-                raise ValidationError(name, "invalid key '%s'" % (k))
+        for (setting, value) in items:
             try:
-                vv = validator._validate(v, name + "." + k)
+                validator = self.nested[setting]
+            except KeyError:
+                raise ValidationError(name, "invalid key '%s'" % (setting))
+            if isinstance(validator, ArgValidatorDeprecated):
+                setting = validator.deprecated_by
+                validator = self.nested.get(setting, None)
+            if setting in seen_keys:
+                raise ValidationError(name, "duplicate key '%s'" % (setting))
+            seen_keys.add(setting)
+            try:
+                validated_value = validator._validate(value, name + "." + setting)
             except ValidationError as e:
                 raise ValidationError(e.name, e.error_message)
-            result[k] = vv
-        for (k, v) in self.nested.items():
-            if k in seen_keys:
+            result[setting] = validated_value
+        for (setting, validator) in self.nested.items():
+            if setting in seen_keys or isinstance(validator, ArgValidatorDeprecated):
                 continue
-            if v.required:
-                raise ValidationError(name, "missing required key '%s'" % (k))
-            vv = v.get_default_value()
-            if not self.all_missing_during_validate and vv is not ArgValidator.MISSING:
-                result[k] = vv
+            if validator.required:
+                raise ValidationError(name, "missing required key '%s'" % (setting))
+            default_value = validator.get_default_value()
+            if (
+                not self.all_missing_during_validate
+                and default_value is not ArgValidator.MISSING
+            ):
+                result[setting] = default_value
         return result
 
 
@@ -549,62 +606,174 @@ class ArgValidator_DictEthtoolFeatures(ArgValidatorDict):
             self,
             name="features",
             nested=[
-                ArgValidatorBool("esp-hw-offload", default_value=None),
-                ArgValidatorBool("esp-tx-csum-hw-offload", default_value=None),
-                ArgValidatorBool("fcoe-mtu", default_value=None),
+                ArgValidatorBool("esp_hw_offload", default_value=None),
+                ArgValidatorDeprecated(
+                    "esp-hw-offload", deprecated_by="esp_hw_offload"
+                ),
+                ArgValidatorBool("esp_tx_csum_hw_offload", default_value=None),
+                ArgValidatorDeprecated(
+                    "esp-tx-csum-hw-offload", deprecated_by="esp_tx_csum_hw_offload",
+                ),
+                ArgValidatorBool("fcoe_mtu", default_value=None),
+                ArgValidatorDeprecated("fcoe-mtu", deprecated_by="fcoe_mtu"),
                 ArgValidatorBool("gro", default_value=None),
                 ArgValidatorBool("gso", default_value=None),
                 ArgValidatorBool("highdma", default_value=None),
-                ArgValidatorBool("hw-tc-offload", default_value=None),
-                ArgValidatorBool("l2-fwd-offload", default_value=None),
+                ArgValidatorBool("hw_tc_offload", default_value=None),
+                ArgValidatorDeprecated("hw-tc-offload", deprecated_by="hw_tc_offload"),
+                ArgValidatorBool("l2_fwd_offload", default_value=None),
+                ArgValidatorDeprecated(
+                    "l2-fwd-offload", deprecated_by="l2_fwd_offload"
+                ),
                 ArgValidatorBool("loopback", default_value=None),
                 ArgValidatorBool("lro", default_value=None),
                 ArgValidatorBool("ntuple", default_value=None),
                 ArgValidatorBool("rx", default_value=None),
                 ArgValidatorBool("rxhash", default_value=None),
                 ArgValidatorBool("rxvlan", default_value=None),
-                ArgValidatorBool("rx-all", default_value=None),
-                ArgValidatorBool("rx-fcs", default_value=None),
-                ArgValidatorBool("rx-gro-hw", default_value=None),
-                ArgValidatorBool("rx-udp_tunnel-port-offload", default_value=None),
-                ArgValidatorBool("rx-vlan-filter", default_value=None),
-                ArgValidatorBool("rx-vlan-stag-filter", default_value=None),
-                ArgValidatorBool("rx-vlan-stag-hw-parse", default_value=None),
+                ArgValidatorBool("rx_all", default_value=None),
+                ArgValidatorDeprecated("rx-all", deprecated_by="rx_all"),
+                ArgValidatorBool("rx_fcs", default_value=None),
+                ArgValidatorDeprecated("rx-fcs", deprecated_by="rx_fcs"),
+                ArgValidatorBool("rx_gro_hw", default_value=None),
+                ArgValidatorDeprecated("rx-gro-hw", deprecated_by="rx_gro_hw"),
+                ArgValidatorBool("rx_udp_tunnel_port_offload", default_value=None),
+                ArgValidatorDeprecated(
+                    "rx-udp_tunnel-port-offload",
+                    deprecated_by="rx_udp_tunnel_port_offload",
+                ),
+                ArgValidatorBool("rx_vlan_filter", default_value=None),
+                ArgValidatorDeprecated(
+                    "rx-vlan-filter", deprecated_by="rx_vlan_filter"
+                ),
+                ArgValidatorBool("rx_vlan_stag_filter", default_value=None),
+                ArgValidatorDeprecated(
+                    "rx-vlan-stag-filter", deprecated_by="rx_vlan_stag_filter",
+                ),
+                ArgValidatorBool("rx_vlan_stag_hw_parse", default_value=None),
+                ArgValidatorDeprecated(
+                    "rx-vlan-stag-hw-parse", deprecated_by="rx_vlan_stag_hw_parse",
+                ),
                 ArgValidatorBool("sg", default_value=None),
-                ArgValidatorBool("tls-hw-record", default_value=None),
-                ArgValidatorBool("tls-hw-tx-offload", default_value=None),
+                ArgValidatorBool("tls_hw_record", default_value=None),
+                ArgValidatorDeprecated("tls-hw-record", deprecated_by="tls_hw_record"),
+                ArgValidatorBool("tls_hw_tx_offload", default_value=None),
+                ArgValidatorDeprecated(
+                    "tls-hw-tx-offload", deprecated_by="tls_hw_tx_offload",
+                ),
                 ArgValidatorBool("tso", default_value=None),
                 ArgValidatorBool("tx", default_value=None),
                 ArgValidatorBool("txvlan", default_value=None),
-                ArgValidatorBool("tx-checksum-fcoe-crc", default_value=None),
-                ArgValidatorBool("tx-checksum-ipv4", default_value=None),
-                ArgValidatorBool("tx-checksum-ipv6", default_value=None),
-                ArgValidatorBool("tx-checksum-ip-generic", default_value=None),
-                ArgValidatorBool("tx-checksum-sctp", default_value=None),
-                ArgValidatorBool("tx-esp-segmentation", default_value=None),
-                ArgValidatorBool("tx-fcoe-segmentation", default_value=None),
-                ArgValidatorBool("tx-gre-csum-segmentation", default_value=None),
-                ArgValidatorBool("tx-gre-segmentation", default_value=None),
-                ArgValidatorBool("tx-gso-partial", default_value=None),
-                ArgValidatorBool("tx-gso-robust", default_value=None),
-                ArgValidatorBool("tx-ipxip4-segmentation", default_value=None),
-                ArgValidatorBool("tx-ipxip6-segmentation", default_value=None),
-                ArgValidatorBool("tx-nocache-copy", default_value=None),
-                ArgValidatorBool("tx-scatter-gather", default_value=None),
-                ArgValidatorBool("tx-scatter-gather-fraglist", default_value=None),
-                ArgValidatorBool("tx-sctp-segmentation", default_value=None),
-                ArgValidatorBool("tx-tcp6-segmentation", default_value=None),
-                ArgValidatorBool("tx-tcp-ecn-segmentation", default_value=None),
-                ArgValidatorBool("tx-tcp-mangleid-segmentation", default_value=None),
-                ArgValidatorBool("tx-tcp-segmentation", default_value=None),
-                ArgValidatorBool("tx-udp-segmentation", default_value=None),
-                ArgValidatorBool("tx-udp_tnl-csum-segmentation", default_value=None),
-                ArgValidatorBool("tx-udp_tnl-segmentation", default_value=None),
-                ArgValidatorBool("tx-vlan-stag-hw-insert", default_value=None),
+                ArgValidatorBool("tx_checksum_fcoe_crc", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-checksum-fcoe-crc", deprecated_by="tx_checksum_fcoe_crc",
+                ),
+                ArgValidatorBool("tx_checksum_ipv4", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-checksum-ipv4", deprecated_by="tx_checksum_ipv4",
+                ),
+                ArgValidatorBool("tx_checksum_ipv6", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-checksum-ipv6", deprecated_by="tx_checksum_ipv6",
+                ),
+                ArgValidatorBool("tx_checksum_ip_generic", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-checksum-ip-generic", deprecated_by="tx_checksum_ip_generic",
+                ),
+                ArgValidatorBool("tx_checksum_sctp", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-checksum-sctp", deprecated_by="tx_checksum_sctp",
+                ),
+                ArgValidatorBool("tx_esp_segmentation", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-esp-segmentation", deprecated_by="tx_esp_segmentation",
+                ),
+                ArgValidatorBool("tx_fcoe_segmentation", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-fcoe-segmentation", deprecated_by="tx_fcoe_segmentation",
+                ),
+                ArgValidatorBool("tx_gre_csum_segmentation", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-gre-csum-segmentation",
+                    deprecated_by="tx_gre_csum_segmentation",
+                ),
+                ArgValidatorBool("tx_gre_segmentation", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-gre-segmentation", deprecated_by="tx_gre_segmentation",
+                ),
+                ArgValidatorBool("tx_gso_partial", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-gso-partial", deprecated_by="tx_gso_partial"
+                ),
+                ArgValidatorBool("tx_gso_robust", default_value=None),
+                ArgValidatorDeprecated("tx-gso-robust", deprecated_by="tx_gso_robust"),
+                ArgValidatorBool("tx_ipxip4_segmentation", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-ipxip4-segmentation", deprecated_by="tx_ipxip4_segmentation",
+                ),
+                ArgValidatorBool("tx_ipxip6_segmentation", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-ipxip6-segmentation", deprecated_by="tx_ipxip6_segmentation",
+                ),
+                ArgValidatorBool("tx_nocache_copy", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-nocache-copy", deprecated_by="tx_nocache_copy",
+                ),
+                ArgValidatorBool("tx_scatter_gather", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-scatter-gather", deprecated_by="tx_scatter_gather",
+                ),
+                ArgValidatorBool("tx_scatter_gather_fraglist", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-scatter-gather-fraglist",
+                    deprecated_by="tx_scatter_gather_fraglist",
+                ),
+                ArgValidatorBool("tx_sctp_segmentation", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-sctp-segmentation", deprecated_by="tx_sctp_segmentation",
+                ),
+                ArgValidatorBool("tx_tcp6_segmentation", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-tcp6-segmentation", deprecated_by="tx_tcp6_segmentation",
+                ),
+                ArgValidatorBool("tx_tcp_ecn_segmentation", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-tcp-ecn-segmentation", deprecated_by="tx_tcp_ecn_segmentation",
+                ),
+                ArgValidatorBool("tx_tcp_mangleid_segmentation", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-tcp-mangleid-segmentation",
+                    deprecated_by="tx_tcp_mangleid_segmentation",
+                ),
+                ArgValidatorBool("tx_tcp_segmentation", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-tcp-segmentation", deprecated_by="tx_tcp_segmentation",
+                ),
+                ArgValidatorBool("tx_udp_segmentation", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-udp-segmentation", deprecated_by="tx_udp_segmentation",
+                ),
+                ArgValidatorBool("tx_udp_tnl_csum_segmentation", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-udp_tnl-csum-segmentation",
+                    deprecated_by="tx_udp_tnl_csum_segmentation",
+                ),
+                ArgValidatorBool("tx_udp_tnl_segmentation", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-udp_tnl-segmentation", deprecated_by="tx_udp_tnl_segmentation",
+                ),
+                ArgValidatorBool("tx_vlan_stag_hw_insert", default_value=None),
+                ArgValidatorDeprecated(
+                    "tx-vlan-stag-hw-insert", deprecated_by="tx_vlan_stag_hw_insert",
+                ),
             ],
         )
         self.default_value = dict(
-            [(k, v.default_value) for k, v in self.nested.items()]
+            [
+                (name, validator.default_value)
+                for name, validator in self.nested.items()
+                if not isinstance(validator, ArgValidatorDeprecated)
+            ]
         )
 
 
@@ -746,11 +915,56 @@ class ArgValidator_Dict802_1X(ArgValidatorDict):
                 ),
                 ArgValidatorPath("client_cert", required=True),
                 ArgValidatorPath("ca_cert"),
+                ArgValidatorPath("ca_path"),
                 ArgValidatorBool("system_ca_certs", default_value=False),
                 ArgValidatorStr("domain_suffix_match", required=False),
             ],
             default_value=None,
         )
+
+    def _validate_post(self, value, name, result):
+        if result["system_ca_certs"] is True and result["ca_path"] is not None:
+            raise ValidationError(
+                name,
+                "ca_path will be ignored by NetworkManager if system_ca_certs is used",
+            )
+        return result
+
+
+class ArgValidator_DictWireless(ArgValidatorDict):
+
+    VALID_KEY_MGMT = [
+        "wpa-psk",
+        "wpa-eap",
+    ]
+
+    def __init__(self):
+        ArgValidatorDict.__init__(
+            self,
+            name="wireless",
+            nested=[
+                ArgValidatorStr("ssid", max_length=32),
+                ArgValidatorStr(
+                    "key_mgmt", enum_values=ArgValidator_DictWireless.VALID_KEY_MGMT
+                ),
+                ArgValidatorStr("password", default_value=None, max_length=63),
+            ],
+            default_value=None,
+        )
+
+    def _validate_post(self, value, name, result):
+        if result["key_mgmt"] == "wpa-psk":
+            if result["password"] is None:
+                raise ValidationError(
+                    name, "must supply a password if using 'wpa-psk' key management",
+                )
+        else:
+            if result["password"] is not None:
+                raise ValidationError(
+                    name, "password only allowed if using 'wpa-psk' key management",
+                )
+
+        return result
 
 
 class ArgValidator_DictConnection(ArgValidatorDict):
@@ -765,6 +979,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
         "bond",
         "vlan",
         "macvlan",
+        "wireless",
     ]
     VALID_SLAVE_TYPES = ["bridge", "bond", "team"]
 
@@ -815,6 +1030,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidator_DictVlan(),
                 ArgValidator_DictMacvlan(),
                 ArgValidator_Dict802_1X(),
+                ArgValidator_DictWireless(),
                 # deprecated options:
                 ArgValidatorStr(
                     "infiniband_transport_mode",
@@ -947,9 +1163,42 @@ class ArgValidator_DictConnection(ArgValidatorDict):
         self.VALID_FIELDS = valid_fields
         return result
 
+    def _validate_post_wireless(self, value, name, result):
+        """
+        Validate wireless settings
+        """
+        if "type" in result:
+            if result["type"] == "wireless":
+                if "wireless" in result:
+                    if (
+                        result["wireless"]["key_mgmt"] == "wpa-eap"
+                        and "ieee802_1x" not in result
+                    ):
+                        raise ValidationError(
+                            name + ".wireless",
+                            "key management set to wpa-eap but no "
+                            "'ieee802_1x' settings defined",
+                        )
+                else:
+                    raise ValidationError(
+                        name + ".wireless",
+                        "must define 'wireless' settings for 'type' 'wireless'",
+                    )
+
+            else:
+                if "wireless" in result:
+                    raise ValidationError(
+                        name + ".wireless",
+                        "'wireless' settings are not allowed for 'type' '%s'"
+                        % (result["type"]),
+                    )
+
+        return result
+
     def _validate_post(self, value, name, result):
         result = self._validate_post_state(value, name, result)
         result = self._validate_post_fields(value, name, result)
+        result = self._validate_post_wireless(value, name, result)
 
         if "type" in result:
 
@@ -1165,6 +1414,15 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                         % (result["type"]),
                     )
 
+            if "ieee802_1x" in result and result["type"] not in [
+                "ethernet",
+                "wireless",
+            ]:
+                raise ValidationError(
+                    name + ".ieee802_1x",
+                    "802.1x settings only allowed for ethernet or wireless interfaces.",
+                )
+
         for k in self.VALID_FIELDS:
             if k in result:
                 continue
@@ -1275,7 +1533,12 @@ class ArgValidator_ListConnections(ArgValidatorList):
                     "if you need to use initscripts.",
                 )
 
-            if connection["type"] != "ethernet":
+        # check if wireless connection is valid
+        if connection["type"] == "wireless":
+            if mode == self.VALIDATE_ONE_MODE_INITSCRIPTS:
                 raise ValidationError.from_connection(
-                    idx, "802.1x settings only allowed for ethernet interfaces."
+                    idx,
+                    "Wireless WPA auth is not supported by initscripts. "
+                    "Configure wireless connection in /etc/wpa_supplicant.conf "
+                    "if you need to use initscripts.",
                 )

@@ -369,6 +369,7 @@ class IfcfgUtil:
         ethtool_features = connection["ethtool"]["features"]
         configured_features = []
         for feature, setting in ethtool_features.items():
+            feature = feature.replace("_", "-")
             value = ""
             if setting:
                 value = "on"
@@ -835,6 +836,28 @@ class NMUtil:
                 NM.SETTING_MACVLAN_PARENT,
                 ArgUtil.connection_find_master(connection["parent"], connections, idx),
             )
+        elif connection["type"] == "wireless":
+            s_con.set_property(
+                NM.SETTING_CONNECTION_TYPE, NM.SETTING_WIRELESS_SETTING_NAME
+            )
+            s_wireless = self.connection_ensure_setting(con, NM.SettingWireless)
+            s_wireless.set_property(
+                NM.SETTING_WIRELESS_SSID,
+                Util.GLib().Bytes.new(connection["wireless"]["ssid"].encode("utf-8")),
+            )
+
+            s_wireless_sec = self.connection_ensure_setting(
+                con, NM.SettingWirelessSecurity
+            )
+            s_wireless_sec.set_property(
+                NM.SETTING_WIRELESS_SECURITY_KEY_MGMT,
+                connection["wireless"]["key_mgmt"],
+            )
+
+            if connection["wireless"]["key_mgmt"] == "wpa-psk":
+                s_wireless_sec.set_property(
+                    NM.SETTING_WIRELESS_SECURITY_PSK, connection["wireless"]["password"]
+                )
         else:
             raise MyError("unsupported type %s" % (connection["type"]))
 
@@ -1002,6 +1025,11 @@ class NMUtil:
                 s_8021x.set_property(
                     NM.SETTING_802_1X_CA_CERT,
                     Util.path_to_glib_bytes(connection["ieee802_1x"]["ca_cert"]),
+                )
+
+            if connection["ieee802_1x"]["ca_path"]:
+                s_8021x.set_property(
+                    NM.SETTING_802_1X_CA_PATH, connection["ieee802_1x"]["ca_path"],
                 )
 
             s_8021x.set_property(
@@ -1571,6 +1599,7 @@ class RunEnvironmentAnsible(RunEnvironment):
         kwargs["warnings"] = warning_logs
         stderr = "\n".join(debug_logs) + "\n"
         kwargs["stderr"] = stderr
+        kwargs["invocation"] = {"params": self.module.params}
         return kwargs
 
     def exit_json(self, connections, changed=False, **kwargs):
@@ -1800,23 +1829,27 @@ class Cmd(object):
             if self.check_mode == CheckMode.REAL_RUN:
                 self.start_transaction()
 
-            for idx, connection in enumerate(self.connections):
-                try:
-                    for action in connection["actions"]:
-                        if action == "absent":
-                            self.run_action_absent(idx)
-                        elif action == "present":
-                            self.run_action_present(idx)
-                        elif action == "up":
-                            self.run_action_up(idx)
-                        elif action == "down":
-                            self.run_action_down(idx)
-                        else:
-                            assert False
-                except Exception as error:
-                    if self.check_mode == CheckMode.REAL_RUN:
-                        self.rollback_transaction(idx, action, error)
-                    raise
+            # Reasoning for this order:
+            # For down/up profiles might need to be present, so do this first
+            # Put profile down before removing it if necessary
+            # To ensure up does not depend on anything that might be removed,
+            # do it last
+            for action in ("present", "down", "absent", "up"):
+                for idx, connection in enumerate(self.connections):
+                    try:
+                        if action in connection["actions"]:
+                            if action == "absent":
+                                self.run_action_absent(idx)
+                            elif action == "present":
+                                self.run_action_present(idx)
+                            elif action == "up":
+                                self.run_action_up(idx)
+                            elif action == "down":
+                                self.run_action_down(idx)
+                    except Exception as error:
+                        if self.check_mode == CheckMode.REAL_RUN:
+                            self.rollback_transaction(idx, action, error)
+                        raise
 
             if self.check_mode == CheckMode.REAL_RUN:
                 self.finish_transaction()
@@ -2083,6 +2116,30 @@ class Cmd_nm(Cmd):
                 "connection %s, %s already up to date"
                 % (con_cur.get_id(), con_cur.get_uuid()),
             )
+
+        if (
+            self.check_mode == CheckMode.REAL_RUN
+            and connection["ieee802_1x"] is not None
+            and connection["ieee802_1x"].get("ca_path")
+        ):
+            # It seems that NM on Fedora 31
+            # (NetworkManager-1.20.4-1.fc31.x86_64) does need some time so that
+            # the D-Bus information is actually up-to-date.
+            time.sleep(0.1)
+            Util.GMainLoop_iterate_all()
+            updated_connection = Util.first(
+                self.nmutil.connection_list(
+                    name=connection["name"], uuid=connection["nm.uuid"]
+                )
+            )
+            ca_path = updated_connection.get_setting_802_1x().props.ca_path
+            if not ca_path:
+                self.log_fatal(
+                    idx,
+                    "ieee802_1x.ca_path specified but not supported by "
+                    "NetworkManager. Please update NetworkManager or use "
+                    "ieee802_1x.ca_cert.",
+                )
 
         seen = set()
         if con_cur is not None:
