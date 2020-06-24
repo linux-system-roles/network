@@ -29,38 +29,26 @@
             network_connections:
               # Create a bond master
               - name: "{{ master_profile }}"
-              # rhbz1508614. we need to up after all profiles are created
-              # state: up
+                state: up
                 type: bond
                 interface_name: "{{ master_device }}"
                 bond:
                   mode: active-backup
                   miimon: 110
-              # enslave an ethernet to the bond
+              # add an ethernet to the bond
               - name: "{{ slave1_profile }}"
-              # rhbz1508614. we need to up after all profiles are created
-              # state: up
+                state: up
                 type: ethernet
                 interface_name: "{{ dhcp_interface1 }}"
                 master: "{{ master_profile }}"
-              # enslave a second ethernet to the bond
+              # add a second ethernet to the bond
               - name: "{{ slave2_profile }}"
-              # rhbz1508614. we need to up after all profiles are created
-              # state: up
+                state: up
                 type: ethernet
                 interface_name: "{{ dhcp_interface2 }}"
                 master: "{{ master_profile }}"
         - import_role:
             name: linux-system-roles.network
-          vars:
-            network_connections:
-              # Upping everything after creation to avoid rhbz1508614
-              - name: "{{ master_profile }}"
-                state: up
-              - name: "{{ slave1_profile }}"
-                state: up
-              - name: "{{ slave2_profile }}"
-                state: up
         - import_tasks: tasks/assert_device_present.yml
           vars:
             interface: "{{ master_device }}"
