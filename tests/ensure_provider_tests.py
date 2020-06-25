@@ -68,7 +68,6 @@ NM_ONLY_TESTS = {
     "playbooks/tests_802_1x_updated.yml": {},
     "playbooks/tests_802_1x.yml": {},
     "playbooks/tests_reapply.yml": {},
-    "playbooks/tests_states.yml": {},
     # mac80211_hwsim (used for tests_wireless) only seems to be available
     # and working on RHEL/CentOS 7
     "playbooks/tests_wireless.yml": {
