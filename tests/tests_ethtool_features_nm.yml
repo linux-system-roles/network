@@ -8,6 +8,8 @@
     - name: Set network provider to 'nm'
       set_fact:
         network_provider: nm
+      tags:
+        - always
 
     - block:
         - name: Install NetworkManager
@@ -22,6 +24,8 @@
           when: true
       when:
         - ansible_distribution_major_version != '6'
+      tags:
+        - always
 
 
 # workaround for: https://github.com/ansible/ansible/issues/27973
