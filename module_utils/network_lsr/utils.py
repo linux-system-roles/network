@@ -158,7 +158,7 @@ class Util:
 
         if not cls.GMainLoop_run(mainloop_timeout):
             cancellable.cancel()
-            raise MyError("failure to call %s.%s(): timeout" % object_, async_action)
+            raise MyError("failure to call %s.%s(): timeout" % (object_, async_action))
 
         success = user_data.get("success", None)
         if success is not None:
