@@ -7,5 +7,7 @@
     - name: Set network provider to 'initscripts'
       set_fact:
         network_provider: initscripts
+      tags:
+        - always
 
 - import_playbook: playbooks/tests_vlan_mtu.yml

@@ -23,6 +23,8 @@ GET_NM_VERSION = """
           when: true
       when:
         - ansible_distribution_major_version != '6'
+      tags:
+        - always
 """
 
 MINIMUM_NM_VERSION_CHECK = """
@@ -41,6 +43,8 @@ RUN_PLAYBOOK_WITH_NM = """# SPDX-License-Identifier: BSD-3-Clause
     - name: Set network provider to 'nm'
       set_fact:
         network_provider: nm
+      tags:
+        - always
 {get_nm_version}
 
 # workaround for: https://github.com/ansible/ansible/issues/27973
@@ -86,6 +90,8 @@ RUN_PLAYBOOK_WITH_INITSCRIPTS = """# SPDX-License-Identifier: BSD-3-Clause
     - name: Set network provider to 'initscripts'
       set_fact:
         network_provider: initscripts
+      tags:
+        - always
 
 - import_playbook: {test_playbook}
 """
