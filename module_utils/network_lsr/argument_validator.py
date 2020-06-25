@@ -1088,8 +1088,10 @@ class ArgValidator_DictConnection(ArgValidatorDict):
             actions.append(persistent_state)
 
         # If the profile should be absent at the end, it needs to be present in
-        # the meantime to allow to (de)activate it
-        if persistent_state == "absent" and state:
+        # the meantime to allow to (de)activate it. This is only possible if it
+        # is completely defined, for which `type` needs to be specified.
+        # Otherwise, downing is happening on a best-effort basis
+        if persistent_state == "absent" and state and result.get("type"):
             actions.append("present")
 
         # Change the runtime state if necessary

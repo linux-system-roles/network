@@ -1,0 +1,68 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Run test
+  block:
+    - name: "TEST: {{ lsr_description }}"
+      debug:
+        msg: "########## {{ lsr_description }} ##########"
+
+    - debug:
+        var: "{{ item }}"
+      loop:
+        - lsr_description
+        - lsr_setup
+        - lsr_test
+        - lsr_assert
+        - lsr_assert_when
+        - lsr_fail_debug
+        - lsr_cleanup
+
+    - include_tasks: tasks/show_interfaces.yml
+
+    - name: setup
+      include_tasks: "{{ item }}"
+      loop: "{{ lsr_setup }}"
+      tags:
+        - "tests::setup"
+
+    - name: test
+      include_tasks: "{{ item }}"
+      loop: "{{ lsr_test }}"
+      tags:
+        - "tests::test"
+
+    - name: asserts
+      include_tasks: "{{ item }}"
+      loop: "{{ lsr_assert }}"
+      tags:
+        - "tests::assert"
+
+    - name: conditional asserts
+      include_tasks: "{{ item['what'] }}"
+      when:
+        - "{{ item['when'] }}"
+      loop: "{{ lsr_assert_when|default([]) }}"
+
+    - name: "Success in test '{{ lsr_description }}'"
+      debug:
+        msg: "+++++ Success in test '{{ lsr_description }}' +++++"
+
+  rescue:
+    - name: "Failure in test '{{ lsr_description }}'"
+      debug:
+        msg: "!!!!! Failure in test '{{ lsr_description }}' !!!!!"
+
+    - debug:
+        var: "{{ item }}"
+      loop: "{{ lsr_fail_debug | default([]) }}"
+
+    - fail:
+        msg: "!!!!! Failure in test '{{ lsr_description }}' !!!!!"
+
+  always:
+    - name: cleanup
+      include_tasks: "{{ item }}"
+      loop: "{{ lsr_cleanup }}"
+      tags:
+        - "tests::cleanup"
+...
