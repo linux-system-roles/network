@@ -47,6 +47,7 @@
     enabled: true
   when:
     - network_provider == "nm"
+  no_log: true
 
 # If any 802.1x connections are used, the wpa_supplicant
 # service is required to be running
@@ -65,6 +66,7 @@
     enabled: true
   when:
     - network_provider == "initscripts"
+  no_log: true
 
 - name: Ensure initscripts network file dependency is present
   copy:
