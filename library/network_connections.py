@@ -1599,7 +1599,7 @@ class RunEnvironmentAnsible(RunEnvironment):
         kwargs["warnings"] = warning_logs
         stderr = "\n".join(debug_logs) + "\n"
         kwargs["stderr"] = stderr
-        kwargs["invocation"] = {"params": self.module.params}
+        kwargs["_invocation"] = {"module_args": self.module.params}
         return kwargs
 
     def exit_json(self, connections, changed=False, **kwargs):
