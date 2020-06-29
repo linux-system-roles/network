@@ -47,8 +47,6 @@
                 type: ethernet
                 interface_name: "{{ dhcp_interface2 }}"
                 master: "{{ master_profile }}"
-        - import_role:
-            name: linux-system-roles.network
         - import_tasks: tasks/assert_device_present.yml
           vars:
             interface: "{{ master_device }}"
