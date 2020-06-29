@@ -2794,11 +2794,7 @@ class TestValidator(unittest.TestCase):
     def test_state_absent_up_no_type(self):
         self.check_partial_connection_zero(
             {"name": "eth0", "persistent_state": "absent", "state": "up"},
-            {
-                "actions": ["present", "up", "absent"],
-                "persistent_state": "absent",
-                "state": "up",
-            },
+            {"actions": ["up", "absent"], "persistent_state": "absent", "state": "up"},
         )
 
     def test_state_absent_up_type(self):
@@ -2822,7 +2818,7 @@ class TestValidator(unittest.TestCase):
         self.check_partial_connection_zero(
             {"name": "eth0", "persistent_state": "absent", "state": "down"},
             {
-                "actions": ["present", "down", "absent"],
+                "actions": ["down", "absent"],
                 "persistent_state": "absent",
                 "state": "down",
             },
@@ -2985,6 +2981,22 @@ class TestValidator(unittest.TestCase):
                 validator, network_lsr.argument_validator.ArgValidatorDeprecated
             ):
                 assert validator.deprecated_by in validators.keys()
+
+    def test_valid_persistent_state(self):
+        """
+        Test that when persistent_state is present and state is set to present
+        or absent, a ValidationError raises.
+        """
+        validator = network_lsr.argument_validator.ArgValidator_DictConnection()
+        input_connection = {
+            "name": "test",
+            "persistent_state": "present",
+            "state": "present",
+            "type": "ethernet",
+        }
+        self.assertValidationError(validator, input_connection)
+        input_connection.update({"state": "absent"})
+        self.assertValidationError(validator, input_connection)
 
 
 @my_test_skipIf(nmutil is None, "no support for NM (libnm via pygobject)")

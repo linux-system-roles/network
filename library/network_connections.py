@@ -45,6 +45,8 @@ options: Documentation needs to be written. Note that the network_connections
 
 
 ###############################################################################
+PERSISTENT_STATE = "persistent_state"
+ABSENT_STATE = "absent"
 
 DEFAULT_ACTIVATION_TIMEOUT = 90
 
@@ -1599,7 +1601,7 @@ class RunEnvironmentAnsible(RunEnvironment):
         kwargs["warnings"] = warning_logs
         stderr = "\n".join(debug_logs) + "\n"
         kwargs["stderr"] = stderr
-        kwargs["invocation"] = {"params": self.module.params}
+        kwargs["_invocation"] = {"module_args": self.module.params}
         return kwargs
 
     def exit_json(self, connections, changed=False, **kwargs):
@@ -2299,11 +2301,13 @@ class Cmd_nm(Cmd):
 
                 cons = self.nmutil.connection_list(name=connection["name"])
         if not changed:
-            self.log_error(
-                idx,
-                "down connection %s failed: connection not found"
-                % (connection["name"]),
+            message = "down connection %s failed: connection not found" % (
+                connection["name"]
             )
+            if connection[PERSISTENT_STATE] == ABSENT_STATE:
+                self.log_info(idx, message)
+            else:
+                self.log_error(idx, message)
 
 
 ###############################################################################
@@ -2436,11 +2440,18 @@ class Cmd_initscripts(Cmd):
 
         path = IfcfgUtil.ifcfg_path(name)
         if not os.path.isfile(path):
-            if self.check_mode == CheckMode.REAL_RUN:
+            if (
+                self.check_mode == CheckMode.REAL_RUN
+                and connection.get(PERSISTENT_STATE) != ABSENT_STATE
+            ):
                 self.log_error(idx, "ifcfg file '%s' does not exist" % (path))
             else:
+                if self.check_mode != CheckMode.REAL_RUN:
+                    in_checkmode = " in check mode"
+                else:
+                    in_checkmode = ""
                 self.log_info(
-                    idx, "ifcfg file '%s' does not exist in check mode" % (path)
+                    idx, "ifcfg file '%s' does not exist%s" % (path, in_checkmode)
                 )
             return
 

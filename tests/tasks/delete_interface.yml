@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: remove test interface if necessary
+  command: "ip link del {{ interface }}"
+  ignore_errors: true
+...
