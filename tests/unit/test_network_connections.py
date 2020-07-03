@@ -2794,7 +2794,7 @@ class TestValidator(unittest.TestCase):
     def test_state_absent_up_no_type(self):
         self.check_partial_connection_zero(
             {"name": "eth0", "persistent_state": "absent", "state": "up"},
-            {"actions": ["up", "absent"], "persistent_state": "absent", "state": "up"},
+            {"actions": ["absent", "up"], "persistent_state": "absent", "state": "up"},
         )
 
     def test_state_absent_up_type(self):
@@ -2807,7 +2807,7 @@ class TestValidator(unittest.TestCase):
                 "type": "ethernet",
             },
             {
-                "actions": ["present", "up", "absent"],
+                "actions": ["present", "absent", "up"],
                 "persistent_state": "absent",
                 "state": "up",
             },
@@ -2818,7 +2818,7 @@ class TestValidator(unittest.TestCase):
         self.check_partial_connection_zero(
             {"name": "eth0", "persistent_state": "absent", "state": "down"},
             {
-                "actions": ["down", "absent"],
+                "actions": ["absent", "down"],
                 "persistent_state": "absent",
                 "state": "down",
             },
