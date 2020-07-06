@@ -220,11 +220,11 @@ NetworkManager.
 - For initscripts, the master is looked up as the `DEVICE` from the corresponding
   ifcfg file.
 
-As `master` refers to other profiles of the same or another play,
-the order of the `connections` list matters. Also, `--check` ignores
-the value of the `master` and assumes it will be present during a real
-run. That means, in presence of an invalid `master`, `--check` may
-signal success but the actual play run fails.
+As `master` refers to other profiles of the same or another play, the order of the
+`connections` list matters. Profiles that are referenced by other profiles need to be
+specified first. Also, `--check` ignores the value of the `master` and assumes it will
+be present during a real run. That means, in presence of an invalid `master`, `--check`
+may signal success but the actual play run fails.
 
 The `team` type uses `roundrobin` as the `runner` configuration. No further configuration is supported at the moment.
 #### `type: vlan`
