@@ -2,9 +2,14 @@
 ---
 - hosts: all
   vars:
-    interface: lsrfeat1
+    interface: testnic1
     type: veth
   tasks:
+    - debug:
+        msg: "this is: playbooks/tests_ethtool_features.yml"
+      tags:
+        - always
+
     - name: "INIT: Ethtool feeatures tests"
       debug:
         msg: "##################################################"
@@ -17,6 +22,8 @@
       package:
         name: ethtool
         state: present
+
+
     - block:
         - name: >-
             TEST: I can create a profile without changing the ethtool features.
@@ -42,6 +49,8 @@
           assert:
             that:
               - original_ethtool_features.stdout == ethtool_features.stdout
+
+
         - name: >-
             TEST: I can disable gro and tx-tcp-segmentation and enable gso.
           debug:
@@ -79,6 +88,8 @@
               - >-
                   'tx-tcp-segmentation: off' in
                   ethtool_features.stdout_lines | map('trim')
+
+
         - name: >-
             TEST: I can enable tx_tcp_segmentation (using underscores).
           debug:
@@ -108,6 +119,8 @@
               - >-
                   'tx-tcp-segmentation: on' in
                   ethtool_features.stdout_lines | map('trim')
+
+
         - name: I cannot change tx_tcp_segmentation and tx-tcp-segmentation at
                 the same time.
           block:
@@ -145,6 +158,8 @@
                 var: __network_connections_result
             - assert:
                 that: "{{ __network_connections_result.failed == true }}"
+
+
         - name: "TEST: I can reset features to their original value."
           debug:
             msg: "##################################################"
