@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    interface: testnic1
+    profile: "{{ interface }}"
+    lsr_fail_debug:
+      - __network_connections_result
+  tasks:
+    - debug:
+        msg: "this is: playbooks/tests_states.yml"
+      tags:
+        - always
+
+
+    - block:
+        - include_tasks: tasks/run_test.yml
+          vars:
+            state: present
+            lsr_description: I can manage a veth interface with NM after I
+                managed it with initscripts.
+            lsr_setup:
+              - tasks/setup_test_interface.yml
+              # run role once with defaults but nm provider to ensure that
+              # NetworKManager is running
+              - tasks/provider/default_with_nm.yml
+              - tasks/provider/create_and_remove_with_initscripts.yml
+            lsr_test:
+              - tasks/provider/create_with_nm.yml
+            lsr_assert:
+              - tasks/assert_profile_present.yml
+            lsr_cleanup:
+              - tasks/cleanup_profile+device.yml
+      tags:
+        - tests::provider:initscripts_to_nm

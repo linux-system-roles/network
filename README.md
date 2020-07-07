@@ -60,10 +60,12 @@ Variables
 The `network` role is configured via variables starting  with  `network_` as the name prefix.
 List of variables:
 
-* `network_provider` - The `network_provider` variable allows to set a specific
-  provider (`nm` or `initscripts`) . Setting it to `{{ network_provider_os_default }}`,
-  the provider is set depending on the operating system. This is usually `nm`
-  except for RHEL 6 or CentOS 6 systems.
+* `network_provider` - The `network_provider` variable allows to set a specific provider
+  (`nm` or `initscripts`) . Setting it to `{{ network_provider_os_default }}`, the
+  provider is set depending on the operating system. This is usually `nm` except for
+  RHEL 6 or CentOS 6 systems. Changing the provider for an existing profile is not
+  supported. To switch providers, it is recommended to first remove profiles with the
+  old provider and then create new profiles with the new provider.
 * `network_connections` - The connection profiles are configured as `network_connections`,
   which is a list of dictionaries that include specific options.
 * `network_allow_restart` - Certain configurations require the role to restart network services.

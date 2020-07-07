@@ -61,12 +61,16 @@ RUN_PLAYBOOK_WITH_NM = """# SPDX-License-Identifier: BSD-3-Clause
 MINIMUM_VERSION = "minimum_version"
 EXTRA_RUN_CONDITION = "extra_run_condition"
 NM_ONLY_TESTS = {
+    "playbooks/tests_802_1x_updated.yml": {},
+    "playbooks/tests_802_1x.yml": {},
     "playbooks/tests_ethtool_features.yml": {
         MINIMUM_VERSION: "'1.20.0'",
         "comment": "# NetworkManager 1.20.0 introduced ethtool settings support",
     },
-    "playbooks/tests_802_1x_updated.yml": {},
-    "playbooks/tests_802_1x.yml": {},
+    "playbooks/tests_provider.yml": {
+        MINIMUM_VERSION: "'1.20.0'",
+        "comment": "# NetworKmanager 1.20.0 added support for forgetting profiles",
+    },
     "playbooks/tests_reapply.yml": {},
     # mac80211_hwsim (used for tests_wireless) only seems to be available
     # and working on RHEL/CentOS 7
