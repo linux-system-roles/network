@@ -8,6 +8,7 @@ import os
 import re
 import shlex
 import socket
+import subprocess
 import time
 import traceback
 
@@ -2340,6 +2341,36 @@ class Cmd_initscripts(Cmd):
             return None
         return f
 
+    def forget_nm_connection(self, path):
+        """
+        Forget a NetworkManager connection by loading the path of the deleted
+        profile. This inverts the effect of loading a profile with
+        `NM_CONTROLLED=no` earlier, which made NetworkManager ignore the
+        device.
+
+        This does not use the Python libnm bindings because they might not be
+        present on the system, since the module is currently operating for the
+        initscripts provider. If it fails, assume that NetworkManager is not
+        present and did not save any state about the corresponding interface.
+        """
+        try:
+            subprocess.call(
+                [
+                    "busctl",
+                    "--system",
+                    "call",
+                    "org.freedesktop.NetworkManager",
+                    "/org/freedesktop/NetworkManager/Settings",
+                    "org.freedesktop.NetworkManager.Settings",
+                    "LoadConnections",
+                    "as",
+                    "1",
+                    path,
+                ]
+            )
+        except Exception:
+            pass
+
     def run_action_absent(self, idx):
         n = self.connections[idx]["name"]
         name = n
@@ -2371,6 +2402,7 @@ class Cmd_initscripts(Cmd):
                 if self.check_mode == CheckMode.REAL_RUN:
                     try:
                         os.unlink(path)
+                        self.forget_nm_connection(path)
                     except Exception as e:
                         self.log_error(
                             idx, "delete ifcfg-rh file '%s' failed: %s" % (path, e)

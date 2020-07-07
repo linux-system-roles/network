@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- include_role:
+    name: linux-system-roles.network
+  vars:
+    network_connections:
+      - name: "{{ interface }}"
+        state: up
+        persistent_state: present
+        type: ethernet
+        autoconnect: yes
+        ip:
+          address: 192.0.2.1/24
+    network_provider: nm
+...
