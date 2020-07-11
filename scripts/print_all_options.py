@@ -165,12 +165,7 @@ def prioritize(key):
 yaml.add_representer(dict, represent_dict)
 sorted_data = priority_sorted([parse_validator(av.ArgValidator_DictConnection())])
 yaml_example = (
-    yaml.dump(
-        sorted_data,
-        explicit_start=True,
-        default_flow_style=False,
-        width=100,
-    )
+    yaml.dump(sorted_data, explicit_start=True, default_flow_style=False, width=100,)
     .replace(COMMENT, "#")
     .replace(EMPTY, "")
 )
