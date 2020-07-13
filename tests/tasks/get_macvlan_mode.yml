@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- block:
+  - name: "get interface {{ interface }} {{ mode }}mode"
+    shell: "ip -d link show {{ interface }} |grep {{ mode }} |awk '{print $3}'"
+    register: mcvl_mode_result
+  - name: Show {{ mode }} mode
+    debug:
+      var: mcvl_mode_result.stdout
+  tags:
+    - always

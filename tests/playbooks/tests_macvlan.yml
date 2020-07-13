@@ -1,0 +1,336 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    interface: lsrmcvl31
+    profile: "{{ interface }}"
+    lsr_fail_debug:
+      - __network_connections_result
+  tasks:
+    - debug:
+        msg: "this is: playbooks/tests_macvlan.yml"
+      tags:
+        - always
+
+    - block:
+        - include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: I can create a macvlan connection
+            mode: macvlan
+            macvlan_tap: no
+            macvlan_mode: bridge
+            lsr_setup:
+              - tasks/delete_interface.yml
+              - tasks/assert_device_absent.yml
+            lsr_test:
+              - tasks/create_macvlan_interface.yml
+            lsr_assert:
+              - tasks/assert_device_present.yml
+            lsr_cleanup:
+              - tasks/cleanup_profile+device.yml
+      tags:
+        - tests::macvlan:create
+
+    - block:
+        - include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: I can remove existing connection without down first
+            mode: macvlan
+            macvlan_tap: no
+            macvlan_mode: bridge
+            lsr_setup:
+              - tasks/create_macvlan_interface.yml
+            lsr_test:
+              - tasks/remove+down_profile.yml
+            lsr_assert:
+              - tasks/assert_device_absent.yml
+            lsr_cleanup:
+              - tasks/cleanup_profile+device.yml
+      tags:
+        - tests::macvlan:remove_up
+
+    - block:
+        - include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: I can create a private mode macvlan interface.
+            mode: macvlan
+            macvlan_tap: no
+            macvlan_mode: private
+            lsr_setup:
+              - tasks/delete_interface.yml
+              - tasks/assert_device_absent.yml
+            lsr_test:
+              - tasks/create_macvlan_interface.yml
+            lsr_assert:
+              - tasks/assert_device_present.yml
+              - tasks/assert_macvlan_mode.yml
+            lsr_cleanup:
+              - tasks/cleanup_profile+device.yml
+      tags:
+        - tests::macvlan:create_private_interface
+
+    - block:
+        - include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: I can shutdown and remove a private
+             mode macvlan interface
+            mode: macvlan
+            macvlan_tap: no
+            macvlan_mode: private
+            lsr_setup:
+              - tasks/delete_interface.yml
+              - tasks/assert_device_absent.yml
+              - tasks/create_macvlan_interface.yml
+              - tasks/assert_device_present.yml
+            lsr_test:
+              - tasks/remove+down_profile.yml
+            lsr_assert:
+              - tasks/assert_device_absent.yml
+            lsr_cleanup:
+              - tasks/cleanup_profile+device.yml
+      tags:
+        - tests::macvlan:remove_private_interface
+
+    - block:
+        - include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: I can create a VEPA mode macvlan interface
+            mode: macvlan
+            macvlan_tap: no
+            macvlan_mode: vepa
+            lsr_setup:
+              - tasks/delete_interface.yml
+              - tasks/assert_device_absent.yml
+            lsr_test:
+              - tasks/create_macvlan_interface.yml
+            lsr_assert:
+              - tasks/assert_device_present.yml
+              - tasks/assert_macvlan_mode.yml
+            lsr_cleanup:
+              - tasks/cleanup_profile+device.yml
+      tags:
+        - tests::macvlan:create_vepa_interface
+
+    - block:
+        - include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: I can remove a VEPA mode macvlan interface
+            mode: macvlan
+            macvlan_tap: no
+            macvlan_mode: vepa
+            lsr_setup:
+              - tasks/delete_interface.yml
+              - tasks/assert_device_absent.yml
+              - tasks/create_macvlan_interface.yml
+              - tasks/assert_device_present.yml
+            lsr_test:
+              - tasks/remove+down_profile.yml
+            lsr_assert:
+              - tasks/assert_device_absent.yml
+            lsr_cleanup:
+              - tasks/cleanup_profile+device.yml
+      tags:
+        - tests::macvlan:remove_vepa_interface
+
+    - block:
+        - include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: I can create a passthru mode macvlan interface
+            mode: macvlan
+            macvlan_tap: no
+            macvlan_mode: passthru
+            lsr_setup:
+              - tasks/delete_interface.yml
+              - tasks/assert_device_absent.yml
+            lsr_test:
+              - tasks/create_macvlan_interface.yml
+            lsr_assert:
+              - tasks/assert_device_present.yml
+              - tasks/assert_macvlan_mode.yml
+            lsr_cleanup:
+              - tasks/cleanup_profile+device.yml
+      tags:
+        - tests::macvlan:create_passthru_interface
+
+    - block:
+        - include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: I can remove a passthru mode macvlan interface
+            mode: macvlan
+            macvlan_tap: no
+            macvlan_mode: passthru
+            lsr_setup:
+              - tasks/delete_interface.yml
+              - tasks/assert_device_absent.yml
+              - tasks/create_macvlan_interface.yml
+              - tasks/assert_device_present.yml
+            lsr_test:
+              - tasks/remove+down_profile.yml
+            lsr_assert:
+              - tasks/assert_device_absent.yml
+            lsr_cleanup:
+              - tasks/cleanup_profile+device.yml
+      tags:
+        - tests::macvlan:remove_passthru_interface
+
+    - block:
+        - include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: I can create a bridge mode macvtap connection
+            mode: macvtap
+            macvlan_tap: yes
+            macvlan_mode: bridge
+            lsr_setup:
+              - tasks/delete_interface.yml
+              - tasks/assert_device_absent.yml
+            lsr_test:
+              - tasks/create_macvlan_interface.yml
+            lsr_assert:
+              - tasks/assert_device_present.yml
+              - tasks/assert_macvlan_mode.yml
+            lsr_cleanup:
+              - tasks/cleanup_profile+device.yml
+      tags:
+        - tests::macvtap:create_bridge_mode_interface
+
+    - block:
+        - include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: I can remove existing connection without down first
+            mode: macvtap
+            macvlan_tap: yes
+            macvlan_mode: bridge
+            lsr_setup:
+              - tasks/create_macvlan_interface.yml
+            lsr_test:
+              - tasks/remove+down_profile.yml
+            lsr_assert:
+              - tasks/assert_device_absent.yml
+            lsr_cleanup:
+              - tasks/cleanup_profile+device.yml
+      tags:
+        - tests::macvtap:remove_up
+
+    - block:
+        - include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: I can create a private mode macvtap interface.
+            mode: macvtap
+            macvlan_tap: yes
+            macvlan_mode: private
+            lsr_setup:
+              - tasks/delete_interface.yml
+              - tasks/assert_device_absent.yml
+            lsr_test:
+              - tasks/create_macvlan_interface.yml
+            lsr_assert:
+              - tasks/assert_device_present.yml
+              - tasks/assert_macvlan_mode.yml
+            lsr_cleanup:
+              - tasks/cleanup_profile+device.yml
+      tags:
+        - tests::macvtap:create_private_interface
+
+    - block:
+        - include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: I can shutdown and remove a private
+             mode macvtap interface
+            mode: macvtap
+            macvlan_tap: yes
+            macvlan_mode: private
+            lsr_setup:
+              - tasks/delete_interface.yml
+              - tasks/assert_device_absent.yml
+              - tasks/create_macvlan_interface.yml
+              - tasks/assert_device_present.yml
+            lsr_test:
+              - tasks/remove+down_profile.yml
+            lsr_assert:
+              - tasks/assert_device_absent.yml
+            lsr_cleanup:
+              - tasks/cleanup_profile+device.yml
+      tags:
+        - tests::macvtap:remove_private_interface
+
+    - block:
+        - include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: I can create a VEPA mode macvtap interface
+            mode: macvtap
+            macvlan_tap: yes
+            macvlan_mode: vepa
+            lsr_setup:
+              - tasks/delete_interface.yml
+              - tasks/assert_device_absent.yml
+            lsr_test:
+              - tasks/create_macvlan_interface.yml
+            lsr_assert:
+              - tasks/assert_device_present.yml
+              - tasks/assert_macvlan_mode.yml
+            lsr_cleanup:
+              - tasks/cleanup_profile+device.yml
+      tags:
+        - tests::macvtap:create_vepa_interface
+
+    - block:
+        - include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: I can remove a vepa mode macvtap interface
+            mode: macvtap
+            macvlan_tap: yes
+            macvlan_mode: vepa
+            lsr_setup:
+              - tasks/delete_interface.yml
+              - tasks/assert_device_absent.yml
+              - tasks/create_macvlan_interface.yml
+              - tasks/assert_device_present.yml
+            lsr_test:
+              - tasks/remove+down_profile.yml
+            lsr_assert:
+              - tasks/assert_device_absent.yml
+            lsr_cleanup:
+              - tasks/cleanup_profile+device.yml
+      tags:
+        - tests::macvtap:remove_vepa_interface
+
+    - block:
+        - include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: I can create a passthru mode macvtap interface
+            mode: macvtap
+            macvlan_tap: yes
+            macvlan_mode: passthru
+            lsr_setup:
+              - tasks/delete_interface.yml
+              - tasks/assert_device_absent.yml
+            lsr_test:
+              - tasks/create_macvlan_interface.yml
+            lsr_assert:
+              - tasks/assert_device_present.yml
+              - tasks/assert_macvlan_mode.yml
+            lsr_cleanup:
+              - tasks/cleanup_profile+device.yml
+      tags:
+        - tests::macvtap:create_passthru_interface
+
+    - block:
+        - include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: I can remove a passthru mode macvtap interface
+            mode: macvtap
+            macvlan_tap: yes
+            macvlan_mode: passthru
+            lsr_setup:
+              - tasks/delete_interface.yml
+              - tasks/assert_device_absent.yml
+              - tasks/create_macvlan_interface.yml
+              - tasks/assert_device_present.yml
+            lsr_test:
+              - tasks/remove+down_profile.yml
+            lsr_assert:
+              - tasks/assert_device_absent.yml
+            lsr_cleanup:
+              - tasks/cleanup_profile+device.yml
+      tags:
+        - tests::macvtap:remove_passthru_interface

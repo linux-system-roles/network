@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- include: get_macvlan_mode.yml
+- name: "assert that interface {{ interface }} is in macvlan {{ macvlan_mode }}"
+  assert:
+    that:
+      - "'{{ macvlan_mode }}' in mcvl_mode_result.stdout"
+    msg: "{{ interface }} is now in {{ mcvl_mode_result.stdout }} mode!"
+    fail_msg: "{{ interface }} is in {{ mcvl_mode_result.stdout }} mode!"

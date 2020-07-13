@@ -77,6 +77,7 @@ NM_ONLY_TESTS = {
     "playbooks/tests_wireless.yml": {
         EXTRA_RUN_CONDITION: "ansible_distribution_major_version == '7'",
     },
+    "playbooks/tests_macvlan.yml": {},
 }
 
 IGNORE = [
