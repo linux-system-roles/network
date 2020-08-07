@@ -25,11 +25,11 @@
 
 set -e
 
-ME=$(basename $0)
-SCRIPTDIR=$(readlink -f $(dirname $0))
+ME=$(basename "$0")
+SCRIPTDIR=$(readlink -f "$(dirname "$0")")
 
-. ${SCRIPTDIR}/utils.sh
-. ${SCRIPTDIR}/config.sh
+. "${SCRIPTDIR}/utils.sh"
+. "${SCRIPTDIR}/config.sh"
 
 if [[ "${RUN_BLACK_DISABLED}" ]]; then
   lsr_info "${ME}: black is disabled. Skipping."
@@ -61,6 +61,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 set -x
+# https://github.com/koalaman/shellcheck/wiki/SC2086
+# shellcheck disable=SC2086
 python -m black \
   --include "${INCLUDE_ARG:-${RUN_BLACK_INCLUDE:-${DEFAULT_INCLUDE}}}" \
   --exclude "${EXCLUDE_ARG:-${RUN_BLACK_EXCLUDE:-${DEFAULT_EXCLUDE}}}" \

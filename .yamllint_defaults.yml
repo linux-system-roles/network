@@ -10,5 +10,7 @@ rules:
   brackets:
     max-spaces-inside: 1
     level: error
-  truthy: disable
+  truthy:
+    allowed-values: ["yes", "no", "true", "false"]
+    level: error
   document-start: disable

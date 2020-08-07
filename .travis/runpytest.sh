@@ -19,13 +19,13 @@
 
 set -e
 
-ME=$(basename $0)
-SCRIPTDIR=$(readlink -f $(dirname $0))
+ME=$(basename "$0")
+SCRIPTDIR=$(readlink -f "$(dirname "$0")")
 
-. ${SCRIPTDIR}/utils.sh
-. ${SCRIPTDIR}/config.sh
+. "${SCRIPTDIR}/utils.sh"
+. "${SCRIPTDIR}/config.sh"
 
-if [[ ! -d ${TOPDIR}/tests/unit ]]; then
+if [[ ! -d "${TOPDIR}/tests/unit" ]]; then
   lsr_info "${ME}: No unit tests found. Skipping."
   exit 0
 fi

@@ -10,11 +10,11 @@
 
 set -e
 
-ME=$(basename $0)
-SCRIPTDIR=$(readlink -f $(dirname $0))
+ME=$(basename "$0")
+SCRIPTDIR=$(readlink -f "$(dirname "$0")")
 
-. ${SCRIPTDIR}/utils.sh
-. ${SCRIPTDIR}/config.sh
+. "${SCRIPTDIR}/utils.sh"
+. "${SCRIPTDIR}/config.sh"
 
 if ! lsr_venv_python_matches_system_python ; then
   lsr_info "${ME}: ${1:-<missing command>}:" \
@@ -22,8 +22,8 @@ if ! lsr_venv_python_matches_system_python ; then
   exit 0
 fi
 
-COMMAND=$(command -v $1)
+COMMAND=$(command -v "$1")
 shift
 
 set -x
-python ${COMMAND} "$@"
+python "${COMMAND}" "$@"

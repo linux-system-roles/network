@@ -1,3 +1,4 @@
+#!/bin/bash
 # SPDX-License-Identifier: MIT
 #
 # Use this file to specify custom configuration for a project. Generally, this
@@ -39,14 +40,6 @@
 #
 #       - RUN_FLAKE8_DISABLED
 #       - RUN_FLAKE8_EXTRA_ARGS
-type -f lsr_check_python_version > /dev/null 2>&1 || . ${SCRIPTDIR}/utils.sh
-if lsr_check_python_version python -lt 3.0
-then
-    PYTHON2_EXCLUDES="tests/ensure_provider_tests.py,scripts/print_all_options.py"
-    FLAKE8_DEFAULT_EXCLUDES=".svn,CVS,.bzr,.hg,.git,__pycache__,.tox,.eggs,*.egg"
-    RUN_PYLINT_EXCLUDE='^(\..*|ensure_provider_tests\.py|print_all_options\.py)$'
-    RUN_FLAKE8_EXTRA_ARGS="--exclude ${FLAKE8_DEFAULT_EXCLUDES},${PYTHON2_EXCLUDES}"
-fi
 #
 #   * .travis/runsyspycmd.sh:
 #
@@ -55,4 +48,17 @@ fi
 #   * .travis/runpytest.sh:
 #
 #       - RUN_PYTEST_SETUP_MODULE_UTILS
+#
+#   * .travis/runshellcheck.sh:
+#
+#       - RUN_SHELLCHECK_DISABLED
+#       - RUN_SHELLCHECK_EXTRA_ARGS
+type -f lsr_check_python_version > /dev/null 2>&1 || . ${SCRIPTDIR}/utils.sh
+if lsr_check_python_version python -lt 3.0
+then
+    PYTHON2_EXCLUDES="tests/ensure_provider_tests.py,scripts/print_all_options.py"
+    FLAKE8_DEFAULT_EXCLUDES=".svn,CVS,.bzr,.hg,.git,__pycache__,.tox,.eggs,*.egg"
+    RUN_PYLINT_EXCLUDE='^(\..*|ensure_provider_tests\.py|print_all_options\.py)$'
+    RUN_FLAKE8_EXTRA_ARGS="--exclude ${FLAKE8_DEFAULT_EXCLUDES},${PYTHON2_EXCLUDES}"
+fi
 LSR_PUBLISH_COVERAGE=normal

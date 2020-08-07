@@ -1,3 +1,4 @@
+#!/bin/bash
 # SPDX-License-Identifier: MIT
 #
 # Auxiliary functions and variables.
@@ -32,7 +33,7 @@ function lsr_banner() {
   local maxlen=${2:-79}
   local fillchar='_'
   local text=" ${1} "
-  local fillsize=$(( ${maxlen} - ${#text} ))
+  local fillsize=$(( maxlen - ${#text} ))
   local line1
   local line2
 
@@ -41,13 +42,13 @@ function lsr_banner() {
     fillsize=0
   fi
 
-  line1=$(printf "%*s" ${maxlen} "" | tr " " "${fillchar}")
+  line1=$(printf "%*s" "${maxlen}" "" | tr " " "${fillchar}")
 
-  if [[ $(( ${fillsize} % 2 )) -eq 1 ]]; then
+  if [[ $(( fillsize % 2 )) -eq 1 ]]; then
     text="${text} "
   fi
 
-  line2=$(printf "%*s" $(( ${fillsize} / 2 )) "" | tr " " "${fillchar}")
+  line2=$(printf "%*s" $(( fillsize / 2 )) "" | tr " " "${fillchar}")
   line2="${line2}${text}${line2}"
 
   echo -e "${__lsr_color_yellow}${line1}${__lsr_color_reset}"
@@ -78,8 +79,8 @@ function lsr_error() {
 #
 # If $1 is installed, return its version.
 function lsr_get_python_version() {
-  if command -v $1 >/dev/null 2>&1; then
-    $1 -c "${__lsr_get_python_version_py}"
+  if command -v "$1" >/dev/null 2>&1; then
+    "$1" -c "${__lsr_get_python_version_py}"
   fi
 }
 
@@ -99,7 +100,7 @@ function lsr_compare_versions() {
     return 1
   fi
 
-  test ${1//./} $2 ${3//./}
+  test "${1//./}" "$2" "${3//./}"
 }
 
 ##
@@ -115,7 +116,7 @@ function lsr_check_python_version() {
     return 1
   fi
 
-  lsr_compare_versions $(lsr_get_python_version $1) $2 $3
+  lsr_compare_versions "$(lsr_get_python_version "$1")" "$2" "$3"
 }
 
 ##
@@ -132,7 +133,7 @@ function lsr_compare_pythons() {
   fi
 
   lsr_compare_versions \
-    $(lsr_get_python_version $1) $2 $(lsr_get_python_version $3)
+    "$(lsr_get_python_version "$1")" "$2" "$(lsr_get_python_version "$3")"
 }
 
 ##
@@ -141,7 +142,8 @@ function lsr_compare_pythons() {
 # Return the system python, or /usr/bin/python3 if nothing
 # else can be found in a standard location.
 function lsr_get_system_python() {
-  local syspython=$(command -pv python3)
+  local syspython
+  syspython=$(command -pv python3)
   if [[ -z "$syspython" ]]; then
     syspython=$(command -pv python)
   fi
@@ -151,7 +153,7 @@ function lsr_get_system_python() {
   if [[ -z "$syspython" ]]; then
     lsr_error Could not determine system python path
   fi
-  echo $syspython
+  echo "$syspython"
 }
 
 ##
@@ -164,9 +166,10 @@ function lsr_get_system_python() {
 # Exit with 0 if virtual environment Python version matches the system Python
 # version.
 function lsr_venv_python_matches_system_python() {
-  local syspython="${2:-$(lsr_get_system_python)}"
+  local syspython
+  syspython="${2:-$(lsr_get_system_python)}"
 
-  lsr_compare_pythons ${1:-python} -eq $syspython
+  lsr_compare_pythons "${1:-python}" -eq "$syspython"
 }
 
 ##
@@ -181,17 +184,19 @@ function lsr_venv_python_matches_system_python() {
 # Exit with 0 if virtual environment Python version matches the system Python
 # version.
 function lsr_setup_module_utils() {
-  local srcdir=${1:-$SRC_MODULE_UTILS_DIR}
-  local destdir=${2:-$DEST_MODULE_UTILS_DIR}
-  if [ -n "$srcdir" -a -d "$srcdir" -a -n "$destdir" -a -d "$destdir" ]; then
-    bash $TOPDIR/tests/setup_module_utils.sh "$srcdir" "$destdir"
+  local srcdir
+  srcdir="${1:-$SRC_MODULE_UTILS_DIR}"
+  local destdir
+  destdir="${2:-$DEST_MODULE_UTILS_DIR}"
+  if [ -n "$srcdir" ] && [ -d "$srcdir" ] && [ -n "$destdir" ] && [ -d "$destdir" ]; then
+    bash "$TOPDIR/tests/setup_module_utils.sh" "$srcdir" "$destdir"
   fi
 }
 
 # set TOPDIR
-ME=${ME:-$(basename $0)}
-SCRIPTDIR=${SCRIPTDIR:-$(readlink -f $(dirname $0))}
-TOPDIR=$(readlink -f ${SCRIPTDIR}/..)
+ME=${ME:-"$(basename "$0")"}
+SCRIPTDIR=${SCRIPTDIR:-$(readlink -f "$(dirname "$0")")}
+TOPDIR=$(readlink -f "${SCRIPTDIR}/..")
 
 # Local Variables:
 # mode: Shell-script

@@ -24,11 +24,11 @@
 
 set -e
 
-ME=$(basename $0)
-SCRIPTDIR=$(readlink -f $(dirname $0))
+ME=$(basename "$0")
+SCRIPTDIR=$(readlink -f "$(dirname "$0")")
 
-. ${SCRIPTDIR}/utils.sh
-. ${SCRIPTDIR}/config.sh
+. "${SCRIPTDIR}/utils.sh"
+. "${SCRIPTDIR}/config.sh"
 
 # Publish the results only if it is desired.
 if [[ -z "${LSR_PUBLISH_COVERAGE}" ]]; then
@@ -40,14 +40,14 @@ case "${LSR_PUBLISH_COVERAGE}" in
     strict) : ;;
     debug) : ;;
     normal) : ;;
-    *) lsr_error Error: \"${LSR_PUBLISH_COVERAGE}\" is not a valid option ;;
+    *) lsr_error Error: \""${LSR_PUBLISH_COVERAGE}"\" is not a valid option ;;
 esac
 
-LSR_TESTSDIR=${LSR_TESTSDIR:-${TOPDIR}/tests}
+LSR_TESTSDIR=${LSR_TESTSDIR:-"${TOPDIR}/tests"}
 
 # Ensure we are in $LSR_TESTSDIR. It is supposed that if a user wants to submit
 # tests results, $LSR_TESTSDIR always exists.
-cd ${LSR_TESTSDIR}
+cd "${LSR_TESTSDIR}"
 
 # For simplicity, we suppose that coverage core data file has name .coverage
 # and it is situated in $LSR_TESTSDIR. Similarly for .coveragerc.
@@ -56,7 +56,7 @@ COVERAGERCFILE='.coveragerc'
 
 # In case there is no $COVERAGEFILE, there is nothing to report. If we are
 # running in strict mode, treat this situation as error.
-if [[ ! -s ${COVERAGEFILE} ]]; then
+if [[ ! -s "${COVERAGEFILE}" ]]; then
   NO_COVERAGEFILE_MSG="${COVERAGEFILE} is missing or empty"
   if [[ "${LSR_PUBLISH_COVERAGE}" == "strict" ]]; then
     lsr_error "${ME} (strict mode): ${NO_COVERAGEFILE_MSG}!"
@@ -74,7 +74,7 @@ fi
 #
 # So in our $COVERAGERCFILE file we make both locations to point to the
 # project's top directory.
-cat > ${COVERAGERCFILE} <<EOF
+cat > "${COVERAGERCFILE}" <<EOF
 [paths]
 source =
     ..
@@ -83,7 +83,7 @@ EOF
 
 # Rename $COVERAGEFILE to ${COVERAGEFILE}.merge. With this trick, coverage
 # combine applies configuration in $COVERAGERCFILE also to $COVERAGEFILE.
-mv ${COVERAGEFILE} ${COVERAGEFILE}.merge
+mv "${COVERAGEFILE}" "${COVERAGEFILE}.merge"
 python -m coverage combine --append
 
 MAYBE_DEBUG=""
@@ -92,4 +92,6 @@ if [[ "${LSR_PUBLISH_COVERAGE}" == "debug" ]]; then
 fi
 
 set -x
+# https://github.com/koalaman/shellcheck/wiki/SC2086
+# shellcheck disable=SC2086
 coveralls ${MAYBE_DEBUG} "$@"

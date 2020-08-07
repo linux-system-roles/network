@@ -16,11 +16,11 @@
 
 set -e
 
-ME=$(basename $0)
-SCRIPTDIR=$(readlink -f $(dirname $0))
+ME=$(basename "$0")
+SCRIPTDIR=$(readlink -f "$(dirname "$0")")
 
-. ${SCRIPTDIR}/utils.sh
-. ${SCRIPTDIR}/config.sh
+. "${SCRIPTDIR}/utils.sh"
+. "${SCRIPTDIR}/config.sh"
 
 if [[ "${RUN_FLAKE8_DISABLED}" ]]; then
   lsr_info "${ME}: flake8 is disabled. Skipping."
@@ -28,4 +28,6 @@ if [[ "${RUN_FLAKE8_DISABLED}" ]]; then
 fi
 
 set -x
+# https://github.com/koalaman/shellcheck/wiki/SC2086
+# shellcheck disable=SC2086
 python -m flake8 ${RUN_FLAKE8_EXTRA_ARGS:-} "$@"

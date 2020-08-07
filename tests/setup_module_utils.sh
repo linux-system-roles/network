@@ -9,7 +9,7 @@ fi
 
 if [ ! -d "${1:-}" ] ; then
     echo Either ansible is not installed, or there is no ansible/module_utils
-    echo in $1 - Skipping
+    echo in "$1" - Skipping
     exit 0
 fi
 
