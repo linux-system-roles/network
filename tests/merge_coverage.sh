@@ -23,6 +23,8 @@ export COVERAGE_FILE="${1}"
 shift
 
 tempdir="$(mktemp -d /tmp/coverage_merge-XXXXXX)"
+# https://github.com/koalaman/shellcheck/wiki/SC2064
+# shellcheck disable=SC2064
 trap "rm -rf '${tempdir}'" EXIT
 
 cp --backup=numbered -- "${@}" "${tempdir}"

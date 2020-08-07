@@ -53,7 +53,9 @@
 #
 #       - RUN_SHELLCHECK_DISABLED
 #       - RUN_SHELLCHECK_EXTRA_ARGS
-type -f lsr_check_python_version > /dev/null 2>&1 || . ${SCRIPTDIR}/utils.sh
+type -f lsr_check_python_version > /dev/null 2>&1 || . "${SCRIPTDIR}/utils.sh"
+# https://github.com/koalaman/shellcheck/wiki/SC2034
+# shellcheck disable=SC2034
 if lsr_check_python_version python -lt 3.0
 then
     PYTHON2_EXCLUDES="tests/ensure_provider_tests.py,scripts/print_all_options.py"
@@ -61,4 +63,6 @@ then
     RUN_PYLINT_EXCLUDE='^(\..*|ensure_provider_tests\.py|print_all_options\.py)$'
     RUN_FLAKE8_EXTRA_ARGS="--exclude ${FLAKE8_DEFAULT_EXCLUDES},${PYTHON2_EXCLUDES}"
 fi
+# https://github.com/koalaman/shellcheck/wiki/SC2034
+# shellcheck disable=SC2034
 LSR_PUBLISH_COVERAGE=normal
