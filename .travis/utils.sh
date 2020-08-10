@@ -1,4 +1,5 @@
-#!/bin/bash
+# https://github.com/koalaman/shellcheck/wiki/SC2148
+# shellcheck shell=bash
 # SPDX-License-Identifier: MIT
 #
 # Auxiliary functions and variables.
