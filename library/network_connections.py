@@ -316,6 +316,11 @@ class IfcfgUtil:
 
         ifcfg["DEVICE"] = connection["interface_name"]
 
+        if connection["defroute"] == "yes":
+            ifcfg["DEFROUTE"] = "yes"
+        elif connection["defroute"] == "no":
+            ifcfg["DEFROUTE"] = "no"
+ 
         if connection["type"] == "ethernet":
             ifcfg["TYPE"] = "Ethernet"
             ifcfg["HWADDR"] = connection["mac"]
