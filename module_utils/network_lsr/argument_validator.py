@@ -1008,6 +1008,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                     "type", enum_values=ArgValidator_DictConnection.VALID_TYPES
                 ),
                 ArgValidatorBool("autoconnect", default_value=True),
+                ArgValidatorBool("defroute", default_value=True),
                 ArgValidatorStr(
                     "slave_type",
                     enum_values=ArgValidator_DictConnection.VALID_SLAVE_TYPES,
