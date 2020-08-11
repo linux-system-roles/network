@@ -16,6 +16,24 @@ ME=$(basename $0)
 SCRIPTDIR=$(readlink -f $(dirname $0))
 BANNERSIZE=90
 
+# LSR_MOLECULE_DOCKER_VERSION is the version string to pass
+# to pip install - this is usually a comparison operator
+# followed by a version number e.g. '<4.3' but in reality
+# may be anything that pip allows to follow a package name
+# in an install specification
+if [ -z "${LSR_MOLECULE_DOCKER_VERSION:-}" ]; then
+  if type docker > /dev/null 2>&1; then
+    DOCKER_SERVER_API_VERSION=$(docker version --format '{{.Server.APIVersion}}')
+    case "$DOCKER_SERVER_API_VERSION" in
+    1.3[0-8]|1.[0-2]*) LSR_MOLECULE_DOCKER_VERSION='<4.3';;
+    *) LSR_MOLECULE_DOCKER_VERSION="";;
+    esac
+  else
+    LSR_MOLECULE_DOCKER_VERSION=""
+  fi
+fi
+export LSR_MOLECULE_DOCKER_VERSION
+
 . ${SCRIPTDIR}/utils.sh
 . ${SCRIPTDIR}/config.sh
 
