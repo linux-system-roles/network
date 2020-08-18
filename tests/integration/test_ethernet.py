@@ -1,0 +1,107 @@
+# -*- coding: utf-8 -*
+# SPDX-License-Identifier: BSD-3-Clause
+
+import logging
+import os
+import pytest
+import subprocess
+import sys
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+
+parentdir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../"))
+with mock.patch.object(
+    sys,
+    "path",
+    [parentdir, os.path.join(parentdir, "module_utils/network_lsr")] + sys.path,
+):
+    with mock.patch.dict(
+        "sys.modules",
+        {
+            "ansible": mock.Mock(),
+            "ansible.module_utils": __import__("module_utils"),
+            "ansible.module_utils.basic": mock.Mock(),
+        },
+    ):
+        import library.network_connections as nc
+
+
+class PytestRunEnvironment(nc.RunEnvironment):
+    def log(self, connections, idx, severity, msg, **kwargs):
+        if severity == nc.LogLevel.ERROR:
+            logging.error("Error: {}".format(connections[idx]))
+            raise RuntimeError(msg)
+        else:
+            logging.debug("Log: {}".format(connections[idx]))
+
+    def run_command(self, argv, encoding=None):
+        command = subprocess.Popen(
+            argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        return_code = command.wait()
+        out, err = command.communicate()
+        return return_code, out.decode("utf-8"), err.decode("utf-8")
+
+    def _check_mode_changed(self, *args, **kwargs):
+        pass
+
+
+def _configure_network(connections, provider):
+    cmd = nc.Cmd.create(
+        provider,
+        run_env=PytestRunEnvironment(),
+        connections_unvalidated=connections,
+        connection_validator=nc.ArgValidator_ListConnections(),
+    )
+    cmd.run()
+
+
+@pytest.fixture(scope="session")
+def provider(request):
+    return request.config.getoption("--provider")
+
+
+@pytest.fixture
+def testnic1():
+    veth_name = "testeth"
+    try:
+        subprocess.call(
+            [
+                "ip",
+                "link",
+                "add",
+                veth_name,
+                "type",
+                "veth",
+                "peer",
+                "name",
+                veth_name + "peer",
+            ],
+            close_fds=True,
+        )
+        yield veth_name
+    finally:
+        subprocess.call(["ip", "link", "delete", veth_name])
+
+
+def _get_ip_addresses(interface):
+    ip_address = subprocess.check_output(["ip", "address", "show", interface])
+    return ip_address.decode("UTF-8")
+
+
+def test_static_ip_with_ethernet(testnic1, provider):
+    ip_address = "192.0.2.127/24"
+    connections = [
+        {
+            "name": testnic1,
+            "type": "ethernet",
+            "state": "up",
+            "ip": {"address": [ip_address]},
+        }
+    ]
+    _configure_network(connections, provider)
+    assert ip_address in _get_ip_addresses(testnic1)
+    assert os.path.exists("/etc/sysconfig/network-scripts/ifcfg-" + testnic1)
