@@ -1,0 +1,97 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Install dependencies for integration tests
+  hosts: all
+  vars:
+    - rpmdependencies:
+        - git
+        - python3-pip
+        - rsync
+
+  tasks:
+    - name: Install EPEL for RHEL and CentOS
+      # yamllint disable-line rule:line-length
+      command: "yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"
+      when: ansible_distribution in ["CentOS", "RedHat"]
+
+    - name: Install rpm dependencies
+      package:
+        state: present
+        name: "{{ rpmdependencies }}"
+
+    - name: Install Pytest
+      command: "pip3 install pytest"
+
+
+# Import needed in order to install initscripts dependencies on the remote
+# system.
+- import_playbook: "../tests_default_initscripts.yml"
+
+# Import needed in order to install Network Manager dependencies on the remote
+# system.
+- import_playbook: "../tests_default_nm.yml"
+
+
+- name: Run Pytest tests
+  hosts: all
+  vars:
+    - rundir: /run/system-roles-test
+  tasks:
+    - file:
+        state: directory
+        path: "{{ rundir }}"
+        recurse: true
+
+    - command: git rev-parse --show-toplevel
+      register: git_top_directory
+      delegate_to: localhost
+
+    - debug:
+        var: git_top_directory
+
+    - synchronize:
+        src: "{{ git_top_directory.stdout }}/"
+        dest: "{{ rundir }}/"
+        recursive: yes
+        delete: yes
+        rsync_opts:
+          - "--exclude=.pyc"
+          - "--exclude=__pycache__"
+      when: False
+
+    # TODO: using tar and copying the file is a workaround for the synchronize
+    # module that does not work in test-harness. Related issue:
+    # https://github.com/linux-system-roles/test-harness/issues/102
+    #
+    - name: Create Tar file
+      shell: 'tar -cvf {{ git_top_directory.stdout }}/testrepo.tar
+             --exclude "*.pyc" --exclude "__pycache__" --exclude testrepo.tar
+             -C {{ git_top_directory.stdout }} .'
+      delegate_to: localhost
+
+    - name: Copy testrepo.tar to the remote system
+      copy:
+        src: "{{ git_top_directory.stdout }}/testrepo.tar"
+        dest: "{{ rundir }}"
+
+    - name: Untar testrepo.tar
+      command: tar xf testrepo.tar
+      args:
+        chdir: "{{ rundir }}"
+
+    - block:
+        - name: Run pytest with nm
+          command: "pytest {{ rundir }}/tests/integration/ --provider=nm"
+          register: playbook_run
+      always:
+        - debug:
+            var: playbook_run.stdout_lines
+
+    - block:
+        - name: Run pytest with initscripts
+          command: >
+            pytest '{{ rundir }}/tests/integration/' --provider=initscripts
+          register: playbook_run
+      always:
+        - debug:
+            var: playbook_run.stdout_lines
