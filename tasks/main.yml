@@ -72,6 +72,7 @@
   copy:
     dest: /etc/sysconfig/network
     content: "# Created by network system role"
+    mode: "0644"
     force: false
   when:
     - network_provider == "initscripts"
