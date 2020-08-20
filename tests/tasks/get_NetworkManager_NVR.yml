@@ -3,17 +3,17 @@
 - block:
     - name: Get NetworkManager RPM version
       command:
-        cmd: rpm -qa NetworkManager
+        cmd: rpm -qa --qf '%{name}-%{version}-%{release}\n' NetworkManager
         warn: false
-      register: __rpm_qa_NetworkManager
+      register: __rpm_q_NetworkManager
 
     - name: Store NetworkManager version
       set_fact:
-        NetworkManager_NVRA: "{{ __rpm_qa_NetworkManager.stdout }}"
+        NetworkManager_NVR: "{{ __rpm_q_NetworkManager.stdout }}"
 
     - name: Show NetworkManager version
       debug:
-        var: NetworkManager_NVRA
+        var: NetworkManager_NVR
   tags:
     - always
 ...
