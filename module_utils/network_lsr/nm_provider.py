@@ -9,12 +9,12 @@ ETHTOOL_FEATURE_PREFIX = "ETHTOOL_OPTNAME_FEATURE_"
 
 def get_nm_ethtool_feature(name):
     """
-        Translate ethtool feature into Network Manager name
+    Translate ethtool feature into Network Manager name
 
-        :param name: Name of the feature
-        :type name: str
-        :returns: Name of the feature to be used by `NM.SettingEthtool.set_feature()`
-        :rtype: str
+    :param name: Name of the feature
+    :type name: str
+    :returns: Name of the feature to be used by `NM.SettingEthtool.set_feature()`
+    :rtype: str
     """
 
     name = ETHTOOL_FEATURE_PREFIX + name.upper()

@@ -2655,8 +2655,8 @@ class TestValidator(unittest.TestCase):
         self.assertEqual(connections[0]["interface_name"], "eth0")
 
     def test_interface_name_ethernet_invalid_profile(self):
-        """ Require explicit interface_name when the profile name is not a
-        valid interface_name """
+        """Require explicit interface_name when the profile name is not a
+        valid interface_name"""
         network_connections = [{"name": "internal:main", "type": "ethernet"}]
         self.assertRaises(
             n.ValidationError, ARGS_CONNECTIONS.validate, network_connections
@@ -3037,7 +3037,10 @@ class TestUtils(unittest.TestCase):
             (["agent-owned"], 1),
             (["not-saved"], 2),
             (["agent-owned", "not-saved"], 3),
-            (["not-required"], 4,),
+            (
+                ["not-required"],
+                4,
+            ),
             (["agent-owned", "not-required"], 5),
             (["not-saved", "not-required"], 6),
             (["agent-owned", "not-saved", "not-required"], 7),
