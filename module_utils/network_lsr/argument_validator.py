@@ -612,7 +612,8 @@ class ArgValidator_DictEthtoolFeatures(ArgValidatorDict):
                 ),
                 ArgValidatorBool("esp_tx_csum_hw_offload", default_value=None),
                 ArgValidatorDeprecated(
-                    "esp-tx-csum-hw-offload", deprecated_by="esp_tx_csum_hw_offload",
+                    "esp-tx-csum-hw-offload",
+                    deprecated_by="esp_tx_csum_hw_offload",
                 ),
                 ArgValidatorBool("fcoe_mtu", default_value=None),
                 ArgValidatorDeprecated("fcoe-mtu", deprecated_by="fcoe_mtu"),
@@ -648,49 +649,59 @@ class ArgValidator_DictEthtoolFeatures(ArgValidatorDict):
                 ),
                 ArgValidatorBool("rx_vlan_stag_filter", default_value=None),
                 ArgValidatorDeprecated(
-                    "rx-vlan-stag-filter", deprecated_by="rx_vlan_stag_filter",
+                    "rx-vlan-stag-filter",
+                    deprecated_by="rx_vlan_stag_filter",
                 ),
                 ArgValidatorBool("rx_vlan_stag_hw_parse", default_value=None),
                 ArgValidatorDeprecated(
-                    "rx-vlan-stag-hw-parse", deprecated_by="rx_vlan_stag_hw_parse",
+                    "rx-vlan-stag-hw-parse",
+                    deprecated_by="rx_vlan_stag_hw_parse",
                 ),
                 ArgValidatorBool("sg", default_value=None),
                 ArgValidatorBool("tls_hw_record", default_value=None),
                 ArgValidatorDeprecated("tls-hw-record", deprecated_by="tls_hw_record"),
                 ArgValidatorBool("tls_hw_tx_offload", default_value=None),
                 ArgValidatorDeprecated(
-                    "tls-hw-tx-offload", deprecated_by="tls_hw_tx_offload",
+                    "tls-hw-tx-offload",
+                    deprecated_by="tls_hw_tx_offload",
                 ),
                 ArgValidatorBool("tso", default_value=None),
                 ArgValidatorBool("tx", default_value=None),
                 ArgValidatorBool("txvlan", default_value=None),
                 ArgValidatorBool("tx_checksum_fcoe_crc", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-checksum-fcoe-crc", deprecated_by="tx_checksum_fcoe_crc",
+                    "tx-checksum-fcoe-crc",
+                    deprecated_by="tx_checksum_fcoe_crc",
                 ),
                 ArgValidatorBool("tx_checksum_ipv4", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-checksum-ipv4", deprecated_by="tx_checksum_ipv4",
+                    "tx-checksum-ipv4",
+                    deprecated_by="tx_checksum_ipv4",
                 ),
                 ArgValidatorBool("tx_checksum_ipv6", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-checksum-ipv6", deprecated_by="tx_checksum_ipv6",
+                    "tx-checksum-ipv6",
+                    deprecated_by="tx_checksum_ipv6",
                 ),
                 ArgValidatorBool("tx_checksum_ip_generic", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-checksum-ip-generic", deprecated_by="tx_checksum_ip_generic",
+                    "tx-checksum-ip-generic",
+                    deprecated_by="tx_checksum_ip_generic",
                 ),
                 ArgValidatorBool("tx_checksum_sctp", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-checksum-sctp", deprecated_by="tx_checksum_sctp",
+                    "tx-checksum-sctp",
+                    deprecated_by="tx_checksum_sctp",
                 ),
                 ArgValidatorBool("tx_esp_segmentation", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-esp-segmentation", deprecated_by="tx_esp_segmentation",
+                    "tx-esp-segmentation",
+                    deprecated_by="tx_esp_segmentation",
                 ),
                 ArgValidatorBool("tx_fcoe_segmentation", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-fcoe-segmentation", deprecated_by="tx_fcoe_segmentation",
+                    "tx-fcoe-segmentation",
+                    deprecated_by="tx_fcoe_segmentation",
                 ),
                 ArgValidatorBool("tx_gre_csum_segmentation", default_value=None),
                 ArgValidatorDeprecated(
@@ -699,7 +710,8 @@ class ArgValidator_DictEthtoolFeatures(ArgValidatorDict):
                 ),
                 ArgValidatorBool("tx_gre_segmentation", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-gre-segmentation", deprecated_by="tx_gre_segmentation",
+                    "tx-gre-segmentation",
+                    deprecated_by="tx_gre_segmentation",
                 ),
                 ArgValidatorBool("tx_gso_partial", default_value=None),
                 ArgValidatorDeprecated(
@@ -709,19 +721,23 @@ class ArgValidator_DictEthtoolFeatures(ArgValidatorDict):
                 ArgValidatorDeprecated("tx-gso-robust", deprecated_by="tx_gso_robust"),
                 ArgValidatorBool("tx_ipxip4_segmentation", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-ipxip4-segmentation", deprecated_by="tx_ipxip4_segmentation",
+                    "tx-ipxip4-segmentation",
+                    deprecated_by="tx_ipxip4_segmentation",
                 ),
                 ArgValidatorBool("tx_ipxip6_segmentation", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-ipxip6-segmentation", deprecated_by="tx_ipxip6_segmentation",
+                    "tx-ipxip6-segmentation",
+                    deprecated_by="tx_ipxip6_segmentation",
                 ),
                 ArgValidatorBool("tx_nocache_copy", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-nocache-copy", deprecated_by="tx_nocache_copy",
+                    "tx-nocache-copy",
+                    deprecated_by="tx_nocache_copy",
                 ),
                 ArgValidatorBool("tx_scatter_gather", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-scatter-gather", deprecated_by="tx_scatter_gather",
+                    "tx-scatter-gather",
+                    deprecated_by="tx_scatter_gather",
                 ),
                 ArgValidatorBool("tx_scatter_gather_fraglist", default_value=None),
                 ArgValidatorDeprecated(
@@ -730,15 +746,18 @@ class ArgValidator_DictEthtoolFeatures(ArgValidatorDict):
                 ),
                 ArgValidatorBool("tx_sctp_segmentation", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-sctp-segmentation", deprecated_by="tx_sctp_segmentation",
+                    "tx-sctp-segmentation",
+                    deprecated_by="tx_sctp_segmentation",
                 ),
                 ArgValidatorBool("tx_tcp6_segmentation", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-tcp6-segmentation", deprecated_by="tx_tcp6_segmentation",
+                    "tx-tcp6-segmentation",
+                    deprecated_by="tx_tcp6_segmentation",
                 ),
                 ArgValidatorBool("tx_tcp_ecn_segmentation", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-tcp-ecn-segmentation", deprecated_by="tx_tcp_ecn_segmentation",
+                    "tx-tcp-ecn-segmentation",
+                    deprecated_by="tx_tcp_ecn_segmentation",
                 ),
                 ArgValidatorBool("tx_tcp_mangleid_segmentation", default_value=None),
                 ArgValidatorDeprecated(
@@ -747,11 +766,13 @@ class ArgValidator_DictEthtoolFeatures(ArgValidatorDict):
                 ),
                 ArgValidatorBool("tx_tcp_segmentation", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-tcp-segmentation", deprecated_by="tx_tcp_segmentation",
+                    "tx-tcp-segmentation",
+                    deprecated_by="tx_tcp_segmentation",
                 ),
                 ArgValidatorBool("tx_udp_segmentation", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-udp-segmentation", deprecated_by="tx_udp_segmentation",
+                    "tx-udp-segmentation",
+                    deprecated_by="tx_udp_segmentation",
                 ),
                 ArgValidatorBool("tx_udp_tnl_csum_segmentation", default_value=None),
                 ArgValidatorDeprecated(
@@ -760,11 +781,13 @@ class ArgValidator_DictEthtoolFeatures(ArgValidatorDict):
                 ),
                 ArgValidatorBool("tx_udp_tnl_segmentation", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-udp_tnl-segmentation", deprecated_by="tx_udp_tnl_segmentation",
+                    "tx-udp_tnl-segmentation",
+                    deprecated_by="tx_udp_tnl_segmentation",
                 ),
                 ArgValidatorBool("tx_vlan_stag_hw_insert", default_value=None),
                 ArgValidatorDeprecated(
-                    "tx-vlan-stag-hw-insert", deprecated_by="tx_vlan_stag_hw_insert",
+                    "tx-vlan-stag-hw-insert",
+                    deprecated_by="tx_vlan_stag_hw_insert",
                 ),
             ],
         )
@@ -881,7 +904,8 @@ class ArgValidatorPath(ArgValidatorStr):
 
         if posixpath.isabs(value) is False:
             raise ValidationError(
-                name, "value '%s' is not a valid posix absolute path" % (value),
+                name,
+                "value '%s' is not a valid posix absolute path" % (value),
             )
         return value
 
@@ -956,12 +980,14 @@ class ArgValidator_DictWireless(ArgValidatorDict):
         if result["key_mgmt"] == "wpa-psk":
             if result["password"] is None:
                 raise ValidationError(
-                    name, "must supply a password if using 'wpa-psk' key management",
+                    name,
+                    "must supply a password if using 'wpa-psk' key management",
                 )
         else:
             if result["password"] is not None:
                 raise ValidationError(
-                    name, "password only allowed if using 'wpa-psk' key management",
+                    name,
+                    "password only allowed if using 'wpa-psk' key management",
                 )
 
         return result

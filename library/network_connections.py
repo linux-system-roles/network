@@ -1032,7 +1032,8 @@ class NMUtil:
 
             if connection["ieee802_1x"]["ca_path"]:
                 s_8021x.set_property(
-                    NM.SETTING_802_1X_CA_PATH, connection["ieee802_1x"]["ca_path"],
+                    NM.SETTING_802_1X_CA_PATH,
+                    connection["ieee802_1x"]["ca_path"],
                 )
 
             s_8021x.set_property(
@@ -1912,7 +1913,7 @@ class Cmd(object):
         """ Hook for after all changes where made successfuly """
 
     def rollback_transaction(self, idx, action, error):
-        """ Hook if configuring a profile results in an error
+        """Hook if configuring a profile results in an error
 
         :param idx: Index of the connection that triggered the error
         :param action: Action that triggered the error
@@ -2019,7 +2020,7 @@ class Cmd_nm(Cmd):
                 self._checkpoint = None
 
     def _check_ethtool_setting_support(self, idx, connection):
-        """ Check if SettingEthtool support is needed and available
+        """Check if SettingEthtool support is needed and available
 
         If any feature is specified, the SettingEthtool setting needs to be
         available. Also NM needs to know about each specified setting. Do not
@@ -2236,7 +2237,7 @@ class Cmd_nm(Cmd):
                 self.log_error(idx, "up connection failed while waiting: %s" % (e))
 
     def _try_reapply(self, idx, con):
-        """ Try to reapply a connection
+        """Try to reapply a connection
 
         If there is exactly one active connection with the same UUID activated
         on exactly one device, ask the device to reapply the connection.
