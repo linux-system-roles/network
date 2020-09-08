@@ -2,7 +2,8 @@
 ## [1.2.0] - 2020-08-26
 ### Changes
 - Rename ethtool features to use underscores instead of dashes to support
-  Jinja2 dot notation
+  Jinja2 dot notation. Accept old notation for compatibility with existing
+  playbooks.
 ### New features
 - Initial 802.1x authentication support (only EAP-TLS)
 - Wireless support
