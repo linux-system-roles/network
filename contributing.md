@@ -57,7 +57,7 @@ will set your global name and email, althought you can change it later for every
 
 ```
 git config --global user.name "Jane Doe"
-git config --global user.email janedoe@example.com`
+git config --global user.email janedoe@example.com
 ```
 
 The git editor is your system's default. If you feel more comfortable with a different
