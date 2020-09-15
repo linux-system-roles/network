@@ -72,6 +72,10 @@ NM_ONLY_TESTS = {
         "comment": "# NetworKmanager 1.20.0 added support for forgetting profiles",
     },
     "playbooks/tests_reapply.yml": {},
+    # team interface is not supported on Fedora
+    "playbooks/tests_team.yml": {
+        EXTRA_RUN_CONDITION: "ansible_distribution != 'Fedora'",
+    },
     # mac80211_hwsim (used for tests_wireless) only seems to be available
     # and working on RHEL/CentOS 7
     "playbooks/tests_wireless.yml": {

@@ -35,6 +35,15 @@ __network_packages_default_wireless: ["{%
       if __network_wireless_connections_defined
       %}NetworkManager-wifi{% endif %}"]
 
+# check if any team connections are defined
+__network_team_connections_defined: "{{
+      ['team'] in network_connections|json_query('[*][type]') }}"
+
+# NetworkManager-team is required for team connections
+__network_packages_default_team: ["{%
+      if __network_team_connections_defined
+      %}NetworkManager-team{% endif %}"]
+
 # wpa_supplicant is required if any 802.1x or wireless connections are defined
 __network_wpa_supplicant_required: "{{
       __network_ieee802_1x_connections_defined or
@@ -54,7 +63,8 @@ __network_service_name_default_nm: NetworkManager
 __network_packages_default_nm: "{{['NetworkManager']
       + __network_packages_default_gobject_packages|select()|list()
       + __network_packages_default_wpa_supplicant|select()|list()
-      + __network_packages_default_wireless|select()|list()}}"
+      + __network_packages_default_wireless|select()|list()
+      + __network_packages_default_team|select()|list()}}"
 
 __network_service_name_default_initscripts: network
 

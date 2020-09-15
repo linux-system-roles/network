@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: network-test
+  vars:
+    network_connections:
+      # Specify the team profile
+      - name: team0
+        state: up
+        type: team
+        interface_name: team0
+        # ip configuration (optional)
+        ip:
+          address:
+            - "192.0.2.24/24"
+            - "2001:db8::23/64"
+
+      # add an team profile to the team
+      - name: member1
+        state: up
+        type: ethernet
+        interface_name: eth1
+        master: team0
+
+      # add a second team profile to the team
+      - name: member2
+        state: up
+        type: ethernet
+        interface_name: eth2
+        master: team0
+
+  roles:
+    - linux-system-roles.network
+...
