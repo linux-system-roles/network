@@ -25,14 +25,15 @@
     - not network_packages is subset(ansible_facts.packages.keys())
   register: __network_package_install
 
-# If network packages have changed and wireless connections are required,
+# If network packages changed and wireless or team connections are specified,
 # NetworkManager must be restarted
-- name: Restart NetworkManager
+- name: Restart NetworkManager due to wireless or team interfaces
   service:
     name: NetworkManager
     state: restarted
   when:
     - __network_wireless_connections_defined
+       or __network_team_connections_defined
     - network_provider == "nm"
     - network_allow_restart
     # ansible-lint wants this to be a handler, but this is not appropriate as
