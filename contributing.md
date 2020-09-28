@@ -112,6 +112,23 @@ tests/test_default.yml`
    there are any errors. If there is no problem with your contribution, the mantainer
    will merge it to the main project.
 
+### Find other images for testing
+To use the CentOS 6, CentOS 7, CentOS 8 images, please checkout the link below:<br/>
+https://cloud.centos.org/centos/6/images/CentOS-6-x86_64-GenericCloud-1907.qcow2c<br/>
+https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-2003.qcow2c<br/>
+https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.1.1911-20200113.3.x86_64.qcow2
+
+- `/6/images/` stands for CentOS 6 images, we can also change it to `/7/images/` to use
+CentOS 7 images, change it to `/8/images/` to use CentOS 8 images.
+- For qemu testing cases, we prefer the image architecture to be `x86_64-GenericCloud`.
+- `2003` in `CentOS-7-x86_64-GenericCloud-2003.qcow2c` stands for image released in
+March 2020.
+- We can use the image with extension `.qcow2` and `.qcow2c`.
+- To save the image, right click on the link above, then select "Save link as...".
+
+For Fedora, we recommend to use the latest qcow2 images from<br/>
+https://kojipkgs.fedoraproject.org/compose/cloud/
+
 ### Some important tips
 
 - Make sure your fork and branch are up-to-date with the main project. First of all,
