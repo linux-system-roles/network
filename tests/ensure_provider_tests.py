@@ -47,10 +47,6 @@ RUN_PLAYBOOK_WITH_NM = """# SPDX-License-Identifier: BSD-3-Clause
         - always
 {get_nm_version}
 
-# workaround for: https://github.com/ansible/ansible/issues/27973
-# There is no way in Ansible to abort a playbook hosts with specific OS
-# releases Therefore we include the playbook with the tests only if the hosts
-# would support it.
 # The test requires or should run with NetworkManager, therefore it cannot run
 # on RHEL/CentOS 6
 - import_playbook: {test_playbook}
