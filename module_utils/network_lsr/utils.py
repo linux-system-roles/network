@@ -7,7 +7,7 @@ import sys
 import uuid
 
 # pylint: disable=import-error, no-name-in-module
-from ansible.module_utils.network_lsr import MyError
+from ansible.module_utils.network_lsr import MyError  # noqa:E501
 
 
 class Util:

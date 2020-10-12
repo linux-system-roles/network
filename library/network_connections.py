@@ -14,17 +14,17 @@ import traceback
 
 # pylint: disable=import-error, no-name-in-module
 from ansible.module_utils.basic import AnsibleModule
-from ansible.module_utils.network_lsr import ethtool
-from ansible.module_utils.network_lsr import MyError
+from ansible.module_utils.network_lsr import ethtool  # noqa:E501
+from ansible.module_utils.network_lsr import MyError  # noqa:E501
 
-from ansible.module_utils.network_lsr.argument_validator import (
+from ansible.module_utils.network_lsr.argument_validator import (  # noqa:E501
     ArgUtil,
     ArgValidator_ListConnections,
     ValidationError,
 )
 
-from ansible.module_utils.network_lsr.utils import Util
-from ansible.module_utils.network_lsr import nm_provider
+from ansible.module_utils.network_lsr.utils import Util  # noqa:E501
+from ansible.module_utils.network_lsr import nm_provider  # noqa:E501
 
 # pylint: enable=import-error, no-name-in-module
 

@@ -6,8 +6,8 @@ import posixpath
 import socket
 
 # pylint: disable=import-error, no-name-in-module
-from ansible.module_utils.network_lsr import MyError
-from ansible.module_utils.network_lsr.utils import Util
+from ansible.module_utils.network_lsr import MyError  # noqa:E501
+from ansible.module_utils.network_lsr.utils import Util  # noqa:E501
 
 
 class ArgUtil:
