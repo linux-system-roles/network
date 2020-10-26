@@ -17,7 +17,7 @@ PRIORITIES = (
     "mac",
     "state",
     "persistent_state",
-    "master",
+    "controller",
     "slave_type",
     "parent",
     "ignore_errors",

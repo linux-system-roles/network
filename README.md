@@ -210,33 +210,33 @@ Note that the `speed` and `duplex` link settings are required when autonegotiati
 
 The `bridge`, `bond`, `team` device types work similar. Note that `team` is not supported in RHEL6 kernels.
 
-For slaves, the `slave_type` and `master` properties must be set. Note that slaves should not have `ip` settings.
+For slaves, the `slave_type` and `controller` properties must be set. Note that slaves should not have `ip` settings.
 
-The `master` refers to the `name` of a profile in the Ansible
+The `controller` refers to the `name` of a profile in the Ansible
 playbook. It is neither an interface-name nor a connection-id of
 NetworkManager.
 
-- For NetworkManager, `master` will be converted to the `connection.uuid`
+- For NetworkManager, `controller` will be converted to the `connection.uuid`
   of the corresponding profile.
 
-- For initscripts, the master is looked up as the `DEVICE` from the corresponding
+- For initscripts, the controller is looked up as the `DEVICE` from the corresponding
   ifcfg file.
 
-As `master` refers to other profiles of the same or another play, the order of the
+As `controller` refers to other profiles of the same or another play, the order of the
 `connections` list matters. Profiles that are referenced by other profiles need to be
-specified first. Also, `--check` ignores the value of the `master` and assumes it will
-be present during a real run. That means, in presence of an invalid `master`, `--check`
+specified first. Also, `--check` ignores the value of the `controller` and assumes it will
+be present during a real run. That means, in presence of an invalid `controller`, `--check`
 may signal success but the actual play run fails.
 
 The `team` type uses `roundrobin` as the `runner` configuration. No further configuration is supported at the moment.
 #### `type: vlan`
 
-Similar to `master`, the `parent` references the connection profile in the ansible
+Similar to `controller`, the `parent` references the connection profile in the ansible
 role.
 
 #### `type: macvlan`
 
-Similar to `master` and `vlan`, the `parent` references the connection profile in the ansible
+Similar to `controller` and `vlan`, the `parent` references the connection profile in the ansible
 role.
 
 #### `type: wireless`
@@ -622,20 +622,20 @@ network_connections:
       auto6: no
 ```
 
-Setting `master` and `slave_type`:
+Setting `controller` and `slave_type`:
 
 ```yaml
 network_connections:
   - name: br0-bond0
     type: bond
     interface_name: bond0
-    master: internal-br0
+    controller: internal-br0
     slave_type: bridge
 
   - name: br0-bond0-eth1
     type: ethernet
     interface_name: eth1
-    master: br0-bond0
+    controller: br0-bond0
     slave_type: bond
 ```
 
@@ -808,7 +808,7 @@ via the `up` or `down` [states](#state) -- unless there are other
 components that rely on the ifcfg files and react on changes.
 
 The `initscripts` provider requires the different profiles to be in the right
-order when they depend on each other. For example the bonding master device
+order when they depend on each other. For example the bonding controller device
 needs to be specified before the slave devices.
 
 When removing a profile for NetworkManager it also takes the connection

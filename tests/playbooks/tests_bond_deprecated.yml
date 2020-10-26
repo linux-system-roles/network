@@ -20,7 +20,7 @@
       vars:
         interface: "{{ dhcp_interface2 }}"
     - block:
-        - name: "TEST Add Bond with 2 slaves"
+        - name: "TEST Add Bond with 2 slaves using deprecated 'master' argument"
           debug:
             msg: "##################################################"
         - import_role:
@@ -40,13 +40,13 @@
                 state: up
                 type: ethernet
                 interface_name: "{{ dhcp_interface1 }}"
-                controller: "{{ controller_profile }}"
+                master: "{{ controller_profile }}"
               # add a second ethernet to the bond
               - name: "{{ slave2_profile }}"
                 state: up
                 type: ethernet
                 interface_name: "{{ dhcp_interface2 }}"
-                controller: "{{ controller_profile }}"
+                master: "{{ controller_profile }}"
         - import_tasks: tasks/assert_device_present.yml
           vars:
             interface: "{{ controller_device }}"
