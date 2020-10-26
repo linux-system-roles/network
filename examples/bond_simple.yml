@@ -23,14 +23,14 @@
         state: up
         type: ethernet
         interface_name: eth1
-        master: bond0
+        controller: bond0
 
       # add a second ethernet profile to the bond
       - name: member2
         state: up
         type: ethernet
         interface_name: eth2
-        master: bond0
+        controller: bond0
   roles:
     - linux-system-roles.network
 ...

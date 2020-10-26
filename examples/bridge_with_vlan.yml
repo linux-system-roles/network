@@ -18,7 +18,7 @@
         state: up
         type: ethernet
         interface_name: "{{ network_interface_name2 }}"
-        master: prod2
+        controller: prod2
         slave_type: bridge
 
       # on top of it, create a VLAN with ID 100 and static

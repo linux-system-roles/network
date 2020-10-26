@@ -32,26 +32,27 @@ class ArgUtil:
         return c
 
     @staticmethod
-    def connection_find_master(name, connections, n_connections=None):
+    def connection_find_controller(name, connections, n_connections=None):
         c = ArgUtil.connection_find_by_name(name, connections, n_connections)
         if not c:
-            raise MyError("invalid master/parent '%s'" % (name))
+            raise MyError("invalid controller/parent '%s'" % (name))
         if c["interface_name"] is None:
             raise MyError(
-                "invalid master/parent '%s' which needs an 'interface_name'" % (name)
+                "invalid controller/parent '%s' which needs an 'interface_name'"
+                % (name)
             )
         if not Util.ifname_valid(c["interface_name"]):
             raise MyError(
-                "invalid master/parent '%s' with invalid 'interface_name' ('%s')"
+                "invalid controller/parent '%s' with invalid 'interface_name' ('%s')"
                 % (name, c["interface_name"])
             )
         return c["interface_name"]
 
     @staticmethod
-    def connection_find_master_uuid(name, connections, n_connections=None):
+    def connection_find_controller_uuid(name, connections, n_connections=None):
         c = ArgUtil.connection_find_by_name(name, connections, n_connections)
         if not c:
-            raise MyError("invalid master/parent '%s'" % (name))
+            raise MyError("invalid controller/parent '%s'" % (name))
         return c["nm.uuid"]
 
     @staticmethod
@@ -1210,7 +1211,8 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                     "slave_type",
                     enum_values=ArgValidator_DictConnection.VALID_SLAVE_TYPES,
                 ),
-                ArgValidatorStr("master"),
+                ArgValidatorStr("controller"),
+                ArgValidatorDeprecated("master", deprecated_by="controller"),
                 ArgValidatorStr("interface_name", allow_empty=True),
                 ArgValidatorMac("mac"),
                 ArgValidatorNum(
@@ -1400,31 +1402,31 @@ class ArgValidator_DictConnection(ArgValidatorDict):
 
         if "type" in result:
 
-            if "master" in result:
+            if "controller" in result:
                 if "slave_type" not in result:
                     result["slave_type"] = None
-                if result["master"] == result["name"]:
+                if result["controller"] == result["name"]:
                     raise ValidationError(
-                        name + ".master", '"master" cannot refer to itself'
+                        name + ".controller", '"controller" cannot refer to itself'
                     )
             else:
                 if "slave_type" in result:
                     raise ValidationError(
                         name + ".slave_type",
-                        "'slave_type' requires a 'master' property",
+                        "'slave_type' requires a 'controller' property",
                     )
 
             if "ip" in result:
-                if "master" in result:
+                if "controller" in result:
                     raise ValidationError(
                         name + ".ip", 'a slave cannot have an "ip" property'
                     )
             else:
-                if "master" not in result:
+                if "controller" not in result:
                     result["ip"] = self.nested["ip"].get_default_value()
 
             if "zone" in result:
-                if "master" in result:
+                if "controller" in result:
                     raise ValidationError(
                         name + ".zone", '"zone" cannot be configured for slave types'
                     )
@@ -1621,13 +1623,14 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                     "802.1x settings only allowed for ethernet or wireless interfaces.",
                 )
 
-        for k in self.VALID_FIELDS:
-            if k in result:
+        for name in self.VALID_FIELDS:
+            if name in result:
                 continue
-            v = self.nested[k]
-            vv = v.get_default_value()
-            if vv is not ArgValidator.MISSING:
-                result[k] = vv
+            validator = self.nested[name]
+            if not isinstance(validator, ArgValidatorDeprecated):
+                value = validator.get_default_value()
+                if value is not ArgValidator.MISSING:
+                    result[name] = value
 
         return result
 
@@ -1644,31 +1647,32 @@ class ArgValidator_ListConnections(ArgValidatorList):
     def _validate_post(self, value, name, result):
         for idx, connection in enumerate(result):
             if "type" in connection:
-                if connection["master"]:
+                if connection["controller"]:
                     c = ArgUtil.connection_find_by_name(
-                        connection["master"], result, idx
+                        connection["controller"], result, idx
                     )
                     if not c:
                         raise ValidationError(
-                            name + "[" + str(idx) + "].master",
-                            "references non-existing 'master' connection '%s'"
-                            % (connection["master"]),
+                            name + "[" + str(idx) + "].controller",
+                            "references non-existing 'controller' connection '%s'"
+                            % (connection["controller"]),
                         )
                     if c["type"] not in ArgValidator_DictConnection.VALID_SLAVE_TYPES:
                         raise ValidationError(
-                            name + "[" + str(idx) + "].master",
-                            "references 'master' connection '%s' which is not a master "
-                            "type by '%s'" % (connection["master"], c["type"]),
+                            name + "[" + str(idx) + "].controller",
+                            "references 'controller' connection '%s' which is "
+                            "not a controller "
+                            "type by '%s'" % (connection["controller"], c["type"]),
                         )
                     if connection["slave_type"] is None:
                         connection["slave_type"] = c["type"]
                     elif connection["slave_type"] != c["type"]:
                         raise ValidationError(
-                            name + "[" + str(idx) + "].master",
-                            "references 'master' connection '%s' which is of type '%s' "
-                            "instead of slave_type '%s'"
+                            name + "[" + str(idx) + "].controller",
+                            "references 'controller' connection '%s' which is "
+                            "of type '%s' instead of slave_type '%s'"
                             % (
-                                connection["master"],
+                                connection["controller"],
                                 c["type"],
                                 connection["slave_type"],
                             ),
@@ -1703,7 +1707,9 @@ class ArgValidator_ListConnections(ArgValidatorList):
             )
         ):
             try:
-                ArgUtil.connection_find_master(connection["parent"], connections, idx)
+                ArgUtil.connection_find_controller(
+                    connection["parent"], connections, idx
+                )
             except MyError:
                 raise ValidationError.from_connection(
                     idx,
@@ -1711,14 +1717,16 @@ class ArgValidator_ListConnections(ArgValidatorList):
                     "missing" % (connection["parent"]),
                 )
 
-        if (connection["master"]) and (mode == self.VALIDATE_ONE_MODE_INITSCRIPTS):
+        if (connection["controller"]) and (mode == self.VALIDATE_ONE_MODE_INITSCRIPTS):
             try:
-                ArgUtil.connection_find_master(connection["master"], connections, idx)
+                ArgUtil.connection_find_controller(
+                    connection["controller"], connections, idx
+                )
             except MyError:
                 raise ValidationError.from_connection(
                     idx,
-                    "profile references a master '%s' which has 'interface_name' "
-                    "missing" % (connection["master"]),
+                    "profile references a controller '%s' which has 'interface_name' "
+                    "missing" % (connection["controller"]),
                 )
 
         # check if 802.1x connection is valid

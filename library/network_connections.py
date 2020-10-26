@@ -344,7 +344,7 @@ class IfcfgUtil:
                 ifcfg["PKEY"] = "yes"
                 ifcfg["PKEY_ID"] = str(connection["infiniband"]["p_key"])
                 if connection["parent"]:
-                    ifcfg["PHYSDEV"] = ArgUtil.connection_find_master(
+                    ifcfg["PHYSDEV"] = ArgUtil.connection_find_controller(
                         connection["parent"], connections, idx
                     )
         elif connection["type"] == "bridge":
@@ -361,7 +361,7 @@ class IfcfgUtil:
         elif connection["type"] == "vlan":
             ifcfg["VLAN"] = "yes"
             ifcfg["TYPE"] = "Vlan"
-            ifcfg["PHYSDEV"] = ArgUtil.connection_find_master(
+            ifcfg["PHYSDEV"] = ArgUtil.connection_find_controller(
                 connection["parent"], connections, idx
             )
             ifcfg["VID"] = str(connection["vlan"]["id"])
@@ -424,8 +424,10 @@ class IfcfgUtil:
         if ethtool_options:
             ifcfg["ETHTOOL_OPTS"] = ethtool_options
 
-        if connection["master"] is not None:
-            m = ArgUtil.connection_find_master(connection["master"], connections, idx)
+        if connection["controller"] is not None:
+            m = ArgUtil.connection_find_controller(
+                connection["controller"], connections, idx
+            )
             if connection["slave_type"] == "bridge":
                 ifcfg["BRIDGE"] = m
             elif connection["slave_type"] == "bond":
@@ -678,7 +680,7 @@ class NMUtil:
             connection.add_setting(setting)
         return setting
 
-    def device_is_master_type(self, dev):
+    def device_is_controller_type(self, dev):
         if dev:
             NM = Util.NM()
             GObject = Util.GObject()
@@ -822,7 +824,7 @@ class NMUtil:
                 if connection["parent"]:
                     s_infiniband.set_property(
                         NM.SETTING_INFINIBAND_PARENT,
-                        ArgUtil.connection_find_master(
+                        ArgUtil.connection_find_controller(
                             connection["parent"], connections, idx
                         ),
                     )
@@ -850,7 +852,7 @@ class NMUtil:
             s_vlan.set_property(NM.SETTING_VLAN_ID, connection["vlan"]["id"])
             s_vlan.set_property(
                 NM.SETTING_VLAN_PARENT,
-                ArgUtil.connection_find_master_uuid(
+                ArgUtil.connection_find_controller_uuid(
                     connection["parent"], connections, idx
                 ),
             )
@@ -872,7 +874,9 @@ class NMUtil:
             s_macvlan.set_property(NM.SETTING_MACVLAN_TAP, connection["macvlan"]["tap"])
             s_macvlan.set_property(
                 NM.SETTING_MACVLAN_PARENT,
-                ArgUtil.connection_find_master(connection["parent"], connections, idx),
+                ArgUtil.connection_find_controller(
+                    connection["parent"], connections, idx
+                ),
             )
         elif connection["type"] == "wireless":
             s_con.set_property(
@@ -943,14 +947,14 @@ class NMUtil:
                 s_wired = self.connection_ensure_setting(con, NM.SettingWired)
                 s_wired.set_property(NM.SETTING_WIRED_MTU, connection["mtu"])
 
-        if connection["master"] is not None:
+        if connection["controller"] is not None:
             s_con.set_property(
                 NM.SETTING_CONNECTION_SLAVE_TYPE, connection["slave_type"]
             )
             s_con.set_property(
                 NM.SETTING_CONNECTION_MASTER,
-                ArgUtil.connection_find_master_uuid(
-                    connection["master"], connections, idx
+                ArgUtil.connection_find_controller_uuid(
+                    connection["controller"], connections, idx
                 ),
             )
         else:
@@ -1257,11 +1261,11 @@ class NMUtil:
 
             if ac_state == NM.ActiveConnectionState.ACTIVATING:
                 if (
-                    self.device_is_master_type(dev)
+                    self.device_is_controller_type(dev)
                     and dev_state >= NM.DeviceState.IP_CONFIG
                     and dev_state <= NM.DeviceState.ACTIVATED
                 ):
-                    # master connections qualify as activated once they
+                    # controller connections qualify as activated once they
                     # reach IP-Config state. That is because they may
                     # wait for slave devices to attach
                     return True, None

@@ -19,14 +19,14 @@
         state: up
         type: ethernet
         interface_name: eth1
-        master: team0
+        controller: team0
 
       # add a second team profile to the team
       - name: member2
         state: up
         type: ethernet
         interface_name: eth2
-        master: team0
+        controller: team0
 
   roles:
     - linux-system-roles.network
