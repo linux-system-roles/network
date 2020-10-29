@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  tasks:
+    - name: remove the NetworkManager-team package
+      package:
+        name: "NetworkManager-team"
+        state: absent
+
+    - name: "get the rpm package facts"
+      package_facts:
+        manager: "auto"
+
+    - name: "Assert NetworkManager-team removed before team configuration"
+      assert:
+        that:
+          - "'NetworkManager-team' not in ansible_facts.packages"
+        msg: "NetworkManager-team is not removed before team configuration"
+
+    - name: "Team interface configuration"
+      include_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          # Specify the team profile
+          - name: team0
+            persistent_state: present
+            type: team
+            interface_name: team0
+
+    - name: "get the rpm package facts"
+      package_facts:
+        manager: "auto"
+
+    - name: "Assert NetworkManager-team is installed after team configuration"
+      assert:
+        that:
+          - "'NetworkManager-team' in ansible_facts.packages"
+        msg: "NetworkManager-team is not installed after team configuration"
+...

@@ -17,3 +17,7 @@ extends: yamllint_defaults.yml
 #   line-length: disable
 rules:
   truthy: disable
+  line-length:
+    ignore: |
+      /tests/tests_wireless_plugin_installation_nm.yml
+      /tests/tests_team_plugin_installation_nm.yml
