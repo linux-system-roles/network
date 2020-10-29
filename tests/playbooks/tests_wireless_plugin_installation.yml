@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  tasks:
+    - name: remove the NetworkManager-wifi package
+      package:
+        name: "NetworkManager-wifi"
+        state: absent
+
+    - name: "get the rpm package facts"
+      package_facts:
+        manager: "auto"
+
+    - name: "Assert NetworkManager-wifi removed before wireless configuration"
+      assert:
+        that:
+          - "'NetworkManager-wifi' not in ansible_facts.packages"
+        msg: "NetworkManager-wifi is not removed before wirelss configuration"
+
+    - name: "wireless configuration"
+      include_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: wlan0
+            type: wireless
+            wireless:
+              ssid: "My WPA2-PSK Network"
+              key_mgmt: "wpa-psk"
+              password: "p@55w0rD"
+
+    - name: "get the rpm package facts"
+      package_facts:
+        manager: "auto"
+
+    - name: "Assert NetworkManager-wifi installed after wireless configuration"
+      assert:
+        that:
+          - "'NetworkManager-wifi' in ansible_facts.packages"
+        msg: "NetworkManager-wifi is not installed after wireless configured"
