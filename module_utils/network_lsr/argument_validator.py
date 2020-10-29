@@ -578,6 +578,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
                     nested=ArgValidatorIPAddr("address[?]"),
                     default_value=list,
                 ),
+                ArgValidatorBool("auto_gateway", default_value=None),
                 ArgValidatorList(
                     "route", nested=ArgValidatorIPRoute("route[?]"), default_value=list
                 ),
@@ -611,6 +612,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 "gateway6": None,
                 "route_metric6": None,
                 "address": [],
+                "auto_gateway": None,
                 "route": [],
                 "route_append_only": False,
                 "rule_append_only": False,
@@ -665,6 +667,20 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 raise ValidationError(
                     name, "'dhcp4_send_hostname' is only valid if 'dhcp4' is enabled"
                 )
+
+        ipv4_gw_defined = result["gateway4"] is not None
+        ipv6_gw_defined = result["gateway6"] is not None
+        dhcp_enabled = result["dhcp4"] or result["auto6"]
+
+        if result["auto_gateway"] and not (
+            ipv4_gw_defined or ipv6_gw_defined or dhcp_enabled
+        ):
+            raise ValidationError(
+                name,
+                "must define 'gateway4', 'gateway6', or use dhcp "
+                "if 'auto_gateway' is enabled",
+            )
+
         return result
 
 
