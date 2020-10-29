@@ -479,9 +479,11 @@ class IfcfgUtil:
             else:
                 ifcfg["IPV6INIT"] = "no"
             if addrs6:
-                ifcfg["IPVADDR"] = addrs6[0]["address"] + "/" + str(addrs6[0]["prefix"])
+                ifcfg["IPV6ADDR"] = (
+                    addrs6[0]["address"] + "/" + str(addrs6[0]["prefix"])
+                )
                 if len(addrs6) > 1:
-                    ifcfg["IPVADDR_SECONDARIES"] = " ".join(
+                    ifcfg["IPV6ADDR_SECONDARIES"] = " ".join(
                         [a["address"] + "/" + str(a["prefix"]) for a in addrs6[1:]]
                     )
             if ip["gateway6"] is not None:
