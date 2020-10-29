@@ -1,0 +1,133 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    type: veth
+    interface: veth0
+  tasks:
+    - include_tasks: tasks/show_interfaces.yml
+    - include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: present
+    - include_tasks: tasks/assert_device_present.yml
+    - name: >-
+        TEST: I can configure an interface with auto_gateway enabled
+      debug:
+        msg: "##################################################"
+    - import_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: "{{ interface }}"
+            type: ethernet
+            state: up
+            ip:
+              auto_gateway: yes
+              dhcp4: no
+              auto6: no
+              address:
+                - "2001:db8::2/64"
+                - "203.0.113.2/24"
+              gateway6: "2001:db8::1"
+              gateway4: "203.0.113.1"
+    - include_tasks: tasks/assert_device_present.yml
+    - include_tasks: tasks/assert_profile_present.yml
+      vars:
+        profile: "{{ interface }}"
+    - name: "Show ipv4 routes"
+      command: "ip route"
+      register: ipv4_routes
+      changed_when: false
+    - name: "Assert default ipv4 route is present"
+      assert:
+        that:
+          - >-
+            "default via 203.0.113.1 dev {{ interface }}"
+            in ipv4_routes.stdout
+    - name: "Get ipv6 routes"
+      command: "ip -6 route"
+      register: ipv6_route
+      changed_when: false
+    - name: "Assert default ipv6 route is present"
+      assert:
+        that:
+          - >-
+            "default via 2001:db8::1 dev {{ interface }}"
+            in ipv6_route.stdout
+      when: network_provider == "nm"
+    - name: "TEARDOWN: remove profiles."
+      debug:
+        msg: "##################################################"
+    - import_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: "{{ interface }}"
+            persistent_state: absent
+            state: down
+      ignore_errors: true
+    - include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: absent
+    - name: >-
+        TEST: I can configure an interface with auto_gateway disabled
+      debug:
+        msg: "##################################################"
+    - include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: present
+    - import_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: "{{ interface }}"
+            type: ethernet
+            state: up
+            ip:
+              auto_gateway: no
+              dhcp4: no
+              auto6: no
+              address:
+                - "2001:db8::2/64"
+                - "203.0.113.2/24"
+              gateway6: "2001:db8::1"
+              gateway4: "203.0.113.1"
+    - include_tasks: tasks/assert_device_present.yml
+    - include_tasks: tasks/assert_profile_present.yml
+      vars:
+        profile: "{{ interface }}"
+    - name: "Show ipv4 routes"
+      command: "ip route"
+      register: ipv4_routes
+      changed_when: false
+    - name: "Assert default ipv4 route is absent"
+      assert:
+        that:
+          - >-
+            "default via 203.0.113.1 dev {{ interface }}"
+            not in ipv4_routes.stdout
+    - name: "Get ipv6 routes"
+      command: "ip -6 route"
+      register: ipv6_route
+      changed_when: false
+    - name: "Assert default ipv6 route is absent"
+      assert:
+        that:
+          - >-
+            "default via 2001:db8::1 dev {{ interface }}"
+            not in ipv6_route.stdout
+      when: network_provider == "nm"
+    - name: "TEARDOWN: remove profiles."
+      debug:
+        msg: "##################################################"
+    - import_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: "{{ interface }}"
+            persistent_state: absent
+            state: down
+      ignore_errors: true
+    - include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: absent
