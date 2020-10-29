@@ -1,0 +1,94 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    type: veth
+    interface: veth0
+  tasks:
+    - include_tasks: tasks/show_interfaces.yml
+    - include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: present
+    - name: Set up gateway ip on veth peer
+      shell: |
+        ip netns add ns1
+        ip link set peer{{ interface }} netns ns1
+        ip netns exec ns1 ip -6 addr add 2001:db8::1/32 dev peer{{ interface }}
+        ip netns exec ns1 ip link set peer{{ interface }} up
+      when:
+        # netns not available on RHEL/CentOS 6
+        - ansible_distribution_major_version != '6'
+    - block:
+        - name: >-
+            TEST: I can configure an interface with static ipv6 config
+          debug:
+            msg: "##################################################"
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                type: ethernet
+                state: up
+                ip:
+                  dhcp4: false
+                  auto6: false
+                  address:
+                    - "2001:db8::2/32"
+                    - "2001:db8::3/32"
+                    - "2001:db8::4/32"
+                  gateway6: "2001:db8::1"
+        - include_tasks: tasks/assert_device_present.yml
+        - include_tasks: tasks/assert_profile_present.yml
+          vars:
+            profile: "{{ interface }}"
+        - name: Get ip address information
+          command: "ip addr show {{ interface }}"
+          register: ip_addr
+        - name:
+          debug:
+            var: ip_addr.stdout
+        - name: Assert ipv6 addresses are correctly set
+          assert:
+            that:
+              - >-
+                'inet6 2001:db8::2/32' in ip_addr.stdout
+              - >-
+                'inet6 2001:db8::3/32' in ip_addr.stdout
+              - >-
+                'inet6 2001:db8::4/32' in ip_addr.stdout
+        - name: Get ipv6 routes
+          command: "ip -6 route"
+          register: ipv6_route
+        - name:
+          debug:
+            var: ipv6_route.stdout
+        - name: Assert default ipv6 route is set
+          assert:
+            that:
+              - >-
+                "default via 2001:db8::1 dev {{ interface }}"
+                in ipv6_route.stdout
+        - name: Test gateway can be pinged
+          command: ping6 -c1 2001:db8::1
+          when:
+            - ansible_distribution_major_version != '6'
+      always:
+        - name: "TEARDOWN: remove profiles."
+          debug:
+            msg: "##################################################"
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                persistent_state: absent
+                state: down
+          ignore_errors: true
+        - include_tasks: tasks/manage_test_interface.yml
+          vars:
+            state: absent
+        - name: Clean up namespace
+          command: ip netns delete ns1
+          when:
+            - ansible_distribution_major_version != '6'

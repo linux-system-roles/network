@@ -751,6 +751,107 @@ class TestValidator(unittest.TestCase):
             ],
         )
 
+    def test_ipv6_static(self):
+        self.maxDiff = None
+        self.do_connections_validate(
+            [
+                {
+                    "actions": ["present", "up"],
+                    "autoconnect": True,
+                    "check_iface_exists": True,
+                    "ethernet": ETHERNET_DEFAULTS,
+                    "ethtool": ETHTOOL_DEFAULTS,
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": "prod1",
+                    "ip": {
+                        "gateway6": "2001:db8::1",
+                        "gateway4": None,
+                        "route_metric4": None,
+                        "auto6": False,
+                        "ipv6_disabled": False,
+                        "dhcp4": False,
+                        "address": [
+                            {
+                                "address": "2001:db8::2",
+                                "family": socket.AF_INET6,
+                                "prefix": 32,
+                            },
+                            {
+                                "address": "2001:db8::3",
+                                "family": socket.AF_INET6,
+                                "prefix": 32,
+                            },
+                            {
+                                "address": "2001:db8::4",
+                                "family": socket.AF_INET6,
+                                "prefix": 32,
+                            },
+                        ],
+                        "route_append_only": False,
+                        "rule_append_only": False,
+                        "route": [],
+                        "dns": [],
+                        "dns_options": [],
+                        "dns_search": [],
+                        "route_metric6": None,
+                        "dhcp4_send_hostname": None,
+                    },
+                    "mac": None,
+                    "controller": None,
+                    "ieee802_1x": None,
+                    "wireless": None,
+                    "mtu": None,
+                    "name": "prod1",
+                    "parent": None,
+                    "persistent_state": "present",
+                    "port_type": None,
+                    "state": "up",
+                    "type": "ethernet",
+                    "wait": None,
+                    "zone": None,
+                }
+            ],
+            [
+                {
+                    "name": "prod1",
+                    "state": "up",
+                    "type": "ethernet",
+                    "ip": {
+                        "dhcp4": "no",
+                        "auto6": "no",
+                        "address": [
+                            "2001:db8::2/32",
+                            "2001:db8::3/32",
+                            "2001:db8::4/32",
+                        ],
+                        "gateway6": "2001:db8::1",
+                    },
+                }
+            ],
+            initscripts_dict_expected=[
+                {
+                    "ifcfg": {
+                        "BOOTPROTO": "none",
+                        "IPV6INIT": "yes",
+                        "IPV6_AUTOCONF": "no",
+                        "IPV6ADDR": "2001:db8::2/32",
+                        "IPV6ADDR_SECONDARIES": "2001:db8::3/32 2001:db8::4/32",
+                        "IPV6_DEFAULTGW": "2001:db8::1",
+                        "NM_CONTROLLED": "no",
+                        "ONBOOT": "yes",
+                        "TYPE": "Ethernet",
+                        "DEVICE": "prod1",
+                    },
+                    "keys": None,
+                    "route": None,
+                    "route6": None,
+                    "rule": None,
+                    "rule6": None,
+                }
+            ],
+        )
+
     def test_routes(self):
         self.maxDiff = None
         self.do_connections_validate(
