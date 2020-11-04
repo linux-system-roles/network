@@ -6,8 +6,7 @@ driver:
   name: docker
 lint:
   name: yamllint
-  options:
-    config-file: .yamllint.yml
+  enabled: False
 platforms:
   - name: centos-6
     image: docker.io/linuxsystemroles/centos-6
@@ -22,6 +21,7 @@ provisioner:
   log: true
   lint:
     name: ansible-lint
+    enabled: False
   playbooks:
     converge: ../../tests/tests_default.yml
 scenario:
@@ -37,3 +37,4 @@ verifier:
   name: testinfra
   lint:
     name: flake8
+    enabled: False

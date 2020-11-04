@@ -1,4 +1,12 @@
 ---
 skip_list:
-- '602'
-- '106'
+- '106'  # Role name does not match ^[a-z][a-z0-9_]+$ pattern
+- '206'  # Variables should have spaces before and after: {{ var_name }}
+- '208'  # File permissions unset or incorrect
+- '301'  # Commands should not change things if nothing needs doing
+- '303'  # Using command rather than module
+- '305'  # Use shell only when shell functionality is required
+- '403'  # Package installs should not use latest
+- '502'  # All tasks should be named
+- '601'  # Don't compare to literal True/False
+- '602'  # Don't compare to empty string
