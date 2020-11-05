@@ -1,7 +1,7 @@
 linux-system-roles/network
 ==========================
 [![Coverage Status](https://coveralls.io/repos/github/linux-system-roles/network/badge.svg)](https://coveralls.io/github/linux-system-roles/network)
-[![Travis Build Status](https://travis-ci.com/linux-system-roles/network.svg?branch=master)](https://travis-ci.com/linux-system-roles/network)
+[![Travis Build Status](https://travis-ci.com/linux-system-roles/network.svg?branch=main)](https://travis-ci.com/linux-system-roles/network)
 [![Code Style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/linux-system-roles/network.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/linux-system-roles/network/context:python)
 
@@ -822,4 +822,4 @@ it is not clear that rollback will result in a working configuration.
 
 
 *Want to contribute? Take a look at our [contributing
-guidelines](https://github.com/linux-system-roles/network/blob/master/contributing.md)!*
+guidelines](https://github.com/linux-system-roles/network/blob/main/contributing.md)!*
