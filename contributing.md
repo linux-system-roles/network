@@ -135,7 +135,7 @@ https://kojipkgs.fedoraproject.org/compose/cloud/
   [configure a remote upstream for your
 fork](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/configuring-a-remote-for-a-fork),
 and keep your branch up-to-date with the upstream using ```git pull --rebase upstream
-master```
+main```
 
 - Try to make a commit per issue.
 
