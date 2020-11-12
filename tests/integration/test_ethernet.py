@@ -92,7 +92,25 @@ def _get_ip_addresses(interface):
     return ip_address.decode("UTF-8")
 
 
-def test_static_ip_with_ethernet(testnic1, provider):
+@pytest.fixture
+def network_lsr_nm_mock():
+    with mock.patch.object(
+        sys,
+        "path",
+        [parentdir, os.path.join(parentdir, "module_utils/network_lsr/nm")] + sys.path,
+    ):
+        with mock.patch.dict(
+            "sys.modules",
+            {
+                "ansible": mock.Mock(),
+                "ansible.module_utils": __import__("module_utils"),
+                "ansible.module_utils.basic": mock.Mock(),
+            },
+        ):
+            yield
+
+
+def test_static_ip_with_ethernet(testnic1, provider, network_lsr_nm_mock):
     ip_address = "192.0.2.127/24"
     connections = [
         {
