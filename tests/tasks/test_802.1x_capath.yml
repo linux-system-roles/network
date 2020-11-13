@@ -28,6 +28,10 @@
     src: "cacert.pem"
     dest: "/etc/pki/tls/my_ca_certs/cacert.pem"
     mode: 0644
+- name: Install openssl (test dependency)
+  package:
+    name: openssl
+    state: present
 - name: Hash cacert
   command: openssl x509 -hash -noout
     -in /etc/pki/tls/my_ca_certs/cacert.pem
