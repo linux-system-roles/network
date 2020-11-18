@@ -11,8 +11,14 @@ import unittest
 import copy
 
 TESTS_BASEDIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(1, os.path.join(TESTS_BASEDIR, "../..", "library"))
-sys.path.insert(1, os.path.join(TESTS_BASEDIR, "../..", "module_utils"))
+for candidate in (
+    os.path.join(TESTS_BASEDIR, "..", "modules"),
+    os.path.join(TESTS_BASEDIR, "../..", "library"),
+    os.path.join(TESTS_BASEDIR, "..", "module_utils"),
+    os.path.join(TESTS_BASEDIR, "../..", "module_utils"),
+):
+    if os.path.isdir(candidate):
+        sys.path.insert(1, candidate)
 
 try:
     from unittest import mock

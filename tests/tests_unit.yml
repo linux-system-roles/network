@@ -29,15 +29,24 @@
 - hosts: all
   name: execute python unit tests
   tasks:
-    - name: Copy python modules
-      copy:
-        src: "{{ item }}"
-        dest: /tmp/test-unit-1/
-        local_follow: false
+    - name: Check python modules existence
+      local_action: stat path="{{ item }}"
+      register: _present_modules
       loop:
         - ../library/network_connections.py
         - unit/test_network_connections.py
         - ../module_utils/network_lsr
+        - module_utils/network_lsr
+        - modules/network_connections.py
+      ignore_errors: true
+
+    - name: Copy python modules
+      copy:
+        src: "{{ item.stat.path }}"
+        dest: /tmp/test-unit-1/
+        local_follow: false
+      when: item.stat.exists
+      loop: "{{ _present_modules.results }}"
 
     - name: Create helpers directory
       file:
