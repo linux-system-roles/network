@@ -7,12 +7,20 @@ import pytest
 import subprocess
 import sys
 
+from importlib import import_module
+
 try:
     from unittest import mock
 except ImportError:
     import mock
 
-parentdir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../"))
+_is_role = os.path.exists(
+    os.path.join(os.path.dirname(__file__), "../roles/linux-system-roles.network")
+)
+if _is_role:
+    parentdir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../"))
+else:  # collection
+    parentdir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../"))
 with mock.patch.object(
     sys,
     "path",
@@ -26,7 +34,10 @@ with mock.patch.object(
             "ansible.module_utils.basic": mock.Mock(),
         },
     ):
-        import library.network_connections as nc
+        if _is_role:
+            nc = import_module("library.network_connections")
+        else:
+            nc = import_module("modules.network_connections")
 
 
 class PytestRunEnvironment(nc.RunEnvironment):

@@ -42,37 +42,65 @@
         path: "{{ rundir }}"
         recurse: true
 
-    - command: git rev-parse --show-toplevel
-      register: git_top_directory
-      delegate_to: localhost
+    - name: Determine legacy role format or collection format
+      local_action:
+        stat path="{{ playbook_dir }}/roles/linux-system-roles.network"
+      register: _role
 
-    - debug:
-        var: git_top_directory
+    - name: Legacy role format
+      block:
+        - command: git rev-parse --show-toplevel
+          register: git_top_directory
+          delegate_to: localhost
 
-    - synchronize:
-        src: "{{ git_top_directory.stdout }}/"
-        dest: "{{ rundir }}/"
-        recursive: yes
-        delete: yes
-        rsync_opts:
-          - "--exclude=.pyc"
-          - "--exclude=__pycache__"
-      when: False
+        - debug:
+            var: git_top_directory
 
-    # TODO: using tar and copying the file is a workaround for the synchronize
-    # module that does not work in test-harness. Related issue:
-    # https://github.com/linux-system-roles/test-harness/issues/102
-    #
-    - name: Create Tar file
-      shell: 'tar -cvf {{ git_top_directory.stdout }}/testrepo.tar
-             --exclude "*.pyc" --exclude "__pycache__" --exclude testrepo.tar
-             -C {{ git_top_directory.stdout }} .'
-      delegate_to: localhost
+        - synchronize:
+            src: "{{ git_top_directory.stdout }}/"
+            dest: "{{ rundir }}/"
+            recursive: yes
+            delete: yes
+            rsync_opts:
+              - "--exclude=.pyc"
+              - "--exclude=__pycache__"
+          when: false
+
+        # TODO: using tar and copying the file is a workaround for
+        # the synchronize module that does not work in test-harness.
+        # Related issue:
+        # https://github.com/linux-system-roles/test-harness/issues/102
+        #
+
+        - name: Create Tar file
+          shell: 'tar -cvf {{ playbook_dir }}/testrepo.tar
+                 --exclude "*.pyc" --exclude "__pycache__"
+                 --exclude testrepo.tar --exclude ".git"
+                 --exclude ".tox"
+                 -C {{ git_top_directory.stdout }} .'
+          delegate_to: localhost
+
+      when: _role.stat.exists
+
+    - name: Collection role format
+      block:
+
+        - name: Create Tar file
+          shell: 'tar -cvf {{ playbook_dir }}/testrepo.tar
+                 --exclude "*.pyc" --exclude "__pycache__"
+                 --exclude testrepo.tar -C {{ playbook_dir }}/..
+                 --transform "s,^\.,tests," .'
+          delegate_to: localhost
+
+      when: not _role.stat.exists
 
     - name: Copy testrepo.tar to the remote system
       copy:
-        src: "{{ git_top_directory.stdout }}/testrepo.tar"
+        src: "{{ playbook_dir }}/testrepo.tar"
         dest: "{{ rundir }}"
+
+    - name: Remove testrepo.tar
+      local_action: file path="{{ playbook_dir }}/testrepo.tar" state=absent
 
     - name: Untar testrepo.tar
       command: tar xf testrepo.tar
