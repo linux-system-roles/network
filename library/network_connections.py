@@ -402,6 +402,24 @@ class IfcfgUtil:
                 " ".join(configured_features),
             )
 
+        ethtool_setring = connection["ethtool"]["set-ring"]
+        configured_setring = []
+        for setring, setting in ethtool_setring.items():
+            if setting is not None:
+                if isinstance(setting, bool):
+                    setting = int(setting)
+                configured_setring.append(
+                    "%s %s" % (setring.replace("_", "-"), setting)
+                )
+
+        if configured_setring:
+            if ethtool_options:
+                ethtool_options += " ; "
+            ethtool_options += "-G %s %s" % (
+                connection["interface_name"],
+                " ".join(configured_setring),
+            )
+
         if ethtool_options:
             ifcfg["ETHTOOL_OPTS"] = ethtool_options
 
@@ -902,6 +920,15 @@ class NMUtil:
                     s_ethtool.set_feature(nm_feature, NM.Ternary.TRUE)
                 else:
                     s_ethtool.set_feature(nm_feature, NM.Ternary.FALSE)
+
+            for setring, setting in connection["ethtool"]["set-ring"].items():
+                nm_setring = nm_provider.get_nm_ethtool_setring(setring)
+
+                if nm_setring:
+                    if setting is None:
+                        s_ethtool.option_set(nm_setring, None)
+                    else:
+                        s_ethtool.option_set_uint32(nm_setring, int(setting))
 
         if connection["mtu"]:
             if connection["type"] == "infiniband":
@@ -2015,20 +2042,46 @@ class Cmd_nm(Cmd):
         if "ethtool" not in connection:
             return
 
-        ethtool_features = connection["ethtool"]["features"]
-        specified_features = dict(
-            [(k, v) for k, v in ethtool_features.items() if v is not None]
-        )
+        ethtool_dict = {
+            "features": nm_provider.get_nm_ethtool_feature,
+            "set-ring": nm_provider.get_nm_ethtool_setring
+        } 
 
-        if specified_features and not hasattr(NM, "SettingEthtool"):
-            self.log_fatal(idx, "ethtool.features specified but not supported by NM")
+        for ethtool_key, nm_get_name_fcnt in ethtool_dict.items():
+            ethtool_settings = connection["ethtool"][ethtool_key]
+            specified = dict(
+                [(k, v) for k, v in ethtool_settings.items() if v is not None]
+            )
 
-        for feature, setting in specified_features.items():
-            nm_feature = nm_provider.get_nm_ethtool_feature(feature)
-            if not nm_feature:
+
+            if specified and not hasattr(NM, "SettingEthtool"):
                 self.log_fatal(
-                    idx, "ethtool feature %s specified but not support by NM" % feature
+                    idx, "ethtool.%s specified but not supported by NM", specified
                 )
+
+            for option, _ in specified.items():
+                nm_name = nm_get_name_fcnt(option)
+                if not nm_name:
+                    self.log_fatal(
+                        idx,
+                        "ethtool %s setting %s specified "
+                        "but not supported by NM" % (ethtool_key, option),
+                    )
+
+        # ethtool_features = connection["ethtool"]["features"]
+        # specified_features = dict(
+        #     [(k, v) for k, v in ethtool_features.items() if v is not None]
+        # )
+
+        # if specified_features and not hasattr(NM, "SettingEthtool"):
+        #     self.log_fatal(idx, "ethtool.features specified but not supported by NM")
+
+        # for feature, setting in specified_features.items():
+        #     nm_feature = nm_provider.get_nm_ethtool_feature(feature)
+        #     if not nm_feature:
+        #         self.log_fatal(
+        #             idx, "ethtool feature %s specified but not support by NM" % feature
+        #         )
 
     def run_action_absent(self, idx):
         seen = set()

@@ -9,6 +9,7 @@ import socket
 from ansible.module_utils.network_lsr import MyError  # noqa:E501
 from ansible.module_utils.network_lsr.utils import Util  # noqa:E501
 
+UINT32_MAX = 0xFFFFFFFF
 
 class ArgUtil:
     @staticmethod
@@ -584,7 +585,10 @@ class ArgValidator_DictEthtool(ArgValidatorDict):
         ArgValidatorDict.__init__(
             self,
             name="ethtool",
-            nested=[ArgValidator_DictEthtoolFeatures()],
+            nested=[
+                ArgValidator_DictEthtoolFeatures(),
+                ArgValidator_DictEthtoolSetring()
+            ],
             default_value=ArgValidator.MISSING,
         )
 
@@ -798,6 +802,38 @@ class ArgValidator_DictEthtoolFeatures(ArgValidatorDict):
                 if not isinstance(validator, ArgValidatorDeprecated)
             ]
         )
+
+
+
+class ArgValidator_DictEthtoolSetring(ArgValidatorDict):
+    def __init__(self):
+        ArgValidatorDict.__init__(
+            self,
+            name="set-ring",
+            nested=[
+                ArgValidatorNum(
+                    "rx", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "rx_mini", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "rx_jumbo", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "tx", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+            ],
+        )
+        self.default_value = dict(
+            [(k, v.default_value) for k, v in self.nested.items()]
+        )
+
+
+
+
+
+
 
 
 class ArgValidator_DictBond(ArgValidatorDict):
