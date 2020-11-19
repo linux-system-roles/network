@@ -711,6 +711,7 @@ class ArgValidator_DictEthtool(ArgValidatorDict):
             nested=[
                 ArgValidator_DictEthtoolFeatures(),
                 ArgValidator_DictEthtoolCoalesce(),
+                ArgValidator_DictEthtoolRing(),
             ],
             default_value=ArgValidator.MISSING,
         )
@@ -1000,6 +1001,31 @@ class ArgValidator_DictEthtoolCoalesce(ArgValidatorDict):
                 ),
                 ArgValidatorNum(
                     "tx_usecs_low", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+            ],
+        )
+        self.default_value = dict(
+            [(k, v.default_value) for k, v in self.nested.items()]
+        )
+
+
+class ArgValidator_DictEthtoolRing(ArgValidatorDict):
+    def __init__(self):
+        ArgValidatorDict.__init__(
+            self,
+            name="ring",
+            nested=[
+                ArgValidatorNum(
+                    "rx", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "rx_jumbo", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "rx_mini", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "tx", val_min=0, val_max=UINT32_MAX, default_value=None
                 ),
             ],
         )

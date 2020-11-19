@@ -436,6 +436,17 @@ The ethtool settings allow to enable or disable various features. The names
 correspond to the names used by the `ethtool` utility. Depending on the actual
 kernel and device, changing some options might not be supported.
 
+The ethtool configuration supports the following options:
+
+- `ring`
+
+    Changes the `rx`/`tx` `ring` parameters of the specified network device. The list
+    of supported `ring` parameters is:
+    - `rx` - Changes the number of ring entries for the Rx ring.
+    - `rx-jumbo` - Changes the number of ring entries for the Rx Jumbo ring.
+    - `rx-mini` - Changes the number of ring entries for the Rx Mini ring.
+    - `tx` - Changes the number of ring entries for the Tx ring.
+
 ```yaml
   ethtool:
     features:
@@ -514,6 +525,11 @@ kernel and device, changing some options might not be supported.
       tx_usecs_high: 0  # optional mininum=0 maximum=0xffffffff
       tx_usecs_irq: 0  # optional mininum=0 maximum=0xffffffff
       tx_usecs_low: 0  # optional mininum=0 maximum=0xffffffff
+    ring:
+      rx: 0  # optional mininum=0 maximum=0xffffffff
+      rx_jumbo: 0  # optional mininum=0 maximum=0xffffffff
+      rx_mini: 0  # optional mininum=0 maximum=0xffffffff
+      tx: 0  # optional mininum=0 maximum=0xffffffff
 ```
 
 ### `ieee802_1x`

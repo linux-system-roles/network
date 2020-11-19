@@ -428,6 +428,19 @@ class IfcfgUtil:
                 connection["interface_name"],
                 " ".join(configured_coalesce),
             )
+        ethtool_ring = connection["ethtool"]["ring"]
+        configured_ring = []
+        for ring, setting in ethtool_ring.items():
+            if setting is not None:
+                configured_ring.append("%s %s" % (ring.replace("_", "-"), setting))
+
+        if configured_ring:
+            if ethtool_options:
+                ethtool_options += " ; "
+            ethtool_options += "-G %s %s" % (
+                connection["interface_name"],
+                " ".join(configured_ring),
+            )
 
         if ethtool_options:
             ifcfg["ETHTOOL_OPTS"] = ethtool_options
@@ -948,6 +961,14 @@ class NMUtil:
                         s_ethtool.option_set(nm_coalesce, None)
                     else:
                         s_ethtool.option_set_uint32(nm_coalesce, int(setting))
+            for ring, setting in connection["ethtool"]["ring"].items():
+                nm_ring = nm_provider.get_nm_ethtool_ring(ring)
+
+                if nm_ring:
+                    if setting is None:
+                        s_ethtool.option_set(nm_ring, None)
+                    else:
+                        s_ethtool.option_set_uint32(nm_ring, setting)
 
         if connection["mtu"]:
             if connection["type"] == "infiniband":
@@ -2005,6 +2026,7 @@ class Cmd_nm(Cmd):
         ethtool_dict = {
             "features": nm_provider.get_nm_ethtool_feature,
             "coalesce": nm_provider.get_nm_ethtool_coalesce,
+            "ring": nm_provider.get_nm_ethtool_ring,
         }
 
         for ethtool_key, nm_get_name_fcnt in ethtool_dict.items():

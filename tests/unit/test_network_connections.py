@@ -140,9 +140,18 @@ ETHTOOL_COALESCE_DEFAULTS = {
     "tx_usecs_low": None,
 }
 
+ETHTOOL_RING_DEFAULTS = {
+    "rx": None,
+    "rx_jumbo": None,
+    "rx_mini": None,
+    "tx": None,
+}
+
+
 ETHTOOL_DEFAULTS = {
     "features": ETHTOOL_FEATURES_DEFAULTS,
     "coalesce": ETHTOOL_COALESCE_DEFAULTS,
+    "ring": ETHTOOL_RING_DEFAULTS,
 }
 
 ETHERNET_DEFAULTS = {"autoneg": None, "duplex": None, "speed": 0}
