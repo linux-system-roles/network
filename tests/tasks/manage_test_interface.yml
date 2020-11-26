@@ -17,9 +17,19 @@
 
 # veth
 - name: Create veth interface {{ interface }}
-  command: ip link add {{ interface }} type veth peer name peer{{ interface }}
+  command: "{{ item }}"
+  with_items:
+    - ip link add {{ interface }} type veth peer name peer{{ interface }}
+    - ip link set peer{{ interface }} up
+    - ip link set {{ interface }} up
   when: "type == 'veth' and state == 'present' and
          interface not in current_interfaces"
+- name: Set up veth as managed by NetworkManager
+  shell: nmcli d set {{ interface }} managed true
+  # The varible for `network_provider` is not exists yet,
+  # just ignore error for initscripts
+  ignore_errors: yes
+  when: "type == 'veth' and state == 'present'"
 
 - name: Delete veth interface {{ interface }}
   command: ip link del {{ interface }} type veth
