@@ -60,7 +60,7 @@
 
     - name: Run python2 unit tests
       command: python2 /tmp/test-unit-1/test_network_connections.py --verbose
-      when: python2_available is succeeded
+      when: python2_available is succeeded and ansible_distribution != 'Fedora'
       register: python2_result
 
     - name: Check if python3 is available
