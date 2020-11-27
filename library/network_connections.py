@@ -11,6 +11,7 @@ import socket
 import subprocess
 import time
 import traceback
+import logging
 
 # pylint: disable=import-error, no-name-in-module
 from ansible.module_utils.basic import AnsibleModule
@@ -65,6 +66,17 @@ class LogLevel:
     WARN = "warn"
     INFO = "info"
     DEBUG = "debug"
+
+    _LOGGING_LEVEL_MAP = {
+        logging.DEBUG: DEBUG,
+        logging.INFO: INFO,
+        logging.WARN: WARN,
+        logging.ERROR: ERROR,
+    }
+
+    @staticmethod
+    def from_logging_level(logging_level):
+        return LogLevel._LOGGING_LEVEL_MAP.get(logging_level, LogLevel.ERROR)
 
     @staticmethod
     def fmt(level):
@@ -1387,61 +1399,6 @@ class NMUtil:
         if failure_reason:
             raise MyError("connection not activated: %s" % (failure_reason))
 
-    def active_connection_deactivate(self, ac, timeout=10, wait_time=None):
-        def deactivate_cb(client, result, cb_args):
-            success = False
-            try:
-                success = client.deactivate_connection_finish(result)
-            except Exception as e:
-                if Util.error_is_cancelled(e):
-                    return
-                cb_args["error"] = str(e)
-            cb_args["success"] = success
-            Util.GMainLoop().quit()
-
-        cancellable = Util.create_cancellable()
-        cb_args = {}
-        self.nmclient.deactivate_connection_async(
-            ac, cancellable, deactivate_cb, cb_args
-        )
-        if not Util.GMainLoop_run(timeout):
-            cancellable.cancel()
-            raise MyError("failure to deactivate connection: %s" % (timeout))
-        if not cb_args.get("success", False):
-            raise MyError(
-                "failure to deactivate connection: %s"
-                % (cb_args.get("error", "unknown error"))
-            )
-
-        self.active_connection_deactivate_wait(ac, wait_time)
-        return True
-
-    def active_connection_deactivate_wait(self, ac, wait_time):
-
-        if not wait_time:
-            return
-
-        NM = Util.NM()
-
-        def check_deactivated(ac):
-            return ac.get_state() >= NM.ActiveConnectionState.DEACTIVATED
-
-        if not check_deactivated(ac):
-
-            def check_deactivated_cb():
-                if check_deactivated(ac):
-                    Util.GMainLoop().quit()
-
-            ac_id = ac.connect(
-                "notify::state", lambda source, pspec: check_deactivated_cb()
-            )
-
-            try:
-                if not Util.GMainLoop_run(wait_time):
-                    raise MyError("connection not fully deactivated after timeout")
-            finally:
-                ac.handler_disconnect(ac_id)
-
     def reapply(self, device, connection=None):
         version_id = 0
         flags = 0
@@ -1627,6 +1584,21 @@ class RunEnvironmentAnsible(RunEnvironment):
 
 
 ###############################################################################
+
+
+class NmLogHandler(logging.Handler):
+    def __init__(self, log_func, idx):
+        self._log = log_func
+        self._idx = idx
+        super(NmLogHandler, self).__init__()
+
+    def filter(self, record):
+        return True
+
+    def emit(self, record):
+        self._log(
+            self._idx, LogLevel.from_logging_level(record.levelno), record.getMessage()
+        )
 
 
 class Cmd(object):
@@ -1954,6 +1926,14 @@ class Cmd_nm(Cmd):
         self._nmutil = None
         self.validate_one_type = ArgValidator_ListConnections.VALIDATE_ONE_MODE_NM
         self._checkpoint = None
+        # pylint: disable=import-error, no-name-in-module
+        from ansible.module_utils.network_lsr.nm import (  # noqa: E501
+            NetworkManagerProvider,
+        )
+
+        # pylint: enable=import-error, no-name-in-module
+
+        self._nm_provider = NetworkManagerProvider()
 
     @property
     def nmutil(self):
@@ -2265,51 +2245,17 @@ class Cmd_nm(Cmd):
 
     def run_action_down(self, idx):
         connection = self.connections[idx]
-
-        cons = self.nmutil.connection_list(name=connection["name"])
-        changed = False
-        if cons:
-            seen = set()
-            while True:
-                ac = Util.first(
-                    self.nmutil.active_connection_list(
-                        connections=cons, black_list=seen
-                    )
-                )
-                if ac is None:
-                    break
-                seen.add(ac)
-                self.log_info(
-                    idx, "down connection %s: %s" % (connection["name"], ac.get_path())
-                )
-                changed = True
-                self.connections_data_set_changed(idx)
-                if self.check_mode == CheckMode.REAL_RUN:
-                    try:
-                        self.nmutil.active_connection_deactivate(ac)
-                    except MyError as e:
-                        self.log_error(idx, "down connection failed: %s" % (e))
-
-                    wait_time = connection["wait"]
-                    if wait_time is None:
-                        wait_time = 10
-
-                    try:
-                        self.nmutil.active_connection_deactivate_wait(ac, wait_time)
-                    except MyError as e:
-                        self.log_error(
-                            idx, "down connection failed while waiting: %s" % (e)
-                        )
-
-                cons = self.nmutil.connection_list(name=connection["name"])
-        if not changed:
-            message = "down connection %s failed: connection not found" % (
-                connection["name"]
-            )
-            if connection[PERSISTENT_STATE] == ABSENT_STATE:
-                self.log_info(idx, message)
-            else:
-                self.log_error(idx, message)
+        logger = logging.getLogger()
+        log_handler = NmLogHandler(self.log, idx)
+        logger.addHandler(log_handler)
+        timeout = connection["wait"]
+        if self._nm_provider.deactivate_connection(
+            connection["name"],
+            10 if timeout is None else timeout,
+            self.check_mode != CheckMode.REAL_RUN,
+        ):
+            self.connections_data_set_changed(idx)
+        logger.removeHandler(log_handler)
 
 
 ###############################################################################
