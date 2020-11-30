@@ -59,6 +59,7 @@ EXTRA_RUN_CONDITION = "extra_run_condition"
 NM_ONLY_TESTS = {
     "playbooks/tests_802_1x_updated.yml": {},
     "playbooks/tests_802_1x.yml": {},
+    "playbooks/tests_dummy.yml": {},
     "playbooks/tests_ethtool_features.yml": {
         MINIMUM_VERSION: "'1.20.0'",
         "comment": "# NetworkManager 1.20.0 introduced ethtool settings support",
