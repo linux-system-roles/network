@@ -1006,6 +1006,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
         "vlan",
         "macvlan",
         "wireless",
+        "dummy",
     ]
     VALID_SLAVE_TYPES = ["bridge", "bond", "team"]
 
