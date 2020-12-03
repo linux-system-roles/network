@@ -306,6 +306,21 @@ ansible-playbook --skip-tags tests::cleanup \
     -i testhost, tests/playbooks/tests_802_1x.yml
 ```
 
+### NetworkManager Documentation
+- [NM 1.0](https://lazka.github.io/pgi-docs/#NM-1.0), it contains full explanation about NetworkManager API, including but not limited to:
+    - Functions
+    - Callbacks
+    - Interfaces
+    - Classes
+    - Hierarchy
+    - Structures
+    - Class Structures
+    - Interface Structures
+    - Flags
+    - Enums
+    - Constants
+    - Symbol Mapping
+
 ### Integration tests with podman
 1. Create `~/.ansible/collections/ansible_collections/containers/podman/` if this
 directory does not exist and `cd` into this directory.
