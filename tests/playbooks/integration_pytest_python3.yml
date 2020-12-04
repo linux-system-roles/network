@@ -42,10 +42,15 @@
         path: "{{ rundir }}"
         recurse: true
 
-    - name: Determine legacy role format or collection format
-      local_action:
-        stat path="{{ playbook_dir }}/roles/linux-system-roles.network"
-      register: _role
+    - name: Get collection paths
+      set_fact:
+        _collection_paths: |
+          {{
+             (lookup("env","ANSIBLE_COLLECTIONS_PATH").split(":") +
+             lookup("env","ANSIBLE_COLLECTIONS_PATHS").split(":") +
+             lookup("env","COLLECTIONS_PATHS").split(":")) |
+             select | list
+          }}
 
     - name: Legacy role format
       block:
@@ -80,10 +85,33 @@
                  -C {{ git_top_directory.stdout }} .'
           delegate_to: localhost
 
-      when: _role.stat.exists
+      when: "{{ _collection_paths | d([]) | length == 0 }}"
 
     - name: Collection role format
       block:
+
+        - name: Get the distribution of the control host
+          shell: grep "^ID=" /etc/os-release
+          register: _my_id
+          delegate_to: localhost
+
+        - name: Stat network_lsr with the collections module_utils path
+          vars:
+            - _network_lsr_path: "\
+              {{ item }}/ansible_collections/\
+              {{ _my_id.stdout.split('=')[1] }}/\
+              system_roles/plugins/module_utils/network_lsr"
+          local_action:
+            stat path="{{ _network_lsr_path }}"
+          register: _network_lsr
+          loop: "{{ _collection_paths | d([]) }}"
+
+        - name: Check if network_lsr exist or not
+          set_fact:
+            _is_collection: "{{ _network_lsr.results |
+                                selectattr('stat', 'defined') |
+                                selectattr('stat.exists', '==', True) | list }}"
+          failed_when: _is_collection | d([]) | length == 0
 
         - name: Create Tar file
           shell: 'tar -cvf {{ playbook_dir }}/testrepo.tar
@@ -92,7 +120,7 @@
                  --transform "s,^\.,tests," .'
           delegate_to: localhost
 
-      when: not _role.stat.exists
+      when: _collection_paths | d([])
 
     - name: Copy testrepo.tar to the remote system
       copy:
