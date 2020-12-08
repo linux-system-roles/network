@@ -21,60 +21,137 @@
 - hosts: all
   name: execute python unit tests
   tasks:
-    - name: Copy python modules
-      copy:
-        src: "{{ item }}"
-        dest: /tmp/test-unit-1/
-        local_follow: false
-      loop:
-        - ../library/network_connections.py
-        - unit/test_network_connections.py
-        - ../module_utils/network_lsr
+    - block:
+        - name: create tempdir for code to test
+          tempfile:
+            state: directory
+            prefix: lsrtest_
+          register: _rundir
 
-    - name: Create helpers directory
-      file:
-        state: directory
-        dest: /tmp/test-unit-1/helpers
+        - name: get tempfile for tar
+          tempfile:
+            prefix: lsrtest_
+            suffix: ".tar"
+          register: temptar
+          delegate_to: localhost
 
-    - name: Copy helpers
-      copy:
-        src: "{{ item }}"
-        dest: /tmp/test-unit-1/helpers
-        mode: 0755
-      with_fileglob:
-        - unit/helpers/*
+        - include_tasks: tasks/get_modules_and_utils_paths.yml
 
-    - name: Check if python2 is available
-      command: python2 --version
-      ignore_errors: true
-      register: python2_available
-      when: true
+        # TODO: using tar and copying the file is a workaround for the
+        # synchronize module that does not work in test-harness. Related issue:
+        # https://github.com/linux-system-roles/test-harness/issues/102
+        #
+        - name: Create Tar file
+          command: >
+            tar -cvf {{ temptar.path }} --exclude "*.pyc"
+                --exclude "__pycache__"
+                -C {{ modules_parent_and_dir.stdout_lines[0] }}
+                {{ modules_parent_and_dir.stdout_lines[1] }}
+                -C {{ module_utils_parent_and_dir.stdout_lines[0] }}
+                {{ module_utils_parent_and_dir.stdout_lines[1] }}
+          delegate_to: localhost
 
-    - name: Run python2 unit tests
-      command: python2 /tmp/test-unit-1/test_network_connections.py --verbose
-      when: python2_available is succeeded and ansible_distribution != 'Fedora'
-      register: python2_result
+        - name: Copy testrepo.tar to the remote system
+          copy:
+            src: "{{ temptar.path }}"
+            dest: "{{ _rundir.path }}"
 
-    - name: Check if python3 is available
-      command: python3 --version
-      ignore_errors: true
-      register: python3_available
-      when: true
+        - name: Untar testrepo.tar
+          command: tar -xvf {{ temptar.path | basename }}
+          args:
+            chdir: "{{ _rundir.path }}"
 
-    - name: Run python3 unit tests
-      command: python3 /tmp/test-unit-1/test_network_connections.py --verbose
-      when: python3_available is succeeded
-      register: python3_result
+        - file:
+            state: directory
+            path: "{{ item }}"
+          loop:
+            - "{{ _rundir.path }}/ansible"
+            - "{{ _rundir.path }}/ansible/module_utils"
 
-    - name: Show python2 unit test results
-      debug:
-        var: python2_result.stderr_lines
-      when: python2_result is succeeded
+        - name: Move module_utils to ansible directory
+          shell: |
+            if [ -d {{ _rundir.path }}/module_utils ]; then
+              mv {{ _rundir.path }}/module_utils {{ _rundir.path }}/ansible
+            fi
 
-    - name: Show python3 unit test results
-      debug:
-        var: python3_result.stderr_lines
-      when: python3_result is succeeded
+        - name: Fake out python module directories, primarily for python2
+          shell: |
+            for dir in $(find {{ _rundir.path }} -type d -print); do
+              if [ ! -f "$dir/__init__.py" ]; then
+                touch "$dir/__init__.py"
+              fi
+            done
+
+        - name: Copy unit test to remote system
+          copy:
+            src: unit/test_network_connections.py
+            dest: "{{ _rundir.path }}"
+
+        - set_fact:
+            _lsr_python_path: "{{
+              _rundir.path ~ '/' ~
+              modules_parent_and_dir.stdout_lines[1] ~ ':' ~
+              _rundir.path ~ '/' ~ 'ansible' ~ '/' ~
+              module_utils_parent_and_dir.stdout_lines[1] ~ ':' ~
+              _rundir.path ~ '/' ~
+              module_utils_parent_and_dir.stdout_lines[1] ~ ':' ~
+              _rundir.path
+            }}"
+
+        - command: ls -alrtFR {{ _rundir.path }}
+        - debug:
+            msg: path {{ _lsr_python_path }}
+
+        - name: Check if python2 is available
+          command: python2 --version
+          ignore_errors: true
+          register: python2_available
+          when: true
+
+        - name: Run python2 unit tests
+          command: >
+            python2 {{ _rundir.path }}/test_network_connections.py --verbose
+          environment:
+            PYTHONPATH: "{{ _lsr_python_path }}"
+          when: >
+            python2_available is succeeded and ansible_distribution != 'Fedora'
+          register: python2_result
+
+        - name: Check if python3 is available
+          command: python3 --version
+          ignore_errors: true
+          register: python3_available
+          when: true
+
+        - name: Run python3 unit tests
+          command: >
+            python3 {{ _rundir.path }}/test_network_connections.py --verbose
+          environment:
+            PYTHONPATH: "{{ _lsr_python_path }}"
+          when: python3_available is succeeded
+          register: python3_result
+
+        - name: Show python2 unit test results
+          debug:
+            var: python2_result.stderr_lines
+          when: python2_result is succeeded
+
+        - name: Show python3 unit test results
+          debug:
+            var: python3_result.stderr_lines
+          when: python3_result is succeeded
+
+      always:
+        - name: remove local tar file
+          file:
+            state: absent
+            path: "{{ temptar.path }}"
+          delegate_to: localhost
+
+        - name: remove tempdir
+          file:
+            state: absent
+            path: "{{ _rundir.path }}"
 
     - name: Ensure that at least one python unit test ran
       fail:

@@ -29,64 +29,121 @@
 
 - name: Run Pytest tests
   hosts: all
-  vars:
-    - rundir: /run/system-roles-test
   tasks:
-    - file:
-        state: directory
-        path: "{{ rundir }}"
-        recurse: true
-
-    - command: git rev-parse --show-toplevel
-      register: git_top_directory
-      delegate_to: localhost
-
-    - debug:
-        var: git_top_directory
-
-    - synchronize:
-        src: "{{ git_top_directory.stdout }}/"
-        dest: "{{ rundir }}/"
-        recursive: yes
-        delete: yes
-        rsync_opts:
-          - "--exclude=.pyc"
-          - "--exclude=__pycache__"
-      when: False
-
-    # TODO: using tar and copying the file is a workaround for the synchronize
-    # module that does not work in test-harness. Related issue:
-    # https://github.com/linux-system-roles/test-harness/issues/102
-    #
-    - name: Create Tar file
-      shell: 'tar -cvf {{ git_top_directory.stdout }}/testrepo.tar
-             --exclude "*.pyc" --exclude "__pycache__" --exclude testrepo.tar
-             -C {{ git_top_directory.stdout }} .'
-      delegate_to: localhost
-
-    - name: Copy testrepo.tar to the remote system
-      copy:
-        src: "{{ git_top_directory.stdout }}/testrepo.tar"
-        dest: "{{ rundir }}"
-
-    - name: Untar testrepo.tar
-      command: tar xf testrepo.tar
-      args:
-        chdir: "{{ rundir }}"
-
     - block:
-        - name: Run pytest with nm
-          command: "pytest {{ rundir }}/tests/integration/ --provider=nm"
-          register: playbook_run
-      always:
-        - debug:
-            var: playbook_run.stdout_lines
+        - name: create tempdir for code to test
+          tempfile:
+            state: directory
+            prefix: lsrtest_
+          register: _rundir
 
-    - block:
-        - name: Run pytest with initscripts
+        - name: get tempfile for tar
+          tempfile:
+            prefix: lsrtest_
+            suffix: ".tar"
+          register: temptar
+          delegate_to: localhost
+
+        - include_tasks: ../tasks/get_modules_and_utils_paths.yml
+
+        - name: get tests directory
+          set_fact:
+            tests_directory: "{{ lookup('first_found', params) }}"
+          vars:
+            params:
+              files:
+                - tests
+                - network
+              paths:
+                - "../.."
+
+        # TODO: using tar and copying the file is a workaround for the
+        # synchronize module that does not work in test-harness. Related issue:
+        # https://github.com/linux-system-roles/test-harness/issues/102
+        #
+        - name: Create Tar file
           command: >
-            pytest '{{ rundir }}/tests/integration/' --provider=initscripts
-          register: playbook_run
-      always:
+            tar -cvf {{ temptar.path }} --exclude "*.pyc"
+                --exclude "__pycache__"
+                -C {{ tests_directory | realpath | dirname }}
+                {{ tests_directory | basename }}
+                -C {{ modules_parent_and_dir.stdout_lines[0] }}
+                {{ modules_parent_and_dir.stdout_lines[1] }}
+                -C {{ module_utils_parent_and_dir.stdout_lines[0] }}
+                {{ module_utils_parent_and_dir.stdout_lines[1] }}
+          delegate_to: localhost
+
+        - name: Copy testrepo.tar to the remote system
+          copy:
+            src: "{{ temptar.path }}"
+            dest: "{{ _rundir.path }}"
+
+        - name: Untar testrepo.tar
+          command: tar xf {{ temptar.path | basename }}
+          args:
+            chdir: "{{ _rundir.path }}"
+
+        - file:
+            state: directory
+            path: "{{ _rundir.path }}/ansible"
+
+        - name: Move module_utils to ansible directory
+          shell: |
+            if [ -d {{ _rundir.path }}/module_utils ]; then
+              mv {{ _rundir.path }}/module_utils {{ _rundir.path }}/ansible
+            fi
+
+        - name: Fake out python module directories, primarily for python2
+          shell: |
+            for dir in $(find {{ _rundir.path }} -type d -print); do
+              if [ ! -f "$dir/__init__.py" ]; then
+                touch "$dir/__init__.py"
+              fi
+            done
+
+        - set_fact:
+            _lsr_python_path: "{{
+                  _rundir.path ~ '/' ~
+                  modules_parent_and_dir.stdout_lines[1] ~ ':' ~ _rundir.path
+            }}"
+
         - debug:
-            var: playbook_run.stdout_lines
+            msg: path {{ _lsr_python_path }}
+        - command: ls -alrtFR {{ _rundir.path }}
+
+        - block:
+            - name: Run pytest with nm
+              command: >
+                pytest
+                {{ _rundir.path }}/{{ tests_directory | basename }}/integration/
+                --provider=nm
+              register: playbook_run
+              environment:
+                PYTHONPATH: "{{ _lsr_python_path }}"
+          always:
+            - debug:
+                var: playbook_run.stdout_lines
+
+        - block:
+            - name: Run pytest with initscripts
+              command: >
+                pytest
+                {{ _rundir.path }}/{{ tests_directory | basename }}/integration/
+                --provider=initscripts
+              register: playbook_run
+              environment:
+                PYTHONPATH: "{{ _lsr_python_path }}"
+          always:
+            - debug:
+                var: playbook_run.stdout_lines
+      always:
+        - name: remove local tar file
+          file:
+            state: absent
+            path: "{{ temptar.path }}"
+          delegate_to: localhost
+
+        - name: remove tempdir
+          file:
+            state: absent
+            path: "{{ _rundir.path }}"
