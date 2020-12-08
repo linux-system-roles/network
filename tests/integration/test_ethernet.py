@@ -1,32 +1,25 @@
 # -*- coding: utf-8 -*
 # SPDX-License-Identifier: BSD-3-Clause
-
 import logging
 import os
-import pytest
 import subprocess
-import sys
+
+import pytest
 
 try:
     from unittest import mock
 except ImportError:
     import mock
 
-parentdir = os.path.normpath(os.path.join(os.path.dirname(__file__), "../../"))
-with mock.patch.object(
-    sys,
-    "path",
-    [parentdir, os.path.join(parentdir, "module_utils/network_lsr")] + sys.path,
+parent_dir = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+with mock.patch.dict(
+    "sys.modules",
+    {
+        "ansible.module_utils.basic": mock.Mock(),
+    },
 ):
-    with mock.patch.dict(
-        "sys.modules",
-        {
-            "ansible": mock.Mock(),
-            "ansible.module_utils": __import__("module_utils"),
-            "ansible.module_utils.basic": mock.Mock(),
-        },
-    ):
-        import library.network_connections as nc
+    import network_connections as nc
 
 
 class PytestRunEnvironment(nc.RunEnvironment):
@@ -94,20 +87,13 @@ def _get_ip_addresses(interface):
 
 @pytest.fixture
 def network_lsr_nm_mock():
-    with mock.patch.object(
-        sys,
-        "path",
-        [parentdir, os.path.join(parentdir, "module_utils/network_lsr/nm")] + sys.path,
+    with mock.patch.dict(
+        "sys.modules",
+        {
+            "ansible.module_utils.basic": mock.Mock(),
+        },
     ):
-        with mock.patch.dict(
-            "sys.modules",
-            {
-                "ansible": mock.Mock(),
-                "ansible.module_utils": __import__("module_utils"),
-                "ansible.module_utils.basic": mock.Mock(),
-            },
-        ):
-            yield
+        yield
 
 
 def test_static_ip_with_ethernet(testnic1, provider, network_lsr_nm_mock):

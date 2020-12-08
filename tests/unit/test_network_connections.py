@@ -1,36 +1,26 @@
 #!/usr/bin/env python
 """ Tests for network_connections Ansible module """
 # SPDX-License-Identifier: BSD-3-Clause
-
+import copy
 import itertools
-import os
 import pprint as pprint_
 import socket
 import sys
 import unittest
-import copy
-
-TESTS_BASEDIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(1, os.path.join(TESTS_BASEDIR, "../..", "library"))
-sys.path.insert(1, os.path.join(TESTS_BASEDIR, "../..", "module_utils"))
 
 try:
     from unittest import mock
 except ImportError:  # py2
     import mock
 
-sys.modules["ansible"] = mock.Mock()
 sys.modules["ansible.module_utils.basic"] = mock.Mock()
-sys.modules["ansible.module_utils"] = mock.Mock()
-sys.modules["ansible.module_utils.network_lsr"] = __import__("network_lsr")
 
 # pylint: disable=import-error, wrong-import-position
+
 import network_lsr
-import network_connections as n
-
-from network_connections import SysUtil
-from network_connections import Util
-
+import network_lsr.argument_validator
+from network_connections import IfcfgUtil, NMUtil, SysUtil, Util
+from network_lsr.argument_validator import ValidationError
 
 try:
     my_test_skipIf = unittest.skipIf
@@ -44,7 +34,7 @@ except AttributeError:
 
 
 try:
-    nmutil = n.NMUtil()
+    nmutil = NMUtil()
     assert nmutil
 except Exception:
     # NMUtil is not supported, for example on RHEL 6 or without
@@ -52,8 +42,8 @@ except Exception:
     nmutil = None
 
 if nmutil:
-    NM = n.Util.NM()
-    GObject = n.Util.GObject()
+    NM = Util.NM()
+    GObject = Util.GObject()
 
 
 def pprint(msg, obj):
@@ -194,7 +184,7 @@ class TestValidator(unittest.TestCase):
         }
 
     def assertValidationError(self, v, value):
-        self.assertRaises(n.ValidationError, v.validate, value)
+        self.assertRaises(ValidationError, v.validate, value)
 
     def assert_nm_connection_routes_expected(self, connection, route_list_expected):
         parser = network_lsr.argument_validator.ArgValidatorIPRoute("route[?]")
@@ -229,13 +219,13 @@ class TestValidator(unittest.TestCase):
         for connection in connections:
             if "type" in connection:
                 connection["nm.exists"] = False
-                connection["nm.uuid"] = n.Util.create_uuid()
+                connection["nm.uuid"] = Util.create_uuid()
 
         mode = VALIDATE_ONE_MODE_NM
         for idx, connection in enumerate(connections):
             try:
                 ARGS_CONNECTIONS.validate_connection_one(mode, connections, idx)
-            except n.ValidationError:
+            except ValidationError:
                 continue
             if "type" in connection:
                 con_new = nmutil.connection_create(connections, idx)
@@ -278,7 +268,7 @@ class TestValidator(unittest.TestCase):
         for idx, connection in enumerate(connections):
             try:
                 ARGS_CONNECTIONS.validate_connection_one(mode, connections, idx)
-            except n.ValidationError:
+            except ValidationError:
                 continue
             if "type" not in connection:
                 continue
@@ -291,7 +281,7 @@ class TestValidator(unittest.TestCase):
             content_current = kwargs.get("initscripts_content_current", None)
             if content_current:
                 content_current = content_current[idx]
-            c = n.IfcfgUtil.ifcfg_create(
+            c = IfcfgUtil.ifcfg_create(
                 connections, idx, content_current=content_current
             )
             # pprint("con[%s] = \"%s\"" % (idx, connections[idx]['name']), c)
@@ -2477,7 +2467,7 @@ class TestValidator(unittest.TestCase):
         connections = ARGS_CONNECTIONS.validate(input_connections)
 
         self.assertRaises(
-            n.ValidationError,
+            ValidationError,
             ARGS_CONNECTIONS.validate_connection_one,
             VALIDATE_ONE_MODE_INITSCRIPTS,
             connections,
@@ -2526,7 +2516,7 @@ class TestValidator(unittest.TestCase):
         connections = ARGS_CONNECTIONS.validate(input_connections)
 
         self.assertRaises(
-            n.ValidationError,
+            ValidationError,
             ARGS_CONNECTIONS.validate_connection_one,
             VALIDATE_ONE_MODE_INITSCRIPTS,
             connections,
@@ -2672,7 +2662,7 @@ class TestValidator(unittest.TestCase):
             {"name": "internal_network", "type": "ethernet", "interface_name": None}
         ]
         self.assertRaises(
-            n.ValidationError, ARGS_CONNECTIONS.validate, network_connections
+            ValidationError, ARGS_CONNECTIONS.validate, network_connections
         )
 
     def test_interface_name_ethernet_explicit(self):
@@ -2688,7 +2678,7 @@ class TestValidator(unittest.TestCase):
         valid interface_name"""
         network_connections = [{"name": "internal:main", "type": "ethernet"}]
         self.assertRaises(
-            n.ValidationError, ARGS_CONNECTIONS.validate, network_connections
+            ValidationError, ARGS_CONNECTIONS.validate, network_connections
         )
         network_connections = [
             {"name": "internal:main", "type": "ethernet", "interface_name": "eth0"}
@@ -2701,7 +2691,7 @@ class TestValidator(unittest.TestCase):
             {"name": "internal", "type": "ethernet", "interface_name": "invalid:name"}
         ]
         self.assertRaises(
-            n.ValidationError, ARGS_CONNECTIONS.validate, network_connections
+            ValidationError, ARGS_CONNECTIONS.validate, network_connections
         )
 
     def test_interface_name_bond_empty_interface_name(self):
@@ -2709,7 +2699,7 @@ class TestValidator(unittest.TestCase):
             {"name": "internal", "type": "bond", "interface_name": "invalid:name"}
         ]
         self.assertRaises(
-            n.ValidationError, ARGS_CONNECTIONS.validate, network_connections
+            ValidationError, ARGS_CONNECTIONS.validate, network_connections
         )
 
     def test_interface_name_bond_profile_as_interface_name(self):
@@ -2745,19 +2735,19 @@ class TestValidator(unittest.TestCase):
     def test_invalid_persistent_state_up(self):
         network_connections = [{"name": "internal", "persistent_state": "up"}]
         self.assertRaises(
-            n.ValidationError, ARGS_CONNECTIONS.validate, network_connections
+            ValidationError, ARGS_CONNECTIONS.validate, network_connections
         )
 
     def test_invalid_persistent_state_down(self):
         network_connections = [{"name": "internal", "persistent_state": "down"}]
         self.assertRaises(
-            n.ValidationError, ARGS_CONNECTIONS.validate, network_connections
+            ValidationError, ARGS_CONNECTIONS.validate, network_connections
         )
 
     def test_invalid_state_test(self):
         network_connections = [{"name": "internal", "state": "test"}]
         self.assertRaises(
-            n.ValidationError, ARGS_CONNECTIONS.validate, network_connections
+            ValidationError, ARGS_CONNECTIONS.validate, network_connections
         )
 
     def test_default_states_type(self):

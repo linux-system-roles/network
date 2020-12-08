@@ -1,0 +1,90 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: set collection paths
+  set_fact:
+    collection_paths: |
+      {{
+        (lookup("env","ANSIBLE_COLLECTIONS_PATH").split(":") +
+        lookup("env","ANSIBLE_COLLECTIONS_PATHS").split(":") +
+        lookup("config", "COLLECTIONS_PATHS")) |
+        select | list
+      }}
+
+- name: set search paths
+  set_fact:
+    modules_search_path: |
+        {{
+          (lookup("env", "ANSIBLE_LIBRARY").split(":") +
+          ["../../library", "../library"] +
+          lookup("config", "DEFAULT_MODULE_PATH")) |
+          select | list
+        }}
+    module_utils_search_path: |
+        {{
+          (lookup("env", "ANSIBLE_MODULE_UTILS").split(":") +
+          ["../../module_utils", "../module_utils"] +
+          lookup("config", "DEFAULT_MODULE_UTILS_PATH")) |
+          select | list
+        }}
+
+# the output should be something like
+# - path to parent directory to chdir to in order to use tar
+# - relative path under parent directory to tar
+# e.g. for the local role case
+# - ../..
+# - library
+# would translate to tar -C ../.. library
+# for the collection case
+# - /home/user/.ansible/collections
+# - ansible_collections/fedora/linux_system_roles/plugins/modules
+# would translate to tar -C /home/user/.ansible/collections \
+# ansible_collections/fedora/linux_system_roles/plugins/modules
+- name: find parent directory and path of modules
+  shell: |
+    set -euxo pipefail
+    for dir in {{ modules_search_path | join(" ") }}; do
+      if [ -f "$dir/network_connections.py" ]; then
+        readlink -f "$(dirname "$dir")"
+        basename "$dir"
+        exit 0
+      fi
+    done
+    for dir in {{ collection_paths | join(" ") }}; do
+      cd "$dir"
+      for subdir in ansible_collections/*/*/plugins/modules; do
+        if [ -f "$subdir/network_connections.py" ]; then
+          echo "$dir"
+          echo "$subdir"
+          exit 0
+        fi
+      done
+    done
+    echo network_connections.py not found
+    exit 1
+  delegate_to: localhost
+  register: modules_parent_and_dir
+
+- name: find parent directory and path of module_utils
+  shell: |
+    set -euxo pipefail
+    for dir in {{ module_utils_search_path | join(" ") }}; do
+      if [ -d "$dir/network_lsr" ]; then
+        readlink -f "$(dirname "$dir")"
+        basename "$dir"
+        exit 0
+      fi
+    done
+    for dir in {{ collection_paths | join(" ") }}; do
+      cd "$dir"
+      for subdir in ansible_collections/*/*/plugins/module_utils; do
+        if [ -d "$subdir/network_lsr" ]; then
+          echo "$dir"
+          echo "$subdir"
+          exit 0
+        fi
+      done
+    done
+    echo network_lsr not found
+    exit 1
+  delegate_to: localhost
+  register: module_utils_parent_and_dir
