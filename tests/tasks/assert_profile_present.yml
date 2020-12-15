@@ -3,5 +3,5 @@
 - include: get_profile_stat.yml
 - name: "assert that profile '{{ profile }}' is present"
   assert:
-    that: profile_stat.stat.exists
-    msg: "profile {{ profile_path }} does not exist"
+    that: lsr_net_profile_exists
+    msg: "profile {{ profile }} does not exist"
