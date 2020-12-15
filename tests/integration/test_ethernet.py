@@ -122,4 +122,7 @@ def test_static_ip_with_ethernet(testnic1, provider, network_lsr_nm_mock):
     ]
     _configure_network(connections, provider)
     assert ip_address in _get_ip_addresses(testnic1)
-    assert os.path.exists("/etc/sysconfig/network-scripts/ifcfg-" + testnic1)
+    if provider == "initscripts":
+        assert os.path.exists("/etc/sysconfig/network-scripts/ifcfg-" + testnic1)
+    else:
+        subprocess.check_call(["nmcli", "connection", "show", testnic1])

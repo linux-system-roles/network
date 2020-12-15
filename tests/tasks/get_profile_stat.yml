@@ -1,26 +1,24 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- name: "Get stat for network-scripts"
-  stat:
-    get_attributes: false
-    get_checksum: false
-    get_mime: false
-    path: "/etc/sysconfig/network-scripts"
-  register: network_scripts_stat
-- name: Set profile path (network-scripts)
-  set_fact:
-    profile_path: /etc/sysconfig/network-scripts/ifcfg-{{ profile }}
-  when:
-    - network_scripts_stat.stat.exists
-- name: Set profile path (NetworkManager system-connections)
-  set_fact:
-    profile_path: /etc/NetworkManager/system-connections/{{ profile }}
-  when:
-    - not network_scripts_stat.stat.exists
+- set_fact: lsr_net_profile_exists=false
+
 - name: stat profile file
   stat:
     get_attributes: false
     get_checksum: false
     get_mime: false
-    path: "{{ profile_path }}"
+    path: /etc/sysconfig/network-scripts/ifcfg-{{ profile }}
   register: profile_stat
+
+- set_fact: lsr_net_profile_exists=true
+  when: profile_stat.stat.exists
+
+# When certain profile is marked as absent but still up, the `nmcli connection`
+# still show it with FILENAME starting with /run. Only consider profile exists
+# when its FILENAME is in /etc folder
+- shell: nmcli -f NAME,FILENAME connection show |grep {{ profile }} | grep /etc
+  register: nm_profile_exists
+  ignore_errors: yes
+
+- set_fact: lsr_net_profile_exists=true
+  when: nm_profile_exists.rc == 0
