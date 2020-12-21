@@ -9,11 +9,6 @@
         - rsync
 
   tasks:
-    - name: Install EPEL for RHEL and CentOS
-      # yamllint disable-line rule:line-length
-      command: "yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"
-      when: ansible_distribution in ["CentOS", "RedHat"]
-
     - name: Install rpm dependencies
       package:
         state: present
