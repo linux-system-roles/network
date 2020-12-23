@@ -36,7 +36,7 @@ jobs:
           toxenvs="py${toxpyver}"
           case "$toxpyver" in
           27) toxenvs="${toxenvs},coveralls,flake8,pylint" ;;
-          36) toxenvs="${toxenvs},coveralls,black,yamllint,collection" ;;
+          36) toxenvs="${toxenvs},coveralls,black,yamllint,ansible-lint,collection" ;;
           37) toxenvs="${toxenvs},coveralls" ;;
           38) toxenvs="${toxenvs},coveralls" ;;
           esac
