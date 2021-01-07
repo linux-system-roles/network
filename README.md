@@ -327,11 +327,12 @@ The IP configuration supports the following options:
     [`ipv4.dhcp-send-hostname`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv4.dhcp-send-hostname)
     property.
 
-* `dns` and `dns_search`
+* `dns`, `dns_search` and `dns_options`
 
     Manual DNS configuration can be specified via a list of addresses
-    given in the `dns` option and a list of domains to search given in the
-    `dns_search` option.
+    given in the `dns` option, a list of domains to search given in the
+    `dns_search` option and a list of dns options to set given in the
+    `dns_options`.
 
 
 * `route_metric4` and `route_metric6`
@@ -717,6 +718,9 @@ network_connections:
       dns_search:
         - example.com
         - subdomain.example.com
+      dns_options:
+        - rotate
+        - timeout:1
 
       route_metric6: -1
       auto6: no

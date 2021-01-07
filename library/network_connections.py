@@ -993,7 +993,9 @@ class NMUtil:
                     s_ip4.add_dns(d["address"])
             for s in ip["dns_search"]:
                 s_ip4.add_dns_search(s)
-
+            s_ip4.clear_dns_options(True)
+            for s in ip["dns_options"]:
+                s_ip4.add_dns_option(s)
             if ip["auto6"]:
                 s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, "auto")
             elif addrs6:
