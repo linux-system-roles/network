@@ -170,6 +170,7 @@ class TestValidator(unittest.TestCase):
                 "route_metric6": None,
                 "dhcp4_send_hostname": None,
                 "dns": [],
+                "dns_options": [],
                 "dns_search": [],
             },
             "mac": None,
@@ -461,6 +462,7 @@ class TestValidator(unittest.TestCase):
                         "route_metric6": None,
                         "dhcp4_send_hostname": None,
                         "dns": [],
+                        "dns_options": [],
                         "dns_search": [],
                     },
                     "mac": None,
@@ -511,6 +513,7 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                         "route": [],
                         "dns": [],
+                        "dns_options": [],
                         "dns_search": [],
                         "route_metric6": None,
                         "dhcp4_send_hostname": None,
@@ -557,6 +560,7 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                         "route": [],
                         "dns": [],
+                        "dns_options": [],
                         "dns_search": [],
                         "route_metric6": None,
                         "dhcp4_send_hostname": None,
@@ -633,6 +637,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4": False,
                         "route_metric6": None,
                         "route_metric4": None,
+                        "dns_options": [],
                         "dns_search": [],
                         "dhcp4_send_hostname": None,
                         "gateway6": None,
@@ -696,6 +701,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4": False,
                         "route_metric6": None,
                         "route_metric4": None,
+                        "dns_options": [],
                         "dns_search": [],
                         "dhcp4_send_hostname": None,
                         "gateway6": None,
@@ -772,6 +778,7 @@ class TestValidator(unittest.TestCase):
                         "route": [],
                         "route_metric6": None,
                         "route_metric4": None,
+                        "dns_options": [],
                         "dns_search": [],
                         "dhcp4_send_hostname": None,
                         "gateway6": None,
@@ -805,6 +812,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4": False,
                         "route_metric6": None,
                         "route_metric4": None,
+                        "dns_options": [],
                         "dns_search": [],
                         "dhcp4_send_hostname": None,
                         "gateway6": None,
@@ -913,6 +921,7 @@ class TestValidator(unittest.TestCase):
                         "route": [],
                         "route_metric6": None,
                         "route_metric4": None,
+                        "dns_options": [],
                         "dns_search": [],
                         "dhcp4_send_hostname": None,
                         "gateway6": None,
@@ -946,6 +955,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4": False,
                         "route_metric6": None,
                         "route_metric4": None,
+                        "dns_options": [],
                         "dns_search": [],
                         "dhcp4_send_hostname": None,
                         "gateway6": None,
@@ -1049,6 +1059,7 @@ class TestValidator(unittest.TestCase):
                         "route": [],
                         "route_metric6": None,
                         "route_metric4": None,
+                        "dns_options": [],
                         "dns_search": [],
                         "dhcp4_send_hostname": None,
                         "gateway6": None,
@@ -1081,6 +1092,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4": False,
                         "route_metric6": None,
                         "route_metric4": None,
+                        "dns_options": [],
                         "dns_search": [],
                         "dhcp4_send_hostname": None,
                         "gateway6": None,
@@ -1133,6 +1145,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4": False,
                         "route_metric6": None,
                         "route_metric4": None,
+                        "dns_options": [],
                         "dns_search": [],
                         "dhcp4_send_hostname": None,
                         "gateway6": None,
@@ -1237,6 +1250,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4": False,
                         "dhcp4_send_hostname": None,
                         "dns": [],
+                        "dns_options": [],
                         "dns_search": [],
                         "gateway4": None,
                         "gateway6": None,
@@ -1275,6 +1289,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4": True,
                         "dhcp4_send_hostname": None,
                         "dns": [],
+                        "dns_options": [],
                         "dns_search": [],
                         "gateway4": None,
                         "gateway6": None,
@@ -1335,6 +1350,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4": True,
                         "route_metric6": None,
                         "route_metric4": None,
+                        "dns_options": [],
                         "dns_search": [],
                         "dhcp4_send_hostname": None,
                         "gateway6": None,
@@ -1382,6 +1398,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4": True,
                         "route_metric6": None,
                         "route_metric4": None,
+                        "dns_options": [],
                         "dns_search": [],
                         "dhcp4_send_hostname": None,
                         "gateway6": None,
@@ -1448,6 +1465,7 @@ class TestValidator(unittest.TestCase):
                         "route_metric4": None,
                         "route_metric6": None,
                         "dns": [],
+                        "dns_options": [],
                         "dns_search": [],
                     },
                     "mac": "aa:bb:cc:dd:ee:ff",
@@ -1491,6 +1509,7 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                         "route": [],
                         "dns": [],
+                        "dns_options": [],
                         "dns_search": [],
                         "route_metric6": None,
                         "dhcp4_send_hostname": None,
@@ -1559,6 +1578,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4": True,
                         "dhcp4_send_hostname": None,
                         "dns": [],
+                        "dns_options": [],
                         "dns_search": [],
                         "gateway4": None,
                         "gateway6": None,
@@ -1597,6 +1617,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4_send_hostname": None,
                         "dhcp4": True,
                         "dns": [],
+                        "dns_options": [],
                         "dns_search": [],
                         "gateway4": None,
                         "gateway6": None,
@@ -1651,6 +1672,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4": True,
                         "dhcp4_send_hostname": None,
                         "dns": [],
+                        "dns_options": [],
                         "dns_search": [],
                         "gateway4": None,
                         "gateway6": None,
@@ -1722,6 +1744,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4": True,
                         "dhcp4_send_hostname": None,
                         "dns": [],
+                        "dns_options": [],
                         "dns_search": [],
                         "gateway4": None,
                         "gateway6": None,
@@ -1820,6 +1843,7 @@ class TestValidator(unittest.TestCase):
                             },
                         ],
                         "dns": [],
+                        "dns_options": [],
                         "dns_search": ["aa", "bb"],
                         "route_metric6": None,
                         "dhcp4_send_hostname": None,
@@ -1920,6 +1944,7 @@ class TestValidator(unittest.TestCase):
                             },
                         ],
                         "dns": [],
+                        "dns_options": [],
                         "dns_search": ["aa", "bb"],
                         "route_metric6": None,
                         "dhcp4_send_hostname": None,
@@ -2033,6 +2058,7 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                         "route": [],
                         "dns": [],
+                        "dns_options": [],
                         "dns_search": [],
                         "route_metric6": None,
                         "dhcp4_send_hostname": None,
@@ -2108,6 +2134,7 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                         "route": [],
                         "dns": [],
+                        "dns_options": [],
                         "dns_search": [],
                         "route_metric6": None,
                         "dhcp4_send_hostname": None,
@@ -2183,6 +2210,7 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                         "route": [],
                         "dns": [],
+                        "dns_options": [],
                         "dns_search": [],
                         "route_metric6": None,
                         "dhcp4_send_hostname": None,
@@ -2256,6 +2284,7 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                         "route": [],
                         "dns": [],
+                        "dns_options": [],
                         "dns_search": [],
                         "route_metric6": None,
                         "dhcp4_send_hostname": None,
@@ -2319,6 +2348,7 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                         "route": [],
                         "dns": [],
+                        "dns_options": [],
                         "dns_search": [],
                         "route_metric6": None,
                         "dhcp4_send_hostname": None,
@@ -3018,6 +3048,138 @@ class TestValidator(unittest.TestCase):
         self.assertValidationError(validator, input_connection)
         input_connection.update({"state": "absent"})
         self.assertValidationError(validator, input_connection)
+
+    def test_dns_options_argvalidator(self):
+        """
+        Test that argvalidator for validating dns_options value is correctly defined.
+        """
+        validator = network_lsr.argument_validator.ArgValidator_DictIP()
+
+        false_testcase_1 = {
+            "dns_options": ["attempts:01"],
+        }
+        false_testcase_2 = {
+            "dns_options": ["debug$"],
+        }
+        false_testcase_3 = {
+            "dns_options": ["edns00"],
+        }
+        false_testcase_4 = {
+            "dns_options": ["ndots:"],
+        }
+        false_testcase_5 = {
+            "dns_options": ["no-check-name"],
+        }
+        false_testcase_6 = {
+            "dns_options": ["no-rel0ad"],
+        }
+        false_testcase_7 = {
+            "dns_options": ["bugno-tld-query"],
+        }
+        false_testcase_8 = {
+            "dns_options": ["etator"],
+        }
+        false_testcase_9 = {
+            "dns_options": ["singlerequest"],
+        }
+        false_testcase_10 = {
+            "dns_options": ["single-request-reopen:2"],
+        }
+        false_testcase_11 = {
+            "dns_options": ["timeout"],
+        }
+        false_testcase_12 = {
+            "dns_options": ["*trust-ad*"],
+        }
+        false_testcase_13 = {
+            "dns_options": ["use1-vc2-use-vc"],
+        }
+
+        self.assertValidationError(validator, false_testcase_1)
+        self.assertValidationError(validator, false_testcase_2)
+        self.assertValidationError(validator, false_testcase_3)
+        self.assertValidationError(validator, false_testcase_4)
+        self.assertValidationError(validator, false_testcase_5)
+        self.assertValidationError(validator, false_testcase_6)
+        self.assertValidationError(validator, false_testcase_7)
+        self.assertValidationError(validator, false_testcase_8)
+        self.assertValidationError(validator, false_testcase_9)
+        self.assertValidationError(validator, false_testcase_10)
+        self.assertValidationError(validator, false_testcase_11)
+        self.assertValidationError(validator, false_testcase_12)
+        self.assertValidationError(validator, false_testcase_13)
+
+        true_testcase_1 = {
+            "dns_options": ["attempts:3"],
+        }
+        true_testcase_2 = {
+            "dns_options": ["debug"],
+        }
+        true_testcase_3 = {
+            "dns_options": ["ndots:3", "single-request-reopen"],
+        }
+        true_testcase_4 = {
+            "dns_options": ["ndots:2", "timeout:3"],
+        }
+        true_testcase_5 = {
+            "dns_options": ["no-check-names"],
+        }
+        true_testcase_6 = {
+            "dns_options": ["no-reload"],
+        }
+        true_testcase_7 = {
+            "dns_options": ["no-tld-query"],
+        }
+        true_testcase_8 = {
+            "dns_options": ["rotate"],
+        }
+        true_testcase_9 = {
+            "dns_options": ["single-request"],
+        }
+        true_testcase_10 = {
+            "dns_options": ["single-request-reopen"],
+        }
+        true_testcase_11 = {
+            "dns_options": ["trust-ad"],
+        }
+        true_testcase_12 = {
+            "dns_options": ["use-vc"],
+        }
+
+        self.assertEqual(
+            validator.validate(true_testcase_1)["dns_options"], ["attempts:3"]
+        )
+        self.assertEqual(validator.validate(true_testcase_2)["dns_options"], ["debug"])
+        self.assertEqual(
+            validator.validate(true_testcase_3)["dns_options"],
+            ["ndots:3", "single-request-reopen"],
+        )
+        self.assertEqual(
+            validator.validate(true_testcase_4)["dns_options"], ["ndots:2", "timeout:3"]
+        )
+        self.assertEqual(
+            validator.validate(true_testcase_5)["dns_options"], ["no-check-names"]
+        )
+        self.assertEqual(
+            validator.validate(true_testcase_6)["dns_options"], ["no-reload"]
+        )
+        self.assertEqual(
+            validator.validate(true_testcase_7)["dns_options"], ["no-tld-query"]
+        )
+        self.assertEqual(validator.validate(true_testcase_8)["dns_options"], ["rotate"])
+        self.assertEqual(
+            validator.validate(true_testcase_9)["dns_options"], ["single-request"]
+        )
+        self.assertEqual(
+            validator.validate(true_testcase_10)["dns_options"],
+            ["single-request-reopen"],
+        )
+        self.assertEqual(
+            validator.validate(true_testcase_11)["dns_options"], ["trust-ad"]
+        )
+        self.assertEqual(
+            validator.validate(true_testcase_12)["dns_options"], ["use-vc"]
+        )
 
 
 @my_test_skipIf(nmutil is None, "no support for NM (libnm via pygobject)")

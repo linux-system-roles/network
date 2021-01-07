@@ -4,6 +4,7 @@
 
 import posixpath
 import socket
+import re
 
 # pylint: disable=import-error, no-name-in-module
 from ansible.module_utils.network_lsr import MyError  # noqa:E501
@@ -171,10 +172,12 @@ class ArgValidatorStr(ArgValidator):
         allow_empty=False,
         min_length=None,
         max_length=None,
+        regex=None,
     ):
         ArgValidator.__init__(self, name, required, default_value)
         self.enum_values = enum_values
         self.allow_empty = allow_empty
+        self.regex = regex
 
         if max_length is not None:
             if not isinstance(max_length, int):
@@ -199,6 +202,12 @@ class ArgValidatorStr(ArgValidator):
                 name,
                 "is '%s' but must be one of '%s'"
                 % (value, "' '".join(sorted(self.enum_values))),
+            )
+        if self.regex is not None and not any(re.match(x, value) for x in self.regex):
+            raise ValidationError(
+                name,
+                "is '%s' which does not match the regex '%s'"
+                % (value, "' '".join(sorted(self.regex))),
             )
         if not self.allow_empty and not value:
             raise ValidationError(name, "cannot be empty")
@@ -517,6 +526,22 @@ class ArgValidatorIPRoute(ArgValidatorDict):
 
 
 class ArgValidator_DictIP(ArgValidatorDict):
+    REGEX_DNS_OPTIONS = [
+        r"^attempts:([1-9]\d*|0)$",
+        r"^debug$",
+        r"^edns0$",
+        r"^ndots:([1-9]\d*|0)$",
+        r"^no-check-names$",
+        r"^no-reload$",
+        r"^no-tld-query$",
+        r"^rotate$",
+        r"^single-request$",
+        r"^single-request-reopen$",
+        r"^timeout:([1-9]\d*|0)$",
+        r"^trust-ad$",
+        r"^use-vc$",
+    ]
+
     def __init__(self):
         ArgValidatorDict.__init__(
             self,
@@ -553,6 +578,13 @@ class ArgValidator_DictIP(ArgValidatorDict):
                     nested=ArgValidatorStr("dns_search[?]"),
                     default_value=list,
                 ),
+                ArgValidatorList(
+                    "dns_options",
+                    nested=ArgValidatorStr(
+                        "dns_options[?]", regex=ArgValidator_DictIP.REGEX_DNS_OPTIONS
+                    ),
+                    default_value=list,
+                ),
             ],
             default_value=lambda: {
                 "dhcp4": True,
@@ -568,6 +600,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 "rule_append_only": False,
                 "dns": [],
                 "dns_search": [],
+                "dns_options": [],
             },
         )
 
@@ -1706,4 +1739,13 @@ class ArgValidator_ListConnections(ArgValidatorList):
                     "Wireless WPA auth is not supported by initscripts. "
                     "Configure wireless connection in /etc/wpa_supplicant.conf "
                     "if you need to use initscripts.",
+                )
+
+        # initscripts does not support ip.dns_options, so raise errors when network
+        # provider is initscripts
+        if connection["ip"]["dns_options"]:
+            if mode == self.VALIDATE_ONE_MODE_INITSCRIPTS:
+                raise ValidationError.from_connection(
+                    idx,
+                    "ip.dns_options is not supported by initscripts.",
                 )
