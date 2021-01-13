@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+
+- name: Test configuring ethernet devices
+  hosts: all
+  vars:
+    type: veth
+    interface: ethtest0
+
+  tasks:
+    - name: "set type={{ type }} and interface={{ interface }}"
+      set_fact:
+        type: "{{ type }}"
+        interface: "{{ interface }}"
+    - include_tasks: tasks/show_interfaces.yml
+    - include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: present
+    - include_tasks: tasks/assert_device_present.yml
+
+    - import_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: "{{ interface }}"
+            interface_name: "{{ interface }}"
+            type: ethernet
+            ip:
+              ipv6_disabled: true
+
+    - name: Verify nmcli connection ipv6.method
+      shell: |
+        set -euxo pipefail
+        nmcli connection show {{ interface }} | grep ipv6.method
+      register: ipv6_method
+      ignore_errors: yes
+
+    - name: "Assert that ipv6.method disabled is configured correctly"
+      assert:
+        that:
+          - "'disabled' in ipv6_method.stdout"
+        msg: "ipv6.method disabled is configured incorrectly"
+
+- import_playbook: down_profile.yml
+  vars:
+    profile: "{{ interface }}"
+# FIXME: assert profile/device down
+- import_playbook: remove_profile.yml
+  vars:
+    profile: "{{ interface }}"
+# FIXME: assert profile away
+- name: Remove interfaces
+  hosts: all
+  tasks:
+    - include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: absent
+    - include_tasks: tasks/assert_device_absent.yml
+...

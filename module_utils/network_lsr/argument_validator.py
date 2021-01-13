@@ -555,6 +555,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
                     "route_metric4", val_min=-1, val_max=0xFFFFFFFF, default_value=None
                 ),
                 ArgValidatorBool("auto6", default_value=None),
+                ArgValidatorBool("ipv6_disabled", default_value=None),
                 ArgValidatorIP("gateway6", family=socket.AF_INET6),
                 ArgValidatorNum(
                     "route_metric6", val_min=-1, val_max=0xFFFFFFFF, default_value=None
@@ -593,6 +594,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 "gateway4": None,
                 "route_metric4": None,
                 "auto6": True,
+                "ipv6_disabled": False,
                 "gateway6": None,
                 "route_metric6": None,
                 "address": [],
@@ -606,14 +608,45 @@ class ArgValidator_DictIP(ArgValidatorDict):
         )
 
     def _validate_post(self, value, name, result):
+
+        has_ipv6_addresses = any(
+            [a for a in result["address"] if a["family"] == socket.AF_INET6]
+        )
+
+        if result["ipv6_disabled"] is True:
+            if result["auto6"] is True:
+                raise ValidationError(
+                    name, "'auto6' and 'ipv6_disabled' are mutually exclusive"
+                )
+            if has_ipv6_addresses:
+                raise ValidationError(
+                    name,
+                    "'ipv6_disabled' and static IPv6 addresses are mutually exclusive",
+                )
+            if result["gateway6"] is not None:
+                raise ValidationError(
+                    name, "'ipv6_disabled' and 'gateway6' are mutually exclusive"
+                )
+            if result["route_metric6"] is not None:
+                raise ValidationError(
+                    name, "'ipv6_disabled' and 'route_metric6' are mutually exclusive"
+                )
+        elif result["ipv6_disabled"] is None:
+            # "ipv6_disabled" is not explicitly set, we always set it to False.
+            # Either "auto6" is enabled or static addresses are set, then this
+            # is clearly correct.
+            # Even with "auto6:False" and no IPv6 addresses, we at least enable
+            # IPv6 link local addresses.
+            result["ipv6_disabled"] = False
+
         if result["dhcp4"] is None:
             result["dhcp4"] = result["dhcp4_send_hostname"] is not None or not any(
                 [a for a in result["address"] if a["family"] == socket.AF_INET]
             )
+
         if result["auto6"] is None:
-            result["auto6"] = not any(
-                [a for a in result["address"] if a["family"] == socket.AF_INET6]
-            )
+            result["auto6"] = not has_ipv6_addresses
+
         if result["dhcp4_send_hostname"] is not None:
             if not result["dhcp4"]:
                 raise ValidationError(
@@ -1760,4 +1793,12 @@ class ArgValidator_ListConnections(ArgValidatorList):
                 raise ValidationError.from_connection(
                     idx,
                     "ip.dns_options is not supported by initscripts.",
+                )
+        # initscripts does not support ip.ipv6_disabled, so raise errors when network
+        # provider is initscripts
+        if connection["ip"]["ipv6_disabled"]:
+            if mode == self.VALIDATE_ONE_MODE_INITSCRIPTS:
+                raise ValidationError.from_connection(
+                    idx,
+                    "ip.ipv6_disabled is not supported by initscripts.",
                 )

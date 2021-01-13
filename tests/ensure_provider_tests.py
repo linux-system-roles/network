@@ -65,6 +65,9 @@ NM_ONLY_TESTS = {
         MINIMUM_VERSION: "'1.20.0'",
         "comment": "# NetworkManager 1.20.0 introduced ethtool settings support",
     },
+    "playbooks/tests_ipv6_disabled.yml": {
+        EXTRA_RUN_CONDITION: "ansible_distribution_major_version == '8'",
+    },
     "playbooks/tests_provider.yml": {
         MINIMUM_VERSION: "'1.20.0'",
         "comment": "# NetworKmanager 1.20.0 added support for forgetting profiles",

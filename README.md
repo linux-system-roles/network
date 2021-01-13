@@ -311,13 +311,13 @@ The IP configuration supports the following options:
 
     Manual addressing can be specified via a list of addresses under the `address` option.
 
-* `dhcp4` and  `auto6`
+* `dhcp4`, `auto6`, and `ipv6_disabled`
 
     Also, manual addressing can be specified by setting either `dhcp4` or `auto6`.
     The `dhcp4` key is  for DHCPv4 and `auto6`  for  StateLess Address Auto Configuration
     (SLAAC). Note that the `dhcp4` and `auto6` keys can be omitted and the default key
-    depends on the presence of manual addresses.
-
+    depends on the presence of manual addresses. `ipv6_disabled` can be set to disable
+    ipv6 for the connection.
 
 * `dhcp4_send_hostname`
 
