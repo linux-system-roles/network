@@ -1000,12 +1000,21 @@ class NMUtil:
             s_ip4.clear_dns_options(True)
             for s in ip["dns_options"]:
                 s_ip4.add_dns_option(s)
-            if ip["auto6"]:
+
+            if ip["ipv6_disabled"]:
+                s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, "disabled")
+            elif ip["auto6"]:
                 s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, "auto")
             elif addrs6:
                 s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, "manual")
             else:
+                # we should not set "ipv6.method=ignore". "ignore" is a legacy mode
+                # and not really useful. Instead, we should set "link-local" here.
+                #
+                # But that fix is a change in behavior for the role, so it needs special
+                # care.
                 s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, "ignore")
+
             for a in addrs6:
                 s_ip6.add_address(
                     NM.IPAddress.new(a["family"], a["address"], a["prefix"])
