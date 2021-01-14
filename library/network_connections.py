@@ -1958,13 +1958,11 @@ class Cmd_nm(Cmd):
         self.validate_one_type = ArgValidator_ListConnections.VALIDATE_ONE_MODE_NM
         self._checkpoint = None
         # pylint: disable=import-error, no-name-in-module
-        from ansible.module_utils.network_lsr.nm import (  # noqa: E501
-            NetworkManagerProvider,
-        )
+        from ansible.module_utils.network_lsr.nm import provider  # noqa:E501
 
         # pylint: enable=import-error, no-name-in-module
 
-        self._nm_provider = NetworkManagerProvider()
+        self._nm_provider = provider.NetworkManagerProvider()
 
     @property
     def nmutil(self):
