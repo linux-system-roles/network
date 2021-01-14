@@ -3,10 +3,8 @@
 ---
 # set network provider and gather facts
 - hosts: all
-  name: Run playbook 'playbooks/tests_ethtool_features.yml' with nm as provider
+  name: Run playbook 'playbooks/tests_ethtool_coalesce.yml' with nm as provider
   tasks:
-    - include_tasks: tasks/el_repo_setup.yml
-
     - name: Set network provider to 'nm'
       set_fact:
         network_provider: nm
@@ -30,10 +28,14 @@
         - always
 
 
+# workaround for: https://github.com/ansible/ansible/issues/27973
+# There is no way in Ansible to abort a playbook hosts with specific OS
+# releases Therefore we include the playbook with the tests only if the hosts
+# would support it.
 # The test requires or should run with NetworkManager, therefore it cannot run
 # on RHEL/CentOS 6
-- import_playbook: playbooks/tests_ethtool_features.yml
+- import_playbook: playbooks/tests_ethtool_coalesce.yml
   when:
     - ansible_distribution_major_version != '6'
 
-    - NetworkManager_version.stdout is version('1.20.0', '>=')
+    - NetworkManager_version.stdout is version('1.25.1', '>=')

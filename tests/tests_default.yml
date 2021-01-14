@@ -5,6 +5,7 @@
   roles:
     - linux-system-roles.network
   tasks:
+    - include_tasks: tasks/el_repo_setup.yml
     - name: Test warning and info logs
       assert:
         that:

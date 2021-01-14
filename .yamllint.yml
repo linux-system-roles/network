@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 ---
-extends: .yamllint_defaults.yml
+extends: yamllint_defaults.yml
 # possible customizations over the base yamllint config
 # skip the yaml files in the /tests/ directory
 # NOTE: If you want to customize `ignore` you'll have to
@@ -15,3 +15,5 @@ extends: .yamllint_defaults.yml
 # have to copy all of the rules from the base config
 # rules:
 #   line-length: disable
+rules:
+  truthy: disable

@@ -3,15 +3,7 @@
 - hosts: all
   name: Setup for test running
   tasks:
-    - name: Install EPEL on enterprise Linux for python2-mock
-      # yamllint disable-line rule:line-length
-      command: yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
-      args:
-        warn: false
-        creates: /etc/yum.repos.d/epel.repo
-      when:
-        - ansible_distribution in ['RedHat', 'CentOS']
-        - ansible_distribution_major_version in ['6', '7']
+    - include_tasks: tasks/el_repo_setup.yml
 
     - name: Install dependencies
       package:

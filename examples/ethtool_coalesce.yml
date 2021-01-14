@@ -1,0 +1,38 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  tasks:
+    - include_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: "{{ network_interface_name1 }}"
+            state: up
+            type: ethernet
+            ip:
+              dhcp4: no
+              auto6: no
+            ethtool:
+              coalesce:
+                adaptive_rx: yes
+                adaptive_tx: no
+                pkt_rate_high: 128
+                pkt_rate_low: 128
+                rx_frames: 128
+                rx_frames_high: 128
+                rx_frames_irq: 128
+                rx_frames_low: 128
+                rx_usecs: 128
+                rx_usecs_high: 128
+                rx_usecs_irq: 128
+                rx_usecs_low: 128
+                sample_interval: 128
+                stats_block_usecs: 128
+                tx_frames: 128
+                tx_frames_high: 128
+                tx_frames_irq: 128
+                tx_frames_low: 128
+                tx_usecs: 128
+                tx_usecs_high: 128
+                tx_usecs_irq: 128
+                tx_usecs_low: 128

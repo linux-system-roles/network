@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- name: Empty play to gather facts
-  hosts: all
+- hosts: all
+  tasks:
+    - include_tasks: tasks/el_repo_setup.yml
 
 - import_playbook: playbooks/integration_pytest_python3.yml
   when: (ansible_distribution in ["CentOS", "RedHat"] and

@@ -5,6 +5,7 @@
 from ansible.module_utils.network_lsr.utils import Util  # noqa:E501
 
 ETHTOOL_FEATURE_PREFIX = "ETHTOOL_OPTNAME_FEATURE_"
+ETHTOOL_COALESCE_PREFIX = "ETHTOOL_OPTNAME_COALESCE_"
 
 
 def get_nm_ethtool_feature(name):
@@ -21,3 +22,19 @@ def get_nm_ethtool_feature(name):
 
     feature = getattr(Util.NM(), name, None)
     return feature
+
+
+def get_nm_ethtool_coalesce(name):
+    """
+    Translate ethtool coalesce into Network Manager name
+
+    :param name: Name of the coalesce
+    :type name: str
+    :returns: Name of the setting to be used by `NM.SettingEthtool.set_coalesce()`
+    :rtype: str
+    """
+
+    name = ETHTOOL_COALESCE_PREFIX + name.upper()
+
+    coalesce = getattr(Util.NM(), name, None)
+    return coalesce

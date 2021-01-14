@@ -5,25 +5,39 @@ dependency:
 driver:
   name: docker
 lint:
-  name: yamllint
-  options:
-    config-file: .yamllint.yml
+  enabled: false
 platforms:
   - name: centos-6
-    image: docker.io/linuxsystemroles/centos-6
-    privileged: true
-  - name: centos-7
-    image: docker.io/linuxsystemroles/centos-7
+    image: registry.centos.org/centos:6
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
     privileged: true
+    command: /sbin/init
+  - name: centos-7
+    image: registry.centos.org/centos/systemd:latest
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    privileged: true
+    command: /usr/lib/systemd/systemd --system
+  - name: centos-8
+    image: registry.centos.org/centos:8
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    privileged: true
+    command: /usr/lib/systemd/systemd --system
+    groups:
+      - py3
 provisioner:
   name: ansible
   log: true
   lint:
-    name: ansible-lint
+    enabled: false
   playbooks:
     converge: ../../tests/tests_default.yml
+  inventory:
+    group_vars:
+      py3:
+        ansible_python_interpreter: /usr/bin/python3
 scenario:
   name: default
   test_sequence:
@@ -33,7 +47,3 @@ scenario:
     - idempotence
     - check
     - destroy
-verifier:
-  name: testinfra
-  lint:
-    name: flake8

@@ -402,6 +402,24 @@ class IfcfgUtil:
                 " ".join(configured_features),
             )
 
+        ethtool_coalesce = connection["ethtool"]["coalesce"]
+        configured_coalesce = []
+        for coalesce, setting in ethtool_coalesce.items():
+            if setting is not None:
+                if isinstance(setting, bool):
+                    setting = int(setting)
+                configured_coalesce.append(
+                    "%s %s" % (coalesce.replace("_", "-"), setting)
+                )
+
+        if configured_coalesce:
+            if ethtool_options:
+                ethtool_options += " ; "
+            ethtool_options += "-C %s %s" % (
+                connection["interface_name"],
+                " ".join(configured_coalesce),
+            )
+
         if ethtool_options:
             ifcfg["ETHTOOL_OPTS"] = ethtool_options
 
@@ -821,6 +839,10 @@ class NMUtil:
                 s_bond.add_option("miimon", str(connection["bond"]["miimon"]))
         elif connection["type"] == "team":
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, NM.SETTING_TEAM_SETTING_NAME)
+        elif connection["type"] == "dummy":
+            s_con.set_property(
+                NM.SETTING_CONNECTION_TYPE, NM.SETTING_DUMMY_SETTING_NAME
+            )
         elif connection["type"] == "vlan":
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, NM.SETTING_VLAN_SETTING_NAME)
             s_vlan = self.connection_ensure_setting(con, NM.SettingVlan)
@@ -902,6 +924,15 @@ class NMUtil:
                     s_ethtool.set_feature(nm_feature, NM.Ternary.TRUE)
                 else:
                     s_ethtool.set_feature(nm_feature, NM.Ternary.FALSE)
+
+            for coalesce, setting in connection["ethtool"]["coalesce"].items():
+                nm_coalesce = nm_provider.get_nm_ethtool_coalesce(coalesce)
+
+                if nm_coalesce:
+                    if setting is None:
+                        s_ethtool.option_set(nm_coalesce, None)
+                    else:
+                        s_ethtool.option_set_uint32(nm_coalesce, int(setting))
 
         if connection["mtu"]:
             if connection["type"] == "infiniband":
@@ -2002,9 +2033,9 @@ class Cmd_nm(Cmd):
     def _check_ethtool_setting_support(self, idx, connection):
         """Check if SettingEthtool support is needed and available
 
-        If any feature is specified, the SettingEthtool setting needs to be
-        available. Also NM needs to know about each specified setting. Do not
-        check if NM knows about any defaults.
+        If any ethtool setting is specified, the SettingEthtool
+        setting needs to be available. Also NM needs to know about each
+        specified setting. Do not check if NM knows about any defaults
 
         """
         NM = Util.NM()
@@ -2015,20 +2046,30 @@ class Cmd_nm(Cmd):
         if "ethtool" not in connection:
             return
 
-        ethtool_features = connection["ethtool"]["features"]
-        specified_features = dict(
-            [(k, v) for k, v in ethtool_features.items() if v is not None]
-        )
+        ethtool_dict = {
+            "features": nm_provider.get_nm_ethtool_feature,
+            "coalesce": nm_provider.get_nm_ethtool_coalesce,
+        }
 
-        if specified_features and not hasattr(NM, "SettingEthtool"):
-            self.log_fatal(idx, "ethtool.features specified but not supported by NM")
+        for ethtool_key, nm_get_name_fcnt in ethtool_dict.items():
+            ethtool_settings = connection["ethtool"][ethtool_key]
+            specified = dict(
+                [(k, v) for k, v in ethtool_settings.items() if v is not None]
+            )
 
-        for feature, setting in specified_features.items():
-            nm_feature = nm_provider.get_nm_ethtool_feature(feature)
-            if not nm_feature:
+            if specified and not hasattr(NM, "SettingEthtool"):
                 self.log_fatal(
-                    idx, "ethtool feature %s specified but not support by NM" % feature
+                    idx, "ethtool.%s specified but not supported by NM", specified
                 )
+
+            for option, _ in specified.items():
+                nm_name = nm_get_name_fcnt(option)
+                if not nm_name:
+                    self.log_fatal(
+                        idx,
+                        "ethtool %s setting %s specified "
+                        "but not supported by NM" % (ethtool_key, option),
+                    )
 
     def run_action_absent(self, idx):
         seen = set()

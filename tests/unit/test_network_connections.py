@@ -124,7 +124,36 @@ ETHTOOL_FEATURES_DEFAULTS = {
     "txvlan": None,
 }
 
-ETHTOOL_DEFAULTS = {"features": ETHTOOL_FEATURES_DEFAULTS}
+
+ETHTOOL_COALESCE_DEFAULTS = {
+    "adaptive_rx": None,
+    "adaptive_tx": None,
+    "pkt_rate_high": None,
+    "pkt_rate_low": None,
+    "rx_frames": None,
+    "rx_frames_high": None,
+    "rx_frames_irq": None,
+    "rx_frames_low": None,
+    "rx_usecs": None,
+    "rx_usecs_high": None,
+    "rx_usecs_irq": None,
+    "rx_usecs_low": None,
+    "sample_interval": None,
+    "stats_block_usecs": None,
+    "tx_frames": None,
+    "tx_frames_high": None,
+    "tx_frames_irq": None,
+    "tx_frames_low": None,
+    "tx_usecs": None,
+    "tx_usecs_high": None,
+    "tx_usecs_irq": None,
+    "tx_usecs_low": None,
+}
+
+ETHTOOL_DEFAULTS = {
+    "features": ETHTOOL_FEATURES_DEFAULTS,
+    "coalesce": ETHTOOL_COALESCE_DEFAULTS,
+}
 
 ETHERNET_DEFAULTS = {"autoneg": None, "duplex": None, "speed": 0}
 
@@ -2912,18 +2941,20 @@ class TestValidator(unittest.TestCase):
             },
         )
 
-    def _test_ethtool_changes(self, input_features, expected_features):
+    def _test_ethtool_changes(self, input_ethtool, expected_ethtool):
         """
         When passing a dictionary 'input_features' with each feature and their
         value to change, and a dictionary 'expected_features' with the expected
         result in the configuration, the expected and resulting connection are
         created and validated.
         """
-        custom_ethtool_features = copy.deepcopy(ETHTOOL_FEATURES_DEFAULTS)
-        custom_ethtool_features.update(expected_features)
-        expected_ethtool = {"features": custom_ethtool_features}
+        expected_ethtool_full = copy.deepcopy(ETHTOOL_DEFAULTS)
+        for key in list(expected_ethtool_full):
+            if key in expected_ethtool:
+                expected_ethtool_full[key].update(expected_ethtool[key])
+
         input_connection = {
-            "ethtool": {"features": input_features},
+            "ethtool": input_ethtool,
             "name": "5",
             "persistent_state": "present",
             "type": "ethernet",
@@ -2931,7 +2962,7 @@ class TestValidator(unittest.TestCase):
 
         expected_connection = {
             "actions": ["present"],
-            "ethtool": expected_ethtool,
+            "ethtool": expected_ethtool_full,
             "interface_name": "5",
             "persistent_state": "present",
             "state": None,
@@ -2944,17 +2975,17 @@ class TestValidator(unittest.TestCase):
         When passing the name of an non-deprecated ethtool feature, their
         current version is updated.
         """
-        input_features = {"tx_tcp_segmentation": "yes"}
-        expected_feature_changes = {"tx_tcp_segmentation": True}
-        self._test_ethtool_changes(input_features, expected_feature_changes)
+        input_ethtool = {"features": {"tx_tcp_segmentation": "yes"}}
+        expected_ethtool = {"features": {"tx_tcp_segmentation": True}}
+        self._test_ethtool_changes(input_ethtool, expected_ethtool)
 
     def test_set_deprecated_ethtool_feature(self):
         """
         When passing a deprecated name, their current version is updated.
         """
-        input_features = {"tx-tcp-segmentation": "yes"}
-        expected_feature_changes = {"tx_tcp_segmentation": True}
-        self._test_ethtool_changes(input_features, expected_feature_changes)
+        input_ethtool = {"features": {"esp-hw-offload": "yes"}}
+        expected_ethtool = {"features": {"esp_hw_offload": True}}
+        self._test_ethtool_changes(input_ethtool, expected_ethtool)
 
     def test_invalid_ethtool_settings(self):
         """
