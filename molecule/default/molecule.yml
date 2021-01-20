@@ -25,8 +25,6 @@ platforms:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
     privileged: true
     command: /usr/lib/systemd/systemd --system
-    groups:
-      - py3
 provisioner:
   name: ansible
   log: true
@@ -34,10 +32,6 @@ provisioner:
     enabled: false
   playbooks:
     converge: ../../tests/tests_default.yml
-  inventory:
-    group_vars:
-      py3:
-        ansible_python_interpreter: /usr/bin/python3
 scenario:
   name: default
   test_sequence:
