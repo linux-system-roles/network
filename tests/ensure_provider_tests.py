@@ -88,6 +88,12 @@ NM_ONLY_TESTS = {
         EXTRA_RUN_CONDITION: "ansible_distribution_major_version == '7'",
     },
     "playbooks/tests_wireless_plugin_installation.yml": {},
+    "playbooks/tests_wireless_wpa3_sae.yml": {
+        "comment": "# SAE has not been exposed via D-Bus on RHEL 7(dist-tag) and \
+failed in setting up mock wifi on RHEL 8",
+        EXTRA_RUN_CONDITION: "ansible_distribution_major_version != '7' and \
+ansible_distribution != 'RedHat'",
+    },
 }
 
 IGNORE = [
