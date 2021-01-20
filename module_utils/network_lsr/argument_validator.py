@@ -1218,9 +1218,10 @@ class ArgValidator_Dict802_1X(ArgValidatorDict):
 class ArgValidator_DictWireless(ArgValidatorDict):
 
     VALID_KEY_MGMT = [
-        "wpa-psk",
-        "wpa-eap",
         "owe",
+        "sae",
+        "wpa-eap",
+        "wpa-psk",
     ]
 
     def __init__(self):
@@ -1238,17 +1239,19 @@ class ArgValidator_DictWireless(ArgValidatorDict):
         )
 
     def _validate_post(self, value, name, result):
-        if result["key_mgmt"] == "wpa-psk":
+        if result["key_mgmt"] == "wpa-psk" or result["key_mgmt"] == "sae":
             if result["password"] is None:
                 raise ValidationError(
                     name,
-                    "must supply a password if using 'wpa-psk' key management",
+                    "must supply a password if using {0} key management".format(
+                        result["key_mgmt"]
+                    ),
                 )
         else:
             if result["password"] is not None:
                 raise ValidationError(
                     name,
-                    "password only allowed if using 'wpa-psk' key management",
+                    "password only allowed if using 'wpa-psk' or 'sae' key management",
                 )
 
         return result

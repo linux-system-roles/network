@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    interface: wlan0
+  tasks:
+    - name: "INIT: wireless tests"
+      include_tasks: tasks/setup_mock_wifi_wpa3_sae.yml
+      when: ansible_distribution in ['CentOS', 'Fedora']
+
+    - name: "TEST: wireless connection with WPA3 Personal"
+      import_role:
+        name: linux-system-roles.network
+      vars:
+        network_allow_restart: true
+        network_connections:
+          - name: "{{ interface }}"
+            # set `state: down` on RHEL 8 since we failed in setting up mock
+            # wifi on RHEL 8
+            state: "{{ 'down' if ansible_distribution == 'RedHat' else 'up' }}"
+            type: wireless
+            ip:
+              address:
+                - 203.0.113.2/24
+              dhcp4: "no"
+              auto6: "no"
+            wireless:
+              ssid: "hostapd-sae"
+              key_mgmt: "sae"
+              password: "p@55w0rD"
+
+    - name: Verify wireless profile KEY_MGMT entry
+      shell: |
+        set -euxo pipefail
+        nmcli c show {{ interface }} | grep 802-11-wireless-security.key-mgmt
+      register: key_mgmt
+      ignore_errors: yes
+      changed_when: false
+
+    - name: "Assert that WPA3 Personal is configured correctly"
+      assert:
+        that:
+          - "'sae' in key_mgmt.stdout"
+        msg: "WPA3 Personal is configured incorrectly"

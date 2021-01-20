@@ -95,6 +95,12 @@ RHEL 7(dist-tag). Failed in setting up mock wifi on RHEL 8",
 ansible_distribution == 'CentOS' or\n     ansible_distribution_major_version > '32' \
 and ansible_distribution == 'Fedora'",
     },
+    "playbooks/tests_wireless_wpa3_sae.yml": {
+        "comment": "# SAE has not been supported by NetworkManager 1.18.8 on \
+RHEL 7. Failed in setting up mock wifi on RHEL 8",
+        EXTRA_RUN_CONDITION: "ansible_distribution_major_version != '7' and \
+ansible_distribution != 'RedHat'",
+    },
 }
 # NM_CONDITIONAL_TESTS is used to store the test playbooks which are demanding for NM
 # minimum version or extra running condition, test playbooks in NM_CONDITIONAL_TESTS

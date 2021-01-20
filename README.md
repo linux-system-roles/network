@@ -262,7 +262,7 @@ the ansible role.
 #### `type: wireless`
 
 The `wireless` type supports WPA-PSK (password) authentication, WPA-EAP (802.1x)
-authentication, and Enhanced Open (OWE).
+authentication, WPA3-Personal SAE (password) authentication and Enhanced Open (OWE).
 
 `nm` (NetworkManager) is the only supported `network_provider` for this type.
 
@@ -276,10 +276,11 @@ The following options are supported:
 
     Any key from following key list:
     - `owe`
+    - `sae`
     - `wpa-eap`
     - `wpa-psk`
 
-- `password`: password for the network (required if `wpa-psk` is used)
+- `password`: password for the network (required if `wpa-psk` or `sae` is used)
 
 ### `autoconnect`
 
