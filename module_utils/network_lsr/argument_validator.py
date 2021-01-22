@@ -95,17 +95,69 @@ class ArgValidator:
             return self.default_value
 
     def validate(self, value):
+        """
+        Validate and normalize the input dictionary
+
+        This validate @value or raises a ValidationError() on error.
+        It also returns a normalized value, where the settings are
+        converted to appropriate types and default values set. You
+        should rely on the normalization to fill unspecified values
+        and resolve ambiguity.
+
+        You are implementing "types" of ArgValidator instances and
+        a major point of them is to implement a suitable validation and
+        normalization. The means for that is for subclasses to override
+        _validate_impl() and possibly _validate_post(). Some subclasses
+        support convenience arguments for simpler validation, like
+        ArgValidatorStr.enum_values or ArgValidatorNum.val_min.
+        Or ArgValidator.required which is honored by ArgValidatorDict
+        to determine whether a mandatory key is missing. Also,
+        ArgValidatorDict and ArgValidatorList have a nested parameter
+        which is an ArgValidator for the elements of the dictionary and list.
+        """
         return self._validate(value, self.name)
 
     def _validate(self, value, name):
+        """
+        The internal implementation for validate().
+
+        This is mostly called from internal code and by validate().
+        Usually you would not call this directly nor override it.
+        Instead, you would implement either _validate_impl() or
+        _validate_post().
+        """
         validated = self._validate_impl(value, name)
         return self._validate_post(value, name, validated)
 
     def _validate_impl(self, value, name):
+        """
+        Implementation of validation.
+
+        Subclasses must implement this validation function. It is
+        the main hook to implement validate(). On validation error
+        it must raise ValidationError() or otherwise return a pre-normalized
+        value that gets passed to _validate_post().
+        """
         raise NotImplementedError()
 
     # pylint: disable=unused-argument,no-self-use
     def _validate_post(self, value, name, result):
+        """
+        Post validation of the validated result.
+
+        This will be called with the result from _validate_impl().
+        By default it does nothing, but subclasses can override
+        this to perform additional validation. The use for this
+        hook is to split the validation in two steps. When validating
+        a dictionary of multiple keys, then _validate_impl() can
+        implement the basic pre-validation and pre-normalization of the individual
+        keys (which can be in any order). Afterwards, _validate_post()
+        can take a more holistic view and validate interdependencies
+        between keys and perform additional validation. For example,
+        _validate_impl() would validate that the keys are of the correct
+        basic type, and _validate_post() would validate that the values
+        don't conflict and possibly normalize derived default values.
+        """
         return result
 
 
