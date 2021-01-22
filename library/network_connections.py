@@ -51,6 +51,7 @@ PERSISTENT_STATE = "persistent_state"
 ABSENT_STATE = "absent"
 
 DEFAULT_ACTIVATION_TIMEOUT = 90
+DEFAULT_TIMEOUT = 10
 
 
 class CheckMode:
@@ -1148,75 +1149,6 @@ class NMUtil:
             )
         return True
 
-    def connection_delete(self, connection, timeout=10):
-
-        # Do nothing, if the connection is already gone
-        if connection not in self.connection_list():
-            return
-
-        if "update2" in dir(connection):
-            return self.volatilize_connection(connection, timeout)
-
-        delete_cb = Util.create_callback("delete_finish")
-
-        cancellable = Util.create_cancellable()
-        cb_args = {}
-        connection.delete_async(cancellable, delete_cb, cb_args)
-        if not Util.GMainLoop_run(timeout):
-            cancellable.cancel()
-            raise MyError("failure to delete connection: %s" % ("timeout"))
-        if not cb_args.get("success", False):
-            raise MyError(
-                "failure to delete connection: %s"
-                % (cb_args.get("error", "unknown error"))
-            )
-
-        # workaround libnm oddity. The connection may not yet be gone if the
-        # connection was active and is deactivating. Wait.
-        c_uuid = connection.get_uuid()
-        gone = self.wait_till_connection_is_gone(c_uuid)
-        if not gone:
-            raise MyError(
-                "connection %s was supposedly deleted successfully, but it's still here"
-                % (c_uuid)
-            )
-
-    def volatilize_connection(self, connection, timeout=10):
-        update2_cb = Util.create_callback("update2_finish")
-
-        cancellable = Util.create_cancellable()
-        cb_args = {}
-
-        connection.update2(
-            None,  # settings
-            Util.NM().SettingsUpdate2Flags.IN_MEMORY_ONLY
-            | Util.NM().SettingsUpdate2Flags.VOLATILE,  # flags
-            None,  # args
-            cancellable,
-            update2_cb,
-            cb_args,
-        )
-
-        if not Util.GMainLoop_run(timeout):
-            cancellable.cancel()
-            raise MyError("failure to volatilize connection: %s" % ("timeout"))
-
-        Util.GMainLoop_iterate_all()
-
-        # Do not check of success if the connection does not exist anymore This
-        # can happen if the connection was already volatile and set to down
-        # during the module call
-        if connection not in self.connection_list():
-            return
-
-        # update2_finish returns None on failure and a GLib.Variant of type
-        # a{sv} with the result otherwise (which can be empty)
-        if cb_args.get("success", None) is None:
-            raise MyError(
-                "failure to volatilize connection: %s: %r"
-                % (cb_args.get("error", "unknown error"), cb_args)
-            )
-
     def create_checkpoint(self, timeout):
         """ Create a new checkpoint """
         checkpoint = Util.call_async_method(
@@ -1246,25 +1178,6 @@ class NMUtil:
             [path],
             mainloop_timeout=DEFAULT_ACTIVATION_TIMEOUT,
         )
-
-    def wait_till_connection_is_gone(self, uuid, timeout=10):
-        """
-        Wait until a connection is gone or until the timeout elapsed
-
-        :param uuid: UUID of the connection that to wait for to be gone
-        :param timeout: Timeout in seconds to wait for
-        :returns: True when connection is gone, False when timeout elapsed
-        :rtype: bool
-        """
-
-        def _poll_timeout_cb(unused):
-            if not self.connection_list(uuid=uuid):
-                Util.GMainLoop().quit()
-
-        poll_timeout_id = Util.GLib().timeout_add(100, _poll_timeout_cb, None)
-        gone = Util.GMainLoop_run(timeout)
-        Util.GLib().source_remove(poll_timeout_id)
-        return gone
 
     def connection_activate(self, connection, timeout=15, wait_time=None):
 
@@ -2070,29 +1983,39 @@ class Cmd_nm(Cmd):
                     )
 
     def run_action_absent(self, idx):
-        seen = set()
         name = self.connections[idx]["name"]
-        black_list_names = None
-        if not name:
-            name = None
+        profile_uuids = set()
+
+        if name:
+            black_list_names = []
+        else:
+            # Delete all profiles except explicitly included
             black_list_names = ArgUtil.connection_get_non_absent_names(self.connections)
-        while True:
-            connections = self.nmutil.connection_list(
-                name=name, black_list_names=black_list_names, black_list=seen
+
+        for nm_profile in self._nm_provider.get_connections():
+            if name and nm_profile.get_id() != name:
+                continue
+            if nm_profile.get_id() not in black_list_names:
+                profile_uuids.add(nm_profile.get_uuid())
+
+        if not profile_uuids:
+            self.log_info(idx, "no connection matches '%s' to delete" % (name))
+            return
+
+        logger = logging.getLogger()
+        log_handler = NmLogHandler(self.log, idx)
+        logger.addHandler(log_handler)
+        timeout = self.connections[idx].get("wait")
+        changed = False
+        for profile_uuid in profile_uuids:
+            changed |= self._nm_provider.volatilize_connection_by_uuid(
+                profile_uuid,
+                DEFAULT_TIMEOUT if timeout is None else timeout,
+                self.check_mode != CheckMode.REAL_RUN,
             )
-            if not connections:
-                break
-            c = connections[-1]
-            seen.add(c)
-            self.log_info(idx, "delete connection %s, %s" % (c.get_id(), c.get_uuid()))
+        if changed:
             self.connections_data_set_changed(idx)
-            if self.check_mode == CheckMode.REAL_RUN:
-                try:
-                    self.nmutil.connection_delete(c)
-                except MyError as e:
-                    self.log_error(idx, "delete connection failed: %s" % (e))
-        if not seen:
-            self.log_info(idx, "no connection '%s'" % (name))
+        logger.removeHandler(log_handler)
 
     def run_action_present(self, idx):
         connection = self.connections[idx]
@@ -2163,30 +2086,27 @@ class Cmd_nm(Cmd):
                     "NetworkManager. Please update NetworkManager or use "
                     "ieee802_1x.ca_cert.",
                 )
-
-        seen = set()
         if con_cur is not None:
-            seen.add(con_cur)
+            self._remove_duplicate_profile(idx, con_cur, connection.get("timeout"))
 
-        while True:
-            connections = self.nmutil.connection_list(
-                name=connection["name"],
-                black_list=seen,
-                black_list_uuids=[connection["nm.uuid"]],
-            )
-            if not connections:
-                break
-            c = connections[-1]
-            self.log_info(
-                idx, "delete duplicate connection %s, %s" % (c.get_id(), c.get_uuid())
-            )
-            self.connections_data_set_changed(idx)
-            if self.check_mode == CheckMode.REAL_RUN:
-                try:
-                    self.nmutil.connection_delete(c)
-                except MyError as e:
-                    self.log_error(idx, "delete duplicate connection failed: %s" % (e))
-            seen.add(c)
+    def _remove_duplicate_profile(self, idx, cur_nm_profile, timeout):
+        logger = logging.getLogger()
+        log_handler = NmLogHandler(self.log, idx)
+        logger.addHandler(log_handler)
+
+        for nm_profile in self._nm_provider.get_connections():
+            if (
+                nm_profile.get_id() == cur_nm_profile.get_id()
+                and nm_profile.get_uuid() != cur_nm_profile.get_uuid()
+            ):
+                if self.check_mode == CheckMode.REAL_RUN:
+                    self._nm_provider.volatilize_connection_by_uuid(
+                        uuid=nm_profile.get_uuid(),
+                        timeout=(DEFAULT_TIMEOUT if timeout is None else timeout),
+                        check_mode=True,
+                    )
+                self.connections_data_set_changed(idx)
+        logger.removeHandler(log_handler)
 
     def run_action_up(self, idx):
         connection = self.connections[idx]
