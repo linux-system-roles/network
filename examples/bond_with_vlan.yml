@@ -16,8 +16,8 @@
           mode: active-backup
           miimon: 110
 
-      # enslave an ethernet to the bond
-      - name: prod2-slave1
+      # set an ethernet as port to the bond
+      - name: prod2-port1
         state: up
         type: ethernet
         interface_name: "{{ network_interface_name2 }}"

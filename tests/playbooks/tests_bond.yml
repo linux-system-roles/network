@@ -4,9 +4,9 @@
   vars:
     controller_profile: bond0
     controller_device: nm-bond
-    slave1_profile: bond0.0
+    port1_profile: bond0.0
     dhcp_interface1: test1
-    slave2_profile: bond0.1
+    port2_profile: bond0.1
     dhcp_interface2: test2
   tasks:
     - name: "INIT Prepare setup"
@@ -20,7 +20,7 @@
       vars:
         interface: "{{ dhcp_interface2 }}"
     - block:
-        - name: "TEST Add Bond with 2 slaves"
+        - name: "TEST Add Bond with 2 ports"
           debug:
             msg: "##################################################"
         - import_role:
@@ -36,13 +36,13 @@
                   mode: active-backup
                   miimon: 110
               # add an ethernet to the bond
-              - name: "{{ slave1_profile }}"
+              - name: "{{ port1_profile }}"
                 state: up
                 type: ethernet
                 interface_name: "{{ dhcp_interface1 }}"
                 controller: "{{ controller_profile }}"
               # add a second ethernet to the bond
-              - name: "{{ slave2_profile }}"
+              - name: "{{ port2_profile }}"
                 state: up
                 type: ethernet
                 interface_name: "{{ dhcp_interface2 }}"
@@ -55,8 +55,8 @@
             profile: "{{ item }}"
           loop:
             - "{{ controller_profile }}"
-            - "{{ slave1_profile }}"
-            - "{{ slave2_profile }}"
+            - "{{ port1_profile }}"
+            - "{{ port2_profile }}"
         - command: grep 'Polling Interval'
                    /proc/net/bonding/{{ controller_device }}
           name: "** TEST check polling interval"
@@ -80,10 +80,10 @@
                 name: linux-system-roles.network
               vars:
                 network_connections:
-                  - name: "{{ slave2_profile }}"
+                  - name: "{{ port2_profile }}"
                     persistent_state: absent
                     state: down
-                  - name: "{{ slave1_profile }}"
+                  - name: "{{ port1_profile }}"
                     persistent_state: absent
                     state: down
                   - name: "{{ controller_profile }}"

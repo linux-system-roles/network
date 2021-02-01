@@ -18,7 +18,7 @@ PRIORITIES = (
     "state",
     "persistent_state",
     "controller",
-    "slave_type",
+    "port_type",
     "parent",
     "ignore_errors",
     "force_state_change",
