@@ -210,7 +210,7 @@ Note that the `speed` and `duplex` link settings are required when autonegotiati
 
 The `bridge`, `bond`, `team` device types work similar. Note that `team` is not supported in RHEL6 kernels.
 
-For slaves, the `slave_type` and `controller` properties must be set. Note that slaves should not have `ip` settings.
+For ports, the `port_type` and `controller` properties must be set. Note that ports should not have `ip` settings.
 
 The `controller` refers to the `name` of a profile in the Ansible
 playbook. It is neither an interface-name nor a connection-id of
@@ -622,7 +622,7 @@ network_connections:
       auto6: no
 ```
 
-Setting `controller` and `slave_type`:
+Setting `controller` and `port_type`:
 
 ```yaml
 network_connections:
@@ -630,13 +630,13 @@ network_connections:
     type: bond
     interface_name: bond0
     controller: internal-br0
-    slave_type: bridge
+    port_type: bridge
 
   - name: br0-bond0-eth1
     type: ethernet
     interface_name: eth1
     controller: br0-bond0
-    slave_type: bond
+    port_type: bond
 ```
 
 Configuring VLANs:
@@ -809,7 +809,7 @@ components that rely on the ifcfg files and react on changes.
 
 The `initscripts` provider requires the different profiles to be in the right
 order when they depend on each other. For example the bonding controller device
-needs to be specified before the slave devices.
+needs to be specified before the port devices.
 
 When removing a profile for NetworkManager it also takes the connection
 down and possibly removes virtual interfaces. With the `initscripts` provider

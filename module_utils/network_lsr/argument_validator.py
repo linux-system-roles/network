@@ -1180,7 +1180,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
         "wireless",
         "dummy",
     ]
-    VALID_SLAVE_TYPES = ["bridge", "bond", "team"]
+    VALID_PORT_TYPES = ["bridge", "bond", "team"]
 
     def __init__(self):
         ArgValidatorDict.__init__(
@@ -1208,8 +1208,12 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ),
                 ArgValidatorBool("autoconnect", default_value=True),
                 ArgValidatorStr(
+                    "port_type",
+                    enum_values=ArgValidator_DictConnection.VALID_PORT_TYPES,
+                ),
+                ArgValidatorDeprecated(
                     "slave_type",
-                    enum_values=ArgValidator_DictConnection.VALID_SLAVE_TYPES,
+                    deprecated_by="port_type",
                 ),
                 ArgValidatorStr("controller"),
                 ArgValidatorDeprecated("master", deprecated_by="controller"),
@@ -1403,23 +1407,23 @@ class ArgValidator_DictConnection(ArgValidatorDict):
         if "type" in result:
 
             if "controller" in result:
-                if "slave_type" not in result:
-                    result["slave_type"] = None
+                if "port_type" not in result:
+                    result["port_type"] = None
                 if result["controller"] == result["name"]:
                     raise ValidationError(
                         name + ".controller", '"controller" cannot refer to itself'
                     )
             else:
-                if "slave_type" in result:
+                if "port_type" in result:
                     raise ValidationError(
-                        name + ".slave_type",
-                        "'slave_type' requires a 'controller' property",
+                        name + ".port_type",
+                        "'port_type' requires a 'controller' property",
                     )
 
             if "ip" in result:
                 if "controller" in result:
                     raise ValidationError(
-                        name + ".ip", 'a slave cannot have an "ip" property'
+                        name + ".ip", 'a port cannot have an "ip" property'
                     )
             else:
                 if "controller" not in result:
@@ -1428,7 +1432,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
             if "zone" in result:
                 if "controller" in result:
                     raise ValidationError(
-                        name + ".zone", '"zone" cannot be configured for slave types'
+                        name + ".zone", '"zone" cannot be configured for port types'
                     )
             else:
                 result["zone"] = None
@@ -1657,24 +1661,24 @@ class ArgValidator_ListConnections(ArgValidatorList):
                             "references non-existing 'controller' connection '%s'"
                             % (connection["controller"]),
                         )
-                    if c["type"] not in ArgValidator_DictConnection.VALID_SLAVE_TYPES:
+                    if c["type"] not in ArgValidator_DictConnection.VALID_PORT_TYPES:
                         raise ValidationError(
                             name + "[" + str(idx) + "].controller",
                             "references 'controller' connection '%s' which is "
                             "not a controller "
                             "type by '%s'" % (connection["controller"], c["type"]),
                         )
-                    if connection["slave_type"] is None:
-                        connection["slave_type"] = c["type"]
-                    elif connection["slave_type"] != c["type"]:
+                    if connection["port_type"] is None:
+                        connection["port_type"] = c["type"]
+                    elif connection["port_type"] != c["type"]:
                         raise ValidationError(
                             name + "[" + str(idx) + "].controller",
                             "references 'controller' connection '%s' which is "
-                            "of type '%s' instead of slave_type '%s'"
+                            "of type '%s' instead of port_type '%s'"
                             % (
                                 connection["controller"],
                                 c["type"],
-                                connection["slave_type"],
+                                connection["port_type"],
                             ),
                         )
                 if connection["parent"]:

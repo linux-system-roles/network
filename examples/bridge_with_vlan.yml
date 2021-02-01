@@ -13,13 +13,13 @@
           dhcp4: no
           auto6: no
 
-      # enslave an ethernet to the bridge
-      - name: prod2-slave1
+      # set an ethernet port to the bridge
+      - name: prod2-port1
         state: up
         type: ethernet
         interface_name: "{{ network_interface_name2 }}"
         controller: prod2
-        slave_type: bridge
+        port_type: bridge
 
       # on top of it, create a VLAN with ID 100 and static
       # addressing

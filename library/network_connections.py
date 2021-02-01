@@ -428,19 +428,19 @@ class IfcfgUtil:
             m = ArgUtil.connection_find_controller(
                 connection["controller"], connections, idx
             )
-            if connection["slave_type"] == "bridge":
+            if connection["port_type"] == "bridge":
                 ifcfg["BRIDGE"] = m
-            elif connection["slave_type"] == "bond":
+            elif connection["port_type"] == "bond":
                 ifcfg["MASTER"] = m
                 ifcfg["SLAVE"] = "yes"
-            elif connection["slave_type"] == "team":
+            elif connection["port_type"] == "team":
                 ifcfg["TEAM_MASTER"] = m
                 if "TYPE" in ifcfg:
                     del ifcfg["TYPE"]
                 if connection["type"] != "team":
                     ifcfg["DEVICETYPE"] = "TeamPort"
             else:
-                raise MyError("invalid slave_type '%s'" % (connection["slave_type"]))
+                raise MyError("invalid port_type '%s'" % (connection["port_type"]))
 
             if ip["route_append_only"] and content_current:
                 route4_file = content_current["route"]
@@ -949,7 +949,7 @@ class NMUtil:
 
         if connection["controller"] is not None:
             s_con.set_property(
-                NM.SETTING_CONNECTION_SLAVE_TYPE, connection["slave_type"]
+                NM.SETTING_CONNECTION_SLAVE_TYPE, connection["port_type"]
             )
             s_con.set_property(
                 NM.SETTING_CONNECTION_MASTER,
@@ -1267,7 +1267,7 @@ class NMUtil:
                 ):
                     # controller connections qualify as activated once they
                     # reach IP-Config state. That is because they may
-                    # wait for slave devices to attach
+                    # wait for port devices to attach
                     return True, None
                 # fall through
             elif ac_state == NM.ActiveConnectionState.ACTIVATED:
