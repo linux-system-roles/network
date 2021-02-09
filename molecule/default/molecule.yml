@@ -3,9 +3,7 @@
 dependency:
   name: galaxy
 driver:
-  name: docker
-lint:
-  enabled: false
+  name: ${LSR_MOLECULE_DRIVER:-docker}
 platforms:
   - name: centos-6
     image: registry.centos.org/centos:6
@@ -28,8 +26,6 @@ platforms:
 provisioner:
   name: ansible
   log: true
-  lint:
-    enabled: false
   playbooks:
     converge: ../../tests/tests_default.yml
 scenario:
