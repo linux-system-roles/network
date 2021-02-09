@@ -50,6 +50,7 @@
       fi
     done
     for dir in {{ collection_paths | join(" ") }}; do
+      if [ ! -d "$dir" ]; then continue; fi
       cd "$dir"
       for subdir in ansible_collections/*/*/plugins/modules; do
         if [ -f "$subdir/network_connections.py" ]; then
@@ -75,6 +76,7 @@
       fi
     done
     for dir in {{ collection_paths | join(" ") }}; do
+      if [ ! -d "$dir" ]; then continue; fi
       cd "$dir"
       for subdir in ansible_collections/*/*/plugins/module_utils; do
         if [ -d "$subdir/network_lsr" ]; then
