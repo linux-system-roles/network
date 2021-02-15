@@ -300,7 +300,7 @@ different or the profile may not be tied to an interface at all.
 
 The `zone` option sets the firewalld zone for the interface.
 
-Slaves to the bridge, bond or team devices cannot specify a zone.
+Ports to the bridge, bond or team devices cannot specify a zone.
 
 
 ### `ip`
@@ -367,7 +367,7 @@ The IP configuration supports the following options:
 
 **Note:** When `route_append_only` or `rule_append_only` is not specified, the `network` role deletes the current routes or routing rules.
 
-**Note:** Slaves to the bridge, bond or team devices cannot specify `ip` settings.
+**Note:** Ports to the bridge, bond or team devices cannot specify `ip` settings.
 
 ### `ethtool`
 
