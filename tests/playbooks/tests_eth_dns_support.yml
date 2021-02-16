@@ -1,21 +1,34 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
 - hosts: all
-  tasks:
-    - name: Connection 'eth0' was not exists yet
-      shell: nmcli connection show eth0
-      register: eth0_exists
-      ignore_errors: yes
 
-    - debug:
-        var: eth0_exists.stderr
+- name: Test configuring ethernet devices
+  hosts: all
+  vars:
+    type: veth
+    interface: ethtest0
+
+
+  tasks:
+    - name: "set type={{ type }} and interface={{ interface }}"
+      set_fact:
+        type: "{{ type }}"
+        interface: "{{ interface }}"
+    - include_tasks: tasks/show_interfaces.yml
+    - include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: present
+    - include_tasks: tasks/assert_device_present.yml
 
     - import_role:
         name: linux-system-roles.network
       vars:
         network_connections:
-          - name: eth0
+          - name: "{{ interface }}"
+            interface_name: "{{ interface }}"
+            state: up
             type: ethernet
+            autoconnect: yes
             ip:
               route_metric4: 100
               dhcp4: no
@@ -52,7 +65,9 @@
               rule_append_only: yes
 
     - name: Verify nmcli connection DNS entry
-      shell: nmcli connection show eth0 | grep ipv4.dns
+      shell: |
+        set -euxo pipefail
+        nmcli connection show {{ interface }} | grep ipv4.dns
       register: ipv4_dns
       ignore_errors: yes
 
@@ -76,4 +91,20 @@
           - "'rotate' in ipv4_dns.stdout"
           - "'timeout:1' in ipv4_dns.stdout"
         msg: "DNS options are configured incorrectly"
+
+- import_playbook: down_profile.yml
+  vars:
+    profile: "{{ interface }}"
+# FIXME: assert profile/device down
+- import_playbook: remove_profile.yml
+  vars:
+    profile: "{{ interface }}"
+# FIXME: assert profile away
+- name: Remove interfaces
+  hosts: all
+  tasks:
+    - include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: absent
+    - include_tasks: tasks/assert_device_absent.yml
 ...
