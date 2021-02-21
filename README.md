@@ -261,8 +261,8 @@ the ansible role.
 
 #### `type: wireless`
 
-The `wireless` type supports WPA-PSK (password) authentication and WPA-EAP (802.1x)
-authentication.
+The `wireless` type supports WPA-PSK (password) authentication, WPA-EAP (802.1x)
+authentication, and Enhanced Open (OWE).
 
 `nm` (NetworkManager) is the only supported `network_provider` for this type.
 
@@ -272,7 +272,13 @@ If WPA-EAP is used, ieee802_1x settings must be defined in the
 The following options are supported:
 
 - `ssid`: the SSID of the wireless network (required)
-- `key_mgmt`: `wpa-psk` or `wpa-eap` (required)
+- `key_mgmt` (required)
+
+    Any key from following key list:
+    - `owe`
+    - `wpa-eap`
+    - `wpa-psk`
+
 - `password`: password for the network (required if `wpa-psk` is used)
 
 ### `autoconnect`
@@ -843,6 +849,17 @@ network_connections:
       client_cert: /etc/pki/tls/client.pem
       ca_cert: /etc/pki/tls/cacert.pem
       domain_suffix_match: example.com
+```
+
+Configuring Enhanced Open(OWE):
+
+```yaml
+network_connections:
+  - name: wlan0
+    type: wireless
+    wireless:
+      ssid: "WIFI_SSID"
+      key_mgmt: "owe"
 ```
 
 ### Invalid and Wrong Configuration

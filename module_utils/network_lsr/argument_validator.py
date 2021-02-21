@@ -1194,6 +1194,7 @@ class ArgValidator_DictWireless(ArgValidatorDict):
     VALID_KEY_MGMT = [
         "wpa-psk",
         "wpa-eap",
+        "owe",
     ]
 
     def __init__(self):

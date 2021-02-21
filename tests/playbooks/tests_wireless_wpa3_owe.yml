@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    interface: wlan0
+  tasks:
+    - name: "INIT: wireless tests"
+      debug:
+        msg: "##################################################"
+    - include_tasks: tasks/setup_mock_wifi_wpa3_owe.yml
+    - block:
+        - name: "TEST: wireless connection with OWE"
+          debug:
+            msg: "##################################################"
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_allow_restart: true
+            network_connections:
+              - name: "{{ interface }}"
+                state: up
+                type: wireless
+                ip:
+                  address:
+                    - 203.0.113.2/24
+                  dhcp4: "no"
+                  auto6: "no"
+                wireless:
+                  ssid: "hostapd-owe"
+                  key_mgmt: "owe"
+
+    - name: "Verify connection profile"
+      shell:
+        nmcli c show {{ interface }} | grep 802-11-wireless-security.key-mgmt
+      register: key_mgmt
+      ignore_errors: yes
+      changed_when: false
+
+    - name: "Assert that OWE is configured correctly"
+      assert:
+        that:
+          - "'owe' in key_mgmt.stdout"
+        msg: "OWE is configured incorrectly"
