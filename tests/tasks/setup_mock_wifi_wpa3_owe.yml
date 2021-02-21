@@ -1,0 +1,57 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Install packages required to set up mock wifi network
+  package:
+    name:
+      - NetworkManager
+      - wpa_supplicant
+    state: present
+
+# Even though hostapd can be installed via EPEL 8, Opportunistic Wireless Encryption
+# (OWE) has not been enabled by default. To warrant the test support on RHEL(dist-tag),
+# we setup hostapd copr repo to enable OWE option.
+- name: install hostapd and mac80211_hwsim kernel module in CentOS 8
+  shell: |
+    dnf -y copr enable liangwen12year/hostapd-owe
+    dnf -y install hostapd
+    release=$(uname -r)
+    tmp="${release/-//}"
+    tmp="${tmp/.x//x}"
+    dnf -y install https://koji.mbox.centos.org/pkgs/packages/kernel/$tmp/kernel-core-$release.rpm
+    dnf -y install https://koji.mbox.centos.org/pkgs/packages/kernel/$tmp/kernel-modules-$release.rpm
+    dnf -y install https://koji.mbox.centos.org/pkgs/packages/kernel/$tmp/kernel-modules-internal-$release.rpm
+  when:
+    - ansible_distribution_major_version == '8'
+    - ansible_distribution == 'CentOS'
+
+- name: install hostapd in Fedora
+  shell: |
+    dnf -y copr enable liangwen12year/hostapd-owe
+    dnf -y install hostapd
+  when:
+    - ansible_distribution == 'Fedora'
+
+- name: install mac80211_hwsim kernel modules in Fedora
+  shell: |
+    dnf -y install koji
+    koji download-build --arch=$(uname -p) kernel-modules-internal-$(uname -r)
+    dnf -y install kernel-modules*.rpm
+  when:
+    - ansible_distribution == 'Fedora'
+
+- name: Create hostapd config
+  copy:
+    content: |
+      interface=wlan1
+      ssid=hostapd-owe
+      hw_mode=g
+      channel=6
+      wpa=2
+      wpa_key_mgmt=OWE
+      rsn_pairwise=CCMP
+      ieee80211w=2
+      nas_identifier=ap.example.com
+    dest: /etc/hostapd/wireless.conf
+    mode: "0644"
+
+- include_tasks: tasks/start_mock_wifi.yml

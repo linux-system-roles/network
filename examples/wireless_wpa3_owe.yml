@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    network_connections:
+      - name: wlan0
+        type: wireless
+        wireless:
+          ssid: "My Enhanced Open(OWE) Network"
+          key_mgmt: "owe"
+  roles:
+    - linux-system-roles.network
