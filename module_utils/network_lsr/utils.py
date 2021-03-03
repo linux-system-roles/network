@@ -1,19 +1,23 @@
-#!/usr/bin/python3 -tt
 # SPDX-License-Identifier: BSD-3-Clause
 # vim: fileencoding=utf8
+
+from __future__ import absolute_import, division, print_function
+
+__metaclass__ = type
 
 import socket
 import sys
 import uuid
 
 # pylint: disable=import-error, no-name-in-module
-from ansible.module_utils.network_lsr import MyError  # noqa:E501
+from ansible.module_utils.network_lsr.myerror import MyError  # noqa:E501
 
 
 class Util:
 
     PY3 = sys.version_info[0] == 3
 
+    # pylint: disable=undefined-variable
     STRING_TYPE = str if PY3 else basestring  # noqa:F821
 
     @staticmethod
@@ -241,7 +245,8 @@ class Util:
                     n = int(c, 16) * 16
                     i = 1
                 else:
-                    assert i == 1
+                    if not i == 1:
+                        raise AssertionError("i != 1 - value is {0}".format(i))
                     n = n + int(c, 16)
                     i = 2
                     b.append(n)

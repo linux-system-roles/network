@@ -1,13 +1,16 @@
-#!/usr/bin/python3 -tt
 # vim: fileencoding=utf8
 # SPDX-License-Identifier: BSD-3-Clause
+
+from __future__ import absolute_import, division, print_function
+
+__metaclass__ = type
 
 import posixpath
 import socket
 import re
 
 # pylint: disable=import-error, no-name-in-module
-from ansible.module_utils.network_lsr import MyError  # noqa:E501
+from ansible.module_utils.network_lsr.myerror import MyError  # noqa:E501
 from ansible.module_utils.network_lsr.utils import Util  # noqa:E501
 
 UINT32_MAX = 0xFFFFFFFF
@@ -72,7 +75,8 @@ class ArgUtil:
 
 class ValidationError(MyError):
     def __init__(self, name, message):
-        Exception.__init__(self, name + ": " + message)
+        # pylint: disable=non-parent-init-called
+        super(ValidationError, self).__init__(name + ": " + message)
         self.error_message = message
         self.name = name
 

@@ -1,5 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
+from __future__ import absolute_import, division, print_function
+
+__metaclass__ = type
+
 import array
 import struct
 import fcntl
@@ -46,7 +50,7 @@ def get_perm_addr(ifname):
             res = ecmd.tobytes()
         except AttributeError:  # tobytes() is not available in python2
             res = ecmd.tostring()
-        _, size, perm_addr = struct.unpack("II%is" % MAX_ADDR_LEN, res)
+        unused, size, perm_addr = struct.unpack("II%is" % MAX_ADDR_LEN, res)
         perm_addr = Util.mac_ntoa(perm_addr[:size])
     except IOError:
         perm_addr = None

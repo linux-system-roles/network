@@ -158,7 +158,7 @@ a consequence, `state: up` always changes the system.
 You can deactivate a connection profile, even if is currently not active. As a
 consequence, `state: down` always changes the system.
 
-Note that if the `state` option is unset, the connection profile’s runtime state will
+Note that if the `state` option is unset, the connection profile's runtime state will
 not be changed.
 
 ### `persistent_state`

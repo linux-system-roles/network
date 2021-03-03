@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 # SPDX-License-Identifier: BSD-3-Clause
 
 set -e
@@ -12,7 +12,7 @@ then
     exit 1
 fi
 
-rm -f remote-coveragedata* "${coveragedata}"
+rm -f remote-coveragedata* "${coverage_data}"
 
 
 # collect pytest coverage
