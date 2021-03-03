@@ -2,6 +2,10 @@
 
 # Handle NM.ActiveConnection
 
+from __future__ import absolute_import, division, print_function
+
+__metaclass__ = type
+
 import logging
 
 # Relative import is not support by ansible 2.8 yet
@@ -21,19 +25,15 @@ def deactivate_active_connection(nm_ac, timeout, check_mode):
         return False
     if not check_mode:
         main_loop = client.get_mainloop(timeout)
-        logging.debug(
-            "Deactivating {id} with timeout {timeout}".format(
-                id=nm_ac.get_id(), timeout=timeout
-            )
-        )
+        logging.debug("Deactivating %s with timeout %s", nm_ac.get_id(), timeout)
         user_data = main_loop
         handler_id = nm_ac.connect(
             NM_AC_STATE_CHANGED_SIGNAL, _nm_ac_state_change_callback, user_data
         )
         logging.debug(
-            "Registered {signal} on client.NM.ActiveConnection {id}".format(
-                signal=NM_AC_STATE_CHANGED_SIGNAL, id=nm_ac.get_id()
-            )
+            "Registered %s on client.NM.ActiveConnection %s",
+            NM_AC_STATE_CHANGED_SIGNAL,
+            nm_ac.get_id(),
         )
         if nm_ac.props.state != client.NM.ActiveConnectionState.DEACTIVATING:
             nm_client = client.get_client()
@@ -44,9 +44,7 @@ def deactivate_active_connection(nm_ac, timeout, check_mode):
                 _nm_ac_deactivate_call_back,
                 user_data,
             )
-            logging.debug(
-                "Deactivating client.NM.ActiveConnection {0}".format(nm_ac.get_id())
-            )
+            logging.debug("Deactivating client.NM.ActiveConnection %s", nm_ac.get_id())
         main_loop.run()
     return True
 
@@ -56,14 +54,13 @@ def _nm_ac_state_change_callback(nm_ac, state, reason, user_data):
     if main_loop.is_cancelled:
         return
     logging.debug(
-        "Got client.NM.ActiveConnection state change: {id}: {state} {reason}".format(
-            id=nm_ac.get_id(), state=state, reason=reason
-        )
+        "Got client.NM.ActiveConnection state change: %s: %s %s",
+        nm_ac.get_id(),
+        state,
+        reason,
     )
     if nm_ac.props.state == client.NM.ActiveConnectionState.DEACTIVATED:
-        logging.debug(
-            "client.NM.ActiveConnection {0} is deactivated".format(nm_ac.get_id())
-        )
+        logging.debug("client.NM.ActiveConnection %s is deactivated", nm_ac.get_id())
         main_loop.quit()
 
 
@@ -82,9 +79,7 @@ def _nm_ac_deactivate_call_back(nm_client, result, user_data):
             client.NM.ManagerError.quark(), client.NM.ManagerError.CONNECTIONNOTACTIVE
         ):
             logging.info(
-                "Connection is not active on {0}, no need to deactivate".format(
-                    nm_ac_id
-                )
+                "Connection is not active on %s, no need to deactivate", nm_ac_id
             )
             if nm_ac:
                 nm_ac.handler_disconnect(handler_id)

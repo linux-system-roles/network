@@ -25,10 +25,10 @@ with mock.patch.dict(
 class PytestRunEnvironment(nc.RunEnvironment):
     def log(self, connections, idx, severity, msg, **kwargs):
         if severity == nc.LogLevel.ERROR:
-            logging.error("Error: {}".format(connections[idx]))
+            logging.error("Error: %s", connections[idx])
             raise RuntimeError(msg)
         else:
-            logging.debug("Log: {}".format(connections[idx]))
+            logging.debug("Log: %s", connections[idx])
 
     def run_command(self, argv, encoding=None):
         command = subprocess.Popen(

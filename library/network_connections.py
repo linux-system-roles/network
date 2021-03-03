@@ -2,6 +2,30 @@
 # -*- coding: utf-8 -*-
 # SPDX-License-Identifier: BSD-3-Clause
 
+from __future__ import absolute_import, division, print_function
+
+__metaclass__ = type
+
+DOCUMENTATION = """
+---
+module: network_connections
+author: Thomas Haller (@thom311)
+short_description: module for network role to manage connection profiles
+requirements: [pygobject, dbus, NetworkManager]
+version_added: "2.0"
+description:
+  - "WARNING: Do not use this module directly! It is only for role internal use."
+  - |
+    Manage networking profiles (connections) for NetworkManager and
+    initscripts networking providers. Documentation needs to be written. Note
+    that the network_connections module tightly integrates with the network
+    role and currently it is not expected to use this module outside the role.
+    Thus, consult README.md for examples for the role.  The requirements are
+    only for the NetworkManager (nm) provider.
+options: {}
+"""
+
+
 import errno
 import functools
 import os
@@ -16,7 +40,7 @@ import logging
 # pylint: disable=import-error, no-name-in-module
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.network_lsr import ethtool  # noqa:E501
-from ansible.module_utils.network_lsr import MyError  # noqa:E501
+from ansible.module_utils.network_lsr.myerror import MyError  # noqa:E501
 
 from ansible.module_utils.network_lsr.argument_validator import (  # noqa:E501
     ArgUtil,
@@ -28,22 +52,6 @@ from ansible.module_utils.network_lsr.utils import Util  # noqa:E501
 from ansible.module_utils.network_lsr import nm_provider  # noqa:E501
 
 # pylint: enable=import-error, no-name-in-module
-
-
-DOCUMENTATION = """
----
-module: network_connections
-author: "Thomas Haller (thaller@redhat.com)"
-short_description: module for network role to manage connection profiles
-requirements: for 'nm' provider requires pygobject, dbus and NetworkManager.
-version_added: "2.0"
-description: Manage networking profiles (connections) for NetworkManager and
-  initscripts networking providers.
-options: Documentation needs to be written. Note that the network_connections
-  module tightly integrates with the network role and currently it is not
-  expected to use this module outside the role. Thus, consult README.md for
-  examples for the role.
-"""
 
 
 ###############################################################################
@@ -774,7 +782,7 @@ class NMUtil:
         if compare_flags is None:
             compare_flags = NM.SettingCompareFlags.IGNORE_TIMESTAMP
 
-        return not (not (con_a.compare(con_b, compare_flags)))
+        return con_a.compare(con_b, compare_flags)
 
     def connection_is_active(self, con):
         NM = Util.NM()
@@ -1401,7 +1409,7 @@ class RunEnvironment(object):
     def check_mode_set(self, check_mode, connections=None):
         c = self._check_mode
         self._check_mode = check_mode
-        assert (
+        if not (
             (c is None and check_mode in [CheckMode.PREPARE])
             or (
                 c == CheckMode.PREPARE
@@ -1410,7 +1418,12 @@ class RunEnvironment(object):
             or (c == CheckMode.PRE_RUN and check_mode in [CheckMode.REAL_RUN])
             or (c == CheckMode.REAL_RUN and check_mode in [CheckMode.DONE])
             or (c == CheckMode.DRY_RUN and check_mode in [CheckMode.DONE])
-        )
+        ):
+            raise AssertionError(
+                "updating check_mode value from {0} into {1} is incorrect".format(
+                    c, check_mode
+                )
+            )
         self._check_mode_changed(c, check_mode, connections)
 
 
@@ -1472,7 +1485,8 @@ class RunEnvironmentAnsible(RunEnvironment):
         warn_traceback=False,
         force_fail=False,
     ):
-        assert idx >= -1
+        if not idx >= -1:
+            raise AssertionError("idx {0} is less than -1".format(idx))
         self._log_idx += 1
         self.run_results[idx]["log"].append((severity, msg, self._log_idx))
         if severity == LogLevel.ERROR:
@@ -1609,14 +1623,15 @@ class Cmd(object):
     def connections_data(self):
         c = self._connections_data
         if c is None:
-            assert self.check_mode in [
+            if self.check_mode not in [
                 CheckMode.DRY_RUN,
                 CheckMode.PRE_RUN,
                 CheckMode.REAL_RUN,
-            ]
-            c = []
-            for _ in range(0, len(self.connections)):
-                c.append({"changed": False})
+            ]:
+                raise AssertionError(
+                    "invalid value {0} for self.check_mode".format(self.check_mode)
+                )
+            c = [{"changed": False}] * len(self.connections)
             self._connections_data = c
         return c
 
@@ -1625,11 +1640,14 @@ class Cmd(object):
             c["changed"] = False
 
     def connections_data_set_changed(self, idx, changed=True):
-        assert self._check_mode in [
+        if self._check_mode not in [
             CheckMode.PRE_RUN,
             CheckMode.DRY_RUN,
             CheckMode.REAL_RUN,
-        ]
+        ]:
+            raise AssertionError(
+                "invalid value {0} for self._check_mode".format(self._check_mode)
+            )
         if not changed:
             return
         self.connections_data[idx]["changed"] = changed
@@ -1699,7 +1717,10 @@ class Cmd(object):
         # modify the connection.
 
         con = self.connections[idx]
-        assert con["state"] in ["up", "down"]
+        if con["state"] not in ["up", "down"]:
+            raise AssertionError(
+                "connection state {0} not 'up' or 'down'".format(con["state"])
+            )
 
         # also check, if the current profile is 'up' with a 'type' (which
         # possibly modifies the connection as well)
@@ -1747,7 +1768,9 @@ class Cmd(object):
         elif self._check_mode != CheckMode.DONE:
             c = CheckMode.DONE
         else:
-            assert False
+            raise AssertionError(
+                "invalid value {0} for self._check_mode".format(self._check_mode)
+            )
         self._check_mode = c
         self.run_env.check_mode_set(c)
         return c
@@ -1913,7 +1936,12 @@ class Cmd_nm(Cmd):
 
             name = connection["name"]
             if not name:
-                assert connection["persistent_state"] == "absent"
+                if not connection["persistent_state"] == "absent":
+                    raise AssertionError(
+                        "persistent_state must be 'absent' not {0} when there is no connection 'name'".format(
+                            connection["persistent_state"]
+                        )
+                    )
                 continue
             if name in names:
                 exists = names[name]["nm.exists"]
@@ -1990,7 +2018,7 @@ class Cmd_nm(Cmd):
                     idx, "ethtool.%s specified but not supported by NM", specified
                 )
 
-            for option, _ in specified.items():
+            for option in specified.keys():
                 nm_name = nm_get_name_fcnt(option)
                 if not nm_name:
                     self.log_fatal(

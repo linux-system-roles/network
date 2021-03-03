@@ -1,6 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 """ Support for NetworkManager aka the NM provider """
 
+from __future__ import absolute_import, division, print_function
+
+__metaclass__ = type
+
 # pylint: disable=import-error, no-name-in-module
 from ansible.module_utils.network_lsr.utils import Util  # noqa:E501
 

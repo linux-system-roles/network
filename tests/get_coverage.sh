@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 # SPDX-License-Identifier: BSD-3-Clause
 
 if [ -n "${DEBUG}" ]
@@ -19,7 +19,6 @@ shift
 playbook="${1}"
 
 coverage_data="remote-coveragedata-${host}-${playbook%.yml}"
-coverage="/root/.local/bin/coverage"
 
 echo "Getting coverage for ${playbook} on ${host}" >&2
 
@@ -32,10 +31,15 @@ call_ansible() {
 }
 
 remote_coverage_dir="$(mktemp -d /tmp/remote_coverage-XXXXXX)"
+# we want to expand ${remote_coverage_dir} here, so tell SC to be quiet
+# https://github.com/koalaman/shellcheck/wiki/SC2064
+# shellcheck disable=SC2064
 trap "rm -rf '${remote_coverage_dir}'" EXIT
 ansible-playbook -i "${host}", get_coverage.yml -e "test_playbook=${playbook} destdir=${remote_coverage_dir}"
 
 #COVERAGE_FILE=remote-coverage coverage combine remote-coverage/tests_*/*/root/.coverage
+# https://github.com/koalaman/shellcheck/wiki/SC2046
+# shellcheck disable=SC2046
 ./merge_coverage.sh coverage "${coverage_data}"-tmp $(find "${remote_coverage_dir}" -type f | tr , _)
 
 cat > tmp_merge_coveragerc <<EOF
