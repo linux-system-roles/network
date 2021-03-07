@@ -76,6 +76,9 @@ NM_ONLY_TESTS = {
         MINIMUM_VERSION: "'1.25.1'",
         "comment": "# NetworkManager 1.25.1 introduced ethtool coalesce support",
     },
+    "playbooks/tests_eth_pci_address_match.yml": {
+        MINIMUM_VERSION: "'1.26.0'",
+    },
     "playbooks/tests_reapply.yml": {},
     # team interface is not supported on Fedora
     "playbooks/tests_team.yml": {

@@ -686,7 +686,7 @@ class NMUtil:
     def connection_ensure_setting(self, connection, setting_type):
         setting = connection.get_setting(setting_type)
         if not setting:
-            setting = setting_type.new()
+            setting = setting_type()
             connection.add_setting(setting)
         return setting
 
@@ -1116,6 +1116,9 @@ class NMUtil:
                     connection["ieee802_1x"]["domain_suffix_match"],
                 )
 
+        if connection["interface_path"] is not None:
+            s_match = self.connection_ensure_setting(con, NM.SettingMatch)
+            s_match.set_property(NM.SETTING_MATCH_PATH, connection["interface_path"])
         try:
             con.normalize()
         except Exception as e:

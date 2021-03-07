@@ -321,6 +321,43 @@ interface. In case of a missing `interface_name`, the `name` of the profile name
 **Note:** The `name` (the profile name) and the `interface_name` (the device name) may be
 different or the profile may not be tied to an interface at all.
 
+### `interface_path`
+
+`interface_path` is a list of globbing pathnames(shell wildcard pattern) to match
+against the ID_PATH udev property of devices. udev property ID_PATH represents the
+persistent path of a device. It consists of a subsystem string(pci, usb, platform,
+etc.) and a subsystem-specific identifier. The path of a device can be obtained with
+`udevadm info /sys/class/net/$dev | grep ID_PATH=` or by looking at the "path" property
+exported by NetworkManager (`nmcli -f general.path device show $dev`). The
+`interface_path` is optional and restricts the profile to be usable only on devices
+with the given `interface_path`. `interface_path` is only allowed for type ethernet or
+infiniband to match a non-virtual device with the profile. `interface_path` uses
+special modifiers at the beginning of the matches for optional, mandatory matches and
+inverting the pattern.
+
+**Special modifiers for `interface_path`:**
+
+- `|`, the element is optional, the match evaluates to be true if at least one of the
+  optional element matches (logical OR). By default, an element is optional. This means
+  that an element `foo` behaves the same as `|foo`
+
+- `&`, the element is mandatory, the match evaluates to be true if all the element
+  matches (logical AND)
+
+- `!`, an element can also be inverted with exclamation mark (`!`) between the pipe
+  symbol (or the ampersand) and before the pattern. Note that `!foo` is a shortcut for
+  the mandatory match `&!foo`
+
+- `\`, a backslash can be used at the beginning of the element (after the optional
+  special characters) to escape the start of the pattern. For example, `&\!a` is an
+  mandatory match for literally `!a`
+
+**Wildcard patterns for `interface_path`:**
+
+- `*`, matches everything
+- `?`, matches any single character
+- `[foo]`, matches any character in foo
+
 ### `zone`
 
 The `zone` option sets the firewalld zone for the interface.
@@ -645,6 +682,23 @@ network_connections:
     mac: "00:00:5e:00:53:5d"
     ip:
       dhcp4: yes
+```
+
+Updating a connection profile by matching interface_path setting:
+
+```yaml
+network_connections:
+  - name: eth0
+    type: ethernet
+    autoconnect: yes
+    # For PCI devices, the path has the form "pci-$domain:$bus:$device.$function"
+    # It will only update the interface with the path "pci-0000:00:03.0"
+    interface_path:
+      - pci-0000:00:03.0
+    ip:
+      dhcp4: no
+      address:
+        - 192.0.2.3/24
 ```
 
 Deleting a connection profile named `eth0` (if it exists):
