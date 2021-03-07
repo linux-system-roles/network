@@ -400,25 +400,34 @@ class ArgValidatorDict(ArgValidator):
 
 
 class ArgValidatorList(ArgValidator):
-    def __init__(self, name, nested, default_value=None):
+    def __init__(
+        self,
+        name,
+        nested,
+        default_value=None,
+        remove_none_or_empty=False,
+    ):
         ArgValidator.__init__(self, name, required=False, default_value=default_value)
         self.nested = nested
+        self.remove_none_or_empty = remove_none_or_empty
 
     def _validate_impl(self, value, name):
-
-        if isinstance(value, Util.STRING_TYPE):
-            # we expect a list. However, for convenience allow to
-            # specify a string, separated by space. Escaping is
-            # not supported. If you need that, define a proper list.
-            value = [s for s in value.split(" ") if s]
 
         if value is None:
             # Users might want to use jinja2 templates to set properties. As such,
             # it's convenient to accept None as an alias for an empty list
             # e.g. setting like `"match": {"path": None}` will be allowed by the role
-            return []
+            value = []
+        elif isinstance(value, Util.STRING_TYPE):
+            # we expect a list. However, for convenience allow to
+            # specify a string, separated by space. Escaping is
+            # not supported. If you need that, define a proper list.
+            value = [s for s in value.split(" ") if s]
+
         result = []
         for (idx, v) in enumerate(value):
+            if (v is None or v == "") and self.remove_none_or_empty:
+                continue
             try:
                 vv = self.nested._validate(v, name + "[" + str(idx) + "]")
             except ValidationError as e:
@@ -1270,6 +1279,45 @@ class ArgValidator_DictWireless(ArgValidatorDict):
         return result
 
 
+class ArgValidatorListMatchPath(ArgValidatorList):
+    def __init__(self, name, nested, default_value, remove_none_or_empty):
+        ArgValidatorList.__init__(
+            self,
+            name,
+            nested,
+            default_value,
+            remove_none_or_empty,
+        )
+
+    def _validate_impl(self, value, name):
+        result = ArgValidatorList._validate_impl(self, value, name)
+        if result == ["|"] or result == ["&"]:
+            raise ValidationError(
+                name,
+                "value '%s' is not a valid 'match.path' setting, after "
+                "normalization, '%s' will only match the devices that have no PCI "
+                "path" % (value, result),
+            )
+        return result
+
+
+class ArgValidator_DictMatch(ArgValidatorDict):
+    def __init__(self):
+        ArgValidatorDict.__init__(
+            self,
+            name="match",
+            nested=[
+                ArgValidatorListMatchPath(
+                    "path",
+                    nested=ArgValidatorStr("path[?]", allow_empty=True),
+                    default_value=None,
+                    remove_none_or_empty=True,
+                ),
+            ],
+            default_value={},
+        )
+
+
 class ArgValidator_DictConnection(ArgValidatorDict):
 
     VALID_PERSISTENT_STATES = ["absent", "present"]
@@ -1340,6 +1388,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidator_DictMacvlan(),
                 ArgValidator_Dict802_1X(),
                 ArgValidator_DictWireless(),
+                ArgValidator_DictMatch(),
                 # deprecated options:
                 ArgValidatorStr(
                     "infiniband_transport_mode",
@@ -1563,6 +1612,15 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                         "but is '%s'" % result["mac"],
                     )
 
+            if result.get("match"):
+                if "path" in result["match"]:
+                    if result["type"] not in ["ethernet", "infiniband"]:
+                        raise ValidationError(
+                            name + ".match.path",
+                            "'match.path' settings are only supported for type "
+                            "'ethernet' or 'infiniband'",
+                        )
+
             if result["type"] == "infiniband":
                 if "infiniband" not in result:
                     result["infiniband"] = self.nested[
@@ -1627,7 +1685,9 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                         "invalid 'interface_name' '%s'" % (result["interface_name"]),
                     )
             else:
-                if not result.get("mac"):
+                if not result.get("mac") and (
+                    not result.get("match") or not result["match"].get("path")
+                ):
                     if not Util.ifname_valid(result["name"]):
                         raise ValidationError(
                             name + ".interface_name",
@@ -1921,3 +1981,18 @@ class ArgValidator_ListConnections(ArgValidatorList):
                     "Setting DNS options 'inet6', 'ip6-bytestring', 'ip6-dotint', "
                     "'no-ip6-dotint' is not allowed when IPv6 is disabled.",
                 )
+
+        if connection["match"]:
+            if connection["match"]["path"]:
+                if mode == self.VALIDATE_ONE_MODE_INITSCRIPTS:
+                    raise ValidationError.from_connection(
+                        idx,
+                        "match.path is not supported by initscripts.",
+                    )
+                else:
+                    if not hasattr(Util.NM(), "SETTING_MATCH_PATH"):
+                        raise ValidationError.from_connection(
+                            idx,
+                            "match.path is not supported by the running version of "
+                            "NetworkManger.",
+                        )

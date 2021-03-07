@@ -31,3 +31,5 @@ rules:
       /tests/tests_bond_deprecated_initscripts.yml
       /tests/tests_ethtool_features_initscripts.yml
       /tests/tests_wireless_wpa3_sae_nm.yml
+      /tests/tests_eth_pci_address_match_nm.yml
+      /tests/playbooks/tests_eth_pci_address_match.yml

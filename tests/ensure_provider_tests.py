@@ -76,6 +76,10 @@ ibution_major_version | int < 9",
         EXTRA_RUN_CONDITION: "ansible_distribution != 'RedHat' or\n      ansible_distr\
 ibution_major_version | int < 9",
     },
+    "playbooks/tests_eth_pci_address_match.yml": {
+        MINIMUM_VERSION: "'1.26.0'",
+        "comment": "# NetworkManager 1.26.0 added support for match.path setting",
+    },
     "playbooks/tests_reapply.yml": {},
     # team interface is not supported on Fedora
     "playbooks/tests_team.yml": {
