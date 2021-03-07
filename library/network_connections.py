@@ -1184,7 +1184,9 @@ class NMUtil:
                     NM.SETTING_802_1X_DOMAIN_SUFFIX_MATCH,
                     connection["ieee802_1x"]["domain_suffix_match"],
                 )
-
+        if connection["match"]:
+            s_match = self.connection_ensure_setting(con, NM.SettingMatch)
+            s_match.set_property(NM.SETTING_MATCH_PATH, connection["match"]["path"])
         try:
             con.normalize()
         except Exception as e:

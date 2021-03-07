@@ -1,0 +1,76 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  tasks:
+    - import_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: pseudo-pci-test-only
+            persistent_state: present
+            type: ethernet
+            # `pci-0001:00:00.0` is a pseudo PCI address,
+            # which used only for testing purpose
+            match:
+              path:
+                - pci-0001:00:00.0
+            ip:
+              dhcp4: no
+              address:
+                - 192.0.2.3/24
+    - block:
+        - name: Get match.path setting for connection
+          command: nmcli -f match.path connection show pseudo-pci-test-only
+          register: match_path
+          ignore_errors: yes
+          changed_when: false
+
+        - name: Assert that the connection profile contains the specified PCI
+            address
+          assert:
+            that:
+              - "'pci-0001:00:00.0' in match_path.stdout"
+            msg: The connection profile does not contain the specified PCI
+              address
+
+        - name: "Remove the PCI address from match path"
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: pseudo-pci-test-only
+                type: ethernet
+                # When clearing the `match.path` setting through the role, the
+                # `interface_name` has to be defined, otherwise the `interface_name`
+                # will be the  profile name. Since it is unclear if a specific
+                # interface exists for the test profile, by setting the
+                # `interface_name` to empty string, the role will accept any interface
+                # for the test profile.
+                interface_name: ""
+                state: down
+                match:
+                  path:
+
+        - name: Get match.path setting for connection
+          command: nmcli -f match.path connection show pseudo-pci-test-only
+          register: clear_path
+          ignore_errors: yes
+          changed_when: false
+
+        - name: "Assert that the PCI address is removed"
+          assert:
+            that:
+              - "'pci-0001:00:00.0' not in clear_path.stdout"
+            msg: "The PCI address is not removed"
+      always:
+        - block:
+            - import_role:
+                name: linux-system-roles.network
+              vars:
+                network_connections:
+                  - name: pseudo-pci-test-only
+                    persistent_state: absent
+                    state: down
+              ignore_errors: true
+          tags:
+            - "tests::cleanup"

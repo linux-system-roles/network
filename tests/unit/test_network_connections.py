@@ -185,6 +185,7 @@ class TestValidator(unittest.TestCase):
                 "dns_search": [],
             },
             "mac": None,
+            "match": {},
             "controller": None,
             "ieee802_1x": None,
             "wireless": None,
@@ -448,6 +449,51 @@ class TestValidator(unittest.TestCase):
         self.assertValidationError(v, [1, "s"])
         self.assertEqual(v.validate(None), [])
 
+    def test_validate_allow_empty_string_in_list(self):
+        """
+        Test that when ArgValidatorStr.allow_empty is True, empty string is allowed in
+        in ArgValidatorList
+        """
+        v = network_lsr.argument_validator.ArgValidatorList(
+            "list",
+            nested=network_lsr.argument_validator.ArgValidatorStr(
+                "list[?]", allow_empty=True
+            ),
+        )
+        self.assertEqual(v.validate(["pci-0001:00:00.0", ""]), ["pci-0001:00:00.0", ""])
+
+    def test_validate_disallow_none_in_list(self):
+        """
+        Test that None is not allowed in ArgValidatorList
+        """
+        v = network_lsr.argument_validator.ArgValidatorList(
+            "list",
+            nested=network_lsr.argument_validator.ArgValidatorStr(
+                "list[?]", allow_empty=True
+            ),
+        )
+        self.assertRaisesRegexp(
+            ValidationError,
+            "must be a string but is 'None'",
+            v.validate,
+            ["pci-0001:00:00.0", None],
+        )
+
+    def test_validate_list_remove_none_or_empty(self):
+        """
+        Test that when ArgValidatorStr.remove_none_or_empty is True, None or empty
+        string will be removed from ArgValidatorList
+        """
+        v = network_lsr.argument_validator.ArgValidatorList(
+            "list",
+            nested=network_lsr.argument_validator.ArgValidatorStr(
+                "list[?]", allow_empty=True
+            ),
+            remove_none_or_empty=True,
+        )
+        self.assertEqual(v.validate(["pci-0001:00:00.0", ""]), ["pci-0001:00:00.0"])
+        self.assertEqual(v.validate(["pci-0001:00:00.0", None]), ["pci-0001:00:00.0"])
+
     def test_empty(self):
         self.maxDiff = None
         self.do_connections_validate([], [])
@@ -483,6 +529,7 @@ class TestValidator(unittest.TestCase):
                         "dns_search": [],
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": None,
                     "wireless": None,
@@ -538,6 +585,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": None,
                     "wireless": None,
@@ -587,6 +635,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": None,
                     "wireless": None,
@@ -654,6 +703,7 @@ class TestValidator(unittest.TestCase):
                     "force_state_change": None,
                     "ignore_errors": None,
                     "interface_name": None,
+                    "match": {},
                     "ip": {
                         "dhcp4": False,
                         "route_metric6": None,
@@ -745,6 +795,7 @@ class TestValidator(unittest.TestCase):
                         "route": [],
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": None,
                     "wireless": None,
@@ -783,6 +834,7 @@ class TestValidator(unittest.TestCase):
                     "force_state_change": None,
                     "ignore_errors": None,
                     "interface_name": "prod1",
+                    "match": {},
                     "ip": {
                         "gateway6": "2001:db8::1",
                         "gateway4": None,
@@ -885,6 +937,7 @@ class TestValidator(unittest.TestCase):
                     "force_state_change": None,
                     "ignore_errors": None,
                     "interface_name": None,
+                    "match": {},
                     "ip": {
                         "dhcp4": False,
                         "auto6": True,
@@ -937,6 +990,7 @@ class TestValidator(unittest.TestCase):
                     "force_state_change": None,
                     "ignore_errors": None,
                     "interface_name": "prod.100",
+                    "match": {},
                     "ip": {
                         "dhcp4": False,
                         "route_metric6": None,
@@ -1051,6 +1105,7 @@ class TestValidator(unittest.TestCase):
                         "route": [],
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": None,
                     "wireless": None,
@@ -1126,6 +1181,7 @@ class TestValidator(unittest.TestCase):
                         "route": [],
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": None,
                     "wireless": None,
@@ -1200,6 +1256,7 @@ class TestValidator(unittest.TestCase):
                     "force_state_change": None,
                     "ignore_errors": None,
                     "interface_name": None,
+                    "match": {},
                     "ip": {
                         "dhcp4": False,
                         "auto6": True,
@@ -1252,6 +1309,7 @@ class TestValidator(unittest.TestCase):
                     "force_state_change": None,
                     "ignore_errors": None,
                     "interface_name": "prod.100",
+                    "match": {},
                     "ip": {
                         "dhcp4": False,
                         "route_metric6": None,
@@ -1347,6 +1405,7 @@ class TestValidator(unittest.TestCase):
                     "force_state_change": None,
                     "ignore_errors": None,
                     "interface_name": "eth0",
+                    "match": {},
                     "ip": {
                         "dhcp4": False,
                         "auto6": False,
@@ -1393,6 +1452,7 @@ class TestValidator(unittest.TestCase):
                     "force_state_change": None,
                     "ignore_errors": None,
                     "interface_name": "veth0",
+                    "match": {},
                     "ip": {
                         "dhcp4": False,
                         "route_metric6": None,
@@ -1448,6 +1508,7 @@ class TestValidator(unittest.TestCase):
                     "force_state_change": None,
                     "ignore_errors": None,
                     "interface_name": "veth1",
+                    "match": {},
                     "ip": {
                         "dhcp4": False,
                         "route_metric6": None,
@@ -1572,6 +1633,7 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": None,
                     "wireless": None,
@@ -1613,6 +1675,7 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                     },
                     "mac": None,
+                    "match": {},
                     "controller": "prod2",
                     "ieee802_1x": None,
                     "wireless": None,
@@ -1678,6 +1741,7 @@ class TestValidator(unittest.TestCase):
                         "route": [],
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": None,
                     "wireless": None,
@@ -1728,6 +1792,7 @@ class TestValidator(unittest.TestCase):
                         "route": [],
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": None,
                     "wireless": None,
@@ -1788,6 +1853,7 @@ class TestValidator(unittest.TestCase):
                         "dns_search": [],
                     },
                     "mac": "aa:bb:cc:dd:ee:ff",
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": None,
                     "wireless": None,
@@ -1836,6 +1902,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": None,
                     "wireless": None,
@@ -1912,6 +1979,7 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": None,
                     "wireless": None,
@@ -1953,6 +2021,7 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                     },
                     "mac": None,
+                    "match": {},
                     "controller": "6643-controller",
                     "ieee802_1x": None,
                     "wireless": None,
@@ -2010,6 +2079,7 @@ class TestValidator(unittest.TestCase):
                         "rule_append_only": False,
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": None,
                     "wireless": None,
@@ -2085,6 +2155,7 @@ class TestValidator(unittest.TestCase):
                     },
                     "mac": "11:22:33:44:55:66:77:88:99:00:"
                     "11:22:33:44:55:66:77:88:99:00",
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": None,
                     "wireless": None,
@@ -2180,6 +2251,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": None,
                     "wireless": None,
@@ -2283,6 +2355,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": None,
                     "wireless": None,
@@ -2399,6 +2472,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": {
                         "identity": "myhost",
@@ -2477,6 +2551,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": {
                         "identity": "myhost",
@@ -2555,6 +2630,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": {
                         "identity": "myhost",
@@ -2631,6 +2707,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": None,
                     "wireless": {
@@ -2697,6 +2774,7 @@ class TestValidator(unittest.TestCase):
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
+                    "match": {},
                     "controller": None,
                     "ieee802_1x": {
                         "identity": "myhost",
@@ -3759,6 +3837,126 @@ class TestNM(unittest.TestCase):
         result = Util.path_to_glib_bytes("/my/test/path")
         self.assertIsInstance(result, Util.GLib().Bytes)
         self.assertEqual(result.get_data(), b"file:///my/test/path\x00")
+
+
+class TestValidatorMatch(unittest.TestCase):
+    def setUp(self):
+        self.test_profile = {
+            "name": "test",
+            "type": "ethernet",
+            "ip": {
+                "dhcp4": False,
+                "address": "192.168.245.7/24",
+            },
+            "match": None,
+        }
+        self.validator = network_lsr.argument_validator.ArgValidator_DictConnection()
+
+    def test_match_path_empty_list(self):
+        """
+        Test that 'match.path' setting can be defined as None, [], [""], [None] or ""
+        and such a setting will be normalized into []
+        """
+        for disabled_path in [None, [], [""], [None], ""]:
+            self.test_profile["match"] = {"path": disabled_path}
+            result = self.validator.validate(self.test_profile)
+            self.assertEqual(result["match"], {"path": []})
+
+    def test_match_path_setting_normalization(self):
+        """
+        Test that 'match.path' setting ["", "usb123", None] will be normalized into
+        ["usb123"]
+        """
+        self.test_profile["match"] = {"path": ["", "usb123", None]}
+        result = self.validator.validate(self.test_profile)
+        self.assertEqual(result["match"], {"path": ["usb123"]})
+
+    def test_match_path_valid_setting(self):
+        """
+        Test that values like ["pci-0000:00:03.0"] and ["&!pci-0000:00:0[1-3].0"] are
+        valid values for 'match.path' setting
+        """
+        self.test_profile["match"] = {"path": ["pci-0000:00:03.0"]}
+        result1 = self.validator.validate(self.test_profile)
+        self.assertEqual(result1["match"], {"path": ["pci-0000:00:03.0"]})
+
+        self.test_profile["match"] = {"path": ["&!pci-0000:00:0[1-3].0"]}
+        result2 = self.validator.validate(self.test_profile)
+        self.assertEqual(result2["match"], {"path": ["&!pci-0000:00:0[1-3].0"]})
+
+    def test_match_path_invalid_setting(self):
+        """
+        Test that values like ["&"] and ["|"] are invalid values for 'match.path'
+        setting
+        """
+        self.test_profile["match"] = {"path": ["&", ""]}
+        self.assertRaisesRegexp(
+            ValidationError,
+            "['&'] will only match the devices that have no PCI path",
+            self.validator.validate,
+            self.test_profile,
+        )
+        self.test_profile["match"] = {"path": ["|", None]}
+        self.assertRaisesRegexp(
+            ValidationError,
+            "['|'] will only match the devices that have no PCI path",
+            self.validator.validate,
+            self.test_profile,
+        )
+
+    def test_match_path_invalid_connection_type(self):
+        """
+        Test that when 'match.path' setting is correctly defined but the connection
+        type is neither ethernet nor infiniband, a ValidationError raises.
+        """
+        self.test_profile["match"] = {"path": ["pci-0000:00:03.0"]}
+        result = self.validator.validate(self.test_profile)
+        self.assertEqual(result["match"], {"path": ["pci-0000:00:03.0"]})
+
+        self.test_profile["type"] = "dummy"
+        self.assertRaisesRegexp(
+            ValidationError,
+            "'match.path' settings are only supported for type 'ethernet' or "
+            "'infiniband'",
+            self.validator.validate,
+            self.test_profile,
+        )
+
+    def test_interface_name_when_match_not_specified(self):
+        """
+        Test that when 'match' setting is not specified, interface name should be
+        profile name.
+        """
+        result = self.validator.validate(self.test_profile)
+        self.assertEqual(result["interface_name"], "test")
+
+    def test_interface_name_and_match_when_match_is_None(self):
+        """
+        Test that when 'match' setting is None, interface name should be profile name
+        and 'match' setting will be normalized into {}.
+        """
+        self.test_profile["match"] = None
+        result = self.validator.validate(self.test_profile)
+        self.assertEqual(result["match"], {})
+        self.assertEqual(result["interface_name"], "test")
+
+    def test_interface_name_when_match_path_is_empty_list(self):
+        """
+        Test that when 'match.path' setting is empty list, interface name should be
+        profile name.
+        """
+        self.test_profile["match"] = {"path": []}
+        result = self.validator.validate(self.test_profile)
+        self.assertEqual(result["interface_name"], "test")
+
+    def test_interface_name_when_match_path_is_valid(self):
+        """
+        Test that when 'match.path' setting contains interface path, interface name
+        should be unset.
+        """
+        self.test_profile["match"] = {"path": ["pci-0000:00:03.0"]}
+        result = self.validator.validate(self.test_profile)
+        self.assertEqual(result["interface_name"], None)
 
 
 class TestUtils(unittest.TestCase):

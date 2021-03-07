@@ -328,6 +328,51 @@ interface. In case of a missing `interface_name`, the `name` of the profile name
 **Note:** The `name` (the profile name) and the `interface_name` (the device name) may be
 different or the profile may not be tied to an interface at all.
 
+### `match`
+
+Settings to specify devices or systems matching a profile. Currently, only the `path`
+setting is implemented.
+
+The settings support a list of patterns which support the following modifiers and
+wildcards:
+
+**Special modifiers for `match` settings:**
+
+- `|`, the element is an alternative, the match evaluates to be true if at least one of
+  the alternatives matches (logical OR). By default, an element is an alternative.
+  This means that an element `foo` behaves the same as `|foo`
+
+- `&`, the element is mandatory, the match evaluates to be true if all the element
+  matches (logical AND)
+
+- `!`, an element can also be inverted with exclamation mark (`!`) between the pipe
+  symbol (or the ampersand) and before the pattern. Note that `!foo` is a shortcut for
+  the mandatory match `&!foo`
+
+- `\`, a backslash can be used at the beginning of the element (after the optional
+  special characters) to escape the start of the pattern. For example, `&\!a` is an
+  mandatory match for literally `!a`
+
+**Wildcard patterns for `match` Settings:**
+In general these work like shell globs.
+
+- `*`, matches zero or more of any character
+- `?`, matches any single character
+- `[fo]` - matches any single `f` or `o` character - also supports ranges - `[0-9]`
+  will match any single digit character
+
+#### `path`
+
+The `path` setting is a list of patterns to match against the `ID_PATH` udev property
+of devices. The `ID_PATH` udev property represents the persistent path of a device. It
+consists of a subsystem string (pci, usb, platform, etc.) and a subsystem-specific
+identifier. The `ID_PATH` of a device can be obtained with the command
+`udevadm info /sys/class/net/$dev | grep ID_PATH=` or by looking at the `path` property
+exported by NetworkManager (`nmcli -f general.path device show $dev`). The `path`
+setting is optional and restricts the profile to be activated only on devices with a
+matching `ID_PATH`. The `path` setting is only supported for ethernet or infiniband
+profiles. It supports modifiers and wildcards as described for match settings.
+
 ### `zone`
 
 The `zone` option sets the firewalld zone for the interface.
@@ -684,6 +729,36 @@ network_connections:
     mac: "00:00:5e:00:53:5d"
     ip:
       dhcp4: yes
+```
+
+Specifying a connecting profile for an ethernet device with the `ID_PATH`:
+
+```yaml
+network_connections:
+  - name: eth0
+    type: ethernet
+    # For PCI devices, the path has the form "pci-$domain:$bus:$device.$function"
+    # The profile will only match the interface at the PCI address pci-0000:00:03.0
+    match:
+      path:
+        - pci-0000:00:03.0
+    ip:
+      address:
+        - 192.0.2.3/24
+```
+
+```yaml
+  - name: eth0
+    type: ethernet
+    # Specifying a connecting profile for an ethernet device only with the PCI address
+    # pci-0000:00:01.0 or pci-0000:00:03.0
+    match:
+      path:
+        - pci-0000:00:0[1-3].0
+        - &!pci-0000:00:02.0
+    ip:
+      address:
+        - 192.0.2.3/24
 ```
 
 Deleting a connection profile named `eth0` (if it exists):

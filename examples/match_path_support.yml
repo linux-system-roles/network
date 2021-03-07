@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    network_connections:
+      - name: eth0
+        type: ethernet
+        match:
+          path:
+            - pci-0000:00:03.0
+        ip:
+          dhcp4: no
+          address:
+            - 192.0.2.3/24
+  roles:
+    - linux-system-roles.network
+...
