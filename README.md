@@ -288,7 +288,11 @@ By default, profiles are created with autoconnect enabled.
 The `mac` address is optional and restricts the profile to be usable only on
 devices with the given MAC address. `mac` is only allowed for `type`
 `ethernet` or `infiniband` to match a non-virtual device with the
-profile.
+profile. The value of the `mac` address needs to be specified in hexadecimal notation
+using colons (for example: `mac: "00:00:5e:00:53:5d"`). To avoid YAML parsing mac
+addresses as integers in sexagesimal (base 60) notation (see
+<https://yaml.org/spec/1.1/#id858600>), it is recommended to always quote the value
+with double quotes and sometimes it is necessary.
 
 - For `NetworkManager`, `mac` is the permanent MAC address, `ethernet.mac-address`.
 
@@ -634,7 +638,7 @@ network_connections:
     #persistent_state: present  # default
     type: ethernet
     autoconnect: yes
-    mac: 00:00:5e:00:53:5d
+    mac: "00:00:5e:00:53:5d"
     ip:
       dhcp4: yes
 ```
