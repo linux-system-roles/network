@@ -3,7 +3,8 @@
 - hosts: all
   name: Setup for test running
   tasks:
-    - include_tasks: tasks/el_repo_setup.yml
+    - name: Enable EPEL
+      include_tasks: tasks/enable_epel.yml
 
     - name: Install dependencies
       package:

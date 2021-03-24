@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
+- name: Enable EPEL
+  include_tasks: enable_epel.yml
+
 - name: Install packages required to set up mock wifi network
   package:
     name:

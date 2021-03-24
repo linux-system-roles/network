@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
+- name: Enable EPEL
+  include_tasks: enable_epel.yml
+
 - name: Install hostapd
   package:
     name: hostapd

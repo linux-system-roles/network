@@ -2,7 +2,6 @@
 # set network provider and gather facts
 - hosts: all
   tasks:
-    - include_tasks: tasks/el_repo_setup.yml
     - name: Set network provider to 'initscripts'
       set_fact:
         network_provider: initscripts
