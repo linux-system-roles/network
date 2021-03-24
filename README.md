@@ -327,12 +327,41 @@ The IP configuration supports the following options:
     [`ipv4.dhcp-send-hostname`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv4.dhcp-send-hostname)
     property.
 
-* `dns`, `dns_search` and `dns_options`
+* `dns`
 
-    Manual DNS configuration can be specified via a list of addresses
-    given in the `dns` option, a list of domains to search given in the
-    `dns_search` option and a list of dns options to set given in the
-    `dns_options`.
+    Manual DNS configuration can be specified via a list of addresses given in the
+    `dns` option.
+
+* `dns_search`
+
+    `dns_search` is only supported for IPv4 nameservers. Manual DNS configuration can
+    be specified via a list of domains to search given in the `dns_search` option.
+
+* `dns_options`
+
+    `dns_options` is only supported for the NetworkManager provider and IPv4
+    nameservers. Manual DNS configuration via a list of DNS options can be given in the
+    `dns_options`. The list of supported DNS options for IPv4 nameservers is described
+    in [man 5 resolv.conf](https://man7.org/linux/man-pages/man5/resolv.conf.5.html).
+    Currently, the list of supported DNS options is:
+    - `attempts:n`
+    - `debug`
+    - `edns0`
+    - `ndots:n`
+    - `no-check-names`
+    - `no-reload`
+    - `no-tld-query`
+    - `rotate`
+    - `single-request`
+    - `single-request-reopen`
+    - `timeout:n`
+    - `trust-ad`
+    - `use-vc`
+
+**Note:** The "trust-ad" setting is only honored if the profile contributes name
+    servers to resolv.conf, and if all contributing profiles have "trust-ad" enabled.
+    When using a caching DNS plugin (dnsmasq or systemd-resolved in NetworkManager.conf)
+    then "edns0" and "trust-ad" are automatically added.
 
 
 * `route_metric4` and `route_metric6`
