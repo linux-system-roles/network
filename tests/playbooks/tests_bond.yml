@@ -1,5 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
+- name: Save host state
+  hosts: all
+  tasks:
+    - import_tasks: tasks/save_state.yml
+
 - hosts: all
   vars:
     controller_profile: bond0
@@ -8,6 +13,8 @@
     dhcp_interface1: test1
     port2_profile: bond0.1
     dhcp_interface2: test2
+  tags:
+    - "tests::expfail"
   tasks:
     - name: "INIT Prepare setup"
       debug:
@@ -95,3 +102,8 @@
             - import_tasks: tasks/remove_test_interfaces_with_dhcp.yml
           tags:
             - "tests::cleanup"
+
+- name: Restore host state
+  hosts: all
+  tasks:
+    - import_tasks: tasks/restore_state.yml

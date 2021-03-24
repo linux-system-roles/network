@@ -135,3 +135,23 @@
               - tasks/cleanup_profile+device.yml
       tags:
         - tests::states:remove_down_twice
+
+  pre_tasks:
+    - name: Save host state
+      import_tasks: tasks/save_state.yml
+
+  post_tasks:
+    - name: Remove test profile
+      tags:
+        - 'tests::cleanup'
+        - 'tests::net::bridge::cleanup'
+      import_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: statebr
+            state: down
+            persistent_state: absent
+
+    - name: Restore host state
+      import_tasks: tasks/restore_state.yml

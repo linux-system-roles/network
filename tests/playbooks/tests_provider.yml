@@ -1,5 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
+- name: Save host state
+  hosts: all
+  tasks:
+    - import_tasks: tasks/save_state.yml
+
 - hosts: all
   vars:
     interface: testnic1
@@ -33,3 +38,8 @@
               - tasks/cleanup_profile+device.yml
       tags:
         - tests::provider:initscripts_to_nm
+
+- name: Restore host state
+  hosts: all
+  tasks:
+    - import_tasks: tasks/restore_state.yml

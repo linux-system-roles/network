@@ -17,6 +17,14 @@
         type: dummy
         interface: dummy1298
 
+  pre_tasks:
+    - name: Save host state
+      import_tasks: tasks/save_state.yml
+
+  post_tasks:
+    - name: Restore host state
+      import_tasks: tasks/restore_state.yml
+
 # FIXME: when: does not seem to work with include_tasks, therefore this cannot
 # be safely tested for now
 #    - name: test tap interfaces

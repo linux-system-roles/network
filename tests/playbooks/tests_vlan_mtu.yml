@@ -10,6 +10,8 @@
     - include_tasks: tasks/manage_test_interface.yml
       vars:
         state: present
+      tags:
+        - 'tests::net::veth'
     - include_tasks: tasks/assert_device_present.yml
     - name: >-
         TEST: I can configure the MTU for a vlan interface without autoconnect.
@@ -38,6 +40,8 @@
             ip:
               dhcp4: false
               auto6: false
+      tags:
+        - 'tests::net::reconf'
     - include_tasks: tasks/assert_device_present.yml
       vars:
         interface: "{{ vlan_interface }}"
@@ -62,6 +66,20 @@
             persistent_state: absent
             state: down
       ignore_errors: true
+      tags:
+        - 'tests::cleanup'
+        - 'tests::net::veth::cleanup'
     - include_tasks: tasks/manage_test_interface.yml
       vars:
         state: absent
+      tags:
+        - 'tests::cleanup'
+        - 'tests::net::veth::cleanup'
+
+  pre_tasks:
+    - name: Save host state
+      import_tasks: tasks/save_state.yml
+
+  post_tasks:
+    - name: Restore host state
+      import_tasks: tasks/restore_state.yml

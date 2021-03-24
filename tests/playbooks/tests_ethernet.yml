@@ -1,5 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
+- name: Save host state
+  hosts: all
+  tasks:
+    - import_tasks: tasks/save_state.yml
+
 - hosts: all
   tasks:
     - debug:
@@ -9,6 +14,8 @@
 
 - name: Test configuring ethernet devices
   hosts: all
+  tags:
+    - 'tests::net::veth'
   vars:
     type: veth
     interface: lsr27
@@ -26,6 +33,8 @@
 
 - name: Test static interface up
   hosts: all
+  tags:
+    - 'tests::net::reconf'
   vars:
     network_connections:
       - name: "{{ interface }}"
@@ -48,17 +57,29 @@
 # FIXME: assert profile present
 # FIXME: assert profile/device up + IP address
 - import_playbook: down_profile.yml
+  tags:
+    - 'tests::cleanup'
   vars:
     profile: "{{ interface }}"
 # FIXME: assert profile/device down
 - import_playbook: remove_profile.yml
+  tags:
+    - 'tests::cleanup'
   vars:
     profile: "{{ interface }}"
 # FIXME: assert profile away
 - name: Remove interfaces
   hosts: all
+  tags:
+    - 'tests::cleanup'
+    - 'tests::net::veth::cleanup'
   tasks:
     - include_tasks: tasks/manage_test_interface.yml
       vars:
         state: absent
     - include_tasks: tasks/assert_device_absent.yml
+
+- name: Restore host state
+  hosts: all
+  tasks:
+    - import_tasks: tasks/restore_state.yml

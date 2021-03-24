@@ -1,5 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
+- name: Save host state
+  hosts: all
+  tasks:
+    - import_tasks: tasks/save_state.yml
+
 - name: Test configuring bridges
   hosts: all
   vars:
@@ -14,6 +19,8 @@
 
 - name: Add test bridge
   hosts: all
+  tags:
+    - 'tests::net::bridge'
   vars:
     network_connections:
       - name: "{{ interface }}"
@@ -36,11 +43,15 @@
     task: tasks/assert_profile_present.yml
 
 - import_playbook: down_profile.yml
+  tags:
+    - 'tests::net::bridge'
   vars:
     profile: "{{ interface }}"
 # FIXME: assert profile/device down
 
 - import_playbook: remove_profile.yml
+  tags:
+    - 'tests::net::bridge'
   vars:
     profile: "{{ interface }}"
 
@@ -51,5 +62,19 @@
 
 # FIXME: Devices might still be left when profile is absent
 # - import_playbook: run_tasks.yml
-#   vars:
+#  vars:
 #     task: tasks/assert_device_absent.yml
+
+- name: Remove test bridge
+  hosts: all
+  tags:
+    - 'tests::cleanup'
+    - 'tests::net::bridge::cleanup'
+  tasks:
+    - command: 'ip link delete "{{ interface }}"'
+      ignore_errors: yes
+
+- name: Restore host state
+  hosts: all
+  tasks:
+    - import_tasks: tasks/restore_state.yml

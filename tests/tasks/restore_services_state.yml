@@ -1,0 +1,22 @@
+- block:
+    - name: load common vars
+      include_vars:
+        file: commonvars.yml
+
+    - name: Get final state of services
+      service_facts:
+      register: final_state
+
+    - name: Restore state of services
+      service:
+        name: "{{ item }}"
+        state: "{{ 'started' if
+                   initial_state.ansible_facts.services[sname]['state']
+                   == 'running' else 'stopped' }}"
+      when:
+         - sname in final_state.ansible_facts.services
+         - sname in initial_state.ansible_facts.services
+      vars:
+        sname: "{{ item + '.service' }}"
+      with_items: "{{ restore_services }}"
+  tags: tests::cleanup

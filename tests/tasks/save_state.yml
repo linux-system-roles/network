@@ -1,0 +1,11 @@
+---
+- name: Get services state
+  import_tasks: get_services_state.yml
+
+- name: Investigate /etc/sysconfig/network presence
+  tags:
+    - 'tests::cleanup'
+  stat:
+    path: /etc/sysconfig/network
+  register: etc_sysconfig_network_stat
+  ignore_errors: yes

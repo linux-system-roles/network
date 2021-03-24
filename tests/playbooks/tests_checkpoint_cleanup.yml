@@ -4,6 +4,11 @@
 # mark a device as unmanaged for NM and then tries to activiate it using NM.
 # This failed without removing the checkpoint.
 ---
+- name: Save host state
+  hosts: all
+  tasks:
+    - import_tasks: tasks/save_state.yml
+
 - hosts: all
   vars:
     interface: cptstbr
@@ -80,3 +85,8 @@
           ignore_errors: true
           tags:
             - "tests::cleanup"
+
+- name: Restore host state
+  hosts: all
+  tasks:
+    - import_tasks: tasks/restore_state.yml

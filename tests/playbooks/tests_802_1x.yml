@@ -1,5 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
+- name: Save host state
+  hosts: all
+  tasks:
+    - import_tasks: tasks/save_state.yml
+
 - hosts: all
   vars:
     interface: 802-1x-test
@@ -122,3 +127,8 @@
               command: update-ca-trust
           tags:
             - "tests::cleanup"
+
+- name: Restore host state
+  hosts: all
+  tasks:
+    - import_tasks: tasks/restore_state.yml

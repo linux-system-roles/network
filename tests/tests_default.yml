@@ -11,3 +11,11 @@
         that:
           - "'warnings' not in __network_connections_result"
         msg: "There are warnings"
+
+  pre_tasks:
+    - name: Save host state
+      import_tasks: tasks/save_state.yml
+
+  post_tasks:
+    - name: Restore host state
+      import_tasks: tasks/restore_state.yml

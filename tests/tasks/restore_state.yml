@@ -1,0 +1,24 @@
+---
+- name: Remove /etc/sysconfig/network if there was no one
+  tags:
+    - 'tests::cleanup'
+  file:
+    path: /etc/sysconfig/network
+    state: absent
+  when:
+    - etc_sysconfig_network_stat is defined
+    - not etc_sysconfig_network_stat.stat.exists
+
+- name: Restore services
+  import_tasks: restore_services_state.yml
+
+- name: reload NetworkManager
+  tags:
+    - 'tests::cleanup'
+  command: nmcli connection reload
+  when:
+    - sname in final_state.ansible_facts.services
+    - sname in initial_state.ansible_facts.services
+    - final_state.ansible_facts.services[sname]['state'] == 'running'
+  vars:
+    sname: NetworkManager.service

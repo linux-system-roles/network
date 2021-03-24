@@ -4,6 +4,11 @@
 # of via Ansible. Until there is better test support for this, just check the
 # log output for the respective log message.
 ---
+- name: Save host state
+  hosts: all
+  tasks:
+    - import_tasks: tasks/save_state.yml
+
 - hosts: all
   vars:
     interface: rpltstbr
@@ -64,3 +69,8 @@
           ignore_errors: true
           tags:
             - "tests::cleanup"
+
+- name: Restore host state
+  hosts: all
+  tasks:
+    - import_tasks: tasks/restore_state.yml
