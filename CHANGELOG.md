@@ -1,6 +1,26 @@
 Changelog
 =========
 
+[1.3.0] - 2021-04-08
+--------------------
+
+### Changes
+
+- Use inclusive language
+  - `slave` is deprecated in favor of `port`
+  - `master` is deprecated in favor of `controller`
+
+### New features
+
+- Support disabling IPv6
+- Support `dns_options` when using one or more IPv4 nameservers
+- Support Ethtool coalesce settings
+- Support dummy interfaces
+
+### Bug fixes
+
+- Fix static IPv6 support for initscripts provider
+
 [1.2.0] - 2020-08-26
 --------------------
 
