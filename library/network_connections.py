@@ -1002,14 +1002,14 @@ class NMUtil:
                 s_ip4.set_property(
                     NM.SETTING_IP_CONFIG_ROUTE_METRIC, ip["route_metric4"]
                 )
-            for d in ip["dns"]:
-                if d["family"] == socket.AF_INET:
-                    s_ip4.add_dns(d["address"])
-            for s in ip["dns_search"]:
-                s_ip4.add_dns_search(s)
+            for nameserver in ip["dns"]:
+                if nameserver["family"] == socket.AF_INET:
+                    s_ip4.add_dns(nameserver["address"])
+            for search_domain in ip["dns_search"]:
+                s_ip4.add_dns_search(search_domain)
             s_ip4.clear_dns_options(True)
-            for s in ip["dns_options"]:
-                s_ip4.add_dns_option(s)
+            for option in ip["dns_options"]:
+                s_ip4.add_dns_option(option)
 
             if ip["ipv6_disabled"]:
                 s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, "disabled")
@@ -1035,9 +1035,14 @@ class NMUtil:
                 s_ip6.set_property(
                     NM.SETTING_IP_CONFIG_ROUTE_METRIC, ip["route_metric6"]
                 )
-            for d in ip["dns"]:
-                if d["family"] == socket.AF_INET6:
-                    s_ip6.add_dns(d["address"])
+            for nameserver in ip["dns"]:
+                if nameserver["family"] == socket.AF_INET6:
+                    s_ip6.add_dns(nameserver["address"])
+            for search_domain in ip["dns_search"]:
+                s_ip6.add_dns_search(search_domain)
+            s_ip6.clear_dns_options(True)
+            for option in ip["dns_options"]:
+                s_ip6.add_dns_option(option)
 
             if ip["route_append_only"] and connection_current:
                 for r in self.setting_ip_config_get_routes(
