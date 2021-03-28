@@ -36,6 +36,7 @@
               dns:
                 - 192.0.2.2
                 - 198.51.100.5
+                - 2001:db8::20
               dns_search:
                 - example.com
                 - example.org
@@ -64,11 +65,19 @@
               route_append_only: no
               rule_append_only: yes
 
-    - name: Verify nmcli connection DNS entry
+    - name: Verify nmcli connection DNS entry for IPv4
       shell: |
         set -euxo pipefail
         nmcli connection show {{ interface }} | grep ipv4.dns
       register: ipv4_dns
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Verify nmcli connection DNS entry for IPv6
+      shell: |
+        set -euxo pipefail
+        nmcli connection show {{ interface }} | grep ipv6.dns
+      register: ipv6_dns
       ignore_errors: yes
       changed_when: false
 
@@ -77,6 +86,7 @@
         that:
           - "'192.0.2.2' in ipv4_dns.stdout"
           - "'198.51.100.5' in ipv4_dns.stdout"
+          - "'2001:db8::20' in ipv6_dns.stdout"
         msg: "DNS addresses are configured incorrectly"
 
     - name: "Assert that DNS search domains are configured correctly"
@@ -84,6 +94,8 @@
         that:
           - "'example.com' in ipv4_dns.stdout"
           - "'example.org' in ipv4_dns.stdout"
+          - "'example.com' in ipv6_dns.stdout"
+          - "'example.org' in ipv6_dns.stdout"
         msg: "DNS search domains are configured incorrectly"
 
     - name: "Assert that DNS options are configured correctly"
@@ -91,6 +103,8 @@
         that:
           - "'rotate' in ipv4_dns.stdout"
           - "'timeout:1' in ipv4_dns.stdout"
+          - "'rotate' in ipv6_dns.stdout"
+          - "'timeout:1' in ipv6_dns.stdout"
         msg: "DNS options are configured incorrectly"
 
 - import_playbook: down_profile.yml
