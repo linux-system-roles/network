@@ -3321,6 +3321,78 @@ class TestValidator(unittest.TestCase):
             validator.validate(true_testcase_12)["dns_options"], ["use-vc"]
         )
 
+    def test_ipv4_dns_without_ipv4_config(self):
+        """
+        Test that configuring IPv4 DNS is not allowed when IPv4 is disabled.
+        """
+        validator = network_lsr.argument_validator.ArgValidator_ListConnections()
+        ipv4_dns_without_ipv4_config = [
+            {
+                "name": "test_ipv4_dns",
+                "type": "ethernet",
+                "ip": {
+                    "auto6": True,
+                    "dhcp4": False,
+                    "dns": ["198.51.100.5"],
+                },
+            }
+        ]
+        self.assertRaises(
+            ValidationError,
+            validator.validate_connection_one,
+            "nm",
+            validator.validate(ipv4_dns_without_ipv4_config),
+            0,
+        )
+
+    def test_ipv6_dns_without_ipv6_config(self):
+        """
+        Test that configuring IPv6 DNS is not allowed when IPv6 is disabled.
+        """
+        validator = network_lsr.argument_validator.ArgValidator_ListConnections()
+        ipv6_dns_without_ipv6_config = [
+            {
+                "name": "test_ipv6_dns",
+                "type": "ethernet",
+                "ip": {
+                    "ipv6_disabled": True,
+                    "dhcp4": True,
+                    "dns": ["2001:db8::20"],
+                },
+            }
+        ]
+        self.assertRaises(
+            ValidationError,
+            validator.validate_connection_one,
+            "nm",
+            validator.validate(ipv6_dns_without_ipv6_config),
+            0,
+        )
+
+    def test_ipv6_dns_options_without_ipv6_config(self):
+        """
+        Test that configuring IPv6 DNS options is not allowed when IPv6 is disabled.
+        """
+        validator = network_lsr.argument_validator.ArgValidator_ListConnections()
+        ipv6_dns_options_without_ipv6_config = [
+            {
+                "name": "test_ipv6_dns",
+                "type": "ethernet",
+                "ip": {
+                    "ipv6_disabled": True,
+                    "dhcp4": True,
+                    "dns_options": ["ip6-bytestring"],
+                },
+            }
+        ]
+        self.assertRaises(
+            ValidationError,
+            validator.validate_connection_one,
+            "nm",
+            validator.validate(ipv6_dns_options_without_ipv6_config),
+            0,
+        )
+
     def test_set_deprecated_master(self):
         """
         When passing the deprecated "master" it is updated to "controller".
