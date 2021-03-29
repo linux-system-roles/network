@@ -357,16 +357,16 @@ class ArgValidatorDict(ArgValidator):
                 raise ValidationError(e.name, e.error_message)
             result[setting] = validated_value
         for (setting, validator) in self.nested.items():
-            if setting in seen_keys or isinstance(validator, ArgValidatorDeprecated):
+            if setting in seen_keys:
+                continue
+            if isinstance(validator, ArgValidatorDeprecated):
                 continue
             if validator.required:
                 raise ValidationError(name, "missing required key '%s'" % (setting))
-            default_value = validator.get_default_value()
-            if (
-                not self.all_missing_during_validate
-                and default_value is not ArgValidator.MISSING
-            ):
-                result[setting] = default_value
+            if not self.all_missing_during_validate:
+                default_value = validator.get_default_value()
+                if default_value is not ArgValidator.MISSING:
+                    result[setting] = default_value
         return result
 
 
