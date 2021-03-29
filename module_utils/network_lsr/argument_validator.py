@@ -95,10 +95,9 @@ class ArgValidator:
         self.default_value = default_value
 
     def get_default_value(self):
-        try:
+        if callable(self.default_value):
             return self.default_value()
-        except Exception:  # pylint: disable=broad-except
-            return self.default_value
+        return self.default_value
 
     def validate(self, value):
         """
