@@ -64,6 +64,7 @@
     exit 1
   delegate_to: localhost
   register: modules_parent_and_dir
+  changed_when: false
 
 - name: find parent directory and path of module_utils
   shell: |
@@ -90,3 +91,4 @@
     exit 1
   delegate_to: localhost
   register: module_utils_parent_and_dir
+  changed_when: false

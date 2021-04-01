@@ -32,7 +32,8 @@
         - include_tasks: tasks/assert_device_present.yml
         - include_tasks: tasks/assert_profile_present.yml
         # Use internal module to get output
-        - network_connections:
+        - name: Get network_connections output
+          network_connections:
             provider: nm
             connections:
               - name: "{{ interface }}"

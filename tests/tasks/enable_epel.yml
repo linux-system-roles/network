@@ -19,6 +19,7 @@
       baseurl=https://archives.fedoraproject.org/pub/archive/epel/6/$basearch
       enabled=1
       gpgcheck=0
+    mode: "0644"
   when:
     - ansible_distribution in ['RedHat', 'CentOS']
     - ansible_distribution_major_version == '6'

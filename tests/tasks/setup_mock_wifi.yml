@@ -17,6 +17,7 @@
   copy:
     src: "{{ item }}"
     dest: "/etc/pki/tls/{{ item }}"
+    mode: "0644"
   with_items:
     - server.key
     - dh.pem
@@ -52,15 +53,18 @@
       logger_syslog=-1
       logger_syslog_level=0
     dest: /etc/hostapd/wireless.conf
+    mode: "0644"
 
 - name: Create eap_user_file config
   copy:
     content: |
       * TLS
     dest: /etc/hostapd/hostapd.eap_user
+    mode: "0644"
 
 - name: Load mac80211_hwsim kernel module to mock a wifi network
   shell: modprobe mac80211_hwsim && sleep 5
+  changed_when: false
 
 - name: Restart NetworkManager and wpa_supplicant
   service:
@@ -77,6 +81,8 @@
     nmcli device set wlan1 managed off
     ip add add 203.0.113.1/24 dev wlan1
     sleep 5
+  changed_when: false
 
 - name: Start hostapd
   shell: hostapd -B /etc/hostapd/wireless.conf && sleep 5
+  changed_when: false
