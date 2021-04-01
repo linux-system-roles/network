@@ -26,11 +26,12 @@
           # yamllint disable-line rule:line-length
           Getting coverage for '{{ coverage_module }}' with '{{ test_playbook }}'
 
-    # combine data in case old data is left there
-    - command: "{{ coverage }} combine"
+    - name: combine data in case old data is left there
+      command: "{{ coverage }} combine"
       environment:
         COVERAGE_FILE: "{{ coverage_file }}"
       ignore_errors: yes
+      changed_when: false
 
     - name: remove old data
       file:
@@ -54,6 +55,7 @@
       copy:
         content: "[run]\ndisable_warnings = no-data-collected\n"
         dest: .coveragerc
+        mode: "0644"
 
     - name: install latest pip
       pip:
@@ -69,14 +71,17 @@
 - name: Gather coverage data
   hosts: all
   tasks:
-    - shell: "{{ coverage }} combine .coverage.*"
+    - name: gather coverage data
+      shell: "{{ coverage }} combine .coverage.*"
       environment:
         COVERAGE_FILE: "{{ coverage_file }}"
+      changed_when: false
 
 - name: Get coverage data
   hosts: all
   tasks:
-    - fetch:
+    - name: "Fetch {{ coverage_file }}"
+      fetch:
         src: "{{ coverage_file }}"
         dest: "{{ destdir }}"
         flat: no

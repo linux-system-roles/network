@@ -35,6 +35,7 @@
         nmcli connection show {{ interface }} | grep ipv6.method
       register: ipv6_method
       ignore_errors: yes
+      changed_when: false
 
     - name: "Assert that ipv6.method disabled is configured correctly"
       assert:

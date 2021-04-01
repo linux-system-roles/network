@@ -43,7 +43,7 @@
           register: no_coalesce
         - name: "ASSERT: The profile does not contain coalescing options"
           assert:
-            that: no_coalesce.stdout == ""
+            that: no_coalesce.stdout | length == 0
         - name: >-
             TEST: I can set rx-frames.
           debug:
@@ -85,7 +85,7 @@
           register: profile
         - name: "ASSERT: The profile does reset coalescing options"
           assert:
-            that: no_coalesce.stdout == ""
+            that: no_coalesce.stdout | length == 0
       always:
         - block:
             - import_role:

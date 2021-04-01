@@ -3,7 +3,8 @@
     TEST: 802.1x profile with unencrypted private key and ca_path
   debug:
     msg: "##################################################"
-- set_fact:
+- name: Set __NM_capath_ignored_NVRs
+  set_fact:
     # Fixed versions/NVRs:
     # 1.25.2
     # NetworkManager-1.24.2-1.fc33
@@ -36,6 +37,7 @@
   command: openssl x509 -hash -noout
     -in /etc/pki/tls/my_ca_certs/cacert.pem
   register: cacert_hash
+  changed_when: false
 - name: Add symlink for cacert
   file:
     state: link
@@ -46,6 +48,7 @@
     cmd: rpm -qa NetworkManager
     warn: false
   register: __network_NM_NVR
+  changed_when: false
 - block:
     - import_role:
         name: linux-system-roles.network
@@ -81,6 +84,7 @@
         - ansible_failed_task
         - __network_NM_NVR.stdout
         - __NM_capath_ignored_NVRs
+      changed_when: false
 
     - name: Assert role behavior
       vars:

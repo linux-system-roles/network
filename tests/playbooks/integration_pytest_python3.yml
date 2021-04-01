@@ -16,6 +16,7 @@
 
     - name: Install Pytest
       command: "pip3 install pytest"
+      changed_when: false
 
 
 # Import needed in order to install initscripts dependencies on the remote
@@ -77,15 +78,18 @@
           copy:
             src: "{{ temptar.path }}"
             dest: "{{ _rundir.path }}"
+            mode: preserve
 
         - name: Untar testrepo.tar
           command: tar xf {{ temptar.path | basename }}
           args:
             chdir: "{{ _rundir.path }}"
 
-        - file:
+        - name: "Create {{ _rundir.path }}/ansible"
+          file:
             state: directory
             path: "{{ _rundir.path }}/ansible"
+            mode: "0755"
 
         - name: Move module_utils to ansible directory
           shell: |
@@ -101,7 +105,8 @@
               fi
             done
 
-        - set_fact:
+        - name: Set _lsr_python_path
+          set_fact:
             _lsr_python_path: "{{
                   _rundir.path ~ '/' ~
                   modules_parent_and_dir.stdout_lines[1] ~ ':' ~ _rundir.path
@@ -109,7 +114,8 @@
 
         - debug:
             msg: path {{ _lsr_python_path }}
-        - command: ls -alrtFR {{ _rundir.path }}
+        - name: "ls -alrtFR {{ _rundir.path }}"
+          command: ls -alrtFR {{ _rundir.path }}
 
         - block:
             - name: Run pytest with nm
