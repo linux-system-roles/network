@@ -1,6 +1,8 @@
-# Contributing to the Network Linux System Role
+Contributing to the Network Linux System Role
+=============================================
 
-## Where to start
+Where to start
+--------------
 
 - **Bugs and needed implementations** are listed on [Github
   Issues](https://github.com/linux-system-roles/network/issues). Issues labeled with
@@ -14,7 +16,8 @@ Requests](https://help.github.com/en/github/collaborating-with-issues-and-pull-r
 
 - The code needs to be **compatible with Python 2.6, 2.7, 3.6, 3.7 and 3.8**.
 
-## Code structure
+Code structure
+--------------
 
 The repository is structured as follows:
 
@@ -36,12 +39,11 @@ The repository is structured as follows:
 
 - `./tests/playbooks/` - Contains the complete tests for the role. `./tests/test_*.yml`
   are shims to run tests once for every provider. `./tests/tasks/` contains task
-  snippets that are used in multiple tests to avoid having the same code repeated 
+  snippets that are used in multiple tests to avoid having the same code repeated
   multiple times.
 
 The rest of files in the root folder mostly serve as configuration files for diferent
 testing tools and bots that help with the manteinance of the project.
-
 
 The code files will always have the imports on the first place, followed by constants
 and in the last place, classes and methods. The style of python coding for this project
@@ -49,13 +51,14 @@ is [**PEP 8**](https://www.python.org/dev/peps/pep-0008/), with automatic format
 thanks to [Python Black](https://black.readthedocs.io/en/stable/). Make sure to install
 the formatter, it will help you a lot throughout the whole coding process!
 
-## Configuring Git
+Configuring Git
+---------------
 
 Before starting to contribute, make sure you have the basic git configuration: Your name
 and email. This will be useful when signing your contributions. The following commands
 will set your global name and email, althought you can change it later for every repo:
 
-```
+```bash
 git config --global user.name "Jane Doe"
 git config --global user.email janedoe@example.com
 ```
@@ -63,14 +66,15 @@ git config --global user.email janedoe@example.com
 The git editor is your system's default. If you feel more comfortable with a different
 editor for writing your commits (such as Vim), change it with:
 
-```
+```bash
 git config --global core.editor vim
 ```
 
-If you want to check your settings, use `git config --list` to see all the settings Git can find.
+If you want to check your settings, use `git config --list` to see all the settings Git
+can find.
 
-
-## How to contribute
+How to contribute
+-----------------
 
 1. Make a
    [fork](https://help.github.com/en/github/getting-started-with-github/fork-a-repo)
@@ -80,30 +84,34 @@ of this repository.
    changes you need to complete an issue.
 
 3. Do not forget to run unit and integration tests before pushing any changes!
+    1. This project uses [tox](https://tox.readthedocs.io/en/latest/) to run unit tests.
+       You can try it with `tox -e py36` in case you want to try it using Python 3.6, or
+       just `tox` if you want to run all the tests.
 
-  - This project uses [tox](https://tox.readthedocs.io/en/latest/) to run unit tests.
-    You can try it with `tox -e py36` in case you want to try it using Python 3.6, or
-    just `tox` if you want to run all the tests.
+    2. Check the formatting of the code with
+      [Python Black](https://black.readthedocs.io/en/stable/)
 
-  - Check the formatting of the code with [Python Black](https://black.readthedocs.io/en/stable/)
+    3. Check the YAML files are correctly formatted using `tox -e yamllint`.
 
-  - Check the YAML files are correctly formatted using `tox -e yamllint`.
+    4. Integration tests are executed as
+       [Ansible Playbooks](https://docs.ansible.com/ansible/latest/user_guide/playbooks.html).
 
-  - Integration tests are executed as
-    [ansible-playbooks](https://docs.ansible.com/ansible/latest/user_guide/playbooks.html).
+       To run them you can use a cloud image like the [CentOS Linux 8.1
+       VM](https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.1.1911-20200113.3.x86_64.qcow2)
+       and execute the command and download the package
+       `standard-test-roles-inventory-qemu` from the Fedora repository:
 
-To run them you can use a cloud image like the [CentOS 8.1
-VM](https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.1.1911-20200113.3.x86_64.qcow2)
-and execute the command and download the package
-`standard-test-roles-inventory-qemu` from the Fedora repository:
+       ```bash
+       dnf install standard-test-roles-inventory-qemu
+       ```
 
-```dnf install standard-test-roles-inventory-qemu```
+       Note that the last path is the one of the test you want to run:
 
-Note that the last path is the one of the test you want to run:
-
-`TEST_SUBJECTS=CentOS-8-GenericCloud-8.1.1911-20200113.3.x86_64.qcow2
-ansible-playbook -v -i /usr/share/ansible/inventory/standard-inventory-qcow2
-tests/test_default.yml`
+       ```bash
+       TEST_SUBJECTS=CentOS-8-GenericCloud-8.1.1911-20200113.3.x86_64.qcow2 \
+       ansible-playbook -v -i /usr/share/ansible/inventory/standard-inventory-qcow2 \
+       tests/test_default.yml
+       ```
 
 4. Once the work is ready and commited, push the branch to your remote fork and click on
    "new Pull Request" on Github.
@@ -113,29 +121,28 @@ tests/test_default.yml`
    will merge it to the main project.
 
 ### Find other images for testing
-To use the CentOS 6, CentOS 7, CentOS 8 images, please checkout the link below:<br/>
-https://cloud.centos.org/centos/6/images/CentOS-6-x86_64-GenericCloud-1907.qcow2c<br/>
-https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-2003.qcow2c<br/>
-https://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.1.1911-20200113.3.x86_64.qcow2
 
-- `/6/images/` stands for CentOS 6 images, we can also change it to `/7/images/` to use
-CentOS 7 images, change it to `/8/images/` to use CentOS 8 images.
+The CentOS project publishes cloud images for
+[CentOS Linux 6](https://cloud.centos.org/centos/6/images/),
+[CentOS Linux 7](https://cloud.centos.org/centos/7/images/) and
+[CentOS Linux 8](https://cloud.centos.org/centos/8/x86_64/images/).
+
 - For qemu testing cases, we prefer the image architecture to be `x86_64-GenericCloud`.
 - `2003` in `CentOS-7-x86_64-GenericCloud-2003.qcow2c` stands for image released in
-March 2020.
+  March 2020.
 - We can use the image with extension `.qcow2` and `.qcow2c`.
 - To save the image, right click on the link above, then select "Save link as...".
 
-For Fedora, we recommend to use the latest qcow2 images from<br/>
-https://kojipkgs.fedoraproject.org/compose/cloud/
+For Fedora, we recommend to use the [latest qcow2
+images](https://kojipkgs.fedoraproject.org/compose/cloud/).
 
 ### Some important tips
 
 - Make sure your fork and branch are up-to-date with the main project. First of all,
   [configure a remote upstream for your
 fork](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/configuring-a-remote-for-a-fork),
-and keep your branch up-to-date with the upstream using ```git pull --rebase upstream
-main```
+and keep your branch up-to-date with the upstream using
+`git pull --rebase upstream main`.
 
 - Try to make a commit per issue.
 
@@ -157,49 +164,50 @@ added, and merge both file versions into one that combines it all.
 
 ### Naming Ansible Items
 
-* All YAML or Python files, variables, arguments, repositories, and other such names
+- All YAML or Python files, variables, arguments, repositories, and other such names
   should follow standard Python naming conventions of being in
   `snake_case_naming_schemes`.
 
-* Names should be mnemonic and descriptive and not strive to shorten more than
+- Names should be mnemonic and descriptive and not strive to shorten more than
   necessary. Systems support long identifier names, so use them to be descriptive
 
-* All defaults and all arguments to a role should have a name that begins with the role
+- All defaults and all arguments to a role should have a name that begins with the role
   name to help avoid collision with other names. Avoid names like `packages` in favor of
   a name like `network_packages`.
 
-* Same argument applies for modules provided in the roles, they also need a `$ROLENAME_`
+- Same argument applies for modules provided in the roles, they also need a `$ROLENAME_`
   prefix: `network_module`. While they are usually implementation details and not intended
   for direct use in playbooks, the unfortunate fact is that importing a role makes them
   available to the rest of the playbook and therefore creates opportunities for name
   collisions.
 
-* Moreover, internal variables (those that are not expected to be set by users) are to
+- Moreover, internal variables (those that are not expected to be set by users) are to
   be prefixed by two underscores: `__network_variable`. This includes variables set by
-  set_fact and register, because they persist in the namespace after the role has
+  `set_fact` and `register`, because they persist in the namespace after the role has
   finished!
 
-* Do not use special characters other than underscore in variable names, even if
+- Do not use special characters other than underscore in variable names, even if
   YAML/JSON allow them. (Using such variables in Jinja2 or Python would be then very
   confusing and probably not functional.)
 
 *Find more explanation on this matter in the [meta
 standards](https://github.com/oasis-roles/meta_standards#naming-things).*
 
-
 ### Write a good commit message
+
 Here are a few rules to keep in mind while writing a commit message
 
-   1. Separate subject from body with a blank line
-   2. Limit the subject line to 50 characters
-   3. Capitalize the subject line
-   4. Do not end the subject line with a period
-   5. Use the imperative mood in the subject line
-   6. Wrap the body at 72 characters
-   7. Use the body to explain what and why vs. how
+1. Separate subject from body with a blank line
+2. Limit the subject line to 50 characters
+3. Capitalize the subject line
+4. Do not end the subject line with a period
+5. Use the imperative mood in the subject line
+6. Wrap the body at 72 characters
+7. Use the body to explain what and why vs. how
 
- A good commit message looks something like this
-```
+ A good commit message looks something like this:
+
+```text
   Summarize changes in around 50 characters or less
 
  More detailed explanatory text, if necessary. Wrap it to about 72
@@ -229,29 +237,27 @@ Here are a few rules to keep in mind while writing a commit message
  See also: #456, #789
 
 Do not forget to sign your commit! Use `git commit -s`
-
 ```
 
 This is taken from [chris beams git commit](https://chris.beams.io/posts/git-commit/).
 You may want to read this for a more detailed explanation (and links to other posts on
-how to write a good commit message). This content is licensed under 
+how to write a good commit message). This content is licensed under
 [CC-BY-SA](https://creativecommons.org/licenses/by-sa/4.0/).
 
-### Sign off your commit. 
+### Sign off your commit
 
-You need to sign off your commit. By adding your 'Signed-off-by' 
-line to the commit messages you adhere to the [Developer 
-Certificate of Origin (DCO)](https://developercertificate.org/). 
+You need to sign off your commit. By adding your 'Signed-off-by' line to the commit
+messages you adhere to the
+[Developer Certificate of Origin (DCO)](https://developercertificate.org/).
 
-Use the `-s` command-line option to append the `Signed-off-by` 
-line when committing your code:
+Use the `-s` command-line option to append the `Signed-off-by` line when committing your
+code:
 
 `$ git commit -s`
 
+This is the full text of the Developer Certificate of Origin:
 
-This is the full text of the DCO:
-
-```
+```text
 Developer Certificate of Origin
 Version 1.1
 
@@ -291,12 +297,11 @@ By making a contribution to this project, I certify that:
     this project or the open source license(s) involved.
 ```
 
-
 ### Debugging
 
 When using the `nm` provider, NetworkManager create a checkpoint and reverts the changes
 on failures. This makes it hard to debug the error. To disable this, set the Ansible
-variable `__network_debug_flags to include the value `disable-checkpoints`. Also tests
+variable `__network_debug_flags` to include the value `disable-checkpoints`. Also tests
 clean up by default in case there are failures. They should be tagged as
 `tests::cleanup` and can be skipped. To use both, run the test playbooks like this:
 
@@ -307,77 +312,68 @@ ansible-playbook --skip-tags tests::cleanup \
 ```
 
 ### NetworkManager Documentation
-- [NM 1.0](https://lazka.github.io/pgi-docs/#NM-1.0), it contains full explanation about NetworkManager API, including but not limited to:
-    - Functions
-    - Callbacks
-    - Interfaces
-    - Classes
-    - Hierarchy
-    - Structures
-    - Class Structures
-    - Interface Structures
-    - Flags
-    - Enums
-    - Constants
-    - Symbol Mapping
+
+- [NM 1.0](https://lazka.github.io/pgi-docs/#NM-1.0), it contains a full explanation
+  about the NetworkManager API.
 
 ### Integration tests with podman
+
 1. Create `~/.ansible/collections/ansible_collections/containers/podman/` if this
-directory does not exist and `cd` into this directory.
-```bash
-mkdir -p ~/.ansible/collections/ansible_collections/containers/podman/
-cd ~/.ansible/collections/ansible_collections/containers/podman/
-```
+  directory does not exist and `cd` into this directory.
+
+    ```bash
+    mkdir -p ~/.ansible/collections/ansible_collections/containers/podman/
+    cd ~/.ansible/collections/ansible_collections/containers/podman/
+    ```
 
 2. Clone the collection plugins for Ansible-Podman into the current directory.
-```bash
-git clone https://github.com/containers/ansible-podman-collections.git .
-```
 
-3. Change directory into the `network/tests`, `network` is the Repo you cloned from
-your local fork.
-```bash
-cd ~/network/tests
-```
+    ```bash
+    git clone https://github.com/containers/ansible-podman-collections.git .
+    ```
 
+3. Change directory into the `tests` subdirectory.
+
+    ```bash
+    cd ~/network/tests
+    ```
 
 4. Use podman with `-d` to run in the background (daemon). Use `c7` because
-`centos/systemd` is centos7.
-```bash
-podman run --name c7 --rm --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d registry.centos.org/centos/systemd
-```
+  `centos/systemd` is centos7.
+
+    ```bash
+    podman run --name lsr-ci-c7 --rm --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+    -d registry.centos.org/centos/systemd
+    ```
 
 5. Use `podman unshare` first to run "podman mount" in root mode, use `-vi` to run
-ansible as inventory in verbose mode, use `-c podman` to use collection plugins. Note,
-the following tests are currently not working with podman:
-- `tests_802_1x_nm.yml` 
-- `tests_802_1x_updated_nm.yml`
-- `tests_bond_initscripts.yml`
-- `tests_bond_nm.yml`
-- `tests_bridge_initscripts.yml`
-- `tests_bridge_nm.yml`
-- `tests_default_nm.yml`
-- `tests_ethernet_nm.yml`
-- `tests_reapply_nm.yml`
-- `tests_states_nm.yml`
-- `tests_vlan_mtu_initscripts.yml`
-- `tests_vlan_mtu_nm.yml`
-- `tests_wireless_nm.yml`
+  ansible as inventory in verbose mode, use `-c podman` to use collection plugins. Note,
+  the following tests are currently not working with podman:
+  - `tests_802_1x_nm.yml`
+  - `tests_802_1x_updated_nm.yml`
+  - `tests_bond_initscripts.yml`
+  - `tests_bond_nm.yml`
+  - `tests_bridge_initscripts.yml`
+  - `tests_bridge_nm.yml`
+  - `tests_default_nm.yml`
+  - `tests_ethernet_nm.yml`
+  - `tests_reapply_nm.yml`
+  - `tests_states_nm.yml`
+  - `tests_vlan_mtu_initscripts.yml`
+  - `tests_vlan_mtu_nm.yml`
+  - `tests_wireless_nm.yml`
 
-```bash
-podman unshare
-ansible-playbook -vi c7, -c podman tests_provider_nm.yml
-```
+    ```bash
+    podman unshare
+    ansible-playbook -vi lsr-ci-c7, -c podman tests_provider_nm.yml
+    ```
 
 6. NOTE that this leaves the container running in the background, to kill it:
-```bash
-> podman ps
-CONTAINER ID  IMAGE                                      COMMAND         CREATED         STATUS             PORTS  NAMES
-02a45f9d53df  registry.centos.org/centos/systemd:latest  /usr/sbin/init  13 minutes ago  Up 13 minutes ago         c7
-> podman stop 02a45f9d53df
-> podman rm 02a45f9d53df
-```
 
+    ```bash
+    podman stop lsr-ci-c7
+    podman rm lsr-ci-c7
+    ```
 
 ### Continuous integration
 
@@ -392,17 +388,18 @@ comment. The available commands are:
 - [citest bad] - Trigger a re-test for all machines with an error or failure status.
 - [citest pending] - Trigger a re-test for all machines with a pending status.
 - [citest commit:<sha1\>] - Whitelist a commit to be tested if the submitter is not
-trusted.
+  trusted.
 
-## How to reach us
+How to reach us
+---------------
+
 The mailing list for developers: systemroles@lists.fedorahosted.org
 
 [Subscribe to the mailing list](https://lists.fedorahosted.org/admin/lists/systemroles.lists.fedorahosted.org/)
 
 [Archive of the mailing list](https://lists.fedorahosted.org/archives/list/systemroles@lists.fedorahosted.org/)
 
-If you are using IRC, join the `#systemroles` IRC channel on 
+If you are using IRC, join the `#systemroles` IRC channel on
 [freenode](https://freenode.net/kb/answer/chat)
-
 
 *Thanks for contributing and happy coding!!*
