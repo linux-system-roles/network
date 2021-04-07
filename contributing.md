@@ -113,6 +113,10 @@ of this repository.
        tests/test_default.yml
        ```
 
+    5. Check the markdown format with
+       [mdl](https://github.com/markdownlint/markdownlint) after changing any
+       markdown document.
+
 4. Once the work is ready and commited, push the branch to your remote fork and click on
    "new Pull Request" on Github.
 
