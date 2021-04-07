@@ -43,36 +43,9 @@ jobs:
           esac
           TOXENV="$toxenvs" lsr_ci_runtox
   python-26:
-    runs-on: ubuntu-16.04
-    env:
-      PY26URL: https://storage.googleapis.com/travis-ci-language-archives/python/binaries/ubuntu/14.04/x86_64/python-2.6.tar.bz2
-      PY26TARFILE: "python-2.6.tar.bz2"
-      PY26VENVPATH: "/home/travis/virtualenv/python2.6"
-      VIRTUAL_ENV_DISABLE_PROMPT: "true"
+    runs-on: ubuntu-latest
     steps:
       - name: checkout PR
         uses: actions/checkout@v2
-      - name: Install python, dependencies
-        run: |
-          set -euo pipefail
-          curl -sSf --retry 5 -o "$PY26TARFILE" "$PY26URL"
-          sudo tar xjf "$PY26TARFILE" --directory /
-          myuid=$(id -u)
-          mygid=$(id -g)
-          sudo chown -H -R $myuid:$mygid "$PY26VENVPATH"
-          source "$PY26VENVPATH/bin/activate"
-          set -x
-          python --version
-          pip --version
-          sudo apt-get update
-          sudo apt-get install git
-          pip install 'tox<3' 'virtualenv==15.*' 'pluggy==0.5.*' \
-          "$TOX_LSR"
-          lsr_ci_preinstall
-          pip list
-      - name: Run tox tests
-        run: |
-          set -euo pipefail
-          source "$PY26VENVPATH/bin/activate"
-          set -x
-          tox -e py26,coveralls26
+      - name: Run py26 tests
+        uses: linux-system-roles/lsr-gh-action-py26@1.0.1
