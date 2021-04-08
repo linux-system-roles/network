@@ -36,12 +36,19 @@ jobs:
           toxpyver=$(echo "${{ matrix.pyver }}" | tr -d .)
           toxenvs="py${toxpyver}"
           case "$toxpyver" in
-          27) toxenvs="${toxenvs},coveralls,flake8,pylint" ;;
-          36) toxenvs="${toxenvs},coveralls,black,yamllint,ansible-lint,collection" ;;
-          37) toxenvs="${toxenvs},coveralls" ;;
-          38) toxenvs="${toxenvs},coveralls" ;;
+          27) toxenvs="${toxenvs},flake8,pylint" ;;
+          36) toxenvs="${toxenvs},black,yamllint,ansible-lint,collection" ;;
+          37) toxenvs="${toxenvs}" ;;
+          38) toxenvs="${toxenvs}" ;;
           esac
           TOXENV="$toxenvs" lsr_ci_runtox
+      - name: Coveralls
+        uses: AndreMiras/coveralls-python-action@develop
+        with:
+          flag-name: ${{ matrix.pyver }}
+          parallel: true
+          base-path: tests/
+
   python-26:
     runs-on: ubuntu-latest
     steps:
@@ -49,3 +56,13 @@ jobs:
         uses: actions/checkout@v2
       - name: Run py26 tests
         uses: linux-system-roles/lsr-gh-action-py26@1.0.1
+
+  coveralls_finish:
+    needs: python
+    runs-on: ubuntu-latest
+    steps:
+      - name: Coveralls Finished
+        uses: AndreMiras/coveralls-python-action@develop
+        with:
+          parallel-finished: true
+          base-path: tests/
