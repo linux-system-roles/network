@@ -49,6 +49,7 @@ jobs:
           flag-name: ${{ matrix.pyver }}
           parallel: true
           base-path: tests/
+          debug: true
 
   python-26:
     runs-on: ubuntu-latest
@@ -67,3 +68,4 @@ jobs:
         with:
           parallel-finished: true
           base-path: tests/
+          debug: true
