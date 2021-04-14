@@ -387,6 +387,10 @@ The IP configuration supports the following options:
     When using a caching DNS plugin (dnsmasq or systemd-resolved in NetworkManager.conf)
     then "edns0" and "trust-ad" are automatically added.
 
+- `gateway4` and `gateway6`
+
+    The default gateway for IPv4 (`gateway4`) or IPv6 (`gateway6`) packets.
+
 - `route_metric4` and `route_metric6`
 
     For `NetworkManager`, `route_metric4` and `route_metric6` corresponds to the
