@@ -9,10 +9,12 @@
   file:
     state: directory
     path: /etc/pki/tls/hostapd_test
+    mode: "0755"
 - name: Copy server certificates
   copy:
     src: "{{ item }}"
     dest: "/etc/pki/tls/hostapd_test/{{ item }}"
+    mode: "0644"
   with_items:
     - server.key
     - dh.pem
@@ -44,6 +46,7 @@
 
     # Enable forwarding of EAP 802.1x messages through software bridge "br1".
     echo 8 > /sys/class/net/br1/bridge/group_fwd_mask
+  changed_when: false
 
 - name: Create hostapd config
   copy:
@@ -64,12 +67,15 @@
       logger_syslog=-1
       logger_syslog_level=0
     dest: /etc/hostapd/wired.conf
+    mode: "0644"
 
 - name: Create eap_user_file config
   copy:
     content: |
       * TLS
     dest: /etc/hostapd/hostapd.eap_user
+    mode: "0644"
 
 - name: Run hostapd in namespace
   shell: ip netns exec ns1 hostapd -B /etc/hostapd/wired.conf && sleep 5
+  changed_when: false

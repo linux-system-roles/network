@@ -6,9 +6,11 @@
     ip link delete veth1-br
     ip link delete veth2-br
     ip link delete br1
+  changed_when: false
 
 - name: Kill hostapd process
-  shell: pkill hostapd
+  command: pkill hostapd
+  changed_when: false
 - name: Remove certs and config
   file:
     state: absent

@@ -56,7 +56,8 @@
         var: "{{ item }}"
       loop: "{{ lsr_fail_debug | default([]) }}"
 
-    - fail:
+    - name: Issue failed message
+      fail:
         msg: "!!!!! Failure in test '{{ lsr_description }}' !!!!!"
 
   always:

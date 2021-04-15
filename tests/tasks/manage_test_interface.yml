@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- fail:
+- name: Ensure state in ["present", "absent"]
+  fail:
     msg: "state needs to be present or absent, not '{{ state }}'"
   when: state not in ["present", "absent"]
 
-- fail:
+- name: Ensure type in ["dummy", "tap", "veth"]
+  fail:
     msg: "type needs to be dummy, tap or veth, not '{{ type }}'"
   when: type not in ["dummy", "tap", "veth"]
 
@@ -25,7 +27,7 @@
   when: "type == 'veth' and state == 'present' and
          interface not in current_interfaces"
 - name: Set up veth as managed by NetworkManager
-  shell: nmcli d set {{ interface }} managed true
+  command: nmcli d set {{ interface }} managed true
   # The varible for `network_provider` is not exists yet,
   # just ignore error for initscripts
   ignore_errors: yes

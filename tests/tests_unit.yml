@@ -55,15 +55,18 @@
           copy:
             src: "{{ temptar.path }}"
             dest: "{{ _rundir.path }}"
+            mode: preserve
 
         - name: Untar testrepo.tar
           command: tar -xvf {{ temptar.path | basename }}
           args:
             chdir: "{{ _rundir.path }}"
 
-        - file:
+        - name: Create {{ _rundir.path }}/ansible/module_utils
+          file:
             state: directory
             path: "{{ item }}"
+            mode: "0755"
           loop:
             - "{{ _rundir.path }}/ansible"
             - "{{ _rundir.path }}/ansible/module_utils"
@@ -86,8 +89,10 @@
           copy:
             src: unit/test_network_connections.py
             dest: "{{ _rundir.path }}"
+            mode: preserve
 
-        - set_fact:
+        - name: Set _lsr_python_path
+          set_fact:
             _lsr_python_path: "{{
               _rundir.path ~ '/' ~
               modules_parent_and_dir.stdout_lines[1] ~ ':' ~
@@ -98,7 +103,8 @@
               _rundir.path
             }}"
 
-        - command: ls -alrtFR {{ _rundir.path }}
+        - name: "ls -alrtFR {{ _rundir.path }}"
+          command: ls -alrtFR {{ _rundir.path }}
         - debug:
             msg: path {{ _lsr_python_path }}
 

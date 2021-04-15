@@ -2,14 +2,15 @@
 ---
 - name: Remove test interfaces
   shell: |
-    ip link delete {{dhcp_interface1}}
-    ip link delete {{dhcp_interface2}}
+    ip link delete {{ dhcp_interface1 }}
+    ip link delete {{ dhcp_interface2 }}
     ip link delete testbr
 
     # Remove udev rule for NM to see veth devices starting with test*.....
     rm -rf /etc/udev/rules.d/88-veth.rules
     udevadm control --reload-rules
     udevadm settle --timeout=5
+  changed_when: false
 
 
 - name: Stop dnsmasq/radvd services
@@ -23,3 +24,4 @@
         iptables -D INPUT -i testbr -p udp --dport 67:68 --sport 67:68 -j ACCEPT
 
     fi
+  changed_when: false

@@ -157,7 +157,7 @@
               debug:
                 var: __network_connections_result
             - assert:
-                that: "{{ __network_connections_result.failed == true }}"
+                that: __network_connections_result.failed
 
 
         - name: "TEST: I can reset features to their original value."
