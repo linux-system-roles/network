@@ -272,7 +272,7 @@ class ArgValidatorNum(ArgValidator):
         v = None
         try:
             if isinstance(value, self.numeric_type):
-                v = value
+                v = self.numeric_type(value)
             else:
                 v2 = self.numeric_type(value)
                 if isinstance(value, Util.STRING_TYPE) or v2 == value:
