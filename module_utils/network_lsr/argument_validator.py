@@ -272,7 +272,9 @@ class ArgValidatorNum(ArgValidator):
         v = None
         try:
             if isinstance(value, self.numeric_type):
-                v = value
+                # ArgValidatorNum should normalize the input values to be of type
+                # self.numeric_type, except the default_value
+                v = self.numeric_type(value)
             else:
                 v2 = self.numeric_type(value)
                 if isinstance(value, Util.STRING_TYPE) or v2 == value:
