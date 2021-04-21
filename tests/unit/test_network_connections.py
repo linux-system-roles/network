@@ -375,6 +375,8 @@ class TestValidator(unittest.TestCase):
 
         v = network_lsr.argument_validator.ArgValidatorNum("state", required=True)
         self.assertValidationError(v, None)
+        self.assertValidationError(v, False)
+        self.assertValidationError(v, True)
 
     def test_validate_bool(self):
 

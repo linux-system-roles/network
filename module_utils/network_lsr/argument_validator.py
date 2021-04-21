@@ -271,7 +271,11 @@ class ArgValidatorNum(ArgValidator):
     def _validate_impl(self, value, name):
         v = None
         try:
-            if isinstance(value, self.numeric_type):
+            if isinstance(value, bool):
+                # bool can (probably) be converted to self.numeric_type,
+                # but here we don't want to accept a boolean value.
+                pass
+            elif isinstance(value, self.numeric_type):
                 v = self.numeric_type(value)
             else:
                 v2 = self.numeric_type(value)
