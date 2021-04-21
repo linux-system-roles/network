@@ -72,10 +72,6 @@ NM_ONLY_TESTS = {
         MINIMUM_VERSION: "'1.20.0'",
         "comment": "# NetworKmanager 1.20.0 added support for forgetting profiles",
     },
-    "playbooks/tests_ethtool_coalesce.yml": {
-        MINIMUM_VERSION: "'1.25.1'",
-        "comment": "# NetworkManager 1.25.1 introduced ethtool coalesce support",
-    },
     "playbooks/tests_reapply.yml": {},
     # team interface is not supported on Fedora
     "playbooks/tests_team.yml": {
@@ -88,6 +84,15 @@ NM_ONLY_TESTS = {
         EXTRA_RUN_CONDITION: "ansible_distribution_major_version == '7'",
     },
     "playbooks/tests_wireless_plugin_installation.yml": {},
+}
+# NM_CONDITIONAL_TESTS is used to store the test playbooks which are demanding for NM
+# minimum version or extra running condition, test playbooks in NM_CONDITIONAL_TESTS
+# can also run with initscripts provider
+NM_CONDITIONAL_TESTS = {
+    "playbooks/tests_ethtool_coalesce.yml": {
+        MINIMUM_VERSION: "'1.25.1'",
+        "comment": "# NetworkManager 1.25.1 introduced ethtool coalesce support",
+    },
 }
 
 IGNORE = [
@@ -114,12 +119,19 @@ RUN_PLAYBOOK_WITH_INITSCRIPTS = """# SPDX-License-Identifier: BSD-3-Clause
 def create_nm_playbook(test_playbook):
     fileroot = os.path.splitext(os.path.basename(test_playbook))[0]
     nm_testfile = fileroot + "_nm.yml"
+    if test_playbook in NM_CONDITIONAL_TESTS:
+        minimum_nm_version = NM_CONDITIONAL_TESTS[test_playbook].get(MINIMUM_VERSION)
+        extra_run_condition = NM_CONDITIONAL_TESTS[test_playbook].get(
+            EXTRA_RUN_CONDITION, ""
+        )
+        comment = NM_CONDITIONAL_TESTS.get(test_playbook, {}).get("comment", "")
+    else:
+        minimum_nm_version = NM_ONLY_TESTS.get(test_playbook, {}).get(MINIMUM_VERSION)
+        extra_run_condition = NM_ONLY_TESTS.get(test_playbook, {}).get(
+            EXTRA_RUN_CONDITION, ""
+        )
+        comment = NM_ONLY_TESTS.get(test_playbook, {}).get("comment", "")
 
-    minimum_nm_version = NM_ONLY_TESTS.get(test_playbook, {}).get(MINIMUM_VERSION)
-    extra_run_condition = NM_ONLY_TESTS.get(test_playbook, {}).get(
-        EXTRA_RUN_CONDITION, ""
-    )
-    comment = NM_ONLY_TESTS.get(test_playbook, {}).get("comment", "")
     if extra_run_condition:
         extra_run_condition = f"{EXTRA_RUN_CONDITION_PREFIX}{extra_run_condition}\n"
 

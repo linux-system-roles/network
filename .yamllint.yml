@@ -21,3 +21,4 @@ rules:
     ignore: |
       /tests/tests_wireless_plugin_installation_nm.yml
       /tests/tests_team_plugin_installation_nm.yml
+      /tests/tests_ethtool_coalesce_initscripts.yml
