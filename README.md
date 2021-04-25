@@ -587,19 +587,32 @@ SSL certificates and keys must be deployed on the host prior to running the role
 
 ### `bond`
 
-The `bond` setting configures the options of bonded interfaces
-(type `bond`). It supports the following options:
+The `bond` setting configures the options of bonded interfaces (type `bond`).
+See the [kernel documentation for
+bonding](https://www.kernel.org/doc/Documentation/networking/bonding.txt) or
+your distribution `nmcli` documentation for valid values. It supports the
+following options:
 
 - `mode`
 
-  Bonding mode.  See the
-  [kernel documentation](https://www.kernel.org/doc/Documentation/networking/bonding.txt)
-  or your distribution `nmcli` documentation for valid values.
-  NetworkManager defaults to `balance-rr`.
+    Bonding mode. Possible values are `balance-rr` (default), `active-backup`,
+    `balance-xor`, `broadcast`, `802.3ad`, `balance-tlb`, or `balance-alb`.
 
 - `miimon`
 
-    Sets the MII link monitoring interval (in milliseconds)
+    Sets the MII link monitoring interval (in milliseconds). Default: `0`
+    (disabled).
+
+- `lacp_rate`
+
+    Specifies the rate at which link partners should transmit LACPDU packets in
+    802.3ad mode. Possible values are `slow` (default) or `fast`.
+
+- `xmit_hash_policy`
+
+    Selects the transmit hash policy used for slave selection in balance-xor and
+    802.3ad modes. Possible values are `layer2` (default), `layer3+4`,
+    `layer2+3`, `encap2+3`, `encap3+4`, or `vlan+srcmac`.
 
 Examples of Options
 -------------------
