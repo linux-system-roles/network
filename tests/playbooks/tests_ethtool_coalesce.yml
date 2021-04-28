@@ -6,7 +6,7 @@
     type: veth
   tasks:
     - debug:
-        msg: "this is: playbooks/tests_ethtool_.coalesceyml"
+        msg: "this is: playbooks/tests_ethtool_coalesce.yml"
       tags:
         - always
 
@@ -34,16 +34,34 @@
             network_connections:
               - name: "{{ interface }}"
                 type: ethernet
-                autoconnect: no
+                state: up
                 ip:
                   dhcp4: no
                   auto6: no
+
         - name: Get profile's coalescing options
           command: nmcli -g ethtool.coalesce-rx-frames c show {{ interface }}
-          register: no_coalesce
+          register: no_coalesce_nm
+          when:
+            - network_provider == "nm"
         - name: "ASSERT: The profile does not contain coalescing options"
           assert:
-            that: no_coalesce.stdout | length == 0
+            that: no_coalesce_nm.stdout | length == 0
+          when:
+            - network_provider == "nm"
+        - name: Get profile's coalescing options
+          command:
+            grep ETHTOOL /etc/sysconfig/network-scripts/ifcfg-{{ interface }}
+          register: no_coalesce_initscripts
+          ignore_errors: true
+          when:
+            - network_provider == "initscripts"
+        - name: "ASSERT: The profile does not contain coalescing options"
+          assert:
+            that: no_coalesce_initscripts.stdout | length == 0
+          when:
+            - network_provider == "initscripts"
+
         - name: >-
             TEST: I can set rx-frames.
           debug:
@@ -54,7 +72,7 @@
             network_connections:
               - name: "{{ interface }}"
                 type: ethernet
-                autoconnect: no
+                state: up
                 ip:
                   dhcp4: no
                   auto6: no
@@ -63,10 +81,28 @@
                     rx_frames: 128
         - name: Get profile's coalescing options
           command: nmcli -g ethtool.coalesce-rx-frames c show {{ interface }}
-          register: with_coalesce
+          register: with_coalesce_nm
+          when:
+            - network_provider == "nm"
         - name: Assert coalesce options set in profile
           assert:
-            that: with_coalesce.stdout == '128'
+            that: with_coalesce_nm.stdout == '128'
+          when:
+            - network_provider == "nm"
+
+        - name: Get profile's coalescing options
+          command:
+            grep ETHTOOL /etc/sysconfig/network-scripts/ifcfg-{{ interface }}
+          register: with_coalesce_initscripts
+          ignore_errors: true
+          when:
+            - network_provider == "initscripts"
+        - name: Assert coalesce options set in profile
+          assert:
+            that: '"rx-frames 128" in with_coalesce_initscripts.stdout'
+          when:
+            - network_provider == "initscripts"
+
         - name: "TEST: I can clear coalescing options"
           debug:
             msg: "##################################################"
@@ -76,16 +112,34 @@
             network_connections:
               - name: "{{ interface }}"
                 type: ethernet
-                autoconnect: no
+                state: up
                 ip:
                   dhcp4: no
                   auto6: no
+
         - name: Get profile's coalescing options
           command: nmcli -g ethtool.coalesce-rx-frames c show {{ interface }}
-          register: profile
+          when:
+            - network_provider == "nm"
+          register: clear_coalesce_nm
         - name: "ASSERT: The profile does reset coalescing options"
           assert:
-            that: no_coalesce.stdout | length == 0
+            that: clear_coalesce_nm.stdout | length == 0
+          when:
+            - network_provider == "nm"
+        - name: Get profile's coalescing options
+          command:
+            grep ETHTOOL /etc/sysconfig/network-scripts/ifcfg-{{ interface }}
+          register: clear_coalesce_initscripts
+          ignore_errors: true
+          when:
+            - network_provider == "initscripts"
+        - name: "ASSERT: The profile does reset coalescing options"
+          assert:
+            that: clear_coalesce_initscripts.stdout | length == 0
+          when:
+            - network_provider == "initscripts"
+
       always:
         - block:
             - import_role:
