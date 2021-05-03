@@ -138,7 +138,7 @@ class Util:
 
     @classmethod
     def call_async_method(cls, object_, action, args, mainloop_timeout=10):
-        """ Asynchronously call a NetworkManager method """
+        """Asynchronously call a NetworkManager method"""
         cancellable = cls.create_cancellable()
         async_action = action + "_async"
         # NM does not use a uniform naming for the async methods,

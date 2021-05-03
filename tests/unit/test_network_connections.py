@@ -2795,13 +2795,13 @@ class TestValidator(unittest.TestCase):
         )
 
     def test_interface_name_ethernet_default(self):
-        """ Use the profile name as interface_name for ethernet profiles """
+        """Use the profile name as interface_name for ethernet profiles"""
         cons_without_interface_name = [{"name": "eth0", "type": "ethernet"}]
         connections = ARGS_CONNECTIONS.validate(cons_without_interface_name)
         self.assertTrue(connections[0]["interface_name"] == "eth0")
 
     def test_interface_name_ethernet_mac(self):
-        """ Do not set interface_name when mac is specified """
+        """Do not set interface_name when mac is specified"""
         cons_without_interface_name = [
             {"name": "eth0", "type": "ethernet", "mac": "3b:0b:88:16:6d:1a"}
         ]
@@ -2809,7 +2809,7 @@ class TestValidator(unittest.TestCase):
         self.assertTrue(connections[0]["interface_name"] is None)
 
     def test_interface_name_ethernet_empty(self):
-        """ Allow not to restrict the profile to an interface """
+        """Allow not to restrict the profile to an interface"""
         network_connections = [
             {"name": "internal_network", "type": "ethernet", "interface_name": ""}
         ]
@@ -2818,7 +2818,7 @@ class TestValidator(unittest.TestCase):
         self.assertTrue(connections[0]["interface_name"] is None)
 
     def test_interface_name_ethernet_None(self):
-        """ Check that interface_name cannot be None """
+        """Check that interface_name cannot be None"""
         network_connections = [
             {"name": "internal_network", "type": "ethernet", "interface_name": None}
         ]
@@ -2827,7 +2827,7 @@ class TestValidator(unittest.TestCase):
         )
 
     def test_interface_name_ethernet_explicit(self):
-        """ Use the explicitly provided interface name """
+        """Use the explicitly provided interface name"""
         network_connections = [
             {"name": "internal", "type": "ethernet", "interface_name": "eth0"}
         ]
