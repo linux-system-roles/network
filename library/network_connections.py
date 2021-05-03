@@ -1175,7 +1175,7 @@ class NMUtil:
         return True
 
     def create_checkpoint(self, timeout):
-        """ Create a new checkpoint """
+        """Create a new checkpoint"""
         checkpoint = Util.call_async_method(
             self.nmclient,
             "checkpoint_create",
@@ -1192,11 +1192,11 @@ class NMUtil:
         return None
 
     def destroy_checkpoint(self, path):
-        """ Destroy the specified checkpoint """
+        """Destroy the specified checkpoint"""
         Util.call_async_method(self.nmclient, "checkpoint_destroy", [path])
 
     def rollback_checkpoint(self, path):
-        """ Rollback the specified checkpoint """
+        """Rollback the specified checkpoint"""
         Util.call_async_method(
             self.nmclient,
             "checkpoint_rollback",
@@ -1863,10 +1863,10 @@ class Cmd(object):
                     )
 
     def start_transaction(self):
-        """ Hook before making changes """
+        """Hook before making changes"""
 
     def finish_transaction(self):
-        """ Hook for after all changes where made successfuly """
+        """Hook for after all changes where made successfuly"""
 
     def rollback_transaction(self, idx, action, error):
         """Hook if configuring a profile results in an error
@@ -1885,7 +1885,7 @@ class Cmd(object):
         )
 
     def on_failure(self):
-        """ Hook to do any cleanup on failure before exiting """
+        """Hook to do any cleanup on failure before exiting"""
         pass
 
     def run_action_absent(self, idx):
