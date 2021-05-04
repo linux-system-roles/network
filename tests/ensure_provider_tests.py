@@ -49,7 +49,7 @@ RUN_PLAYBOOK_WITH_NM = """# SPDX-License-Identifier: BSD-3-Clause
 
 # The test requires or should run with NetworkManager, therefore it cannot run
 # on RHEL/CentOS 6
-- import_playbook: {test_playbook}
+{comment}- import_playbook: {test_playbook}
   when:
     - ansible_distribution_major_version != '6'
 {minimum_nm_version_check}{extra_run_condition}"""
@@ -119,6 +119,7 @@ def create_nm_playbook(test_playbook):
     extra_run_condition = NM_ONLY_TESTS.get(test_playbook, {}).get(
         EXTRA_RUN_CONDITION, ""
     )
+    comment = NM_ONLY_TESTS.get(test_playbook, {}).get("comment", "")
     if extra_run_condition:
         extra_run_condition = f"{EXTRA_RUN_CONDITION_PREFIX}{extra_run_condition}\n"
 
@@ -127,10 +128,13 @@ def create_nm_playbook(test_playbook):
         nm_version_check = MINIMUM_NM_VERSION_CHECK.format(
             minimum_nm_version=minimum_nm_version
         )
+    if comment:
+        comment = f"{comment}\n"
 
     nominal_nm_testfile_data = RUN_PLAYBOOK_WITH_NM.format(
         test_playbook=test_playbook,
         get_nm_version=minimum_nm_version and GET_NM_VERSION or "",
+        comment=comment,
         minimum_nm_version_check=nm_version_check,
         extra_run_condition=extra_run_condition,
     )
