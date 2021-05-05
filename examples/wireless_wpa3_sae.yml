@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: network-test
+  vars:
+    network_connections:
+      - name: wlan0
+        type: wireless
+        wireless:
+          ssid: "My WPA3-Personal Network"
+          key_mgmt: "sae"
+          # recommend vault encrypting the wireless password
+          # see https://docs.ansible.com/ansible/latest/user_guide/vault.html
+          password: "p@55w0rD"
+
+
+  roles:
+    - linux-system-roles.network

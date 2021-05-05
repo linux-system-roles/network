@@ -261,8 +261,8 @@ the ansible role.
 
 #### `type: wireless`
 
-The `wireless` type supports WPA-PSK (password) authentication and WPA-EAP (802.1x)
-authentication.
+The `wireless` type supports WPA-PSK (password) authentication, WPA-EAP (802.1x)
+authentication and WPA3-Personal SAE (password) authentication.
 
 `nm` (NetworkManager) is the only supported `network_provider` for this type.
 
@@ -272,8 +272,14 @@ If WPA-EAP is used, ieee802_1x settings must be defined in the
 The following options are supported:
 
 - `ssid`: the SSID of the wireless network (required)
-- `key_mgmt`: `wpa-psk` or `wpa-eap` (required)
-- `password`: password for the network (required if `wpa-psk` is used)
+- `key_mgmt` (required)
+
+    Any key from following key list:
+    - `wpa-psk`
+    - `wpa-eap`
+    - `sae`
+
+- `password`: password for the network (required if `wpa-psk` or `sae` is used)
 
 ### `autoconnect`
 
