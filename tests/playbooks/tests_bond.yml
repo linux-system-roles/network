@@ -8,6 +8,8 @@
     dhcp_interface1: test1
     port2_profile: bond0.1
     dhcp_interface2: test2
+  tags:
+    - tests::expfail
   tasks:
     - name: "INIT Prepare setup"
       debug:

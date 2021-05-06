@@ -10,5 +10,6 @@
         network_provider: initscripts
       tags:
         - always
+        - tests::expfail
 
 - import_playbook: playbooks/tests_bond.yml

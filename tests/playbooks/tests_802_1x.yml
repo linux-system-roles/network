@@ -3,6 +3,8 @@
 - hosts: all
   vars:
     interface: 802-1x-test
+  tags:
+    - tests::expfail
   tasks:
     - name: "INIT: 802.1x tests"
       debug:

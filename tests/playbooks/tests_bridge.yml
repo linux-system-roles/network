@@ -49,6 +49,16 @@
     profile: "{{ interface }}"
     task: tasks/assert_profile_absent.yml
 
+- name: Remove test bridge
+  hosts: all
+  tags:
+    - tests::cleanup
+  tasks:
+    - name: Remove the test interface
+      command: ip link delete {{ interface | quote }}
+      ignore_errors: yes
+      changed_when: false
+
 # FIXME: Devices might still be left when profile is absent
 # - import_playbook: run_tasks.yml
 #   vars:
