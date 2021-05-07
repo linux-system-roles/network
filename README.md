@@ -358,21 +358,25 @@ The IP configuration supports the following options:
 
 - `dns_search`
 
-    `dns_search` is only supported for IPv4 nameservers. Manual DNS configuration can
-    be specified via a list of domains to search given in the `dns_search` option.
+    Manual DNS configuration can be specified via a list of domains to search given in
+    the `dns_search` option.
 
 - `dns_options`
 
-    `dns_options` is only supported for the NetworkManager provider and IPv4
-    nameservers. Manual DNS configuration via a list of DNS options can be given in the
-    `dns_options`. The list of supported DNS options for IPv4 nameservers is described
-    in [man 5 resolv.conf](https://man7.org/linux/man-pages/man5/resolv.conf.5.html).
+    `dns_options` is only supported for the NetworkManager provider. Manual DNS
+    configuration via a list of DNS options can be given in the `dns_options`. The list
+    of supported DNS options for IPv4 nameservers is described in
+    [man 5 resolv.conf](https://man7.org/linux/man-pages/man5/resolv.conf.5.html).
     Currently, the list of supported DNS options is:
     - `attempts:n`
     - `debug`
     - `edns0`
+    - `inet6`
+    - `ip6-bytestring`
+    - `ip6-dotint`
     - `ndots:n`
     - `no-check-names`
+    - `no-ip6-dotint`
     - `no-reload`
     - `no-tld-query`
     - `rotate`
