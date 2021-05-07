@@ -1,0 +1,49 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+
+- name: Test configuring ethernet devices
+  hosts: all
+  vars:
+    type: veth
+    interface: eth0
+
+  tasks:
+    - name: "set type={{ type }} and interface={{ interface }}"
+      set_fact:
+        type: "{{ type }}"
+        interface: "{{ interface }}"
+    - include_tasks: tasks/show_interfaces.yml
+    - include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: present
+    - include_tasks: tasks/assert_device_present.yml
+
+    - import_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: "{{ interface }}"
+            # interface_name: eth0
+            persistent_state: present
+            type: ethernet
+            interface_path:
+              - pci-0000:00:03.0
+            ip:
+              dhcp4: no
+              address:
+                - 192.0.2.3/24
+    - name: Verify nmcli connection profile
+      shell: |
+        set -euxo pipefail
+        nmcli connection show {{ interface }} | grep ipv4.addresses
+      register: ipv4_addresses
+      ignore_errors: yes
+      changed_when: false
+
+    - name: "Assert that network configuring via matching pci address works"
+      assert:
+        that:
+          - "'192.0.2.3/24' in ipv4_addresses.stdout"
+        msg: "Network configuring via matching pci address is failed"
+...

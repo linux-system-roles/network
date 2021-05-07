@@ -1255,6 +1255,11 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidatorDeprecated("master", deprecated_by="controller"),
                 ArgValidatorStr("interface_name", allow_empty=True),
                 ArgValidatorMac("mac"),
+                ArgValidatorList(
+                    "interface_path",
+                    nested=ArgValidatorStr("interface_path[?]"),
+                    default_value=None,
+                ),
                 ArgValidatorNum(
                     "mtu", val_min=0, val_max=0xFFFFFFFF, default_value=None
                 ),
@@ -1494,6 +1499,19 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                         "but is '%s'" % result["mac"],
                     )
 
+            if "interface_path" in result:
+                if result["interface_path"] == []:
+                    raise ValidationError(
+                        name + ".interface_path",
+                        "'interface_path' address can not be empty list",
+                    )
+                if result["type"] not in ["ethernet", "infiniband"]:
+                    raise ValidationError(
+                        name + ".interface_path",
+                        "a 'interface_path' address is only allowed for type 'ethernet' "
+                        "or 'infiniband'",
+                    )
+
             if result["type"] == "infiniband":
                 if "infiniband" not in result:
                     result["infiniband"] = self.nested[
@@ -1558,7 +1576,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                         "invalid 'interface_name' '%s'" % (result["interface_name"]),
                     )
             else:
-                if not result.get("mac"):
+                if not result.get("mac") and not result.get("interface_path"):
                     if not Util.ifname_valid(result["name"]):
                         raise ValidationError(
                             name + ".interface_name",
@@ -1805,3 +1823,22 @@ class ArgValidator_ListConnections(ArgValidatorList):
                     idx,
                     "ip.ipv6_disabled is not supported by initscripts.",
                 )
+        # initscripts does not support interface_path, so raise errors when network
+        # provider is initscripts
+        # When NM does not have attribute "SettingMatch" and "SETTING_MATCH_PATH",
+        # it will not support interface_path, so raise errors when NM does not have
+        # attribute "SettingMatch" and "SETTING_MATCH_PATH"
+        if connection["interface_path"]:
+            if mode == self.VALIDATE_ONE_MODE_INITSCRIPTS:
+                raise ValidationError.from_connection(
+                    idx,
+                    "interface_path is not supported by initscripts.",
+                )
+            else:
+                if not hasattr(Util.NM(), "SettingMatch") or not hasattr(
+                    Util.NM(), "SETTING_MATCH_PATH"
+                ):
+                    raise ValidationError.from_connection(
+                        idx,
+                        "interface_path is not supported by NM with current verison",
+                    )
