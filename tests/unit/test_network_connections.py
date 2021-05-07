@@ -1455,7 +1455,12 @@ class TestValidator(unittest.TestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
-                    "bond": {"mode": "balance-rr", "miimon": None},
+                    "bond": {
+                        "mode": "balance-rr",
+                        "miimon": None,
+                        "lacp_rate": None,
+                        "xmit_hash_policy": None,
+                    },
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -1504,7 +1509,12 @@ class TestValidator(unittest.TestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
-                    "bond": {"mode": "active-backup", "miimon": None},
+                    "bond": {
+                        "mode": "active-backup",
+                        "miimon": None,
+                        "lacp_rate": None,
+                        "xmit_hash_policy": None,
+                    },
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -1549,6 +1559,72 @@ class TestValidator(unittest.TestCase):
                     "state": "up",
                     "type": "bond",
                     "bond": {"mode": "active-backup"},
+                }
+            ],
+        )
+
+    def test_bond_8023ad(self):
+        self.maxDiff = None
+        self.do_connections_validate(
+            [
+                {
+                    "actions": ["present", "up"],
+                    "autoconnect": True,
+                    "bond": {
+                        "mode": "802.3ad",
+                        "miimon": 100,
+                        "lacp_rate": "slow",
+                        "xmit_hash_policy": "layer2+3",
+                    },
+                    "check_iface_exists": True,
+                    "ethernet": ETHERNET_DEFAULTS,
+                    "ethtool": ETHTOOL_DEFAULTS,
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": "bond1",
+                    "ip": {
+                        "dhcp4": True,
+                        "route_metric6": None,
+                        "route_metric4": None,
+                        "dns_options": [],
+                        "dns_search": [],
+                        "dhcp4_send_hostname": None,
+                        "gateway6": None,
+                        "gateway4": None,
+                        "auto6": True,
+                        "ipv6_disabled": False,
+                        "dns": [],
+                        "address": [],
+                        "route_append_only": False,
+                        "rule_append_only": False,
+                        "route": [],
+                    },
+                    "mac": None,
+                    "controller": None,
+                    "ieee802_1x": None,
+                    "wireless": None,
+                    "mtu": None,
+                    "name": "bond1",
+                    "parent": None,
+                    "persistent_state": "present",
+                    "port_type": None,
+                    "state": "up",
+                    "type": "bond",
+                    "wait": None,
+                    "zone": None,
+                }
+            ],
+            [
+                {
+                    "name": "bond1",
+                    "state": "up",
+                    "type": "bond",
+                    "bond": {
+                        "mode": "802.3ad",
+                        "miimon": 100,
+                        "lacp_rate": "slow",
+                        "xmit_hash_policy": "layer2+3",
+                    },
                 }
             ],
         )

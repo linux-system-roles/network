@@ -1,0 +1,87 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    controller_profile: bond0
+    controller_device: nm-bond
+    port1_profile: bond0.0
+    dhcp_interface1: test1
+    port2_profile: bond0.1
+    dhcp_interface2: test2
+  tasks:
+    - name: "INIT Prepare setup"
+      debug:
+        msg: "##################################################"
+    - import_tasks: tasks/create_test_interfaces_with_dhcp.yml
+    - import_tasks: tasks/assert_device_present.yml
+      vars:
+        interface: "{{ dhcp_interface1 }}"
+    - import_tasks: tasks/assert_device_present.yml
+      vars:
+        interface: "{{ dhcp_interface2 }}"
+    - block:
+        - name: "TEST Add Bond with 2 ports"
+          debug:
+            msg: "##################################################"
+        - import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              # Create a bond controller
+              - name: "{{ controller_profile }}"
+                state: up
+                type: bond
+                interface_name: "{{ controller_device }}"
+                bond:
+                  mode: 802.3ad
+                  miimon: 110
+                  lacp_rate: slow
+                  xmit_hash_policy: layer2+3
+              # add an ethernet to the bond
+              - name: "{{ port1_profile }}"
+                state: up
+                type: ethernet
+                interface_name: "{{ dhcp_interface1 }}"
+                controller: "{{ controller_profile }}"
+              # add a second ethernet to the bond
+              - name: "{{ port2_profile }}"
+                state: up
+                type: ethernet
+                interface_name: "{{ dhcp_interface2 }}"
+                controller: "{{ controller_profile }}"
+        - import_tasks: tasks/assert_device_present.yml
+          vars:
+            interface: "{{ controller_device }}"
+        - include_tasks: tasks/assert_profile_present.yml
+          vars:
+            profile: "{{ item }}"
+          loop:
+            - "{{ controller_profile }}"
+            - "{{ port1_profile }}"
+            - "{{ port2_profile }}"
+        - command: grep 'Bonding Mode:'
+                   /proc/net/bonding/{{ controller_device }}
+          name: "** TEST check bond mode is 802.3ad"
+          register: result
+          until: "'802.3ad' in result.stdout"
+      always:
+        - block:
+            - import_role:
+                name: linux-system-roles.network
+              vars:
+                network_connections:
+                  - name: "{{ port2_profile }}"
+                    persistent_state: absent
+                    state: down
+                  - name: "{{ port1_profile }}"
+                    persistent_state: absent
+                    state: down
+                  - name: "{{ controller_profile }}"
+                    persistent_state: absent
+                    state: down
+              ignore_errors: true
+            - command: ip link del {{ controller_device }}
+              ignore_errors: true
+            - import_tasks: tasks/remove_test_interfaces_with_dhcp.yml
+          tags:
+            - "tests::cleanup"
