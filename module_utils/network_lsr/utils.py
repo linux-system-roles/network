@@ -255,7 +255,7 @@ class Util:
         if i == 1:
             raise MyError("not a valid MAC address: '%s'" % (mac_str))
         if force_len is not None:
-            if force_len != len(b):
+            if not any(a for a in force_len if a == len(b)):
                 raise MyError(
                     "not a valid MAC address of length %s: '%s'" % (force_len, mac_str)
                 )
@@ -271,6 +271,24 @@ class Util:
     @staticmethod
     def mac_norm(mac_str, force_len=None):
         return Util.mac_ntoa(Util.mac_aton(mac_str, force_len))
+
+    @staticmethod
+    def num_to_mac(num, force_len=None):
+        mac = []
+        s_num = num
+        while num:
+            num, mod = divmod(num, 60)
+            if mod < 10:
+                mac.insert(0, "0" + str(mod))
+            else:
+                mac.insert(0, str(mod))
+        mac_addr = ":".join(mac)
+        if force_len is not None:
+            if not any(a for a in force_len if a == len(mac)):
+                raise MyError(
+                    "not a valid number '%d' for MAC address: '%s'" % (s_num, mac_addr)
+                )
+        return mac_addr
 
     @staticmethod
     def boolean(arg):

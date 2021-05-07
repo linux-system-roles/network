@@ -3361,6 +3361,41 @@ class TestValidator(unittest.TestCase):
             self.assertTrue("port_type" in connection)
             self.assertTrue("slave_type" not in connection)
 
+    def test_mac_address_argvalidator(self):
+        """
+        Test that argvalidator for validating mac address is correctly defined.
+        """
+        validator = network_lsr.argument_validator.ArgValidatorMac("mac")
+        self.assertEqual(validator.validate(41135085296), "52:54:00:12:34:56")
+        self.assertEqual(validator.validate("00:00:5e:00:53:5d"), "00:00:5e:00:53:5d")
+        self.assertEqual(validator.validate("00:00:00:00:00:00"), "00:00:00:00:00:00")
+        self.assertEqual(validator.validate("ff:ff:ff:ff:ff:ff"), "ff:ff:ff:ff:ff:ff")
+        self.assertEqual(
+            validator.validate(
+                "80:00:00:6d:fe:80:00:00:00:00:00:00:00:02:55:00:70:33:cf:01"
+            ),
+            "80:00:00:6d:fe:80:00:00:00:00:00:00:00:02:55:00:70:33:cf:01",
+        )
+        self.assertEqual(
+            validator.validate(
+                "01:02:03:04:05:06:07:08:09:0A:01:02:03:04:05:06:07:08:09:11"
+            ),
+            "01:02:03:04:05:06:07:08:09:0a:01:02:03:04:05:06:07:08:09:11",
+        )
+        self.assertValidationError(validator, 1234)
+        self.assertValidationError(validator, "aa:bb")
+        self.assertValidationError(validator, sys.maxsize)
+        self.assertValidationError(validator, 0)
+        self.assertValidationError(
+            validator, "80:00:00:6d:fe:80:00:00:00:00:00:00:00:02:55:00:70:33:cf:"
+        )
+        self.assertValidationError(
+            validator, "80:00:00:6d:fe:80:00:00:00:00:00:00:00:02:55:00:70:33:cf:xx"
+        )
+        self.assertValidationError(
+            validator, "80:00:00:6d:fe:80:00:00:00:00:00:00:00:02:55:000:70:33:cf:01"
+        )
+
 
 @my_test_skipIf(nmutil is None, "no support for NM (libnm via pygobject)")
 class TestNM(unittest.TestCase):

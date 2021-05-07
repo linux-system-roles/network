@@ -14,6 +14,9 @@ from ansible.module_utils.network_lsr.myerror import MyError  # noqa:E501
 from ansible.module_utils.network_lsr.utils import Util  # noqa:E501
 
 UINT32_MAX = 0xFFFFFFFF
+# a MAC address for type ethernet requires 6 octets
+# a MAC address for type infiniband requires 20 octets
+MAC_ADDR_OCTETS = [6, 20]
 
 
 class ArgUtil:
@@ -416,11 +419,25 @@ class ArgValidatorIP(ArgValidatorStr):
 
 
 class ArgValidatorMac(ArgValidatorStr):
-    def __init__(self, name, force_len=None, required=False, default_value=None):
+    def __init__(
+        self, name, force_len=MAC_ADDR_OCTETS, required=False, default_value=None
+    ):
         ArgValidatorStr.__init__(self, name, required, default_value, None)
         self.force_len = force_len
 
     def _validate_impl(self, value, name):
+        if type(value) == int:
+            try:
+                value = Util.num_to_mac(value, self.force_len)
+            except MyError:
+                raise ValidationError(
+                    name, "value '%s' is not a valid MAC address" % (value)
+                )
+        if not isinstance(value, Util.STRING_TYPE):
+            raise ValidationError(
+                name,
+                "must be a string and value should be quoted, but is '%s', " % (value),
+            )
         v = ArgValidatorStr._validate_impl(self, value, name)
         try:
             addr = Util.mac_aton(v, self.force_len)
