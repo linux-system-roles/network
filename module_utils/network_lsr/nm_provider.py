@@ -10,6 +10,7 @@ from ansible.module_utils.network_lsr.utils import Util  # noqa:E501
 
 ETHTOOL_FEATURE_PREFIX = "ETHTOOL_OPTNAME_FEATURE_"
 ETHTOOL_COALESCE_PREFIX = "ETHTOOL_OPTNAME_COALESCE_"
+ETHTOOL_RING_PREFIX = "ETHTOOL_OPTNAME_RING_"
 
 
 def get_nm_ethtool_feature(name):
@@ -42,3 +43,18 @@ def get_nm_ethtool_coalesce(name):
 
     coalesce = getattr(Util.NM(), name, None)
     return coalesce
+
+
+def get_nm_ethtool_ring(name):
+    """
+    Translate ethtool ring option into NetworkManager attribute name
+    :param name: Name of the ring
+    :type name: str
+    :returns: Name of the setting to be used by `NM.SettingEthtool.set_ring()`
+    :rtype: str
+    """
+
+    name = ETHTOOL_RING_PREFIX + name.upper()
+
+    ring = getattr(Util.NM(), name, None)
+    return ring
