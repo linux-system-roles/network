@@ -705,7 +705,7 @@ class NMUtil:
     def connection_ensure_setting(self, connection, setting_type):
         setting = connection.get_setting(setting_type)
         if not setting:
-            setting = setting_type.new()
+            setting = setting_type()
             connection.add_setting(setting)
         return setting
 
