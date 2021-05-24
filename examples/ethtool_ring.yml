@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  tasks:
+    - include_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: "{{ network_interface_name1 }}"
+            state: up
+            type: ethernet
+            ip:
+              dhcp4: no
+              auto6: no
+            ethtool:
+              ring:
+                rx: 128
+                rx_jumbo: 128
+                rx_mini: 128
+                tx: 128

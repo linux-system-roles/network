@@ -22,3 +22,6 @@ rules:
       /tests/tests_wireless_plugin_installation_nm.yml
       /tests/tests_team_plugin_installation_nm.yml
       /tests/tests_ethtool_coalesce_initscripts.yml
+      /tests/tests_ethtool_ring_initscripts.yml
+      /tests/tests_wireless_wpa3_owe_nm.yml
+      /tests/tasks/setup_mock_wifi_wpa3_owe.yml

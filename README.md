@@ -261,8 +261,8 @@ the ansible role.
 
 #### `type: wireless`
 
-The `wireless` type supports WPA-PSK (password) authentication and WPA-EAP (802.1x)
-authentication.
+The `wireless` type supports WPA-PSK (password) authentication, WPA-EAP (802.1x)
+authentication, and Enhanced Open (OWE).
 
 `nm` (NetworkManager) is the only supported `network_provider` for this type.
 
@@ -272,7 +272,13 @@ If WPA-EAP is used, ieee802_1x settings must be defined in the
 The following options are supported:
 
 - `ssid`: the SSID of the wireless network (required)
-- `key_mgmt`: `wpa-psk` or `wpa-eap` (required)
+- `key_mgmt` (required)
+
+    Any key from following key list:
+    - `owe`
+    - `wpa-eap`
+    - `wpa-psk`
+
 - `password`: password for the network (required if `wpa-psk` is used)
 
 ### `autoconnect`
@@ -440,6 +446,17 @@ The ethtool settings allow to enable or disable various features. The names
 correspond to the names used by the `ethtool` utility. Depending on the actual
 kernel and device, changing some options might not be supported.
 
+The ethtool configuration supports the following options:
+
+- `ring`
+
+    Changes the `rx`/`tx` `ring` parameters of the specified network device. The list
+    of supported `ring` parameters is:
+    - `rx` - Changes the number of ring entries for the Rx ring.
+    - `rx-jumbo` - Changes the number of ring entries for the Rx Jumbo ring.
+    - `rx-mini` - Changes the number of ring entries for the Rx Mini ring.
+    - `tx` - Changes the number of ring entries for the Tx ring.
+
 ```yaml
   ethtool:
     features:
@@ -518,6 +535,11 @@ kernel and device, changing some options might not be supported.
       tx_usecs_high: 0  # optional mininum=0 maximum=0xffffffff
       tx_usecs_irq: 0  # optional mininum=0 maximum=0xffffffff
       tx_usecs_low: 0  # optional mininum=0 maximum=0xffffffff
+    ring:
+      rx: 0  # optional mininum=0 maximum=0xffffffff
+      rx_jumbo: 0  # optional mininum=0 maximum=0xffffffff
+      rx_mini: 0  # optional mininum=0 maximum=0xffffffff
+      tx: 0  # optional mininum=0 maximum=0xffffffff
 ```
 
 ### `ieee802_1x`
@@ -831,6 +853,17 @@ network_connections:
       client_cert: /etc/pki/tls/client.pem
       ca_cert: /etc/pki/tls/cacert.pem
       domain_suffix_match: example.com
+```
+
+Configuring Enhanced Open(OWE):
+
+```yaml
+network_connections:
+  - name: wlan0
+    type: wireless
+    wireless:
+      ssid: "WIFI_SSID"
+      key_mgmt: "owe"
 ```
 
 ### Invalid and Wrong Configuration
