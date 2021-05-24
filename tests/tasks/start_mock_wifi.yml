@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Ensure NetworkManager is running
+  service:
+    name: NetworkManager
+    state: started
+
+- name: Load mac80211_hwsim kernel module to mock a wifi network
+  shell: modprobe mac80211_hwsim radio=2 && sleep 5
+  changed_when: false
+
+- name: Restart NetworkManager and wpa_supplicant
+  service:
+    name: "{{ item }}"
+    state: restarted
+  with_items:
+    - NetworkManager
+    - wpa_supplicant
+
+- name: Bring up wlan0 and wlan1 (mock wifi interfaces)
+  shell: |
+    ip link set up wlan0
+    ip link set up wlan1
+    nmcli device set wlan1 managed off
+    ip addr add 203.0.113.1/24 dev wlan1
+    sleep 5
+  changed_when: false
+
+- name: Start hostapd
+  shell: hostapd -B /etc/hostapd/wireless.conf && sleep 5
+  changed_when: false

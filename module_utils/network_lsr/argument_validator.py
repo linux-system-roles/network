@@ -540,8 +540,12 @@ class ArgValidator_DictIP(ArgValidatorDict):
         r"^attempts:([1-9]\d*|0)$",
         r"^debug$",
         r"^edns0$",
+        r"^inet6$",
+        r"^ip6-bytestring$",
+        r"^ip6-dotint$",
         r"^ndots:([1-9]\d*|0)$",
         r"^no-check-names$",
+        r"^no-ip6-dotint$",
         r"^no-reload$",
         r"^no-tld-query$",
         r"^rotate$",
@@ -717,6 +721,7 @@ class ArgValidator_DictEthtool(ArgValidatorDict):
             nested=[
                 ArgValidator_DictEthtoolFeatures(),
                 ArgValidator_DictEthtoolCoalesce(),
+                ArgValidator_DictEthtoolRing(),
             ],
             default_value=ArgValidator.MISSING,
         )
@@ -1014,6 +1019,31 @@ class ArgValidator_DictEthtoolCoalesce(ArgValidatorDict):
         )
 
 
+class ArgValidator_DictEthtoolRing(ArgValidatorDict):
+    def __init__(self):
+        ArgValidatorDict.__init__(
+            self,
+            name="ring",
+            nested=[
+                ArgValidatorNum(
+                    "rx", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "rx_jumbo", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "rx_mini", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+                ArgValidatorNum(
+                    "tx", val_min=0, val_max=UINT32_MAX, default_value=None
+                ),
+            ],
+        )
+        self.default_value = dict(
+            [(k, v.default_value) for k, v in self.nested.items()]
+        )
+
+
 class ArgValidator_DictBond(ArgValidatorDict):
 
     VALID_MODES = [
@@ -1174,6 +1204,7 @@ class ArgValidator_DictWireless(ArgValidatorDict):
     VALID_KEY_MGMT = [
         "wpa-psk",
         "wpa-eap",
+        "owe",
     ]
 
     def __init__(self):
@@ -1738,6 +1769,13 @@ class ArgValidator_ListConnections(ArgValidatorList):
     VALIDATE_ONE_MODE_INITSCRIPTS = "initscripts"
 
     def validate_connection_one(self, mode, connections, idx):
+        def _ipv4_enabled(connection):
+            has_addrs4 = any(
+                address["family"] == socket.AF_INET
+                for address in connection["ip"]["address"]
+            )
+            return connection["ip"]["dhcp4"] or has_addrs4
+
         connection = connections[idx]
         if "type" not in connection:
             return
@@ -1810,4 +1848,46 @@ class ArgValidator_ListConnections(ArgValidatorList):
                 raise ValidationError.from_connection(
                     idx,
                     "ip.ipv6_disabled is not supported by initscripts.",
+                )
+        # Setting ip.dns is not allowed when corresponding IP method for that
+        # nameserver is disabled
+        for nameserver in connection["ip"]["dns"]:
+            if nameserver["family"] == socket.AF_INET and not _ipv4_enabled(connection):
+                raise ValidationError.from_connection(
+                    idx,
+                    "IPv4 needs to be enabled to support IPv4 nameservers.",
+                )
+            if (
+                nameserver["family"] == socket.AF_INET6
+                and connection["ip"]["ipv6_disabled"]
+            ):
+                raise ValidationError.from_connection(
+                    idx,
+                    "IPv6 needs to be enabled to support IPv6 nameservers.",
+                )
+        # when IPv4 and IPv6 are disabled, setting ip.dns_options or
+        # ip.dns_search is not allowed
+        if connection["ip"]["dns_search"] or connection["ip"]["dns_options"]:
+            if not _ipv4_enabled(connection) and connection["ip"]["ipv6_disabled"]:
+                raise ValidationError.from_connection(
+                    idx,
+                    "Setting 'dns_search' or 'dns_options' is not allowed when "
+                    "both IPv4 and IPv6 are disabled.",
+                )
+        # DNS options 'inet6', 'ip6-bytestring', 'ip6-dotint', 'no-ip6-dotint' are only
+        # supported for IPv6 configuration, so raise errors when IPv6 is disabled
+        if any(
+            option in connection["ip"]["dns_options"]
+            for option in [
+                "inet6",
+                "ip6-bytestring",
+                "ip6-dotint",
+                "no-ip6-dotint",
+            ]
+        ):
+            if connection["ip"]["ipv6_disabled"]:
+                raise ValidationError.from_connection(
+                    idx,
+                    "Setting DNS options 'inet6', 'ip6-bytestring', 'ip6-dotint', "
+                    "'no-ip6-dotint' is not allowed when IPv6 is disabled.",
                 )
