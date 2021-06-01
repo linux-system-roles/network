@@ -87,8 +87,14 @@
     __debug_flags: "{{ __network_debug_flags | default(omit) }}"
   register: __network_connections_result
 
+- name: Show stderr messages
+  debug:
+    var: __network_connections_result.stderr_lines
+
 - name: Show debug messages
-  debug: var=__network_connections_result
+  debug:
+    var: __network_connections_result
+    verbosity: 1
 
 - name: Re-test connectivity
   ping:
