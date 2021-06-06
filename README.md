@@ -341,6 +341,18 @@ The IP configuration supports the following options:
 
     Manual addressing can be specified via a list of addresses under the `address` option.
 
+- `auto_gateway`
+
+    If enabled, a default route will be configured using the default gateway. If disabled,
+    the default route will be removed.
+
+    If this variable is not specified, the role will use the default behavior of the
+    `network_provider` selected.
+
+    Setting this option to `no` is equivalent to:
+    - `DEFROUTE = no` in initscripts, or
+    - `ipv4.never-default/ipv6.never-default yes` in nmcli
+
 - `dhcp4`, `auto6`, and `ipv6_disabled`
 
     Also, manual addressing can be specified by setting either `dhcp4` or `auto6`.
