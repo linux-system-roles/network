@@ -3,7 +3,7 @@
 - hosts: all
   vars:
     controller_profile: bond0
-    controller_device: nm-bond
+    controller_device: deprecated-bond
     port1_profile: bond0.0
     dhcp_interface1: test1
     port2_profile: bond0.1
