@@ -437,6 +437,7 @@ class TestValidator(unittest.TestCase):
             {"i": 5, "s": "s_default", "l": "6"}, v.validate({"i": "5", "l": "6"})
         )
         self.assertValidationError(v, {"k": 1})
+        self.assertEqual(v.validate(None), {})
 
     def test_validate_list(self):
 

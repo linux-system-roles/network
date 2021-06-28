@@ -350,6 +350,11 @@ class ArgValidatorDict(ArgValidator):
     def _validate_impl(self, value, name):
         result = {}
         seen_keys = set()
+        if value is None:
+            # Users might want to use jinja2 templates to set properties. As such,
+            # it's convenient to accept None as an alias for an empty dictionary
+            # e.g. setting like `"match": None` will be allowed by the role
+            return {}
         try:
             items = list(value.items())
         except AttributeError:
