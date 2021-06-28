@@ -445,6 +445,7 @@ class TestValidator(unittest.TestCase):
         )
         self.assertEqual([1, 5], v.validate(["1", 5]))
         self.assertValidationError(v, [1, "s"])
+        self.assertEqual(v.validate(None), [])
 
     def test_empty(self):
         self.maxDiff = None

@@ -407,6 +407,11 @@ class ArgValidatorList(ArgValidator):
             # not supported. If you need that, define a proper list.
             value = [s for s in value.split(" ") if s]
 
+        if value is None:
+            # Users might want to use jinja2 templates to set properties. As such,
+            # it's convenient to accept None as an alias for an empty list
+            # e.g. setting like `"match": {"path": None}` will be allowed by the role
+            return []
         result = []
         for (idx, v) in enumerate(value):
             try:
