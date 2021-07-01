@@ -12,20 +12,7 @@
         state: present
     - include_tasks: tasks/assert_device_present.yml
     - block:
-        - block:
-          - include_role:
-              name: linux-system-roles.network
-            register: __network_connections_result
-          - name: Assert change:true
-            assert:
-              that: __network_connections_result is changed
-          - include_role:
-              name: linux-system-roles.network
-            register: __network_connections_result
-          - name: Assert change:false
-            assert:
-              that: not __network_connections_result is changed
-          vars:
+        - vars:
             network_connections:
               - name: "{{ interface }}"
                 state: up
@@ -33,6 +20,40 @@
                 ip:
                   address:
                     - 192.0.2.2/24
+          block:
+            - include_role:
+                name: linux-system-roles.network
+              register: __network_connections_result
+            - name: Assert change:true
+              assert:
+                that: __network_connections_result is changed
+            - include_role:
+                name: linux-system-roles.network
+              register: __network_connections_result
+            - name: Assert change:false
+              assert:
+                that: not __network_connections_result is changed
+        - vars:
+            network_connections:
+              - name: "{{ interface }}"
+                state: up
+                type: ethernet
+                ip:
+                  dhcp4: "no"
+                  auto6: "no"
+          block:
+            - include_role:
+                name: linux-system-roles.network
+              register: __network_connections_result
+            - name: Assert change:true
+              assert:
+                that: __network_connections_result is changed
+            - include_role:
+                name: linux-system-roles.network
+              register: __network_connections_result
+            - name: Assert change:false
+              assert:
+                that: not __network_connections_result is changed
       always:
         - block:
             - include_role:

@@ -1044,7 +1044,11 @@ class NMUtil:
                     s_ip4.add_dns(nameserver["address"])
             for search_domain in ip["dns_search"]:
                 s_ip4.add_dns_search(search_domain)
-            s_ip4.clear_dns_options(True)
+            # NetworkManager ifcfg plguin will discard empty dns option which
+            # cause follow up NM.Connection.compare() raise false alarm
+            # Use False here to ask NetworkManager remove dns option completely instead
+            # of keeping an empty list
+            s_ip4.clear_dns_options(False)
             for option in ip["dns_options"]:
                 s_ip4.add_dns_option(option)
 
@@ -1086,7 +1090,11 @@ class NMUtil:
                     s_ip6.add_dns(nameserver["address"])
             for search_domain in ip["dns_search"]:
                 s_ip6.add_dns_search(search_domain)
-            s_ip6.clear_dns_options(True)
+            # NetworkManager ifcfg plguin will discard empty dns option which
+            # cause follow up NM.Connection.compare() raise false alarm
+            # Use False here to ask NetworkManager remove dns option completely instead
+            # of keeping an empty list
+            s_ip6.clear_dns_options(False)
             for option in ip["dns_options"]:
                 s_ip6.add_dns_option(option)
 
