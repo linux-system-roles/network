@@ -976,6 +976,16 @@ class NMUtil:
                     else:
                         s_ethtool.option_set_uint32(nm_ring, setting)
 
+            # * When users did not specify any ethtool configuration, this module
+            #   will generate an default `NM.SettingEthtool` object and pass it to
+            #   NetworkManager. But NetworkManager cannot serialize this when using the
+            #   ifcfg plugin but treats this as no `NM.SettingEthtool` object.
+            # * The following `NM.SimpleConnection.compare()` will therefore identify a
+            #   difference in the configuration.
+            # * To workaround this, remove the default NM.SettingEthtool object.
+            if s_ethtool.compare(NM.SettingEthtool.new(), NM.SettingCompareFlags.EXACT):
+                con.remove_setting(NM.SettingEthtool)
+
         if connection["mtu"]:
             if connection["type"] == "infiniband":
                 s_infiniband = self.connection_ensure_setting(con, NM.SettingInfiniband)
