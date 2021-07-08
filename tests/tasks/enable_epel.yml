@@ -1,11 +1,27 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- name: Enable EPEL {{ ansible_distribution_major_version }}
-  # yamllint disable-line rule:line-length
-  command: yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
-  args:
-    warn: false
-    creates: /etc/yum.repos.d/epel.repo
+- block:
+    - name: Create EPEL {{ ansible_distribution_major_version }}
+      # yamllint disable-line rule:line-length
+      command: yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
+      args:
+        warn: false
+        creates: /etc/yum.repos.d/epel.repo
+
+    - name: Retrieve EPEL {{ ansible_distribution_major_version }} file stats
+      stat:
+        path: /etc/yum.repos.d/epel.repo
+      register: _result
+
+    - name: Enable EPEL {{ ansible_distribution_major_version }}
+      ini_file:
+        path: /etc/yum.repos.d/epel.repo
+        section: epel
+        mode: "{{ _result.stat.mode }}"
+        owner: "{{ _result.stat.pw_name }}"
+        group: "{{ _result.stat.gr_name }}"
+        option: enabled
+        value: "1"
   when:
     - ansible_distribution in ['RedHat', 'CentOS']
     - ansible_distribution_major_version in ['7', '8']
