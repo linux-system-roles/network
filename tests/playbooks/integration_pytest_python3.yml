@@ -131,6 +131,10 @@
                 var: playbook_run.stdout_lines
 
         - block:
+            - name: install network-scripts when running pytest with initscripts
+              package:
+                name: network-scripts
+                state: present
             - name: Run pytest with initscripts
               command: >
                 pytest
