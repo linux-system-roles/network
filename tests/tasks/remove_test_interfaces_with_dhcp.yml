@@ -5,11 +5,6 @@
     ip link delete {{ dhcp_interface1 }}
     ip link delete {{ dhcp_interface2 }}
     ip link delete testbr
-
-    # Remove udev rule for NM to see veth devices starting with test*.....
-    rm -rf /etc/udev/rules.d/88-veth.rules
-    udevadm control --reload-rules
-    udevadm settle --timeout=5
   changed_when: false
 
 

@@ -8,21 +8,24 @@
 
 - name: Create test interfaces
   shell: |
-    # NM to see veth devices starting with test* as managed after ip add..
-    echo 'ENV{ID_NET_DRIVER}=="veth",\
-          ENV{INTERFACE}=="test*", \
-          ENV{NM_UNMANAGED}="0"' >/etc/udev/rules.d/88-veth.rules
-    udevadm control --reload-rules
-    udevadm settle --timeout=5
-
-    # Setuptwo devices with IPv4/IPv6 auto support
     ip link add {{ dhcp_interface1 }} type veth peer name {{ dhcp_interface1 }}p
-    ip link set {{ dhcp_interface1 }}p up
     ip link add {{ dhcp_interface2 }} type veth peer name {{ dhcp_interface2 }}p
+    if [ -n "$(pidof NetworkManager)" ];then
+      nmcli d set {{ dhcp_interface1 }} managed true
+      nmcli d set {{ dhcp_interface2 }} managed true
+      # NetworkManager should not manage DHCP server ports
+      nmcli d set {{ dhcp_interface1 }}p managed false
+      nmcli d set {{ dhcp_interface2 }}p managed false
+    fi
+    ip link set {{ dhcp_interface1 }}p up
     ip link set {{ dhcp_interface2 }}p up
 
     # Create the 'testbr' - providing both 10.x ipv4 and 2620:52:0 ipv6 dhcp
     ip link add name testbr type bridge forward_delay 0
+    if [ -n "$(pidof NetworkManager)" ];then
+      # NetworkManager should not manage DHCP server ports
+      nmcli d set testbr managed false
+    fi
     ip link set testbr up
     ip addr add 192.0.2.1/24 dev testbr
     ip -6 addr add 2001:DB8::1/32 dev testbr
