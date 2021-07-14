@@ -17,8 +17,10 @@
 
     # Setuptwo devices with IPv4/IPv6 auto support
     ip link add {{ dhcp_interface1 }} type veth peer name {{ dhcp_interface1 }}p
+    ip link set {{ dhcp_interface1 }}p down
     ip link set {{ dhcp_interface1 }}p up
     ip link add {{ dhcp_interface2 }} type veth peer name {{ dhcp_interface2 }}p
+    ip link set {{ dhcp_interface2 }}p down
     ip link set {{ dhcp_interface2 }}p up
 
     # Create the 'testbr' - providing both 10.x ipv4 and 2620:52:0 ipv6 dhcp
