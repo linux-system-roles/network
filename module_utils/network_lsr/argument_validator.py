@@ -758,11 +758,7 @@ class ArgValidator_DictEthtool(ArgValidatorDict):
                 ArgValidator_DictEthtoolCoalesce(),
                 ArgValidator_DictEthtoolRing(),
             ],
-            default_value=ArgValidator.MISSING,
-        )
-
-        self._default_value = dict(
-            [(k, v.get_default_value()) for k, v in self.nested.items()]
+            default_value=ArgValidator.DEFAULT,
         )
 
 
@@ -963,13 +959,7 @@ class ArgValidator_DictEthtoolFeatures(ArgValidatorDict):
                     deprecated_by="tx_vlan_stag_hw_insert",
                 ),
             ],
-        )
-        self._default_value = dict(
-            [
-                (name, validator.get_default_value())
-                for name, validator in self.nested.items()
-                if not isinstance(validator, ArgValidatorDeprecated)
-            ]
+            default_value=ArgValidator.DEFAULT,
         )
 
 
@@ -1048,9 +1038,7 @@ class ArgValidator_DictEthtoolCoalesce(ArgValidatorDict):
                     "tx_usecs_low", val_min=0, val_max=UINT32_MAX, default_value=None
                 ),
             ],
-        )
-        self._default_value = dict(
-            [(k, v.get_default_value()) for k, v in self.nested.items()]
+            default_value=ArgValidator.DEFAULT,
         )
 
 
@@ -1073,9 +1061,7 @@ class ArgValidator_DictEthtoolRing(ArgValidatorDict):
                     "tx", val_min=0, val_max=UINT32_MAX, default_value=None
                 ),
             ],
-        )
-        self._default_value = dict(
-            [(k, v.get_default_value()) for k, v in self.nested.items()]
+            default_value=ArgValidator.DEFAULT,
         )
 
 
