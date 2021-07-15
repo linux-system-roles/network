@@ -311,10 +311,21 @@ class ArgValidatorBool(ArgValidator):
         raise ValidationError(name, "must be an boolean but is '%s'" % (value))
 
 
-class ArgValidatorDeprecated:
+class ArgValidatorDeprecated(ArgValidator):
+    """
+    ArgValidatorDeprecated is only used as a marker to indicate that a setting is deprecated
+    by another setting. The validator that contains a deprecated setting is responsible for
+    processing this and the replacement setting needs to perform the validation.
+    """
+
     def __init__(self, name, deprecated_by):
-        self.name = name
+        ArgValidator.__init__(self, name, default_value=ArgValidator.MISSING)
         self.deprecated_by = deprecated_by
+
+    def _validate_impl(self, value, name):
+        raise MyError(
+            "Deprecated settings need to be validated by the replacement setting."
+        )
 
 
 class ArgValidatorDict(ArgValidator):
@@ -358,8 +369,6 @@ class ArgValidatorDict(ArgValidator):
             result[setting] = validated_value
         for (setting, validator) in self.nested.items():
             if setting in seen_keys:
-                continue
-            if isinstance(validator, ArgValidatorDeprecated):
                 continue
             if validator.required:
                 raise ValidationError(name, "missing required key '%s'" % (setting))
@@ -1717,11 +1726,9 @@ class ArgValidator_DictConnection(ArgValidatorDict):
         for name in self.VALID_FIELDS:
             if name in result:
                 continue
-            validator = self.nested[name]
-            if not isinstance(validator, ArgValidatorDeprecated):
-                value = validator.get_default_value()
-                if value is not ArgValidator.MISSING:
-                    result[name] = value
+            value = self.nested[name].get_default_value()
+            if value is not ArgValidator.MISSING:
+                result[name] = value
 
         return result
 
