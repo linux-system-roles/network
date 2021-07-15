@@ -92,12 +92,12 @@ class ArgValidator:
     def __init__(self, name=None, required=False, default_value=None):
         self.name = name
         self.required = required
-        self.default_value = default_value
+        self._default_value = default_value
 
     def get_default_value(self):
-        if callable(self.default_value):
-            return self.default_value()
-        return self.default_value
+        if callable(self._default_value):
+            return self._default_value()
+        return self._default_value
 
     def validate(self, value):
         """
@@ -364,9 +364,9 @@ class ArgValidatorDict(ArgValidator):
             if validator.required:
                 raise ValidationError(name, "missing required key '%s'" % (setting))
             if not self.all_missing_during_validate:
-                default_value = validator.get_default_value()
-                if default_value is not ArgValidator.MISSING:
-                    result[setting] = default_value
+                default = validator.get_default_value()
+                if default is not ArgValidator.MISSING:
+                    result[setting] = default
         return result
 
 
@@ -697,7 +697,7 @@ class ArgValidator_DictEthernet(ArgValidatorDict):
         )
 
     def get_default_ethernet(self):
-        return dict([(k, v.default_value) for k, v in self.nested.items()])
+        return dict([(k, v._default_value) for k, v in self.nested.items()])
 
     def _validate_post(self, value, name, result):
         has_speed_or_duplex = result["speed"] != 0 or result["duplex"] is not None
@@ -737,8 +737,8 @@ class ArgValidator_DictEthtool(ArgValidatorDict):
             default_value=ArgValidator.MISSING,
         )
 
-        self.default_value = dict(
-            [(k, v.default_value) for k, v in self.nested.items()]
+        self._default_value = dict(
+            [(k, v._default_value) for k, v in self.nested.items()]
         )
 
 
@@ -940,9 +940,9 @@ class ArgValidator_DictEthtoolFeatures(ArgValidatorDict):
                 ),
             ],
         )
-        self.default_value = dict(
+        self._default_value = dict(
             [
-                (name, validator.default_value)
+                (name, validator._default_value)
                 for name, validator in self.nested.items()
                 if not isinstance(validator, ArgValidatorDeprecated)
             ]
@@ -1025,8 +1025,8 @@ class ArgValidator_DictEthtoolCoalesce(ArgValidatorDict):
                 ),
             ],
         )
-        self.default_value = dict(
-            [(k, v.default_value) for k, v in self.nested.items()]
+        self._default_value = dict(
+            [(k, v._default_value) for k, v in self.nested.items()]
         )
 
 
@@ -1050,8 +1050,8 @@ class ArgValidator_DictEthtoolRing(ArgValidatorDict):
                 ),
             ],
         )
-        self.default_value = dict(
-            [(k, v.default_value) for k, v in self.nested.items()]
+        self._default_value = dict(
+            [(k, v._default_value) for k, v in self.nested.items()]
         )
 
 
