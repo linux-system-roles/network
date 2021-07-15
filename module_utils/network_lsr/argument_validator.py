@@ -87,7 +87,7 @@ class ValidationError(MyError):
 
 class ArgValidator:
     MISSING = object()
-    DEFAULT_SENTINEL = object()
+    DEFAULT = object()
 
     def __init__(self, name=None, required=False, default_value=None):
         self.name = name
@@ -253,17 +253,12 @@ class ArgValidatorNum(ArgValidator):
         required=False,
         val_min=None,
         val_max=None,
-        default_value=ArgValidator.DEFAULT_SENTINEL,
+        default_value=ArgValidator.DEFAULT,
         numeric_type=int,
     ):
-        ArgValidator.__init__(
-            self,
-            name,
-            required,
-            numeric_type(0)
-            if default_value is ArgValidator.DEFAULT_SENTINEL
-            else default_value,
-        )
+        if default_value is ArgValidator.DEFAULT:
+            default_value = numeric_type(0)
+        ArgValidator.__init__(self, name, required, default_value)
         self.val_min = val_min
         self.val_max = val_max
         self.numeric_type = numeric_type
