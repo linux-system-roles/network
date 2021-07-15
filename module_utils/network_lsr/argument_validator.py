@@ -337,11 +337,14 @@ class ArgValidatorDict(ArgValidator):
         default_value=None,
         all_missing_during_validate=False,
     ):
-        ArgValidator.__init__(self, name, required, default_value)
         if nested is not None:
-            self.nested = dict([(v.name, v) for v in nested])
+            nested = dict([(v.name, v) for v in nested])
         else:
-            self.nested = {}
+            nested = {}
+        if default_value is ArgValidator.DEFAULT:
+            default_value = self.generate_default
+        ArgValidator.__init__(self, name, required, default_value)
+        self.nested = nested
         self.all_missing_during_validate = all_missing_during_validate
 
     def _validate_impl(self, value, name):
@@ -377,6 +380,18 @@ class ArgValidatorDict(ArgValidator):
                 if default is not ArgValidator.MISSING:
                     result[setting] = default
         return result
+
+    @staticmethod
+    def generate_default_from_nested(nested):
+        result = {}
+        for name, validator in nested.items():
+            default = validator.get_default_value()
+            if default is not ArgValidator.MISSING:
+                result[name] = default
+        return result
+
+    def generate_default(self):
+        return ArgValidatorDict.generate_default_from_nested(self.nested)
 
 
 class ArgValidatorList(ArgValidator):
