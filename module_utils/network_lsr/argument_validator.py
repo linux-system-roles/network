@@ -488,7 +488,7 @@ class ArgValidatorIPAddr(ArgValidatorDict):
 
 
 class ArgValidatorIPRoute(ArgValidatorDict):
-    def __init__(self, name, family=None, required=False, default_value=None):
+    def __init__(self, name, family=None, required=False):
         ArgValidatorDict.__init__(
             self,
             name,
