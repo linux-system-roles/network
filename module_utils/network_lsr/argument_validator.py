@@ -697,7 +697,7 @@ class ArgValidator_DictEthernet(ArgValidatorDict):
         )
 
     def get_default_ethernet(self):
-        return dict([(k, v._default_value) for k, v in self.nested.items()])
+        return dict([(k, v.get_default_value()) for k, v in self.nested.items()])
 
     def _validate_post(self, value, name, result):
         has_speed_or_duplex = result["speed"] != 0 or result["duplex"] is not None
@@ -738,7 +738,7 @@ class ArgValidator_DictEthtool(ArgValidatorDict):
         )
 
         self._default_value = dict(
-            [(k, v._default_value) for k, v in self.nested.items()]
+            [(k, v.get_default_value()) for k, v in self.nested.items()]
         )
 
 
@@ -942,7 +942,7 @@ class ArgValidator_DictEthtoolFeatures(ArgValidatorDict):
         )
         self._default_value = dict(
             [
-                (name, validator._default_value)
+                (name, validator.get_default_value())
                 for name, validator in self.nested.items()
                 if not isinstance(validator, ArgValidatorDeprecated)
             ]
@@ -1026,7 +1026,7 @@ class ArgValidator_DictEthtoolCoalesce(ArgValidatorDict):
             ],
         )
         self._default_value = dict(
-            [(k, v._default_value) for k, v in self.nested.items()]
+            [(k, v.get_default_value()) for k, v in self.nested.items()]
         )
 
 
@@ -1051,7 +1051,7 @@ class ArgValidator_DictEthtoolRing(ArgValidatorDict):
             ],
         )
         self._default_value = dict(
-            [(k, v._default_value) for k, v in self.nested.items()]
+            [(k, v.get_default_value()) for k, v in self.nested.items()]
         )
 
 
