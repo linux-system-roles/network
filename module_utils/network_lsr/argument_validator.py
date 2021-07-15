@@ -334,7 +334,7 @@ class ArgValidatorDict(ArgValidator):
         name=None,
         required=False,
         nested=None,
-        default_value=None,
+        default_value=ArgValidator.DEFAULT,
         all_missing_during_validate=False,
     ):
         if nested is not None:
@@ -472,6 +472,7 @@ class ArgValidatorIPAddr(ArgValidatorDict):
                 ),
                 ArgValidatorNum("prefix", default_value=None, val_min=0),
             ],
+            default_value=None,
         )
         self.family = family
 
@@ -524,6 +525,7 @@ class ArgValidatorIPRoute(ArgValidatorDict):
                     "metric", default_value=-1, val_min=-1, val_max=0xFFFFFFFF
                 ),
             ],
+            default_value=None,
         )
         self.family = family
 
@@ -758,7 +760,6 @@ class ArgValidator_DictEthtool(ArgValidatorDict):
                 ArgValidator_DictEthtoolCoalesce(),
                 ArgValidator_DictEthtoolRing(),
             ],
-            default_value=ArgValidator.DEFAULT,
         )
 
 
@@ -959,7 +960,6 @@ class ArgValidator_DictEthtoolFeatures(ArgValidatorDict):
                     deprecated_by="tx_vlan_stag_hw_insert",
                 ),
             ],
-            default_value=ArgValidator.DEFAULT,
         )
 
 
@@ -1038,7 +1038,6 @@ class ArgValidator_DictEthtoolCoalesce(ArgValidatorDict):
                     "tx_usecs_low", val_min=0, val_max=UINT32_MAX, default_value=None
                 ),
             ],
-            default_value=ArgValidator.DEFAULT,
         )
 
 
@@ -1061,7 +1060,6 @@ class ArgValidator_DictEthtoolRing(ArgValidatorDict):
                     "tx", val_min=0, val_max=UINT32_MAX, default_value=None
                 ),
             ],
-            default_value=ArgValidator.DEFAULT,
         )
 
 
