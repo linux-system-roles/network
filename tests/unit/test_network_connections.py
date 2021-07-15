@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 import copy
 import itertools
+import os
 import pprint as pprint_
 import socket
 import sys
@@ -15,9 +16,12 @@ except ImportError:  # py2
 
 sys.modules["ansible.module_utils.basic"] = mock.Mock()
 
-# pylint: disable=import-error, wrong-import-position
+try:
+    import network_lsr
+except ImportError:
+    sys.path.append(os.path.join(os.path.dirname(__file__), "fake_env"))
+    import network_lsr
 
-import network_lsr
 import network_lsr.argument_validator
 from network_connections import IfcfgUtil, NMUtil, SysUtil, Util
 from network_lsr.argument_validator import ValidationError
