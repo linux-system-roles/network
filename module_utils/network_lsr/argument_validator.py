@@ -347,7 +347,7 @@ class ArgValidatorDict(ArgValidator):
                 raise ValidationError(name, "invalid key '%s'" % (setting))
             if isinstance(validator, ArgValidatorDeprecated):
                 setting = validator.deprecated_by
-                validator = self.nested.get(setting, None)
+                validator = self.nested[setting]
             if setting in seen_keys:
                 raise ValidationError(name, "duplicate key '%s'" % (setting))
             seen_keys.add(setting)
