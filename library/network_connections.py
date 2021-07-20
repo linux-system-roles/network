@@ -952,12 +952,19 @@ class NMUtil:
                 nm_feature = nm_provider.get_nm_ethtool_feature(feature)
 
                 if setting is None:
-                    if nm_feature:
-                        s_ethtool.set_feature(nm_feature, NM.Ternary.DEFAULT)
+                    if not nm_feature:
+                        continue
+                    val = NM.Ternary.DEFAULT
                 elif setting:
-                    s_ethtool.set_feature(nm_feature, NM.Ternary.TRUE)
+                    val = NM.Ternary.TRUE
                 else:
-                    s_ethtool.set_feature(nm_feature, NM.Ternary.FALSE)
+                    val = NM.Ternary.FALSE
+                if not hasattr(s_ethtool, "option_set"):
+                    s_ethtool.set_feature(nm_feature, val)
+                elif val == NM.Ternary.DEFAULT:
+                    s_ethtool.option_set(nm_feature, None)
+                else:
+                    s_ethtool.option_set_boolean(nm_feature, val)
 
             for coalesce, setting in connection["ethtool"]["coalesce"].items():
                 nm_coalesce = nm_provider.get_nm_ethtool_coalesce(coalesce)
