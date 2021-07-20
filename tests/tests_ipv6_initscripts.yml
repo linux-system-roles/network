@@ -4,6 +4,7 @@
 - hosts: all
   name: Run playbook 'playbooks/tests_ipv6.yml' with initscripts as provider
   tasks:
+    - include_tasks: tasks/el_repo_setup.yml
     - name: Set network provider to 'initscripts'
       set_fact:
         network_provider: initscripts
@@ -11,3 +12,6 @@
         - always
 
 - import_playbook: playbooks/tests_ipv6.yml
+  when: (ansible_distribution in ['CentOS','RedHat'] and
+    ansible_distribution_major_version | int < 9) or
+    ansible_distribution == 'Fedora'

@@ -25,3 +25,6 @@ rules:
       /tests/tests_ethtool_ring_initscripts.yml
       /tests/tests_wireless_wpa3_owe_nm.yml
       /tests/tasks/setup_mock_wifi_wpa3_owe.yml
+      /tests/tests_auto_gateway_initscripts.yml
+      /tests/tests_bond_deprecated_initscripts.yml
+      /tests/tests_ethtool_features_initscripts.yml
