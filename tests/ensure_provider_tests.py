@@ -73,6 +73,8 @@ ibution_major_version | int < 9",
     "playbooks/tests_provider.yml": {
         MINIMUM_VERSION: "'1.20.0'",
         "comment": "# NetworKmanager 1.20.0 added support for forgetting profiles",
+        EXTRA_RUN_CONDITION: "ansible_distribution != 'RedHat' or\n      ansible_distr\
+ibution_major_version | int < 9",
     },
     "playbooks/tests_reapply.yml": {},
     # team interface is not supported on Fedora
@@ -127,6 +129,9 @@ RUN_PLAYBOOK_WITH_INITSCRIPTS = """# SPDX-License-Identifier: BSD-3-Clause
         - always
 
 - import_playbook: {test_playbook}
+  when: (ansible_distribution in ['CentOS','RedHat'] and\n    \
+ansible_distribution_major_version | int < 9) or\n    \
+ansible_distribution == 'Fedora'
 """
 
 
