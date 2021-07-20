@@ -67,10 +67,6 @@ ibution_major_version | int < 9",
     },
     "playbooks/tests_eth_dns_support.yml": {},
     "playbooks/tests_dummy.yml": {},
-    "playbooks/tests_ethtool_features.yml": {
-        MINIMUM_VERSION: "'1.20.0'",
-        "comment": "# NetworkManager 1.20.0 introduced ethtool settings support",
-    },
     "playbooks/tests_ipv6_disabled.yml": {
         EXTRA_RUN_CONDITION: "ansible_distribution_major_version == '8'",
     },
@@ -105,6 +101,10 @@ NM_CONDITIONAL_TESTS = {
     "playbooks/tests_ethtool_coalesce.yml": {
         MINIMUM_VERSION: "'1.25.1'",
         "comment": "# NetworkManager 1.25.1 introduced ethtool coalesce support",
+    },
+    "playbooks/tests_ethtool_features.yml": {
+        MINIMUM_VERSION: "'1.20.0'",
+        "comment": "# NetworkManager 1.20.0 introduced ethtool settings support",
     },
 }
 
