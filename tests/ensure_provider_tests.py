@@ -119,6 +119,7 @@ RUN_PLAYBOOK_WITH_INITSCRIPTS = """# SPDX-License-Identifier: BSD-3-Clause
 - hosts: all
   name: Run playbook '{test_playbook}' with initscripts as provider
   tasks:
+    - include_tasks: tasks/el_repo_setup.yml
     - name: Set network provider to 'initscripts'
       set_fact:
         network_provider: initscripts
