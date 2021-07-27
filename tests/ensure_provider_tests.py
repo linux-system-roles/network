@@ -57,8 +57,14 @@ RUN_PLAYBOOK_WITH_NM = """# SPDX-License-Identifier: BSD-3-Clause
 MINIMUM_VERSION = "minimum_version"
 EXTRA_RUN_CONDITION = "extra_run_condition"
 NM_ONLY_TESTS = {
-    "playbooks/tests_802_1x_updated.yml": {},
-    "playbooks/tests_802_1x.yml": {},
+    "playbooks/tests_802_1x_updated.yml": {
+        EXTRA_RUN_CONDITION: "ansible_distribution != 'RedHat' or\n      ansible_distr\
+ibution_major_version | int < 9",
+    },
+    "playbooks/tests_802_1x.yml": {
+        EXTRA_RUN_CONDITION: "ansible_distribution != 'RedHat' or\n      ansible_distr\
+ibution_major_version | int < 9",
+    },
     "playbooks/tests_eth_dns_support.yml": {},
     "playbooks/tests_dummy.yml": {},
     "playbooks/tests_ethtool_features.yml": {
