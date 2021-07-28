@@ -1,0 +1,24 @@
+name: integration
+
+on:
+  pull_request:
+   types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - base
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: "c8"
+          - os: "c8s"
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run tests
+        run: sudo .github/run_test.sh --os ${{ matrix.os }}
