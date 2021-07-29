@@ -1,8 +1,8 @@
 #!/bin/bash -x
 
 TEST_SOURCE_DIR="/network-role"
-C8S_CONTAINER_IMAGE="quay.io/linux_system_roles/c8s-network-role"
-C8_CONTAINER_IMAGE="quay.io/linux_system_roles/c8-network-role"
+C8S_CONTAINER_IMAGE="quay.io/linux-system-roles/c8s-network-role"
+C8_CONTAINER_IMAGE="quay.io/linux-system-roles/c8-network-role"
 PODMAN_OPTS="--systemd=true --privileged"
 
 read -d '' TEST_FILES << EOF
