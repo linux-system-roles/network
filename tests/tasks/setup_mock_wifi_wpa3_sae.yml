@@ -1,0 +1,62 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Install packages required to set up mock wifi network
+  package:
+    name:
+      - NetworkManager
+      - wpa_supplicant
+    state: present
+
+# Even though hostapd can be installed via EPEL 8, Simultaneous Authentication
+# of Equals (SAE) has not been enabled by default. To warrant the test support
+# on CentOS 8, we setup hostapd copr repo to enable SAE option.
+- name: install hostapd and mac80211_hwsim kernel module in CentOS 8
+  shell: |
+    dnf -y copr enable liangwen12year/hostapd-owe
+    dnf -y install hostapd
+    release=$(uname -r)
+    tmp="${release/-//}"
+    tmp="${tmp/.x//x}"
+    dnf -y install https://koji.mbox.centos.org/pkgs/packages/kernel/$tmp/kernel-core-$release.rpm
+    dnf -y install https://koji.mbox.centos.org/pkgs/packages/kernel/$tmp/kernel-modules-$release.rpm
+    dnf -y install https://koji.mbox.centos.org/pkgs/packages/kernel/$tmp/kernel-modules-internal-$release.rpm
+  when:
+    - ansible_distribution_major_version == '8'
+    - ansible_distribution == 'CentOS'
+
+- name: install hostapd in Fedora
+  package:
+    name:
+      - hostapd
+    state: present
+  when:
+    - ansible_distribution == 'Fedora'
+
+# Since DNF package manager can not warrant installing the kernel module with the same
+# version as the kernel in target machine, install the kernel module from koji instead
+- name: install mac80211_hwsim kernel module in Fedora
+  shell: |
+    dnf -y install koji
+    koji download-build --arch=$(uname -p) kernel-modules-internal-$(uname -r)
+    dnf -y install kernel-modules*.rpm
+  args:
+    warn: false
+  when:
+    - ansible_distribution == 'Fedora'
+
+- name: Create hostapd config
+  copy:
+    content: |
+      interface=wlan1
+      ssid=hostapd-sae
+      hw_mode=g
+      channel=6
+      wpa=2
+      wpa_passphrase=p@55w0rD
+      wpa_key_mgmt=SAE
+      rsn_pairwise=CCMP
+      ieee80211w=2
+    dest: /etc/hostapd/wireless.conf
+    mode: "0644"
+
+- include_tasks: tasks/start_mock_wifi.yml

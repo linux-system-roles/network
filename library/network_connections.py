@@ -925,7 +925,10 @@ class NMUtil:
                 connection["wireless"]["key_mgmt"],
             )
 
-            if connection["wireless"]["key_mgmt"] == "wpa-psk":
+            if (
+                connection["wireless"]["key_mgmt"] == "wpa-psk"
+                or connection["wireless"]["key_mgmt"] == "sae"
+            ):
                 s_wireless_sec.set_property(
                     NM.SETTING_WIRELESS_SECURITY_PSK, connection["wireless"]["password"]
                 )
