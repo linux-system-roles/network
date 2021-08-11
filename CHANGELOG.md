@@ -1,6 +1,30 @@
 Changelog
 =========
 
+[1.4.0] - 2021-08-10
+--------------------
+
+### Changes
+
+- Drop the support for Ansible 2.8
+- Display the `stderr_lines` only by default
+  - All the config parameters can still be displayed as previous using
+    `ansible-playbook -v`
+
+### New features
+
+- Support Simultaneous Authentication of Equals(SAE) authentication
+- Support Opportunistic Wireless Encryption (OWE)
+- Support Ethtool ring settings
+- Support `auto_gateway` option
+
+### Bug fixes
+
+- Fix static IPv6 support for initscripts provider
+- Fix `dns_search` and `dns_options` support for all address family
+- Fix deprecation warning on Ethtool setting
+- Fix the idempotence when applying the same network connection twice
+
 [1.3.0] - 2021-04-08
 --------------------
 
