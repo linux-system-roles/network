@@ -225,7 +225,7 @@ disabled (`autoneg: no`).
 #### `type: bridge`, `type: bond`, `type: team`
 
 The `bridge`, `bond`, `team` device types work similar. Note that `team` is not
-supported in RHEL6 kernels.
+supported in RHEL6 kernels, and has been deprecated in RHEL 9.
 
 For ports, the `port_type` and `controller` properties must be set. Note that ports
 should not have `ip` settings.
