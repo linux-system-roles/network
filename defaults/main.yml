@@ -27,8 +27,9 @@ __network_ieee802_1x_connections_defined: "{{ network_connections |
       selectattr('ieee802_1x', 'defined') | list | count > 0 }}"
 
 # check if any wireless connections are defined
-__network_wireless_connections_defined: "{{
-      ['wireless'] in network_connections|json_query('[*][type]') }}"
+__network_wireless_connections_defined: "{{ network_connections |
+      selectattr('type', 'defined') |
+      selectattr('type', 'match', '^wireless$') | list | count > 0 }}"
 
 # NetworkManager-wireless is required for wireless connections
 __network_packages_default_wireless: ["{%
@@ -36,8 +37,9 @@ __network_packages_default_wireless: ["{%
       %}NetworkManager-wifi{% endif %}"]
 
 # check if any team connections are defined
-__network_team_connections_defined: "{{
-      ['team'] in network_connections|json_query('[*][type]') }}"
+__network_team_connections_defined: "{{ network_connections |
+      selectattr('type', 'defined') |
+      selectattr('type', 'match', '^team$') | list | count > 0 }}"
 
 # NetworkManager-team is required for team connections
 __network_packages_default_team: ["{%
@@ -71,7 +73,8 @@ __network_service_name_default_initscripts: network
 # initscripts requires bridge-utils to manage bridges, install it when the
 # 'bridge' type is used in network_connections
 __network_packages_default_initscripts_bridge: ["{%
-if ['bridge'] in network_connections|json_query('[*][type]') and
+if network_connections|selectattr('type', 'defined')|
+   selectattr('type', 'match', '^bridge$')|list|count>0 and
    ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux'] and
    ansible_distribution_major_version is version('7', '<=')
 %}bridge-utils{% endif %}"]
