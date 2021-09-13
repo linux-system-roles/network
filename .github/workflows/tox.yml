@@ -28,7 +28,7 @@ jobs:
           set -euxo pipefail
           python -m pip install --upgrade pip
           sudo apt-get update
-          sudo apt-get install git
+          sudo apt-get install -y git
           pip install "$TOX_LSR"
           lsr_ci_preinstall
       - name: Run tox tests
