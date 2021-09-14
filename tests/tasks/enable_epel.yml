@@ -8,20 +8,17 @@
         warn: false
         creates: /etc/yum.repos.d/epel.repo
 
-    - name: Retrieve EPEL {{ ansible_distribution_major_version }} file stats
-      stat:
-        path: /etc/yum.repos.d/epel.repo
-      register: _result
+    - name: Enable EPEL 7
+      command: yum config-manager --set-enabled epel
+      when: ansible_distribution_major_version == '7'
+      args:
+        warn: false
 
-    - name: Enable EPEL {{ ansible_distribution_major_version }}
-      ini_file:
-        path: /etc/yum.repos.d/epel.repo
-        section: epel
-        mode: "{{ _result.stat.mode }}"
-        owner: "{{ _result.stat.pw_name }}"
-        group: "{{ _result.stat.gr_name }}"
-        option: enabled
-        value: "1"
+    - name: Enable EPEL 8
+      command: dnf config-manager --set-enabled epel
+      when: ansible_distribution_major_version == '8'
+      args:
+        warn: false
   when:
     - ansible_distribution in ['RedHat', 'CentOS']
     - ansible_distribution_major_version in ['7', '8']
