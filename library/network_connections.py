@@ -1029,14 +1029,17 @@ class NMUtil:
             addrs4 = [a for a in ip["address"] if a["family"] == socket.AF_INET]
             addrs6 = [a for a in ip["address"] if a["family"] == socket.AF_INET6]
 
+            is_ipv4_configured = False
             if ip["dhcp4"]:
                 s_ip4.set_property(NM.SETTING_IP_CONFIG_METHOD, "auto")
                 s_ip4.set_property(
                     NM.SETTING_IP_CONFIG_DHCP_SEND_HOSTNAME,
                     ip["dhcp4_send_hostname"] is not False,
                 )
+                is_ipv4_configured = True
             elif addrs4:
                 s_ip4.set_property(NM.SETTING_IP_CONFIG_METHOD, "manual")
+                is_ipv4_configured = True
             else:
                 s_ip4.set_property(NM.SETTING_IP_CONFIG_METHOD, "disabled")
             for a in addrs4:
@@ -1052,8 +1055,11 @@ class NMUtil:
             for nameserver in ip["dns"]:
                 if nameserver["family"] == socket.AF_INET:
                     s_ip4.add_dns(nameserver["address"])
-            for search_domain in ip["dns_search"]:
-                s_ip4.add_dns_search(search_domain)
+            # NetworkManager only allows to configure `ipv4.dns-search` setting when
+            # IPv4 is enabled
+            if is_ipv4_configured:
+                for search_domain in ip["dns_search"]:
+                    s_ip4.add_dns_search(search_domain)
             # NetworkManager ifcfg plguin will discard empty dns option which
             # cause follow up NM.Connection.compare() raise false alarm
             # Use False here to ask NetworkManager remove dns option completely instead
@@ -1062,12 +1068,15 @@ class NMUtil:
             for option in ip["dns_options"]:
                 s_ip4.add_dns_option(option)
 
+            is_ipv6_configured = False
             if ip["ipv6_disabled"]:
                 s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, "disabled")
             elif ip["auto6"]:
                 s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, "auto")
+                is_ipv6_configured = True
             elif addrs6:
                 s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, "manual")
+                is_ipv6_configured = True
             else:
                 # we should not set "ipv6.method=ignore". "ignore" is a legacy mode
                 # and not really useful. Instead, we should set "link-local" here.
@@ -1098,8 +1107,11 @@ class NMUtil:
             for nameserver in ip["dns"]:
                 if nameserver["family"] == socket.AF_INET6:
                     s_ip6.add_dns(nameserver["address"])
-            for search_domain in ip["dns_search"]:
-                s_ip6.add_dns_search(search_domain)
+            # NetworkManager only allows to configure `ipv6.dns-search` setting when
+            # IPv6 is enabled
+            if is_ipv6_configured:
+                for search_domain in ip["dns_search"]:
+                    s_ip6.add_dns_search(search_domain)
             # NetworkManager ifcfg plguin will discard empty dns option which
             # cause follow up NM.Connection.compare() raise false alarm
             # Use False here to ask NetworkManager remove dns option completely instead

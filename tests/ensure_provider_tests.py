@@ -72,6 +72,7 @@ ibution_major_version | int < 9",
     "playbooks/tests_ipv6_disabled.yml": {
         EXTRA_RUN_CONDITION: "ansible_distribution_major_version == '8'",
     },
+    "playbooks/tests_ipv6_dns_search.yml": {},
     "playbooks/tests_provider.yml": {
         MINIMUM_VERSION: "'1.20.0'",
         "comment": "# NetworKmanager 1.20.0 added support for forgetting profiles",
