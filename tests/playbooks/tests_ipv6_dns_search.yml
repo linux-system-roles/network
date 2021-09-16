@@ -1,0 +1,156 @@
+---
+- hosts: all
+  tasks:
+    - block:
+        - name: Configure the static IPv4 address and not configure the IPv6
+            address
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: br-example
+                type: bridge
+                ip:
+                  dhcp4: false
+                  auto6: false
+                  dns: 203.0.113.113
+                  dns_search: example.com
+                  address:
+                    - 192.0.2.1/24
+                state: up
+        - name: Get DNS search entry for IPv4
+          command: nmcli -f ipv4.dns-search connection show br-example
+          register: ipv4_dns_search
+          ignore_errors: yes
+          changed_when: false
+
+        - name: Get DNS search entry for IPv6
+          command: nmcli -f ipv6.dns-search connection show br-example
+          register: ipv6_dns_search
+          ignore_errors: yes
+          changed_when: false
+
+        - name: Assert that IPv4 DNS search entry is configured correctly
+          assert:
+            that:
+              - "'example.com' in ipv4_dns_search.stdout"
+            msg: "IPv4 DNS search entry is missing"
+
+        - name: Assert that DNS search setting for IPv6 is not configured when
+            IPv6 address is not configured
+          assert:
+            that:
+              - "'example.com' not in ipv6_dns_search.stdout"
+            msg: DNS search setting for IPv6 is configured when IPv6 address is
+              not configured
+
+        - name: Reconfigure the static IPv4 and IPv6 address, reconfigure DNS
+            and DNS search setting for IPv4 and IPv6
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: br-example
+                type: bridge
+                ip:
+                  dhcp4: false
+                  auto6: false
+                  dns:
+                    - 203.0.113.113
+                    - 2001:db8::20
+                  dns_search: example.com
+                  address:
+                    - 192.0.2.1/24
+                    - 2001:db8::2/32
+                state: up
+
+        - name: Get DNS search entry for IPv6
+          command: nmcli -f ipv6.dns-search connection show br-example
+          register: ipv6_dns_search_static
+          ignore_errors: yes
+          changed_when: false
+
+        - name: Assert that DNS search setting for IPv6 is configured when
+            the static IPv6 address is configured
+          assert:
+            that:
+              - "'example.com' in ipv6_dns_search_static.stdout"
+            msg: DNS search setting for IPv6 is not configured when the static
+              IPv6 address is configured
+
+        - name: Reconfigure connection profile and only configure the static
+            IPv6 address
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: br-example
+                type: bridge
+                ip:
+                  dhcp4: false
+                  auto6: false
+                  dns:
+                    - 2001:db8::20
+                  dns_search: example.com
+                  address:
+                    - 2001:db8::2/32
+                state: up
+
+        - name: Get DNS search entry for IPv6
+          command: nmcli -f ipv6.dns-search connection show br-example
+          register: ipv6_dns_search_static_only
+          ignore_errors: yes
+          changed_when: false
+
+        - name: Assert that DNS search setting for IPv6 is configured when only
+            the static IPv6 address is configured
+          assert:
+            that:
+              - "'example.com' in ipv6_dns_search_static_only.stdout"
+            msg: DNS search setting for IPv6 is not configured when only the
+              static IPv6 address is configured
+
+        - name: Reconfigure connection profile, disable both IPv4 and IPv6
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: br-example
+                type: bridge
+                ip:
+                  dhcp4: false
+                  ipv6_disabled: true
+                  dns_search: example.com
+                state: up
+          ignore_errors: true  # noqa ignore-errors
+          changed_when: false
+
+        - name: Assert that reconfiguring network connection is failed
+          assert:
+            that:
+              - __network_connections_result.failed
+            msg: reconfiguring network connection is not failed
+
+        - name: Assert that configuring DNS search setting is not allowed when
+            both IPv4 and IPv6 are disabled
+          assert:
+            that:
+              - __network_connections_result.stderr is search("Setting
+                'dns_search' or 'dns_options' is not allowed when both IPv4 and
+                IPv6 are disabled.")
+            msg: Reconfiguring network connection is not failed with the error
+              "Setting 'dns_search' or 'dns_options' is not allowed when both
+              IPv4 and IPv6 are disabled."
+
+      always:
+        - block:
+            - import_role:
+                name: linux-system-roles.network
+              vars:
+                network_connections:
+                  - name: br-example
+                    persistent_state: absent
+                    state: down
+              ignore_errors: true
+          tags:
+            - "tests::cleanup"
