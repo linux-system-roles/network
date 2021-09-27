@@ -3594,6 +3594,95 @@ class TestValidator(unittest.TestCase):
             0,
         )
 
+    def test_auto6_enabled_ipv6_disabled(self):
+        """
+        Test that enabling `auto6` and disabling IPv6 are mutually exclusive.
+        """
+        validator = network_lsr.argument_validator.ArgValidator_ListConnections()
+        auto6_enabled_ipv6_disabled = [
+            {
+                "name": "test_ipv6_method",
+                "type": "ethernet",
+                "ip": {
+                    "ipv6_disabled": True,
+                    "auto6": True,
+                },
+            }
+        ]
+        self.assertRaisesRegexp(
+            ValidationError,
+            "'auto6' and 'ipv6_disabled' are mutually exclusive",
+            validator.validate,
+            auto6_enabled_ipv6_disabled,
+        )
+
+    def test_static_ipv6_configured_ipv6_disabled(self):
+        """
+        Test that configuring static IPv6 and disabling IPv6 are mutually exclusive.
+        """
+        validator = network_lsr.argument_validator.ArgValidator_ListConnections()
+        static_ipv6_configured_ipv6_disabled = [
+            {
+                "name": "test_ipv6_method",
+                "type": "ethernet",
+                "ip": {
+                    "ipv6_disabled": True,
+                    "address": ["2001:db8::2/32"],
+                },
+            }
+        ]
+        self.assertRaisesRegexp(
+            ValidationError,
+            "'ipv6_disabled' and static IPv6 addresses are mutually exclusive",
+            validator.validate,
+            static_ipv6_configured_ipv6_disabled,
+        )
+
+    def test_gateway6_configured_ipv6_disabled(self):
+        """
+        Test that configuring `gateway6` and disabling IPv6 are mutually exclusive.
+        """
+        validator = network_lsr.argument_validator.ArgValidator_ListConnections()
+        gateway6_configured_ipv6_disabled = [
+            {
+                "name": "test_ipv6_method",
+                "type": "ethernet",
+                "ip": {
+                    "ipv6_disabled": True,
+                    "gateway6": "2001:db8::1",
+                },
+            }
+        ]
+        self.assertRaisesRegexp(
+            ValidationError,
+            "'ipv6_disabled' and 'gateway6' are mutually exclusive",
+            validator.validate,
+            gateway6_configured_ipv6_disabled,
+        )
+
+    def test_route_metric6_configured_ipv6_disabled(self):
+        """
+        Test that configuring `route_metric6` and disabling IPv6 are mutually
+        exclusive.
+        """
+        validator = network_lsr.argument_validator.ArgValidator_ListConnections()
+        route_metric6_configured_ipv6_disabled = [
+            {
+                "name": "test_ipv6_method",
+                "type": "ethernet",
+                "ip": {
+                    "ipv6_disabled": True,
+                    "route_metric6": -1,
+                },
+            }
+        ]
+        self.assertRaisesRegexp(
+            ValidationError,
+            "'ipv6_disabled' and 'route_metric6' are mutually exclusive",
+            validator.validate,
+            route_metric6_configured_ipv6_disabled,
+        )
+
     def test_set_deprecated_master(self):
         """
         When passing the deprecated "master" it is updated to "controller".
