@@ -5,6 +5,7 @@
 - hosts: all
   name: Run playbook 'playbooks/tests_ipv6_disabled.yml' with nm as provider
   tasks:
+    - include_tasks: tasks/el_repo_setup.yml
     - name: Set network provider to 'nm'
       set_fact:
         network_provider: nm

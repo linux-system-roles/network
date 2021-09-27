@@ -4,6 +4,7 @@
 """
 # vim: fileencoding=utf8
 
+import difflib
 import glob
 import os
 import sys
@@ -40,6 +41,7 @@ RUN_PLAYBOOK_WITH_NM = """# SPDX-License-Identifier: BSD-3-Clause
 - hosts: all
   name: Run playbook '{test_playbook}' with nm as provider
   tasks:
+    - include_tasks: tasks/el_repo_setup.yml
     - name: Set network provider to 'nm'
       set_fact:
         network_provider: nm
@@ -118,7 +120,12 @@ NM_CONDITIONAL_TESTS = {
         MINIMUM_VERSION: "'1.20.0'",
         "comment": "# NetworkManager 1.20.0 introduced ethtool settings support",
     },
+    "playbooks/tests_ethtool_ring.yml": {
+        MINIMUM_VERSION: "'1.25.2'",
+        "comment": "# NetworkManager 1.25.2 introduced ethtool ring support",
+    },
 }
+
 
 IGNORE = [
     # checked by tests_regression_nm.yml
@@ -207,6 +214,15 @@ def check_playbook(generate, testfile, test_playbook, nominal_data):
             testdata = ifile.read()
             if testdata != nominal_data:
                 print(f"ERROR: Playbook does not match nominal value: {testfile}")
+                sys.stdout.writelines(
+                    difflib.unified_diff(
+                        nominal_data.splitlines(keepends=True),
+                        testdata.splitlines(keepends=True),
+                        fromfile=f"{testfile}.expected",
+                        tofile=f"{testfile}.actual",
+                    )
+                )
+
                 returncode = 1
 
     return is_missing, returncode
