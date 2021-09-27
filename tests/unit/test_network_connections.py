@@ -3626,12 +3626,12 @@ class TestValidator(unittest.TestCase):
             0,
         )
 
-    def test_ipv6_dns_without_ipv6_config(self):
+    def test_ipv6_dns_with_ipv6_disabled(self):
         """
         Test that configuring IPv6 DNS is not allowed when IPv6 is disabled.
         """
         validator = network_lsr.argument_validator.ArgValidator_ListConnections()
-        ipv6_dns_without_ipv6_config = [
+        ipv6_dns_with_ipv6_disabled = [
             {
                 "name": "test_ipv6_dns",
                 "type": "ethernet",
@@ -3642,11 +3642,12 @@ class TestValidator(unittest.TestCase):
                 },
             }
         ]
-        self.assertRaises(
+        self.assertRaisesRegexp(
             ValidationError,
+            "IPv6 needs to be enabled to support IPv6 nameservers.",
             validator.validate_connection_one,
             "nm",
-            validator.validate(ipv6_dns_without_ipv6_config),
+            validator.validate(ipv6_dns_with_ipv6_disabled),
             0,
         )
 
