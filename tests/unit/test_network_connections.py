@@ -3664,6 +3664,36 @@ class TestValidator(Python26CompatTestCase):
             0,
         )
 
+    def test_ipv6_dns_with_static_ipv6_configuration(self):
+        """
+        Test that configuring IPv6 DNS is allowed when static IPv6 is configured.
+        """
+        validator = network_lsr.argument_validator.ArgValidator_ListConnections()
+        ipv6_dns_with_static_ipv6_configuration = [
+            {
+                "name": "test_ipv6_dns",
+                "type": "ethernet",
+                "ip": {
+                    "dhcp4": False,
+                    "auto6": False,
+                    "dns": ["2001:db8::20"],
+                    "address": ["2001:db8::2/32"],
+                },
+            }
+        ]
+        # the connection index is 0 because there is only one connection profile
+        # defined here
+        connection_index = 0
+
+        self.assertEqual(
+            validator.validate_connection_one(
+                "nm",
+                validator.validate(ipv6_dns_with_static_ipv6_configuration),
+                connection_index,
+            ),
+            None,
+        )
+
     def test_ipv6_dns_options_without_ipv6_config(self):
         """
         Test that configuring IPv6 DNS options is not allowed when IPv6 is disabled.
