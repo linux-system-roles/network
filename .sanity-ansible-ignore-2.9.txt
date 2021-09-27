@@ -37,6 +37,8 @@ tests/network/ensure_provider_tests.py metaclass-boilerplate!skip
 tests/network/ensure_provider_tests.py shebang!skip
 tests/network/get_coverage.sh shebang!skip
 tests/network/get_total_coverage.sh shebang!skip
+tests/network/git-pre-commit.sh shebang!skip
+tests/network/git-post-commit.sh shebang!skip
 tests/network/integration/conftest.py future-import-boilerplate!skip
 tests/network/integration/conftest.py metaclass-boilerplate!skip
 tests/network/integration/test_ethernet.py future-import-boilerplate!skip
