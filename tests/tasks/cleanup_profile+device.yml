@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- shell: |
+- name: Cleanup profile and device
+  shell: |
     nmcli con delete {{ interface }}
     nmcli con load /etc/sysconfig/network-scripts/ifcfg-{{ interface }}
     rm -f /etc/sysconfig/network-scripts/ifcfg-{{ interface }}
     ip link del {{ interface }}
-  ignore_errors: true
+  ignore_errors: true  # noqa ignore-errors
+  changed_when: false
 ...

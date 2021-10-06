@@ -30,7 +30,7 @@
   command: nmcli d set {{ interface }} managed true
   # The varible for `network_provider` is not exists yet,
   # just ignore error for initscripts
-  ignore_errors: yes
+  ignore_errors: yes  # noqa ignore-errors
   when: "type == 'veth' and state == 'present'"
 
 - name: Delete veth interface {{ interface }}

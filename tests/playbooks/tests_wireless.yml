@@ -21,7 +21,8 @@
         - name: "TEST: wireless connection with WPA-PSK"
           debug:
             msg: "##################################################"
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_allow_restart: true
@@ -38,7 +39,8 @@
                   ssid: "mock_wifi"
                   key_mgmt: "wpa-psk"
                   password: "p@55w0rD"
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_connections:
@@ -48,7 +50,8 @@
         - name: "TEST: wireless connection with 802.1x TLS-EAP"
           debug:
             msg: "##################################################"
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_allow_restart: true
@@ -75,7 +78,8 @@
                   ca_cert: /etc/pki/tls/cacert.pem
       always:
         - block:
-            - import_role:
+            - name: Import network role
+              import_role:
                 name: linux-system-roles.network
               vars:
                 network_connections:

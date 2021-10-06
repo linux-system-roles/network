@@ -19,7 +19,8 @@
         state: present
     - include_tasks: tasks/assert_device_present.yml
 
-    - import_role:
+    - name: Import network role
+      import_role:
         name: linux-system-roles.network
       vars:
         network_connections:

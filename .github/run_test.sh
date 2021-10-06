@@ -1,11 +1,13 @@
 #!/bin/bash -x
 
+set -euo pipefail
+
 TEST_SOURCE_DIR="/network-role"
 C8S_CONTAINER_IMAGE="quay.io/linux-system-roles/c8s-network-role"
 C8_CONTAINER_IMAGE="quay.io/linux-system-roles/c8-network-role"
 PODMAN_OPTS="--systemd=true --privileged"
 
-read -d '' TEST_FILES << EOF
+read -r -d '' TEST_FILES << EOF || :
 tests_802_1x_nm.yml
 tests_bond_nm.yml
 tests_auto_gateway_nm.yml
@@ -57,8 +59,9 @@ case $OS_TYPE in
         ;;
 esac
 
-CONTAINER_ID=`podman run -d $PODMAN_OPTS \
-    -v $PROJECT_PATH:$TEST_SOURCE_DIR $CONTAINER_IMAGE`
+# shellcheck disable=SC2086
+CONTAINER_ID=$(podman run -d $PODMAN_OPTS \
+    -v "$PROJECT_PATH":$TEST_SOURCE_DIR $CONTAINER_IMAGE)
 
 if [ -z "$CONTAINER_ID" ];then
     echo "Failed to start container"
@@ -66,49 +69,46 @@ if [ -z "$CONTAINER_ID" ];then
 fi
 
 function clean_up {
-    podman rm -f $CONTAINER_ID || true
+    podman rm -f "$CONTAINER_ID" || true
 }
 
-if [ -z "$DEBUG" ];then
+if [ -z "${DEBUG:-}" ];then
     trap clean_up ERR EXIT
 fi
 
-# Ensure we quit on first failure
-set -e
-
 # Ensure we are testing the latest packages and ignore upgrade failure
-sudo podman exec -i $CONTAINER_ID /bin/bash -c  'dnf upgrade -y' || true
+sudo podman exec -i "$CONTAINER_ID" /bin/bash -c  'dnf upgrade -y' || true
 
-podman exec -i $CONTAINER_ID \
+podman exec -i "$CONTAINER_ID" \
     /bin/bash -c  \
         'while ! systemctl is-active dbus; do sleep 1; done'
 
-podman exec -i $CONTAINER_ID \
+podman exec -i "$CONTAINER_ID" \
     /bin/bash -c  'sysctl -w net.ipv6.conf.all.disable_ipv6=0'
 
-sudo podman exec -i $CONTAINER_ID \
+sudo podman exec -i "$CONTAINER_ID" \
         /bin/bash -c  \
                 'systemctl start systemd-udevd;
         while ! systemctl is-active systemd-udevd; do sleep 1; done'
 
 
-podman exec -i $CONTAINER_ID \
+podman exec -i "$CONTAINER_ID" \
     /bin/bash -c  \
         'systemctl restart NetworkManager;
          while ! systemctl is-active NetworkManager; do sleep 1; done'
 
-podman exec -i $CONTAINER_ID \
+podman exec -i "$CONTAINER_ID" \
     /bin/bash -c  \
         'systemctl restart sshd;
          while ! systemctl is-active sshd; do sleep 1; done'
 
-podman exec -i $CONTAINER_ID \
+podman exec -i "$CONTAINER_ID" \
     /bin/bash -c  \
         'cat /dev/zero | ssh-keygen -q -N "";
          cp -v /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys'
 
 for test_file in $TEST_FILES; do
-    podman exec -i $CONTAINER_ID \
+    podman exec -i "$CONTAINER_ID" \
         /bin/bash -c  \
             "cd $TEST_SOURCE_DIR;
              env ANSIBLE_HOST_KEY_CHECKING=False \
@@ -116,7 +116,7 @@ for test_file in $TEST_FILES; do
                  ./tests/$test_file"
 done
 
-if [ -n "$DEBUG" ];then
-    podman exec -it $CONTAINER_ID bash
+if [ -n "${DEBUG:-}" ];then
+    podman exec -it "$CONTAINER_ID" bash
     clean_up
 fi

@@ -38,7 +38,7 @@
         # We need to add iptables rule to allow dhcp request
         iptables -I INPUT -i testbr -p udp --dport 67:68 --sport 67:68 -j ACCEPT
 
-        # Add {{dhcp_interface1}}, {{dhcp_interface2}} peers into the testbr
+        # Add {{ dhcp_interface1 }}, {{ dhcp_interface2 }} peers into the testbr
         brctl addif testbr {{ dhcp_interface1 }}p
         brctl addif testbr {{ dhcp_interface2 }}p
 

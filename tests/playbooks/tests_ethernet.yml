@@ -2,9 +2,11 @@
 ---
 - hosts: all
   tasks:
-    - debug:
+    - name: Show inside ethernet tests
+      debug:
         msg: Inside ethernet tests
-    - debug:
+    - name: Show network_provider
+      debug:
         var: network_provider
 
 - name: Test configuring ethernet devices
@@ -42,7 +44,8 @@
 
 - hosts: all
   tasks:
-    - debug:
+    - name: Show network_provider
+      debug:
         var: network_provider
 
 # FIXME: assert profile present

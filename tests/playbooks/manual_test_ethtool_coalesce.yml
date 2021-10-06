@@ -25,7 +25,8 @@
         - name: Get current device coalesce
           command: "ethtool --show-coalesce {{ interface }}"
           register: original_ethtool_coalesce
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_connections:
@@ -46,7 +47,8 @@
             TEST: I can set rx-frames and adaptive-tx.
           debug:
             msg: "##################################################"
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_connections:
@@ -63,7 +65,7 @@
         - name: Get current device coalesce
           command: "ethtool --show-coalesce {{ interface }}"
           register: ethtool_coalesce
-        - name:
+        - name: Show ethtool_coalesce output
           debug:
             var: ethtool_coalesce.stdout_lines
         - name: Assert device coalesce
@@ -78,7 +80,8 @@
         - name: "TEST: I can reset coalesce to their original value."
           debug:
             msg: "##################################################"
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_connections:

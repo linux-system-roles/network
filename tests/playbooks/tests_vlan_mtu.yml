@@ -15,7 +15,8 @@
         TEST: I can configure the MTU for a vlan interface without autoconnect.
       debug:
         msg: "##################################################"
-    - import_role:
+    - name: Import network role
+      import_role:
         name: linux-system-roles.network
       vars:
         network_connections:
@@ -51,7 +52,8 @@
     - name: "TEARDOWN: remove profiles."
       debug:
         msg: "##################################################"
-    - import_role:
+    - name: Import network role
+      import_role:
         name: linux-system-roles.network
       vars:
         network_connections:
@@ -61,7 +63,7 @@
           - name: "{{ vlan_interface }}"
             persistent_state: absent
             state: down
-      ignore_errors: true
+      ignore_errors: true  # noqa ignore-errors
     - include_tasks: tasks/manage_test_interface.yml
       vars:
         state: absent

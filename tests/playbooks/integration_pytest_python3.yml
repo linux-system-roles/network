@@ -112,8 +112,10 @@
                   modules_parent_and_dir.stdout_lines[1] ~ ':' ~ _rundir.path
             }}"
 
-        - debug:
+        - name: Show _lsr_python_path
+          debug:
             msg: path {{ _lsr_python_path }}
+
         - name: "ls -alrtFR {{ _rundir.path }}"
           command: ls -alrtFR {{ _rundir.path }}
 

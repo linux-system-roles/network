@@ -5,7 +5,8 @@
     interface: testnic1
     type: veth
   tasks:
-    - debug:
+    - name: Show playbook name
+      debug:
         msg: "this is: playbooks/tests_ethtool_ring.yml"
       tags:
         - always
@@ -28,7 +29,8 @@
             TEST: I can create a profile without any ring option.
           debug:
             msg: "##################################################"
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_connections:
@@ -66,7 +68,8 @@
             TEST: I can set rx.
           debug:
             msg: "##################################################"
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_connections:
@@ -144,7 +147,8 @@
         - name: "TEST: I can clear ring options"
           debug:
             msg: "##################################################"
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_connections:
@@ -180,7 +184,8 @@
 
       always:
         - block:
-            - import_role:
+            - name: Import network role
+              import_role:
                 name: linux-system-roles.network
               vars:
                 network_connections:

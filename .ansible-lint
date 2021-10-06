@@ -3,3 +3,6 @@ skip_list:
 - '106'  # Role name does not match ^[a-z][a-z0-9_]+$ pattern
 - '303'  # Using command rather than module
 - '403'  # Package installs should not use latest
+- var-naming  # allow tests to use var names with Capital Letters
+warn_list:
+- load-failure  # allow include_tasks with tasks/ directory

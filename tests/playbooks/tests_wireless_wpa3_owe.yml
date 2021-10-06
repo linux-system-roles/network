@@ -12,7 +12,8 @@
         - name: "TEST: wireless connection with OWE"
           debug:
             msg: "##################################################"
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_allow_restart: true

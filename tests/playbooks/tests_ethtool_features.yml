@@ -5,7 +5,8 @@
     interface: testnic1
     type: veth
   tasks:
-    - debug:
+    - name: Show playbook name
+      debug:
         msg: "this is: playbooks/tests_ethtool_features.yml"
       tags:
         - always
@@ -32,7 +33,8 @@
         - name: Get current device features
           command: "ethtool --show-features {{ interface }}"
           register: original_ethtool_features
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_connections:
@@ -55,7 +57,8 @@
             TEST: I can disable gro and tx-tcp-segmentation and enable gso.
           debug:
             msg: "##################################################"
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_connections:
@@ -73,7 +76,7 @@
         - name: Get current device features
           command: "ethtool --show-features {{ interface }}"
           register: ethtool_features
-        - name:
+        - name: Show ethtool_features
           debug:
             var: ethtool_features.stdout_lines
         - name: Assert device features
@@ -94,7 +97,8 @@
             TEST: I can enable tx_tcp_segmentation (using underscores).
           debug:
             msg: "##################################################"
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_connections:
@@ -110,7 +114,7 @@
         - name: Get current device features
           command: "ethtool --show-features {{ interface }}"
           register: ethtool_features
-        - name:
+        - name: Show ethtool_features
           debug:
             var: ethtool_features.stdout_lines
         - name: Assert device features
@@ -156,14 +160,16 @@
             - name: Check failure
               debug:
                 var: __network_connections_result
-            - assert:
+            - name: Assert that the result is failure
+              assert:
                 that: __network_connections_result.failed
 
 
         - name: "TEST: I can reset features to their original value."
           debug:
             msg: "##################################################"
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_connections:
@@ -185,7 +191,8 @@
             network_provider == 'nm'
       always:
         - block:
-            - import_role:
+            - name: Import network role
+              import_role:
                 name: linux-system-roles.network
               vars:
                 network_connections:

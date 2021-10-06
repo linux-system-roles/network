@@ -7,7 +7,8 @@
     lsr_fail_debug:
       - __network_connections_result
   tasks:
-    - debug:
+    - name: Show playbook name
+      debug:
         msg: "this is: playbooks/tests_states.yml"
       tags:
         - always

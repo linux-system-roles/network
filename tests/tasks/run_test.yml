@@ -6,7 +6,8 @@
       debug:
         msg: "########## {{ lsr_description }} ##########"
 
-    - debug:
+    - name: Show item
+      debug:
         var: "{{ item }}"
       loop:
         - lsr_description
@@ -52,7 +53,8 @@
       debug:
         msg: "!!!!! Failure in test '{{ lsr_description }}' !!!!!"
 
-    - debug:
+    - name: Show item that failed
+      debug:
         var: "{{ item }}"
       loop: "{{ lsr_fail_debug | default([]) }}"
 

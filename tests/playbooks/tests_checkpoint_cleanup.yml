@@ -10,7 +10,8 @@
     profile: "{{ interface }}"
     network_provider: nm
   pre_tasks:
-    - debug:
+    - name: Show test banner
+      debug:
         msg: Inside states tests
     - include_tasks: tasks/show_interfaces.yml
     - include_tasks: tasks/assert_device_absent.yml
@@ -24,7 +25,8 @@
             name: dbus-tools
             state: present
         # create test profile
-        - include_role:
+        - name: Include network role
+          include_role:
             name: linux-system-roles.network
           vars:
             network_provider: initscripts
@@ -60,7 +62,8 @@
         - name: get NM dbus objects
           command: busctl --system tree --list org.freedesktop.NetworkManager
           register: nm_dbus_objects
-        - debug:
+        - name: Show nm_dbus_objects
+          debug:
             var: nm_dbus_objects
         - name: Assert that no checkpoints are left
           assert:
