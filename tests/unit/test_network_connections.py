@@ -55,6 +55,19 @@ def pprint(msg, obj):
         obj.dump()
 
 
+class Python26CompatTestCase(unittest.TestCase):
+    # pylint: disable=no-member
+    def assertRaisesRegex(self, exception, regex, *args, **kwargs):
+        if sys.version[:3] == "2.6":
+            self.assertRaises(exception, *args, **kwargs)
+        elif sys.version[:3] < "3.2":
+            self.assertRaisesRegexp(exception, regex, *args, **kwargs)
+        else:
+            super(Python26CompatTestCase, self).assertRaisesRegex(
+                exception, regex, *args, **kwargs
+            )
+
+
 ARGS_CONNECTIONS = network_lsr.argument_validator.ArgValidator_ListConnections()
 VALIDATE_ONE_MODE_INITSCRIPTS = ARGS_CONNECTIONS.VALIDATE_ONE_MODE_INITSCRIPTS
 VALIDATE_ONE_MODE_NM = ARGS_CONNECTIONS.VALIDATE_ONE_MODE_NM
@@ -157,7 +170,7 @@ ETHTOOL_DEFAULTS = {
 ETHERNET_DEFAULTS = {"autoneg": None, "duplex": None, "speed": 0}
 
 
-class TestValidator(unittest.TestCase):
+class TestValidator(Python26CompatTestCase):
     def setUp(self):
         # default values when "type" is specified and state is not
         self.default_connection_settings = {
@@ -472,7 +485,7 @@ class TestValidator(unittest.TestCase):
                 "list[?]", allow_empty=True
             ),
         )
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             ValidationError,
             "must be a string but is 'None'",
             v.validate,
@@ -3642,7 +3655,7 @@ class TestValidator(unittest.TestCase):
                 },
             }
         ]
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             ValidationError,
             "IPv6 needs to be enabled to support IPv6 nameservers.",
             validator.validate_connection_one,
@@ -3690,7 +3703,7 @@ class TestValidator(unittest.TestCase):
                 },
             }
         ]
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             ValidationError,
             "'auto6' and 'ipv6_disabled' are mutually exclusive",
             validator.validate,
@@ -3712,7 +3725,7 @@ class TestValidator(unittest.TestCase):
                 },
             }
         ]
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             ValidationError,
             "'ipv6_disabled' and static IPv6 addresses are mutually exclusive",
             validator.validate,
@@ -3734,7 +3747,7 @@ class TestValidator(unittest.TestCase):
                 },
             }
         ]
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             ValidationError,
             "'ipv6_disabled' and 'gateway6' are mutually exclusive",
             validator.validate,
@@ -3757,7 +3770,7 @@ class TestValidator(unittest.TestCase):
                 },
             }
         ]
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             ValidationError,
             "'ipv6_disabled' and 'route_metric6' are mutually exclusive",
             validator.validate,
@@ -3840,7 +3853,7 @@ class TestNM(unittest.TestCase):
         self.assertEqual(result.get_data(), b"file:///my/test/path\x00")
 
 
-class TestValidatorMatch(unittest.TestCase):
+class TestValidatorMatch(Python26CompatTestCase):
     def setUp(self):
         self.test_profile = {
             "name": "test",
@@ -3891,14 +3904,14 @@ class TestValidatorMatch(unittest.TestCase):
         setting
         """
         self.test_profile["match"] = {"path": ["&", ""]}
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             ValidationError,
             "['&'] will only match the devices that have no PCI path",
             self.validator.validate,
             self.test_profile,
         )
         self.test_profile["match"] = {"path": ["|", None]}
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             ValidationError,
             "['|'] will only match the devices that have no PCI path",
             self.validator.validate,
@@ -3915,10 +3928,9 @@ class TestValidatorMatch(unittest.TestCase):
         self.assertEqual(result["match"], {"path": ["pci-0000:00:03.0"]})
 
         self.test_profile["type"] = "dummy"
-        self.assertRaisesRegexp(
+        self.assertRaisesRegex(
             ValidationError,
-            "'match.path' settings are only supported for type 'ethernet' or "
-            "'infiniband'",
+            "'match.path' settings are only supported for type 'ethernet' or 'infiniband'",
             self.validator.validate,
             self.test_profile,
         )
