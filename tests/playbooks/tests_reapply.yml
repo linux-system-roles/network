@@ -10,7 +10,8 @@
     profile: "{{ interface }}"
     network_provider: nm
   pre_tasks:
-    - debug:
+    - name: Show test banner
+      debug:
         msg: Inside states tests
     - include_tasks: tasks/show_interfaces.yml
     - include_tasks: tasks/assert_device_absent.yml
@@ -19,7 +20,8 @@
   tasks:
     - block:
         # create test profile
-        - include_role:
+        - name: Include network role
+          include_role:
             name: linux-system-roles.network
           vars:
             network_connections:
@@ -46,7 +48,8 @@
                   auto6: false
           ignore_errors: true
           register: test_module_run
-        - debug:
+        - name: Show test_module_run
+          debug:
             var: test_module_run
         - name: Assert that reapply is found in log output
           assert:

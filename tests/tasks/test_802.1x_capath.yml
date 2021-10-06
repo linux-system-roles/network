@@ -50,7 +50,8 @@
   register: __network_NM_NVR
   changed_when: false
 - block:
-    - import_role:
+    - name: Import network role
+      import_role:
         name: linux-system-roles.network
       vars:
         network_connections:
@@ -77,7 +78,8 @@
       fail:
         msg: after test
   rescue:
-    - debug:
+    - name: Show failed item
+      debug:
         var: "{{ item }}"
       with_items:
         - ansible_failed_result

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- include_role:
+- name: Include network role
+  include_role:
     name: linux-system-roles.network
   vars:
     network_connections:

@@ -2,5 +2,6 @@
 ---
 - name: remove test interface if necessary
   command: "ip link del {{ interface }}"
-  ignore_errors: true
+  ignore_errors: true  # noqa ignore-errors
+  changed_when: false
 ...

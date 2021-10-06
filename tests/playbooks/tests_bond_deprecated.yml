@@ -23,7 +23,8 @@
         - name: "TEST Add Bond with 2 ports using deprecated 'master' argument"
           debug:
             msg: "##################################################"
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_connections:
@@ -76,7 +77,8 @@
           delay: 2
       always:
         - block:
-            - import_role:
+            - name: Import network role
+              import_role:
                 name: linux-system-roles.network
               vars:
                 network_connections:

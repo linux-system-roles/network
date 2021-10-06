@@ -12,7 +12,8 @@
         - name: "TEST: 802.1x profile with private key password and ca cert"
           debug:
             msg: "##################################################"
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_connections:
@@ -36,7 +37,8 @@
                   ca_cert: /etc/pki/tls/cacert.pem
         - name: "TEST: I can ping the EAP server"
           command: ping -c1 203.0.113.1
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_connections:
@@ -55,7 +57,8 @@
             mode: 0644
         - name: Update ca trust
           command: update-ca-trust
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_connections:
@@ -79,7 +82,8 @@
                   domain_suffix_match: example.com
         - name: "TEST: I can ping the EAP server"
           command: ping -c1 203.0.113.1
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_connections:

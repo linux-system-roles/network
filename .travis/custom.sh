@@ -3,6 +3,8 @@
 
 set -e
 
+# https://github.com/koalaman/shellcheck/wiki/SC1091
+# shellcheck disable=SC1091
 . "$LSR_SCRIPTDIR/utils.sh"
 
 # Write your custom commands here that should be run when `tox -e custom`:

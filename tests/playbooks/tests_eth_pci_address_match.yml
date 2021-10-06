@@ -2,7 +2,8 @@
 ---
 - hosts: all
   tasks:
-    - import_role:
+    - name: Import network role
+      import_role:
         name: linux-system-roles.network
       vars:
         network_connections:
@@ -64,7 +65,8 @@
             msg: "The PCI address is not removed"
       always:
         - block:
-            - import_role:
+            - name: Import network role
+              import_role:
                 name: linux-system-roles.network
               vars:
                 network_connections:

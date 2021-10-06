@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- include_role:
+- name: Include network role
+  include_role:
     name: linux-system-roles.network
   vars:
     network_connections:
@@ -10,6 +11,7 @@
         ip:
           address:
             - "192.0.2.42/30"
-- debug:
+- name: Show result
+  debug:
     var: __network_connections_result
 ...

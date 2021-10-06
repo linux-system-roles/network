@@ -23,7 +23,8 @@
             TEST: I can configure an interface with static ipv6 config
           debug:
             msg: "##################################################"
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_connections:
@@ -45,7 +46,7 @@
         - name: Get ip address information
           command: "ip addr show {{ interface }}"
           register: ip_addr
-        - name:
+        - name: Show ip_addr
           debug:
             var: ip_addr.stdout
         - name: Assert ipv6 addresses are correctly set
@@ -60,7 +61,7 @@
         - name: Get ipv6 routes
           command: "ip -6 route"
           register: ipv6_route
-        - name:
+        - name: Show ipv6_route
           debug:
             var: ipv6_route.stdout
         - name: Assert default ipv6 route is set
@@ -77,14 +78,15 @@
         - name: "TEARDOWN: remove profiles."
           debug:
             msg: "##################################################"
-        - import_role:
+        - name: Import network role
+          import_role:
             name: linux-system-roles.network
           vars:
             network_connections:
               - name: "{{ interface }}"
                 persistent_state: absent
                 state: down
-          ignore_errors: true
+          ignore_errors: true  # noqa ignore-errors
         - include_tasks: tasks/manage_test_interface.yml
           vars:
             state: absent
