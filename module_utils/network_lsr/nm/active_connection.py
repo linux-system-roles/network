@@ -8,23 +8,22 @@ __metaclass__ = type
 
 import logging
 
-# Relative import is not support by ansible 2.8 yet
-# pylint: disable=import-error, no-name-in-module
-from ansible.module_utils.network_lsr.nm import client  # noqa:E501
-from ansible.module_utils.network_lsr.nm import error  # noqa:E501
-
-# pylint: enable=import-error, no-name-in-module
+from .client import GLib
+from .client import NM
+from .client import get_client
+from .client import get_mainloop
+from .error import LsrNetworkNmError
 
 
 NM_AC_STATE_CHANGED_SIGNAL = "state-changed"
 
 
 def deactivate_active_connection(nm_ac, timeout, check_mode):
-    if not nm_ac or nm_ac.props.state == client.NM.ActiveConnectionState.DEACTIVATED:
+    if not nm_ac or nm_ac.props.state == NM.ActiveConnectionState.DEACTIVATED:
         logging.info("Connection is not active, no need to deactivate")
         return False
     if not check_mode:
-        main_loop = client.get_mainloop(timeout)
+        main_loop = get_mainloop(timeout)
         logging.debug("Deactivating %s with timeout %s", nm_ac.get_id(), timeout)
         user_data = main_loop
         handler_id = nm_ac.connect(
@@ -35,8 +34,8 @@ def deactivate_active_connection(nm_ac, timeout, check_mode):
             NM_AC_STATE_CHANGED_SIGNAL,
             nm_ac.get_id(),
         )
-        if nm_ac.props.state != client.NM.ActiveConnectionState.DEACTIVATING:
-            nm_client = client.get_client()
+        if nm_ac.props.state != NM.ActiveConnectionState.DEACTIVATING:
+            nm_client = get_client()
             user_data = (main_loop, nm_ac, nm_ac.get_id(), handler_id)
             nm_client.deactivate_connection_async(
                 nm_ac,
@@ -59,7 +58,7 @@ def _nm_ac_state_change_callback(nm_ac, state, reason, user_data):
         state,
         reason,
     )
-    if nm_ac.props.state == client.NM.ActiveConnectionState.DEACTIVATED:
+    if nm_ac.props.state == NM.ActiveConnectionState.DEACTIVATED:
         logging.debug("client.NM.ActiveConnection %s is deactivated", nm_ac.get_id())
         main_loop.quit()
 
@@ -74,10 +73,8 @@ def _nm_ac_deactivate_call_back(nm_client, result, user_data):
 
     try:
         success = nm_client.deactivate_connection_finish(result)
-    except client.GLib.Error as e:
-        if e.matches(
-            client.NM.ManagerError.quark(), client.NM.ManagerError.CONNECTIONNOTACTIVE
-        ):
+    except GLib.Error as e:
+        if e.matches(NM.ManagerError.quark(), NM.ManagerError.CONNECTIONNOTACTIVE):
             logging.info(
                 "Connection is not active on %s, no need to deactivate", nm_ac_id
             )
@@ -120,4 +117,4 @@ def _deactivate_fail(main_loop, handler_id, nm_ac, msg):
     if nm_ac:
         nm_ac.handler_disconnect(handler_id)
     logging.error(msg)
-    main_loop.fail(error.LsrNetworkNmError(msg))
+    main_loop.fail(LsrNetworkNmError(msg))

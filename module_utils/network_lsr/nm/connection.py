@@ -8,12 +8,9 @@ __metaclass__ = type
 
 import logging
 
-# Relative import is not support by ansible 2.8 yet
-# pylint: disable=import-error, no-name-in-module
-from ansible.module_utils.network_lsr.nm import client  # noqa:E501
-from ansible.module_utils.network_lsr.nm import error  # noqa:E501
-
-# pylint: enable=import-error, no-name-in-module
+from .client import NM
+from .client import get_mainloop
+from .error import LsrNetworkNmError
 
 
 def delete_remote_connection(nm_profile, timeout, check_mode):
@@ -22,7 +19,7 @@ def delete_remote_connection(nm_profile, timeout, check_mode):
         return False
 
     if not check_mode:
-        main_loop = client.get_mainloop(timeout)
+        main_loop = get_mainloop(timeout)
         user_data = main_loop
         nm_profile.delete_async(
             main_loop.cancellable,
@@ -48,7 +45,7 @@ def _nm_profile_delete_call_back(nm_profile, result, user_data):
         success = nm_profile.delete_finish(result)
     except Exception as e:
         main_loop.fail(
-            error.LsrNetworkNmError(
+            LsrNetworkNmError(
                 "Connection deletion aborted on {id}/{uuid}: error={error}".format(
                     id=nm_profile.get_id(), uuid=nm_profile.get_uuid(), error=e
                 )
@@ -58,7 +55,7 @@ def _nm_profile_delete_call_back(nm_profile, result, user_data):
         main_loop.quit()
     else:
         main_loop.fail(
-            error.LsrNetworkNmError(
+            LsrNetworkNmError(
                 "Connection deletion aborted on {id}/{uuid}: error=unknown".format(
                     id=nm_profile.get_id(), uuid=nm_profile.get_uuid()
                 )
@@ -71,12 +68,11 @@ def volatilize_remote_connection(nm_profile, timeout, check_mode):
         logging.info("NULL NM.RemoteConnection, no need to volatilize")
         return False
     if not check_mode:
-        main_loop = client.get_mainloop(timeout)
+        main_loop = get_mainloop(timeout)
         user_data = main_loop
         nm_profile.update2(
             None,  # settings
-            client.NM.SettingsUpdate2Flags.IN_MEMORY_ONLY
-            | client.NM.SettingsUpdate2Flags.VOLATILE,
+            NM.SettingsUpdate2Flags.IN_MEMORY_ONLY | NM.SettingsUpdate2Flags.VOLATILE,
             None,  # args
             main_loop.cancellable,
             _nm_profile_volatile_update2_call_back,
@@ -101,7 +97,7 @@ def _nm_profile_volatile_update2_call_back(nm_profile, result, user_data):
         success = nm_profile.update2_finish(result)
     except Exception as e:
         main_loop.fail(
-            error.LsrNetworkNmError(
+            LsrNetworkNmError(
                 "Connection volatilize aborted on {id}/{uuid}: error={error}".format(
                     id=nm_profile.get_id(), uuid=nm_profile.get_uuid(), error=e
                 )
@@ -111,7 +107,7 @@ def _nm_profile_volatile_update2_call_back(nm_profile, result, user_data):
         main_loop.quit()
     else:
         main_loop.fail(
-            error.LsrNetworkNmError(
+            LsrNetworkNmError(
                 "Connection volatilize aborted on {id}/{uuid}: error=unknown".format(
                     id=nm_profile.get_id(), uuid=nm_profile.get_uuid()
                 )

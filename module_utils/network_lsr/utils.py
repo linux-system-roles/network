@@ -9,8 +9,10 @@ import socket
 import sys
 import uuid
 
-# pylint: disable=import-error, no-name-in-module
-from ansible.module_utils.network_lsr.myerror import MyError  # noqa:E501
+# pylint: disable=import-error
+from .myerror import MyError
+
+# pylint: enable=import-error
 
 
 class Util:

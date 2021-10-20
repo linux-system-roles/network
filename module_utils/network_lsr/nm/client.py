@@ -6,10 +6,10 @@ __metaclass__ = type
 
 import logging
 
-# Relative import is not support by ansible 2.8 yet
-# pylint: disable=import-error, no-name-in-module
-from ansible.module_utils.network_lsr.nm import error  # noqa:E501
+from .error import LsrNetworkNmError
 
+# pylint environment does not have gobject inspection
+# pylint: disable=import-error
 import gi
 
 try:
@@ -22,7 +22,7 @@ try:
     from gi.repository import GLib  # NOQA: E402
     from gi.repository import Gio  # NOQA: E402
 
-    # pylint: enable=import-error, no-name-in-module
+    # pylint: enable=import-error
 
     NM
     GLib
@@ -62,7 +62,7 @@ class _NmMainLoop(object):
 
     def _timeout_call_back(self, _user_data):
         logging.error("Timeout")
-        self.fail(error.LsrNetworkNmError("Timeout"))
+        self.fail(LsrNetworkNmError("Timeout"))
 
     @property
     def cancellable(self):

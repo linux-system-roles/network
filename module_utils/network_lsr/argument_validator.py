@@ -9,9 +9,8 @@ import posixpath
 import socket
 import re
 
-# pylint: disable=import-error, no-name-in-module
-from ansible.module_utils.network_lsr.myerror import MyError  # noqa:E501
-from ansible.module_utils.network_lsr.utils import Util  # noqa:E501
+from .myerror import MyError
+from .utils import Util
 
 UINT32_MAX = 0xFFFFFFFF
 

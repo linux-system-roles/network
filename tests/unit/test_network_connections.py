@@ -5,22 +5,12 @@ import copy
 import itertools
 import pprint as pprint_
 import socket
-import sys
 import unittest
-
-try:
-    from unittest import mock
-except ImportError:  # py2
-    import mock
-
-sys.modules["ansible.module_utils.basic"] = mock.Mock()
-
-# pylint: disable=import-error, wrong-import-position
 
 import network_lsr
 import network_lsr.argument_validator
 from network_connections import IfcfgUtil, NMUtil, SysUtil, Util
-from network_lsr.argument_validator import ValidationError
+from ansible.module_utils.network_lsr.argument_validator import ValidationError
 
 try:
     my_test_skipIf = unittest.skipIf

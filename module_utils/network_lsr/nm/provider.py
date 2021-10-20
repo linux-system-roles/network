@@ -6,13 +6,13 @@ __metaclass__ = type
 
 import logging
 
-# Relative import is not support by ansible 2.8 yet
-# pylint: disable=import-error, no-name-in-module
-from ansible.module_utils.network_lsr.nm import active_connection  # noqa:E501
-from ansible.module_utils.network_lsr.nm import client  # noqa:E501
-from ansible.module_utils.network_lsr.nm import connection  # noqa:E501
+# pylint: disable=import-error
+from .active_connection import deactivate_active_connection
+from .client import get_client
+from .connection import delete_remote_connection
+from .connection import volatilize_remote_connection
 
-# pylint: enable=import-error, no-name-in-module
+# pylint: enable=import-error
 
 
 class NetworkManagerProvider:
@@ -20,14 +20,12 @@ class NetworkManagerProvider:
         """
         Return True if changed.
         """
-        nm_client = client.get_client()
+        nm_client = get_client()
         changed = False
         for nm_ac in nm_client.get_active_connections():
             nm_profile = nm_ac.get_connection()
             if nm_profile and nm_profile.get_id() == connection_name:
-                changed |= active_connection.deactivate_active_connection(
-                    nm_ac, timeout, check_mode
-                )
+                changed |= deactivate_active_connection(nm_ac, timeout, check_mode)
         if not changed:
             logging.info("No active connection for %s", connection_name)
 
@@ -40,23 +38,21 @@ class NetworkManagerProvider:
 
         Return True if changed.
         """
-        nm_client = client.get_client()
+        nm_client = get_client()
         changed = False
         for nm_profile in nm_client.get_connections():
             if nm_profile and nm_profile.get_uuid() == uuid:
                 if hasattr(nm_profile, "update2"):
-                    changed |= connection.volatilize_remote_connection(
+                    changed |= volatilize_remote_connection(
                         nm_profile, timeout, check_mode
                     )
                 else:
-                    changed |= connection.delete_remote_connection(
-                        nm_profile, timeout, check_mode
-                    )
+                    changed |= delete_remote_connection(nm_profile, timeout, check_mode)
         if not changed:
             logging.info("No connection with UUID %s to volatilize", uuid)
 
         return changed
 
     def get_connections(self):
-        nm_client = client.get_client()
+        nm_client = get_client()
         return nm_client.get_connections()
