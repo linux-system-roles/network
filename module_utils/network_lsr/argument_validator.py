@@ -1866,6 +1866,17 @@ class ArgValidator_ListConnections(ArgValidatorList):
             )
             return connection["ip"]["dhcp4"] or has_addrs4
 
+        def _ipv6_is_not_configured(connection):
+            has_addrs6 = any(
+                address["family"] == socket.AF_INET6
+                for address in connection["ip"]["address"]
+            )
+            return (
+                not connection["ip"]["ipv6_disabled"]
+                and not connection["ip"]["auto6"]
+                and not has_addrs6
+            )
+
         connection = connections[idx]
         if "type" not in connection:
             return
@@ -1947,9 +1958,8 @@ class ArgValidator_ListConnections(ArgValidatorList):
                     idx,
                     "IPv4 needs to be enabled to support IPv4 nameservers.",
                 )
-            if (
-                nameserver["family"] == socket.AF_INET6
-                and connection["ip"]["ipv6_disabled"]
+            if nameserver["family"] == socket.AF_INET6 and (
+                connection["ip"]["ipv6_disabled"] or _ipv6_is_not_configured(connection)
             ):
                 raise ValidationError.from_connection(
                     idx,
