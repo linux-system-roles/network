@@ -220,7 +220,7 @@ class Util:
             return False
         if len(ifname) >= 16:
             return False
-        if any([c == "/" or c == ":" or c.isspace() for c in ifname]):
+        if any(c == "/" or c == ":" or c.isspace() for c in ifname):
             return False
         # FIXME: encoding issues regarding python unicode string
         return True

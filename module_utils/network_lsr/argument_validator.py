@@ -665,7 +665,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
     def _validate_post(self, value, name, result):
 
         has_ipv6_addresses = any(
-            [a for a in result["address"] if a["family"] == socket.AF_INET6]
+            a for a in result["address"] if a["family"] == socket.AF_INET6
         )
 
         if result["ipv6_disabled"] is True:
@@ -696,7 +696,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
 
         if result["dhcp4"] is None:
             result["dhcp4"] = result["dhcp4_send_hostname"] is not None or not any(
-                [a for a in result["address"] if a["family"] == socket.AF_INET]
+                a for a in result["address"] if a["family"] == socket.AF_INET
             )
 
         if result["auto6"] is None:
