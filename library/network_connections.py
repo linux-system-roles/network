@@ -256,7 +256,7 @@ class IfcfgUtil:
         if r.match(value):
             return value
 
-        if any([ord(c) < ord(" ") for c in value]):
+        if any(ord(c) < ord(" ") for c in value):
             # needs ansic escaping due to ANSI control caracters (newline)
             s = "$'"
             for c in value:
@@ -470,8 +470,8 @@ class IfcfgUtil:
             if connection["zone"]:
                 ifcfg["ZONE"] = connection["zone"]
 
-            addrs4 = list([a for a in ip["address"] if a["family"] == socket.AF_INET])
-            addrs6 = list([a for a in ip["address"] if a["family"] == socket.AF_INET6])
+            addrs4 = [a for a in ip["address"] if a["family"] == socket.AF_INET]
+            addrs6 = [a for a in ip["address"] if a["family"] == socket.AF_INET6]
 
             if ip["dhcp4"]:
                 ifcfg["BOOTPROTO"] = "dhcp"
@@ -1026,8 +1026,8 @@ class NMUtil:
             s_ip4.set_property(NM.SETTING_IP_CONFIG_METHOD, "auto")
             s_ip6.set_property(NM.SETTING_IP_CONFIG_METHOD, "auto")
 
-            addrs4 = list([a for a in ip["address"] if a["family"] == socket.AF_INET])
-            addrs6 = list([a for a in ip["address"] if a["family"] == socket.AF_INET6])
+            addrs4 = [a for a in ip["address"] if a["family"] == socket.AF_INET]
+            addrs6 = [a for a in ip["address"] if a["family"] == socket.AF_INET6]
 
             if ip["dhcp4"]:
                 s_ip4.set_property(NM.SETTING_IP_CONFIG_METHOD, "auto")
