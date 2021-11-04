@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        pyver: ['2.7', '3.6', '3.7', '3.8', '3.9']
+        pyver: ['2.7', '3.6', '3.8', '3.9']
     steps:
       - name: checkout PR
         uses: actions/checkout@v2
@@ -39,7 +39,6 @@ jobs:
           case "$toxpyver" in
           27) toxenvs="${toxenvs},coveralls,flake8,pylint" ;;
           36) toxenvs="${toxenvs},coveralls,ensure_provider_tests,black,yamllint" ;;
-          37) toxenvs="${toxenvs},coveralls" ;;
           38) toxenvs="${toxenvs},coveralls,ansible-lint,ansible-plugin-scan,collection,ansible-test" ;;
           39) toxenvs="${toxenvs},coveralls" ;;
           esac
