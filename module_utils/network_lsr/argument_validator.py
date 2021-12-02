@@ -1974,6 +1974,12 @@ class ArgValidator_ListConnections(ArgValidatorList):
                     "Setting 'dns_search' or 'dns_options' is not allowed when "
                     "both IPv4 and IPv6 are disabled.",
                 )
+            elif not _ipv4_enabled(connection) and _ipv6_is_not_configured(connection):
+                raise ValidationError.from_connection(
+                    idx,
+                    "Setting 'dns_search' or 'dns_options' is not allowed when "
+                    "IPv4 is disabled and IPv6 is not configured.",
+                )
         # DNS options 'inet6', 'ip6-bytestring', 'ip6-dotint', 'no-ip6-dotint' are only
         # supported for IPv6 configuration, so raise errors when IPv6 is disabled
         if any(
