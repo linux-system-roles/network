@@ -3744,6 +3744,33 @@ class TestValidator(Python26CompatTestCase):
             0,
         )
 
+    def test_dns_search_without_ipv4_and_ipv6_configuration(self):
+        """
+        Test that configuring DNS search setting is not allowed when both IPv4 and
+        IPv6 are not configured.
+        """
+        validator = network_lsr.argument_validator.ArgValidator_ListConnections()
+        dns_search_without_ipv4_and_ipv6_configuration = [
+            {
+                "name": "test_dns_search",
+                "type": "ethernet",
+                "ip": {
+                    "dhcp4": False,
+                    "auto6": False,
+                    "dns_search": ["example.com"],
+                },
+            }
+        ]
+        self.assertRaisesRegex(
+            ValidationError,
+            "Setting 'dns_search' or 'dns_options' is not allowed when IPv4 is "
+            "disabled and IPv6 is not configured",
+            validator.validate_connection_one,
+            "nm",
+            validator.validate(dns_search_without_ipv4_and_ipv6_configuration),
+            0,
+        )
+
     def test_auto6_enabled_ipv6_disabled(self):
         """
         Test that enabling `auto6` and disabling IPv6 are mutually exclusive.
