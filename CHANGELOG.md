@@ -1,6 +1,17 @@
 Changelog
 =========
 
+[1.5.0] - 2021-12-14
+--------------------
+
+### Changes
+
+- Support ansible-core 2.11 and 2.12
+
+### New features
+
+- Support matching network interfaces by their device path such as PCI address
+
 [1.4.0] - 2021-08-10
 --------------------
 
