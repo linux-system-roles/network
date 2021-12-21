@@ -27,7 +27,9 @@
   when: "type == 'veth' and state == 'present' and
          interface not in current_interfaces"
 - name: Set up veth as managed by NetworkManager
-  command: nmcli d set {{ interface }} managed true
+  shell: |
+    nmcli c reload
+    nmcli d set {{ interface }} managed true
   # The varible for `network_provider` is not exists yet,
   # just ignore error for initscripts
   ignore_errors: yes  # noqa ignore-errors
