@@ -26,6 +26,23 @@
     - ip link set {{ interface }} up
   when: "type == 'veth' and state == 'present' and
          interface not in current_interfaces"
+
+- name: Install NetworkManager in CentOS7 when running with nm provider
+  package:
+    name: NetworkManager
+    state: present
+  when:
+    - ansible_distribution_major_version == '7' and
+      ansible_distribution == 'CentOS'
+    - network_provider == 'nm'
+
+- name: Start NetworkManager in CentOS7 when running with nm provider
+  command: systemctl start NetworkManager
+  when:
+    - ansible_distribution_major_version == '7' and
+      ansible_distribution == 'CentOS'
+    - network_provider == 'nm'
+
 - name: Set up veth as managed by NetworkManager
   shell: |
     nmcli c reload
