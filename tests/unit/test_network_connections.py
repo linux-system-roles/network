@@ -230,6 +230,7 @@ class TestValidator(Python26CompatTestCase):
                 "prefix": int(r.get_prefix()),
                 "gateway": r.get_next_hop(),
                 "metric": int(r.get_metric()),
+                "table": r.get_attribute("table"),
             }
             for r in route_list_new
         ]
@@ -267,17 +268,21 @@ class TestValidator(Python26CompatTestCase):
                     s6.clear_routes()
                     for r in kwargs["nm_route_list_current"][idx]:
                         r = parser.validate(r)
-                        r = NM.IPRoute.new(
+                        rr = NM.IPRoute.new(
                             r["family"],
                             r["network"],
                             r["prefix"],
                             r["gateway"],
                             r["metric"],
                         )
-                        if r.get_family() == socket.AF_INET:
-                            s4.add_route(r)
+                        if r["table"]:
+                            NM.IPRoute.set_attribute(
+                                rr, "table", Util.GLib().Variant.new_uint32(r["table"])
+                            )
+                        if r["family"] == socket.AF_INET:
+                            s4.add_route(rr)
                         else:
-                            s6.add_route(r)
+                            s6.add_route(rr)
                     con_new = nmutil.connection_create(
                         connections, idx, connection_current=con_new
                     )
@@ -1038,6 +1043,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 24,
                                 "gateway": None,
                                 "metric": -1,
+                                "table": None,
                             }
                         ],
                     },
@@ -1357,6 +1363,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 24,
                                 "gateway": None,
                                 "metric": -1,
+                                "table": None,
                             }
                         ],
                     },
@@ -1495,6 +1502,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 24,
                                 "gateway": None,
                                 "metric": -1,
+                                "table": None,
                             }
                         ],
                     },
@@ -1551,6 +1559,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 24,
                                 "gateway": None,
                                 "metric": -1,
+                                "table": None,
                             }
                         ],
                     },
@@ -2248,6 +2257,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 24,
                                 "gateway": None,
                                 "metric": 545,
+                                "table": None,
                             },
                             {
                                 "family": socket.AF_INET,
@@ -2255,6 +2265,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 30,
                                 "gateway": None,
                                 "metric": -1,
+                                "table": None,
                             },
                         ],
                         "dns": [],
@@ -2345,6 +2356,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 24,
                                 "gateway": None,
                                 "metric": 545,
+                                "table": None,
                             },
                             {
                                 "family": socket.AF_INET,
@@ -2352,6 +2364,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 30,
                                 "gateway": None,
                                 "metric": -1,
+                                "table": None,
                             },
                             {
                                 "family": socket.AF_INET6,
@@ -2359,6 +2372,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 64,
                                 "gateway": None,
                                 "metric": -1,
+                                "table": None,
                             },
                         ],
                         "dns": [],
@@ -4079,6 +4093,223 @@ class TestUtils(unittest.TestCase):
         for test_case in test_cases:
             result = Util.convert_passwd_flags_nm(test_case[0])
             self.assertEqual(result, test_case[1])
+
+
+class TestValidatorRouteTable(Python26CompatTestCase):
+    def setUp(self):
+        self.test_connections = [
+            {
+                "name": "eth0",
+                "type": "ethernet",
+                "ip": {
+                    "dhcp4": False,
+                    "address": ["198.51.100.3/26"],
+                    "route": [
+                        {
+                            "network": "198.51.100.128",
+                            "prefix": 26,
+                            "gateway": "198.51.100.1",
+                            "metric": 2,
+                            "table": 30400,
+                        },
+                    ],
+                },
+            }
+        ]
+        self.validator = network_lsr.argument_validator.ArgValidator_ListConnections()
+        self.rt_parsing = network_lsr.argument_validator.IPRouteUtils()
+        self.old_getter = (
+            network_lsr.argument_validator.IPRouteUtils.get_route_tables_mapping
+        )
+        network_lsr.argument_validator.IPRouteUtils.get_route_tables_mapping = (
+            classmethod(
+                lambda cls: {
+                    "custom": 200,
+                    "eth": 30400,
+                }
+            )
+        )
+        # the connection index is 0 because there is only one connection profile
+        # defined here
+        self.connection_index = 0
+
+    def tearDown(self):
+        network_lsr.argument_validator.IPRouteUtils.get_route_tables_mapping = (
+            self.old_getter
+        )
+
+    def test_valid_numeric_route_tables(self):
+        """
+        Test that the value between 1 and 4294967295 are the valid value for numeric
+        route tables and the value will not be normalized
+        """
+
+        self.validator.validate_route_tables(
+            self.validator.validate(self.test_connections)[0],
+            self.connection_index,
+        )
+        self.assertEqual(
+            self.test_connections[0]["ip"]["route"][0]["table"],
+            30400,
+        )
+
+        self.test_connections[0]["ip"]["route"][0]["table"] = 200
+        self.validator.validate_route_tables(
+            self.validator.validate(self.test_connections)[0],
+            self.connection_index,
+        )
+        self.assertEqual(
+            self.test_connections[0]["ip"]["route"][0]["table"],
+            200,
+        )
+
+    def test_invalid_numeric_route_tables(self):
+        """
+        Test that the value less than 1 or greater than 4294967295 are the invalid
+        value for numeric route tables
+        """
+
+        self.test_connections[0]["ip"]["route"][0]["table"] = 0
+        val_min = 1
+        val_max = 0xFFFFFFFF
+        self.assertRaisesRegex(
+            ValidationError,
+            "route table value is {0} but cannot be less than {1}".format(
+                self.test_connections[0]["ip"]["route"][0]["table"],
+                val_min,
+            ),
+            self.validator.validate,
+            self.test_connections,
+        )
+
+        self.test_connections[0]["ip"]["route"][0]["table"] = 4294967296
+        self.assertRaisesRegex(
+            ValidationError,
+            "route table value is {0} but cannot be greater than {1}".format(
+                self.test_connections[0]["ip"]["route"][0]["table"],
+                val_max,
+            ),
+            self.validator.validate,
+            self.test_connections,
+        )
+
+    def test_empty_route_table_name(self):
+        """
+        Test that empty string is invalid value for route table name
+        """
+
+        self.test_connections[0]["ip"]["route"][0]["table"] = ""
+        self.assertRaisesRegex(
+            ValidationError,
+            "route table name cannot be empty string",
+            self.validator.validate,
+            self.test_connections,
+        )
+
+    def test_invalid_value_types_for_route_tables(self):
+        """
+        Test that the value types apart from string type and integer type are all
+        invalid value types for route tables
+        """
+
+        self.test_connections[0]["ip"]["route"][0]["table"] = False
+        self.assertRaisesRegex(
+            ValidationError,
+            "route table must be the named or numeric tables but is {0}".format(
+                self.test_connections[0]["ip"]["route"][0]["table"]
+            ),
+            self.validator.validate,
+            self.test_connections,
+        )
+
+        self.test_connections[0]["ip"]["route"][0]["table"] = 2.5
+        self.assertRaisesRegex(
+            ValidationError,
+            "route table must be the named or numeric tables but is {0}".format(
+                self.test_connections[0]["ip"]["route"][0]["table"]
+            ),
+            self.validator.validate,
+            self.test_connections,
+        )
+
+    def test_invalid_route_table_names(self):
+        """
+        Test that the route table names should not be composed from the characters
+        which are not contained within the benign set r"^[a-zA-Z0-9_.-]+$"
+        """
+
+        self.test_connections[0]["ip"]["route"][0]["table"] = "test*"
+        self.assertRaisesRegex(
+            ValidationError,
+            "route table name contains invalid characters",
+            self.validator.validate,
+            self.test_connections,
+        )
+
+        self.test_connections[0]["ip"]["route"][0]["table"] = "!!!"
+        self.assertRaisesRegex(
+            ValidationError,
+            "route table name contains invalid characters",
+            self.validator.validate,
+            self.test_connections,
+        )
+
+    def test_parse_rt_tables(self):
+        """
+        Test that the `IPRouteUtils._parse_route_tables_mapping()` will create the
+        route tables mapping dictionary when feeding the proper route table file
+        content
+        """
+
+        def parse(file_content):
+            mapping = {}
+            network_lsr.argument_validator.IPRouteUtils._parse_route_tables_mapping(
+                file_content, mapping
+            )
+            return mapping
+
+        self.assertEqual(parse(b""), {})
+        self.assertEqual(parse(b"5 x"), {"x": 5})
+        self.assertEqual(parse(b"   7   y   "), {})
+        self.assertEqual(parse(b"5 x\n0x4 y"), {"x": 5, "y": 4})
+        self.assertEqual(parse(b"5 x #df\n0x4 y"), {"x": 5, "y": 4})
+        self.assertEqual(parse(b"5 x #df\n0x4 y\n7\ty"), {"x": 5, "y": 4})
+        self.assertEqual(parse(b"-1 x #df\n0x4 y\n5 x"), {"x": 5, "y": 4})
+
+    def test_table_found_when_validate_route_tables(self):
+        """
+        Test that the `validate_route_tables()` will find the table id mapping from
+        `IPRouteUtils.get_route_tables_mapping()`.
+        """
+
+        self.test_connections[0]["ip"]["route"][0]["table"] = "custom"
+
+        self.validator.validate_route_tables(
+            self.test_connections[0],
+            self.connection_index,
+        )
+        self.assertEqual(
+            self.test_connections[0]["ip"]["route"][0]["table"],
+            200,
+        )
+
+    def test_table_not_found_when_validate_route_tables(self):
+        """
+        Test that the validation error is raised when the `validate_route_tables()` cannot
+        find the table id mapping from `IPRouteUtils.get_route_tables_mapping()`.
+        """
+
+        self.test_connections[0]["ip"]["route"][0]["table"] = "test"
+        self.assertRaisesRegex(
+            ValidationError,
+            "cannot find route table {0} in `/etc/iproute2/rt_tables` or "
+            "`/etc/iproute2/rt_tables.d/`".format(
+                self.test_connections[0]["ip"]["route"][0]["table"]
+            ),
+            self.validator.validate_route_tables,
+            self.test_connections[0],
+            self.connection_index,
+        )
 
 
 class TestSysUtils(unittest.TestCase):
