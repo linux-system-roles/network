@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  tasks:
+    - name: Add a new routing table
+      lineinfile:
+        path: /etc/iproute2/rt_tables.d/table.conf
+        line: "200 custom"
+        mode: "0644"
+        create: yes
+
+    - name: Configure connection profile and specify the table in static routes
+      import_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: eth0
+            type: ethernet
+            state: up
+            autoconnect: yes
+            ip:
+              dhcp4: no
+              address:
+                - 198.51.100.3/26
+              route:
+                - network: 198.51.100.128
+                  prefix: 26
+                  gateway: 198.51.100.1
+                  metric: 2
+                  table: 30400
+                - network: 198.51.100.64
+                  prefix: 26
+                  gateway: 198.51.100.6
+                  metric: 4
+                  table: custom
+...

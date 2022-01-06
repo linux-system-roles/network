@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function
 
 __metaclass__ = type
 
+import os
 import posixpath
 import socket
 import re
@@ -244,6 +245,62 @@ class ArgValidatorStr(ArgValidator):
             return len(str(value)) >= self.min_length
         else:
             return True
+
+
+class ArgValidatorRouteTable(ArgValidator):
+    def __init__(
+        self,
+        name,
+        required=False,
+        default_value=None,
+    ):
+        ArgValidator.__init__(self, name, required, default_value)
+
+    def _validate_impl(self, value, name):
+        table = None
+        try:
+            if isinstance(value, bool):
+                # bool can (probably) be converted to integer type,
+                # but here we don't want to accept a boolean value.
+                pass
+            elif isinstance(value, int):
+                table = int(value)
+            elif isinstance(value, Util.STRING_TYPE):
+                try:
+                    table = int(value)
+                except Exception:
+                    table = value
+        except Exception:
+            pass
+        if table is None:
+            raise ValidationError(
+                name,
+                "route table must be the named or numeric tables but is {0}".format(
+                    value
+                ),
+            )
+        if isinstance(table, int):
+            if table < 1:
+                raise ValidationError(
+                    name,
+                    "route table value is {0} but cannot be less than 1".format(value),
+                )
+            elif table > 0xFFFFFFFF:
+                raise ValidationError(
+                    name,
+                    "route table value is {0} but cannot be greater than 4294967295".format(
+                        value
+                    ),
+                )
+        if isinstance(table, Util.STRING_TYPE):
+            if table == "":
+                raise ValidationError(name, "route table name cannot be empty string")
+            if not IPRouteUtils.ROUTE_TABLE_ALIAS_RE.match(table):
+                raise ValidationError(
+                    name, "route table name contains invalid characters"
+                )
+
+        return table
 
 
 class ArgValidatorNum(ArgValidator):
@@ -543,6 +600,7 @@ class ArgValidatorIPRoute(ArgValidatorDict):
                 ArgValidatorNum(
                     "metric", default_value=-1, val_min=-1, val_max=0xFFFFFFFF
                 ),
+                ArgValidatorRouteTable("table"),
             ],
             default_value=None,
         )
@@ -1858,6 +1916,19 @@ class ArgValidator_ListConnections(ArgValidatorList):
     VALIDATE_ONE_MODE_NM = "nm"
     VALIDATE_ONE_MODE_INITSCRIPTS = "initscripts"
 
+    def validate_route_tables(self, connection, idx):
+        for r in connection["ip"]["route"]:
+            if isinstance(r["table"], Util.STRING_TYPE):
+                mapping = IPRouteUtils.get_route_tables_mapping()
+                if r["table"] in mapping:
+                    r["table"] = mapping[r["table"]]
+                else:
+                    raise ValidationError.from_connection(
+                        idx,
+                        "cannot find route table {0} in `/etc/iproute2/rt_tables` or "
+                        "`/etc/iproute2/rt_tables.d/`".format(r["table"]),
+                    )
+
     def validate_connection_one(self, mode, connections, idx):
         def _ipv4_enabled(connection):
             has_addrs4 = any(
@@ -2012,3 +2083,99 @@ class ArgValidator_ListConnections(ArgValidatorList):
                             "match.path is not supported by the running version of "
                             "NetworkManger.",
                         )
+        self.validate_route_tables(connection, idx)
+
+
+class IPRouteUtils(object):
+
+    ROUTE_TABLE_ALIAS_RE = re.compile("^[a-zA-Z0-9_.-]+$")
+
+    @classmethod
+    def _parse_route_tables_mapping(cls, file_content, mapping):
+        for line in file_content.split(b"\n"):
+
+            # iproute2 only skips over leading ' ' and '\t'.
+            line = line.lstrip()
+
+            # skip empty lines or comments
+            if not line:
+                continue
+
+            # In Python 2.x, there is no new type called `bytes`. And Python 2.x
+            # `bytes` is just an alias to the str type
+            if Util.PY3:
+                if line[0] == ord(b"#"):
+                    continue
+            else:
+                if line[0] == "#":
+                    continue
+
+            # iproute2 splits at the first space.
+            ll = line.split(b" ", 1)
+            if len(ll) != 2:
+                continue
+            line1 = ll[0]
+            line2 = ll[1]
+
+            comment_space = line2.find(b" ")
+            if comment_space >= 0:
+                # when commenting the route table entry in the same line,
+                # iproute2 only accepts one ' ', followed by '#'
+                if not re.match(b"^[a-zA-Z0-9_.-]+ #", line2):
+                    continue
+                line2 = line2[:comment_space]
+
+            # convert to UTF-8 and only accept benign characters.
+            try:
+                line2 = line2.decode("utf-8")
+            except Exception:
+                continue
+
+            if not cls.ROUTE_TABLE_ALIAS_RE.match(line2):
+                continue
+
+            tableid = None
+            try:
+                tableid = int(line1)
+            except Exception:
+                if line.startswith(b"0x"):
+                    try:
+                        tableid = int(line1[2:], 16)
+                    except Exception:
+                        pass
+            if tableid is None or tableid < 0 or tableid > 0xFFFFFFFF:
+                continue
+
+            mapping[line2] = tableid
+
+    @classmethod
+    def _parse_route_tables_mapping_from_file(cls, filename, mapping):
+        try:
+            with open(filename, "rb") as f:
+                file_content = f.read()
+        except Exception:
+            return
+        cls._parse_route_tables_mapping(file_content, mapping)
+
+    @classmethod
+    def get_route_tables_mapping(cls):
+        if not hasattr(cls, "_cached_rt_tables"):
+            mapping = {}
+            cls._parse_route_tables_mapping_from_file(
+                "/etc/iproute2/rt_tables", mapping
+            )
+            # In iproute2, the directory `/etc/iproute2/rt_tables/rt_tables.d`
+            # is also iterated when get the mapping between the route table name
+            # and route table id,
+            # https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/tree/lib/rt_names.c?id=ade99e208c1843ed3b6eb9d138aa15a6a5eb5219#n391
+            try:
+                fnames = os.listdir("/etc/iproute2/rt_tables.d")
+            except Exception:
+                fnames = []
+            for f in fnames:
+                if f.endswith(".conf") and f[0] != ".":
+                    cls._parse_route_tables_mapping_from_file(
+                        "/etc/iproute2/rt_tables.d/" + f, mapping
+                    )
+            cls._cached_rt_tables = mapping
+        return cls._cached_rt_tables

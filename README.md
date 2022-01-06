@@ -473,8 +473,11 @@ The IP configuration supports the following options:
 
     Static route configuration can be specified via a list of routes given in the
     `route` option. The default value is an empty list. Each route is a dictionary with
-    the following entries: `network`, `prefix`, `gateway` and `metric`. `network` and
-    `prefix` specify the destination network.
+    the following entries: `network`, `prefix`, `gateway`, `metric` and `table`.
+    `network` and `prefix` specify the destination network. `table` supports both the
+    numeric table and named table. In order to specify the named table, the users have
+    to ensure the named table is properly defined in `/etc/iproute2/rt_tables` or
+    `/etc/iproute2/rt_tables.d/*.conf`.
     Note that Classless inter-domain routing (CIDR) notation or network mask notation
     are not supported yet.
 

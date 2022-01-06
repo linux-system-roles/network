@@ -84,6 +84,7 @@ ibution_major_version | int < 9",
         "comment": "# NetworkManager 1.26.0 added support for match.path setting",
     },
     "playbooks/tests_reapply.yml": {},
+    "playbooks/tests_route_table.yml": {},
     # team interface is not supported on Fedora
     "playbooks/tests_team.yml": {
         EXTRA_RUN_CONDITION: "ansible_distribution != 'Fedora'",
