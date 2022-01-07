@@ -5,6 +5,7 @@ set -euo pipefail
 TEST_SOURCE_DIR="/network-role"
 C8S_CONTAINER_IMAGE="quay.io/linux-system-roles/c8s-network-role"
 C8_CONTAINER_IMAGE="quay.io/linux-system-roles/c8-network-role"
+C7_CONTAINER_IMAGE="quay.io/linux-system-roles/c7-network-role"
 PODMAN_OPTS="--systemd=true --privileged"
 
 read -r -d '' TEST_FILES << EOF || :
@@ -52,6 +53,9 @@ case $OS_TYPE in
         ;;
     "c8")
         CONTAINER_IMAGE=$C8_CONTAINER_IMAGE
+        ;;
+    "c7")
+        CONTAINER_IMAGE=$C7_CONTAINER_IMAGE
         ;;
     *)
         echo "Unsupported OS type $OS_TYPE"
