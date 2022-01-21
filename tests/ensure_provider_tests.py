@@ -132,6 +132,7 @@ NM_CONDITIONAL_TESTS = {
 IGNORE = [
     # checked by tests_regression_nm.yml
     "playbooks/tests_checkpoint_cleanup.yml",
+    "playbooks/tests_switch_provider.yml",
 ]
 
 RUN_PLAYBOOK_WITH_INITSCRIPTS = """# SPDX-License-Identifier: BSD-3-Clause
