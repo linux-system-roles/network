@@ -60,3 +60,31 @@ class NetworkManagerProvider:
     def get_connections(self):
         nm_client = client.get_client()
         return nm_client.get_connections()
+
+    def get_client_version(self):
+        nm_client = client.get_client()
+        return nm_client.get_version()
+
+    def reload_configuration(self):
+        timeout = 10
+        nm_client = client.get_client()
+        main_loop = client.get_mainloop(timeout)
+        logging.debug("Reloading configuration with timeout %s", timeout)
+        nm_client.reload_connections_async(
+            main_loop.cancellable, _reload_config_callback, main_loop
+        )
+        main_loop.run()
+
+
+def _reload_config_callback(nm_client, result, main_loop):
+    try:
+        success = nm_client.reload_connections_finish(result)
+    except client.GLib.Error as e:
+        logging.warn("Failed to reload configuration: %s", e)
+        main_loop.quit()
+        return
+    if success:
+        logging.debug("Reloading configuration finished")
+    else:
+        logging.warn("Failed to reload configuration, no error message")
+    main_loop.quit()

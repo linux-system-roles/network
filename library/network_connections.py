@@ -2055,6 +2055,16 @@ class Cmd_nm(Cmd):
                 len(self.connections) * DEFAULT_ACTIVATION_TIMEOUT
             )
 
+        # On NetworkManger 1.18, If user switch from initscripts provider where
+        # NM_CONTROLLED=no defined in ifcfg-ethX file, NetworkManager daemon will treat
+        # that interface as strictly unmanaged, even the follow up deletion of
+        # ifcfg-ethX file cannot change the NetworManager's unmanaged state of this
+        # interface. This will prevent any follow up "nm" provider action on this
+        # interface.  To solve that, we instruct NetworkManager to reload the
+        # configuration.
+        if self._nm_provider.get_client_version().startswith("1.18."):
+            self._nm_provider.reload_configuration()
+
     def rollback_transaction(self, idx, action, error):
         Cmd.rollback_transaction(self, idx, action, error)
         self.on_failure()

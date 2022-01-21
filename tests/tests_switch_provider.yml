@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  name: Run playbook 'playbooks/tests_switch_provider.yml'
+
+- import_playbook: playbooks/tests_switch_provider.yml
+  when:
+    # The test requires or should run with NetworkManager, therefore it cannot
+    # run on RHEL/CentOS 6
+    - ansible_distribution_major_version != '6'

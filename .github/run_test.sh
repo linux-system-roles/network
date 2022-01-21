@@ -8,10 +8,13 @@ C8_CONTAINER_IMAGE="quay.io/linux-system-roles/c8-network-role"
 C7_CONTAINER_IMAGE="quay.io/linux-system-roles/c7-network-role"
 PODMAN_OPTS="--systemd=true --privileged"
 
+# FIXME: test_wireless has been removed because is not supported on CI
+# container EL7. We need to add this back for EL8 or greater.
 read -r -d '' TEST_FILES << EOF || :
 tests_802_1x_nm.yml
 tests_bond_nm.yml
 tests_auto_gateway_nm.yml
+tests_bridge_initscripts.yml
 tests_bridge_nm.yml
 tests_change_indication_on_repeat_run.yml
 tests_dummy_nm.yml
@@ -22,6 +25,7 @@ tests_ethtool_ring_nm.yml
 tests_ipv6_disabled_nm.yml
 tests_ipv6_nm.yml
 tests_vlan_mtu_nm.yml
+tests_switch_provider.yml
 EOF
 
 EXEC_PATH=$(dirname "$(realpath "$0")")
