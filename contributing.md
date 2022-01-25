@@ -163,8 +163,9 @@ commits](https://help.github.com/en/github/collaborating-with-issues-and-pull-re
 conflicts. On the rebase you have to compare what the other person added to what you
 added, and merge both file versions into one that combines it all.
 
-- If you have any doubt, do not hesitate to ask! You can join IRC channel \#systemroles
-  on freenode, or ask on the PR/issue itself.
+- If you have any doubt, do not hesitate to ask! You can join IRC channel
+  \#systemroles on [Libera](https://libera.chat/), or ask on the PR/issue
+  itself.
 
 ### Naming Ansible Items
 
@@ -404,6 +405,6 @@ The mailing list for developers: systemroles@lists.fedorahosted.org
 [Archive of the mailing list](https://lists.fedorahosted.org/archives/list/systemroles@lists.fedorahosted.org/)
 
 If you are using IRC, join the `#systemroles` IRC channel on
-[freenode](https://freenode.net/kb/answer/chat)
+[Libera](https://libera.chat/).
 
 *Thanks for contributing and happy coding!!*
