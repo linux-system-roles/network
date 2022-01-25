@@ -42,8 +42,8 @@ The repository is structured as follows:
   snippets that are used in multiple tests to avoid having the same code repeated
   multiple times.
 
-The rest of files in the root folder mostly serve as configuration files for diferent
-testing tools and bots that help with the manteinance of the project.
+The rest of files in the root folder mostly serve as configuration files for different
+testing tools and bots that help with the maintenance of the project.
 
 The code files will always have the imports on the first place, followed by constants
 and in the last place, classes and methods. The style of python coding for this project
@@ -56,7 +56,7 @@ Configuring Git
 
 Before starting to contribute, make sure you have the basic git configuration: Your name
 and email. This will be useful when signing your contributions. The following commands
-will set your global name and email, althought you can change it later for every repo:
+will set your global name and email, although you can change it later for every repo:
 
 ```bash
 git config --global user.name "Jane Doe"
