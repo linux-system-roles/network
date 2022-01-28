@@ -35,7 +35,7 @@
     profile: "{{ interface }}"
     task: tasks/assert_profile_present.yml
 
-- import_playbook: down_profile.yml
+- import_playbook: down_profile+delete_interface.yml
   vars:
     profile: "{{ interface }}"
 # FIXME: assert profile/device down
@@ -49,7 +49,6 @@
     profile: "{{ interface }}"
     task: tasks/assert_profile_absent.yml
 
-# FIXME: Devices might still be left when profile is absent
-# - import_playbook: run_tasks.yml
-#   vars:
-#     task: tasks/assert_device_absent.yml
+- import_playbook: run_tasks.yml
+  vars:
+    task: tasks/assert_device_absent.yml

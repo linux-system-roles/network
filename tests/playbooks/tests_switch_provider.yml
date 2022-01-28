@@ -4,12 +4,11 @@
 # set network provider and gather facts
 - hosts: all
   name: Switch initscripts provider to nm
-  vars:
-    interface: LSR-TST-br34
   tasks:
     - name: set fact to use initscripts network_provider
       set_fact:
         network_provider: initscripts
+        interface: LST-TST-br34
       tags:
         - always
     - name: "Create test bridge {{ interface }} via initscripts provider"
@@ -24,15 +23,9 @@
               dhcp4: false
               auto6: false
     - include_tasks: tasks/assert_device_present.yml
-    - name: "Take the profile {{ interface }} down via initscripts provider"
-      include_role:
-        name: linux-system-roles.network
+    - include_tasks: tasks/remove+down_profile.yml
       vars:
-        network_connections:
-          - name: "{{ interface }}"
-            persistent_state: absent
-            state: down
-            type: bridge
+        profile: "{{ interface }}"
     # The initscripts should not remove the interface for down/absent
     - include_tasks: tasks/assert_device_present.yml
     - name: set fact to use nm network_provider
@@ -52,14 +45,9 @@
               dhcp4: false
               auto6: false
     - include_tasks: tasks/assert_device_present.yml
-    - name: "Remove bridge {{ interface }} via nm provider"
-      include_role:
-        name: linux-system-roles.network
+    - include_tasks: tasks/remove+down_profile.yml
       vars:
-        network_connections:
-          - name: "{{ interface }}"
-            state: down
-            type: bridge
+        profile: "{{ interface }}"
     # NetworkManager should not remove pre-exist interface for down/absent
     - include_tasks: tasks/assert_device_present.yml
     - include_tasks: tasks/delete_interface.yml

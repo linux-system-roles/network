@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
 - import_playbook: down_profile.yml
-- name: Delete the interface when the network provider is initscripts
+- name: Delete the interface
   hosts: all
   tasks:
     - include_tasks: tasks/delete_interface.yml

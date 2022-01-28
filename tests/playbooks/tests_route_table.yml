@@ -133,19 +133,18 @@
         state: absent
         path: /etc/iproute2/rt_tables.d/table.conf
 
-- import_playbook: down_profile.yml
+- import_playbook: down_profile+delete_interface.yml
   vars:
     profile: "{{ interface }}"
 # FIXME: assert profile/device down
 - import_playbook: remove_profile.yml
   vars:
     profile: "{{ interface }}"
-# FIXME: assert profile away
-- name: Remove interfaces
+- name: Assert device and profile are absent
   hosts: all
   tasks:
-    - include_tasks: tasks/manage_test_interface.yml
+    - include_tasks: tasks/assert_profile_absent.yml
       vars:
-        state: absent
+        profile: "{{ interface }}"
     - include_tasks: tasks/assert_device_absent.yml
 ...
