@@ -126,12 +126,7 @@
               - tasks/get_NetworkManager_NVR.yml
             lsr_assert_when:
               - what: tasks/assert_device_absent.yml
-                # NetworkManager 1.18.4 from CentOS does not seem to remove the
-                # virtual interface in this case but it seems to work with
-                # 1:NetworkManager-1.27.0-26129.d0a2eb8f05.el7
-                when: "{{ network_provider == 'nm' and
-                  NetworkManager_NVR != 'NetworkManager-1.18.4-3.el7'
-                  }}"
+                when: "{{ network_provider == 'nm' }}"
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
       tags:
