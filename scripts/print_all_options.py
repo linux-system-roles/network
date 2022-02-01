@@ -64,15 +64,11 @@ def parse_validator(validator):
     if isinstance(validator, av.ArgValidatorDict):
         res = {}
         for k, v in validator.nested.items():
-            if (
-                v.name
-                not in (
-                    "infiniband_transport_mode",
-                    "infiniband_p_key",
-                    "vlan_id",
-                )
-                and not isinstance(v, av.ArgValidatorDeprecated)
-            ):
+            if v.name not in (
+                "infiniband_transport_mode",
+                "infiniband_p_key",
+                "vlan_id",
+            ) and not isinstance(v, av.ArgValidatorDeprecated):
                 name = k
                 if not validator.required:
                     pass
