@@ -867,8 +867,14 @@ class NMUtil:
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, NM.SETTING_BOND_SETTING_NAME)
             s_bond = self.connection_ensure_setting(con, NM.SettingBond)
             s_bond.add_option("mode", connection["bond"]["mode"])
-            if connection["bond"]["miimon"] is not None:
-                s_bond.add_option("miimon", str(connection["bond"]["miimon"]))
+            for option, value in connection["bond"].items():
+                if value is None:
+                    continue
+                if option in ["all_ports_active", "use_carrier", "tlb_dynamic_lb"]:
+                    value = int(value)
+                if option in ["all_ports_active", "packets_per_port"]:
+                    option = option.replace("port", "slave")
+                s_bond.add_option(option, str(value))
         elif connection["type"] == "team":
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, NM.SETTING_TEAM_SETTING_NAME)
         elif connection["type"] == "dummy":

@@ -1159,14 +1159,203 @@ class ArgValidator_DictBond(ArgValidatorDict):
             nested=[
                 ArgValidatorStr("mode", enum_values=ArgValidator_DictBond.VALID_MODES),
                 ArgValidatorNum(
+                    "ad_actor_sys_prio", val_min=1, val_max=65535, default_value=None
+                ),
+                ArgValidatorMac("ad_actor_system"),
+                ArgValidatorStr(
+                    "ad_select", enum_values=["stable", "bandwidth", "count"]
+                ),
+                ArgValidatorNum(
+                    "ad_user_port_key", val_min=0, val_max=1023, default_value=None
+                ),
+                ArgValidatorBool("all_ports_active", default_value=None),
+                ArgValidatorStr("arp_all_targets", enum_values=["any", "all"]),
+                ArgValidatorNum(
+                    "arp_interval", val_min=0, val_max=1000000, default_value=None
+                ),
+                ArgValidatorStr(
+                    "arp_validate",
+                    enum_values=[
+                        "none",
+                        "active",
+                        "backup",
+                        "all",
+                        "filter",
+                        "filter_active",
+                        "filter_backup",
+                    ],
+                ),
+                ArgValidatorStr("arp_ip_target"),
+                ArgValidatorNum(
+                    "downdelay", val_min=0, val_max=1000000, default_value=None
+                ),
+                ArgValidatorStr(
+                    "fail_over_mac", enum_values=["none", "active", "follow"]
+                ),
+                ArgValidatorStr("lacp_rate", enum_values=["slow", "fast"]),
+                ArgValidatorNum(
+                    "lp_interval", val_min=1, val_max=1000000, default_value=None
+                ),
+                ArgValidatorNum(
                     "miimon", val_min=0, val_max=1000000, default_value=None
+                ),
+                ArgValidatorNum(
+                    "min_links", val_min=0, val_max=1000000, default_value=None
+                ),
+                ArgValidatorNum(
+                    "num_grat_arp", val_min=0, val_max=255, default_value=None
+                ),
+                ArgValidatorNum(
+                    "packets_per_port", val_min=0, val_max=65535, default_value=None
+                ),
+                ArgValidatorNum(
+                    "peer_notif_delay", val_min=0, val_max=1000000, default_value=None
+                ),
+                ArgValidatorStr("primary"),
+                ArgValidatorStr(
+                    "primary_reselect", enum_values=["always", "better", "failure"]
+                ),
+                ArgValidatorNum(
+                    "resend_igmp", val_min=0, val_max=255, default_value=None
+                ),
+                ArgValidatorBool("tlb_dynamic_lb", default_value=None),
+                ArgValidatorNum(
+                    "updelay", val_min=0, val_max=1000000, default_value=None
+                ),
+                ArgValidatorBool("use_carrier", default_value=None),
+                ArgValidatorStr(
+                    "xmit_hash_policy",
+                    enum_values=[
+                        "layer2",
+                        "layer3+4",
+                        "layer2+3",
+                        "encap2+3",
+                        "encap3+4",
+                        "vlan+srcmac",
+                    ],
                 ),
             ],
             default_value=ArgValidator.MISSING,
         )
 
+    def _validate_post(self, value, name, result):
+        AD_OPTIONS = [
+            "ad_actor_sys_prio",
+            "ad_actor_system",
+            "ad_user_port_key",
+            "lacp_rate",
+        ]
+        ARP_OPTIONS = ["arp_interval", "arp_ip_target", "arp_validate"]
+        ARP_ONLY_MODE = ["balance-rr", "active-backup", "balance-xor", "broadcast"]
+
+        if result["mode"] != "802.3ad":
+            for option in AD_OPTIONS:
+                if result[option] is not None:
+                    raise ValidationError(
+                        name,
+                        "the bond option {0} is only valid with mode 802.3ad".format(
+                            option
+                        ),
+                    )
+
+        if result["packets_per_port"] is not None and result["mode"] != "balance-rr":
+            raise ValidationError(
+                name,
+                "the bond option packets_per_port is only valid with mode balance-rr",
+            )
+
+        if result["mode"] not in ARP_ONLY_MODE:
+            for option in ARP_OPTIONS:
+                if result[option] is not None:
+                    raise ValidationError(
+                        name,
+                        "the bond option {0} is only valid with mode balance-rr, active-backup, balance-xor or broadcast".format(
+                            option
+                        ),
+                    )
+
+        if result["tlb_dynamic_lb"] is not None and result["mode"] not in [
+            "balance-tlb",
+            "balance-alb",
+        ]:
+            raise ValidationError(
+                name,
+                "the bond option tlb_dynamic_lb is only valid with mode balance-tlb or balance-alb",
+            )
+
+        if result["primary"] is not None and result["mode"] not in [
+            "active-backup",
+            "balance-tlb",
+            "balance-alb",
+        ]:
+            raise ValidationError(
+                name,
+                "the bond option primary is only valid with mode active-backup, balance-tlb, balance-alb",
+            )
+
+        if (
+            result["updelay"] is not None or result["downdelay"] is not None
+        ) and not result["miimon"]:
+            raise ValidationError(
+                name,
+                "the bond option downdelay or updelay is only valid with miimon enabled",
+            )
+        if result["peer_notif_delay"] is not None:
+            if not result["miimon"] or result["peer_notif_delay"] % result["miimon"]:
+                raise ValidationError(
+                    name,
+                    "the bond option peer_notif_delay needs miimon enabled and must be miimon multiple",
+                )
+            if result["arp_interval"]:
+                raise ValidationError(
+                    name,
+                    "the bond option peer_notif_delay needs arp_interval disabled",
+                )
+        if result["arp_ip_target"]:
+            if not result["arp_interval"]:
+                raise ValidationError(
+                    name,
+                    "the bond option arp_ip_target requires arp_interval to be set",
+                )
+
+        if result["arp_interval"]:
+            if not result["arp_ip_target"]:
+                raise ValidationError(
+                    name,
+                    "the bond option arp_interval requires arp_ip_target to be set",
+                )
+
+        return result
+
     def get_default_bond(self):
-        return {"mode": ArgValidator_DictBond.VALID_MODES[0], "miimon": None}
+        return {
+            "mode": ArgValidator_DictBond.VALID_MODES[0],
+            "ad_actor_sys_prio": None,
+            "ad_actor_system": None,
+            "ad_select": None,
+            "ad_user_port_key": None,
+            "all_ports_active": None,
+            "arp_all_targets": None,
+            "arp_interval": None,
+            "arp_ip_target": None,
+            "arp_validate": None,
+            "downdelay": None,
+            "fail_over_mac": None,
+            "lacp_rate": None,
+            "lp_interval": None,
+            "miimon": None,
+            "min_links": None,
+            "num_grat_arp": None,
+            "packets_per_port": None,
+            "peer_notif_delay": None,
+            "primary": None,
+            "primary_reselect": None,
+            "resend_igmp": None,
+            "tlb_dynamic_lb": None,
+            "updelay": None,
+            "use_carrier": None,
+            "xmit_hash_policy": None,
+        }
 
 
 class ArgValidator_DictInfiniband(ArgValidatorDict):
@@ -1889,6 +2078,12 @@ class ArgValidator_ListConnections(ArgValidatorList):
                             "not a controller "
                             "type by '%s'" % (connection["controller"], c["type"]),
                         )
+                    if connection["type"] == "infiniband":
+                        if c["type"] == "bond" and c["bond"]["mode"] != "active_backup":
+                            raise ValidationError(
+                                name + "[" + str(idx) + "].controller",
+                                "bond only supports infiniband ports in active-backup mode",
+                            )
                     if connection["port_type"] is None:
                         connection["port_type"] = c["type"]
                     elif connection["port_type"] != c["type"]:
@@ -2083,6 +2278,28 @@ class ArgValidator_ListConnections(ArgValidatorList):
                             "match.path is not supported by the running version of "
                             "NetworkManger.",
                         )
+
+        if "bond" in connection:
+            if mode == self.VALIDATE_ONE_MODE_INITSCRIPTS:
+                for option in connection["bond"]:
+                    if connection["bond"][option] is not None and option not in [
+                        "mode",
+                        "miimon",
+                    ]:
+                        raise ValidationError.from_connection(
+                            idx,
+                            "initscripts only supports the mode and miimon bond "
+                            "options. All the other bond options are not supported by "
+                            "initscripts.",
+                        )
+            # the `peer_notif_delay` bond option was supported in NM since NM 1.30
+            if connection["bond"]["peer_notif_delay"]:
+                if not hasattr(Util.NM(), "SETTING_BOND_OPTION_PEER_NOTIF_DELAY"):
+                    raise ValidationError.from_connection(
+                        idx,
+                        "the bond option peer_notif_delay is not supported in "
+                        "NetworkManger until NM 1.30",
+                    )
         self.validate_route_tables(connection, idx)
 
 

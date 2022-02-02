@@ -1,0 +1,178 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    controller_profile: bond0
+    controller_device: nm-bond
+    port1_profile: bond0.0
+    dhcp_interface1: test1
+    port2_profile: bond0.1
+    dhcp_interface2: test2
+  tasks:
+    - name: "INIT Prepare setup"
+      debug:
+        msg: "##################################################"
+    - import_tasks: tasks/create_test_interfaces_with_dhcp.yml
+    - import_tasks: tasks/assert_device_present.yml
+      vars:
+        interface: "{{ dhcp_interface1 }}"
+    - import_tasks: tasks/assert_device_present.yml
+      vars:
+        interface: "{{ dhcp_interface2 }}"
+    - block:
+        - name: "TEST Add Bond with 2 ports"
+          debug:
+            msg: "##################################################"
+        - name: Configure the bond options
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              # Create a bond controller
+              - name: "{{ controller_profile }}"
+                state: up
+                type: bond
+                interface_name: "{{ controller_device }}"
+                bond:
+                  mode: 802.3ad
+                  ad_actor_sys_prio: 65535
+                  ad_actor_system: 00:00:5e:00:53:5d
+                  ad_select: stable
+                  ad_user_port_key: 1023
+                  all_ports_active: True
+                  arp_all_targets: all
+                  downdelay: 0
+                  lacp_rate: slow
+                  lp_interval: 128
+                  miimon: 110
+                  min_links: 0
+                  num_grat_arp: 64
+                  primary_reselect: better
+                  resend_igmp: 225
+                  updelay: 0
+                  use_carrier: True
+                  xmit_hash_policy: encap2+3
+
+              # add an ethernet to the bond
+              - name: "{{ port1_profile }}"
+                state: up
+                type: ethernet
+                interface_name: "{{ dhcp_interface1 }}"
+                controller: "{{ controller_profile }}"
+              # add a second ethernet to the bond
+              - name: "{{ port2_profile }}"
+                state: up
+                type: ethernet
+                interface_name: "{{ dhcp_interface2 }}"
+                controller: "{{ controller_profile }}"
+        - import_tasks: tasks/assert_device_present.yml
+          vars:
+            interface: "{{ controller_device }}"
+        - include_tasks: tasks/assert_profile_present.yml
+          vars:
+            profile: "{{ item }}"
+          loop:
+            - "{{ controller_profile }}"
+            - "{{ port1_profile }}"
+            - "{{ port2_profile }}"
+
+        - command: cat
+            /sys/class/net/{{ controller_device }}/bonding/'{{ item.key }}'
+          name: "** TEST check bond settings"
+          register: result
+          until: "'{{ item.value }}' in result.stdout"
+          loop:
+            - { key: 'mode', value: '802.3ad'}
+            - { key: 'ad_actor_sys_prio', value: '65535'}
+            - { key: 'ad_actor_system', value: '00:00:5e:00:53:5d'}
+            - { key: 'ad_select', value: 'stable'}
+            - { key: 'ad_user_port_key', value: '1023'}
+            - { key: 'all_slaves_active', value: '1'}
+            - { key: 'arp_all_targets', value: 'all'}
+            - { key: 'downdelay', value: '0'}
+            - { key: 'lacp_rate', value: 'slow'}
+            - { key: 'lp_interval', value: '128'}
+            - { key: 'miimon', value: '110'}
+            - { key: 'num_grat_arp', value: '64'}
+            - { key: 'resend_igmp', value: '225'}
+            - { key: 'updelay', value: '0'}
+            - { key: 'use_carrier', value: '1'}
+            - { key: 'xmit_hash_policy', value: 'encap2+3'}
+
+        - command: ip -4 a s {{ controller_device }}
+          name: "** TEST check IPv4"
+          register: result
+          until: "'192.0.2' in result.stdout"
+          retries: 20
+          delay: 2
+        - command: ip -6 a s {{ controller_device }}
+          name: "** TEST check IPv6"
+          register: result
+          until: "'2001' in result.stdout"
+          retries: 20
+          delay: 2
+
+        - name: Reconfigure the bond options
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              # Create a bond controller
+              - name: "{{ controller_profile }}"
+                state: up
+                type: bond
+                interface_name: "{{ controller_device }}"
+                bond:
+                  mode: active-backup
+                  arp_interval: 60
+                  arp_ip_target: 192.0.2.128
+                  arp_validate: none
+                  primary: "{{ dhcp_interface1 }}"
+
+        - command: cat
+            /sys/class/net/{{ controller_device }}/bonding/'{{ item.key }}'
+          name: "** TEST check bond settings"
+          register: result
+          until: "'{{ item.value }}' in result.stdout"
+          loop:
+            - { key: 'mode', value: 'active-backup'}
+            - { key: 'arp_interval', value: '60'}
+            - { key: 'arp_ip_target', value: '192.0.2.128'}
+            - { key: 'arp_validate', value: 'none'}
+            - { key: 'primary', value: '{{ dhcp_interface1 }}'}
+
+        - command: ip -4 a s {{ controller_device }}
+          name: "** TEST check IPv4"
+          register: result
+          until: "'192.0.2' in result.stdout"
+          retries: 20
+          delay: 2
+        - command: ip -6 a s {{ controller_device }}
+          name: "** TEST check IPv6"
+          register: result
+          until: "'2001' in result.stdout"
+          retries: 20
+          delay: 2
+
+      always:
+        - block:
+            - name: Import network role
+              import_role:
+                name: linux-system-roles.network
+              vars:
+                network_connections:
+                  - name: "{{ port2_profile }}"
+                    persistent_state: absent
+                    state: down
+                  - name: "{{ port1_profile }}"
+                    persistent_state: absent
+                    state: down
+                  - name: "{{ controller_profile }}"
+                    persistent_state: absent
+                    state: down
+              ignore_errors: true
+            - command: ip link del {{ controller_device }}
+              ignore_errors: true
+            - import_tasks: tasks/remove_test_interfaces_with_dhcp.yml
+          tags:
+            - "tests::cleanup"

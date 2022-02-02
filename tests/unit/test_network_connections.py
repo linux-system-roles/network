@@ -1737,7 +1737,34 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
-                    "bond": {"mode": "balance-rr", "miimon": None},
+                    "bond": {
+                        "mode": "balance-rr",
+                        "ad_actor_sys_prio": None,
+                        "ad_actor_system": None,
+                        "ad_select": None,
+                        "ad_user_port_key": None,
+                        "all_ports_active": None,
+                        "arp_all_targets": None,
+                        "arp_interval": None,
+                        "arp_ip_target": None,
+                        "arp_validate": None,
+                        "downdelay": None,
+                        "fail_over_mac": None,
+                        "lacp_rate": None,
+                        "lp_interval": None,
+                        "miimon": None,
+                        "min_links": None,
+                        "num_grat_arp": None,
+                        "packets_per_port": None,
+                        "peer_notif_delay": None,
+                        "primary": None,
+                        "primary_reselect": None,
+                        "resend_igmp": None,
+                        "tlb_dynamic_lb": None,
+                        "updelay": None,
+                        "use_carrier": None,
+                        "xmit_hash_policy": None,
+                    },
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -1788,7 +1815,34 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
-                    "bond": {"mode": "active-backup", "miimon": None},
+                    "bond": {
+                        "mode": "active-backup",
+                        "ad_actor_sys_prio": None,
+                        "ad_actor_system": None,
+                        "ad_select": None,
+                        "ad_user_port_key": None,
+                        "all_ports_active": None,
+                        "arp_all_targets": None,
+                        "arp_interval": None,
+                        "arp_ip_target": None,
+                        "arp_validate": None,
+                        "downdelay": None,
+                        "fail_over_mac": None,
+                        "lacp_rate": None,
+                        "lp_interval": None,
+                        "miimon": None,
+                        "min_links": None,
+                        "num_grat_arp": None,
+                        "packets_per_port": None,
+                        "peer_notif_delay": None,
+                        "primary": None,
+                        "primary_reselect": None,
+                        "resend_igmp": None,
+                        "tlb_dynamic_lb": None,
+                        "updelay": None,
+                        "use_carrier": None,
+                        "xmit_hash_policy": None,
+                    },
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -4310,6 +4364,188 @@ class TestValidatorRouteTable(Python26CompatTestCase):
             self.test_connections[0],
             self.connection_index,
         )
+
+
+class TestValidatorDictBond(Python26CompatTestCase):
+    def setUp(self):
+        self.validator = network_lsr.argument_validator.ArgValidator_ListConnections()
+        self.test_connections = [
+            {
+                "name": "bond0",
+                "type": "bond",
+                "bond": {
+                    "mode": "balance-rr",
+                },
+            },
+        ]
+
+    def test_invalid_bond_option_ad(self):
+
+        """
+        Test the ad bond option restrictions
+        """
+        self.test_connections[0]["bond"]["ad_actor_sys_prio"] = 65535
+        self.assertRaisesRegex(
+            ValidationError,
+            "the bond option ad_actor_sys_prio is only valid with mode 802.3ad",
+            self.validator.validate,
+            self.test_connections,
+        )
+        self.test_connections[0]["bond"]["mode"] = "802.3ad"
+        self.validator.validate(self.test_connections)
+
+    def test_invalid_bond_option_packets_per_port(self):
+        """
+        Test the packets_per_port bond option restrictions
+        """
+        self.test_connections[0]["bond"]["mode"] = "802.3ad"
+        self.test_connections[0]["bond"]["packets_per_port"] = 2
+        self.assertRaisesRegex(
+            ValidationError,
+            "the bond option packets_per_port is only valid with mode balance-rr",
+            self.validator.validate,
+            self.test_connections,
+        )
+        self.test_connections[0]["bond"]["mode"] = "balance-rr"
+        self.validator.validate(self.test_connections)
+
+    def test_invalid_bond_option_arp(self):
+        """
+        Test the arp bond option restrictions
+        """
+        self.test_connections[0]["bond"]["mode"] = "802.3ad"
+        self.test_connections[0]["bond"]["arp_interval"] = 2
+        self.test_connections[0]["bond"]["arp_ip_target"] = "198.51.100.3"
+
+        self.assertRaisesRegex(
+            ValidationError,
+            "the bond option arp_interval is only valid with mode balance-rr, active-backup, balance-xor or broadcast",
+            self.validator.validate,
+            self.test_connections,
+        )
+        self.test_connections[0]["bond"]["mode"] = "balance-rr"
+        self.validator.validate(self.test_connections)
+
+    def test_invalid_bond_option_tlb_dynamic_lb(self):
+        """
+        Test the tlb_dynamic_lb bond option restrictions
+        """
+        self.test_connections[0]["bond"]["tlb_dynamic_lb"] = True
+        self.assertRaisesRegex(
+            ValidationError,
+            "the bond option tlb_dynamic_lb is only valid with mode balance-tlb or balance-alb",
+            self.validator.validate,
+            self.test_connections,
+        )
+        self.test_connections[0]["bond"]["mode"] = "balance-tlb"
+        self.validator.validate(self.test_connections)
+
+    def test_invalid_bond_option_primary(self):
+        """
+        Test the primary bond option restrictions
+        """
+        self.test_connections[0]["bond"]["primary"] = "bond0.0"
+        self.assertRaisesRegex(
+            ValidationError,
+            "the bond option primary is only valid with mode active-backup, balance-tlb, balance-alb",
+            self.validator.validate,
+            self.test_connections,
+        )
+        self.test_connections[0]["bond"]["mode"] = "balance-tlb"
+        self.validator.validate(self.test_connections)
+
+    def test_invalid_bond_option_downdelay_updelay(self):
+        """
+        Test the downdelay or updelay bond option restrictions
+        """
+        self.test_connections[0]["bond"]["downdelay"] = 5
+        self.assertRaisesRegex(
+            ValidationError,
+            "the bond option downdelay or updelay is only valid with miimon enabled",
+            self.validator.validate,
+            self.test_connections,
+        )
+        self.test_connections[0]["bond"]["miimon"] = 110
+        self.validator.validate(self.test_connections)
+
+    def test_invalid_bond_option_peer_notif_delay(self):
+        """
+        Test the peer_notif_delay bond option restrictions
+        """
+        self.test_connections[0]["bond"]["miimon"] = 110
+        self.test_connections[0]["bond"]["peer_notif_delay"] = 222
+        self.assertRaisesRegex(
+            ValidationError,
+            "the bond option peer_notif_delay needs miimon enabled and must be miimon multiple",
+            self.validator.validate,
+            self.test_connections,
+        )
+        self.test_connections[0]["bond"]["peer_notif_delay"] = 220
+        self.test_connections[0]["bond"]["arp_interval"] = 110
+        self.assertRaisesRegex(
+            ValidationError,
+            "the bond option peer_notif_delay needs arp_interval disabled",
+            self.validator.validate,
+            self.test_connections,
+        )
+        self.test_connections[0]["bond"]["arp_interval"] = 0
+        self.validator.validate(self.test_connections)
+
+    def test_invalid_bond_option_peer_arp_ip_target_arp_interval(self):
+        """
+        Test the arp_ip_target or arp_interval bond option restrictions
+        """
+        self.test_connections[0]["bond"]["arp_interval"] = 4
+        self.assertRaisesRegex(
+            ValidationError,
+            "the bond option arp_interval requires arp_ip_target to be set",
+            self.validator.validate,
+            self.test_connections,
+        )
+
+        self.test_connections[0]["bond"]["arp_ip_target"] = "198.51.100.3"
+        self.test_connections[0]["bond"]["arp_interval"] = 0
+        self.assertRaisesRegex(
+            ValidationError,
+            "the bond option arp_ip_target requires arp_interval to be set",
+            self.validator.validate,
+            self.test_connections,
+        )
+        self.test_connections[0]["bond"]["arp_interval"] = 4
+        self.validator.validate(self.test_connections)
+
+    def test_invalid_bond_option_infiniband_port(self):
+        """
+        Test that bond only supports infiniband ports in active-backup mode
+        """
+        test_connections_with_infiniband_port = [
+            {
+                "name": "bond0",
+                "type": "bond",
+                "bond": {
+                    "mode": "balance-rr",
+                },
+            },
+            {
+                "name": "bond0.0",
+                "type": "infiniband",
+                "controller": "bond0",
+            },
+            {
+                "name": "bond0.1",
+                "type": "infiniband",
+                "controller": "bond0",
+            },
+        ]
+
+        self.assertRaisesRegex(
+            ValidationError,
+            "bond only supports infiniband ports in active-backup mode",
+            self.validator.validate,
+            test_connections_with_infiniband_port,
+        )
+        self.test_connections[0]["bond"]["mode"] = "active-backup"
+        self.validator.validate(self.test_connections)
 
 
 class TestSysUtils(unittest.TestCase):
