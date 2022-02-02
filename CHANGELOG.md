@@ -1,6 +1,18 @@
 Changelog
 =========
 
+[1.6.0] - 2022-02-02
+--------------------
+
+### New features
+
+- Support routing tables in static routes
+
+### Bug fixes
+
+- Fix setting DNS search settings when only one IP family is enabled
+- Fix switching from initscripts to NetworkManager 1.18
+
 [1.5.0] - 2021-12-14
 --------------------
 
