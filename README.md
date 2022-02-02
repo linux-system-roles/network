@@ -692,19 +692,149 @@ SSL certificates and keys must be deployed on the host prior to running the role
 
 ### `bond`
 
-The `bond` setting configures the options of bonded interfaces
-(type `bond`). It supports the following options:
+The `bond` setting configures the options of bonded interfaces (type `bond`).
+See the [kernel documentation for
+bonding](https://www.kernel.org/doc/Documentation/networking/bonding.txt) or
+your distribution `nmcli` documentation for valid values. It supports the
+following options:
 
 - `mode`
 
-  Bonding mode.  See the
-  [kernel documentation](https://www.kernel.org/doc/Documentation/networking/bonding.txt)
-  or your distribution `nmcli` documentation for valid values.
-  NetworkManager defaults to `balance-rr`.
+    Bonding mode. The possible values are `balance-rr` (default), `active-backup`,
+    `balance-xor`, `broadcast`, `802.3ad`, `balance-tlb`, or `balance-alb`.
+
+- `ad_actor_sys_prio`
+
+    In `802.3ad` bonding mode, this specifies the system priority. The valid range is
+    1 - 65535.
+
+- `ad_actor_system`
+
+    In `802.3ad` bonding mode, this specifies the system mac-address for the actor in
+    protocol packet exchanges (LACPDUs).
+
+- `ad_select`
+
+    This option specifies the 802.3ad aggregation selection logic to use.  The possible
+    values are: `stable`, `bandwidth`, `count`.
+
+- `ad_user_port_key`
+
+    In `802.3ad` bonding mode, this defines the upper 10 bits of the port key. The
+    allowed range for the value is 0 - 1023.
+
+- `all_ports_active`
+
+    `all_slaves_active` in kernel and NetworkManager. The boolean value `False` drops
+    the duplicate frames (received on inactive ports) and the boolean value `True`
+    delivers the duplicate frames.
+
+- `arp_all_targets`
+
+    This option specifies the quantity of arp_ip_targets that must be reachable in
+    order for the ARP monitor to consider a port as being up. The possible values are
+    `any` or `all`.
+
+- `arp_interval`
+
+    This option specifies the ARP link monitoring frequency in milliseconds. A value of
+    0 disables ARP monitoring.
+
+- `arp_validate`
+
+    In any mode that supports arp monitoring, this option specifies whether or not ARP
+    probes and replies should be validated. Or for link monitoring purposes, whether
+    non-ARP traffic should be filtered (disregarded). The possible values are: `none`,
+    `active`, `backup`, `all`, `filter`, `filter_active`, `filter_backup`.
+
+- `arp_ip_target`
+
+    When `arp_interval` is enabled, this option specifies the IP addresses to use as
+    ARP monitoring peers.
+
+- `downdelay`
+
+    The time to wait (in milliseconds) before disabling a port after a link failure
+    has been detected.
+
+- `fail_over_mac`
+
+    This option specifies the policy to select the MAC address for the bond interface
+    in active-backup mode. The possible values are: `none` (default), `active`,
+    `follow`.
+
+- `lacp_rate`
+
+    In `802.3ad` bonding mode, this option defines the rate in which we requst link
+    partner to transmit LACPDU packets. The possible values are: `slow`, `fast`.
+
+- `lp_interval`
+
+    This option specifies the number of seconds between instances where the bonding
+    driver sends learning packets to each ports peer switch.
 
 - `miimon`
 
-    Sets the MII link monitoring interval (in milliseconds)
+    Sets the MII link monitoring interval (in milliseconds).
+
+- `min_links`
+
+    This option specifies the minimum number of links that must be active before
+    asserting the carrier.
+
+- `num_grat_arp`
+
+    This option specify the number of peer notifications (gratuitious ARPs) to be
+    issued after a failover event. The allowed range for the value is 0 - 255.
+
+- `packets_per_port`
+
+    In `balance-rr` bonding mode, this option specifies the number of packets allowed
+    for a port in network transmission before moving to the next one. The allowed
+    range for the value is 0 - 65535.
+
+- `peer_notif_delay`
+
+    This option specifies the delay (in milliseconds) between each peer notification
+    when they are issued after a failover event.
+
+- `primary`
+
+    This option defines the primary device.
+
+- `primary_reselect`
+
+    This option specifies the reselection policy for the primary port. The possible
+    values are: `always`, `better`, `failure`.
+
+- `resend_igmp`
+
+    This option specifies the number of IGMP membership reports to be issued after a
+    failover event. The allowed range for the value is 0 - 255.
+
+- `tlb_dynamic_lb`
+
+    This option specifies if dynamic shuffling of flows is enabled in tlb mode. The
+    boolean value `True` enables the flow shuffling while the boolean value `False`
+    disables it.
+
+- `updelay`
+
+    This option specifies the time (in milliseconds) to wait before enabling a port
+    after a link recovery has been detected.
+
+- `use_carrier`
+
+    This options specifies whether or not miimon should use MII or ETHTOOL ioctls
+    versus netif_carrier_ok() to determine the link sattus. The boolean value `True`
+    enables the use of netif_carrier_ok() while the boolean value `False` uses MII or
+    ETHTOOL ioctls instead.
+
+- `xmit_hash_policy`
+
+    This option specifies the transmit hash policy to use for port selection, the
+    possible values are: `layer2`, `layer3+4`, `layer2+3`, `encap2+3`, `encap3+4`,
+    `vlan+srcmac`.
 
 Examples of Options
 -------------------
