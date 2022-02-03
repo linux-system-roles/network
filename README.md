@@ -99,14 +99,14 @@ Options
 The `network_connections` variable is a list of dictionaries that include the
 following options. List of options:
 
-### `name` (required)
+### `name` (usually required)
 
-The `name` option identifies the connection profile. It is not the name of the
-networking interface for which the profile applies, though we can associate
-the profile with an interface and give them the same name.
-Note that you can have multiple profiles for the same device, but only
-one profile can be active on the device each time.
-For NetworkManager, a connection can only be active at one device each time.
+The `name` option identifies the connection profile to be configured. It is not
+the name of the networking interface for which the profile applies, though we
+can associate the profile with an interface and give them the same name. Note
+that you can have multiple profiles for the same device, but only one profile
+can be active on the device each time. For NetworkManager, a connection can
+only be active at one device each time.
 
 - For `NetworkManager`, the `name` option corresponds to the
   [`connection.id`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.connection.id)
@@ -121,6 +121,24 @@ For NetworkManager, a connection can only be active at one device each time.
 
 You can also use the same connection profile multiple times. Therefore, it is possible
 to create a profile and activate it separately.
+
+**Note:** The network role will only change the profiles that are specified in the
+`network_connections` variable. Therefore, if only the ports of a profile are specified
+to be removed from the controller and the controller is not specified, then the
+controller profile will remain on the system. This can happen, if for example all ports
+are removed from a bond interface.
+
+**Note:** To remove all profiles on a system that are not specified in the
+`network_connections` variable, add an entry without a name and `persistent_state:
+absent`. This will match and remove all remaining profiles:
+
+```yaml
+network_connections:
+  - name: eth0  # profiles to keep/configure on the system
+    [...]
+
+  - persistent_state: absent  # remove all other profiles
+```
 
 ### `state`
 
