@@ -5,6 +5,7 @@ set -euo pipefail
 TEST_SOURCE_DIR="/network-role"
 C8S_CONTAINER_IMAGE="quay.io/linux-system-roles/c8s-network-role"
 C7_CONTAINER_IMAGE="quay.io/linux-system-roles/c7-network-role"
+C9S_CONTAINER_IMAGE="quay.io/linux-system-roles/c9s-network-role"
 PODMAN_OPTS="--systemd=true --privileged"
 
 # FIXME: test_wireless has been removed because is not supported on CI
@@ -55,6 +56,9 @@ case $OS_TYPE in
         ;;
     "c7")
         CONTAINER_IMAGE=$C7_CONTAINER_IMAGE
+        ;;
+    "c9s")
+        CONTAINER_IMAGE=$C9S_CONTAINER_IMAGE
         ;;
     *)
         echo "Unsupported OS type $OS_TYPE"
