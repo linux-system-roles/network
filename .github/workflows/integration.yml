@@ -16,6 +16,7 @@ jobs:
         include:
           - os: "c7"
           - os: "c8s"
+          - os: "c9s"
 
     steps:
       - uses: actions/checkout@v2

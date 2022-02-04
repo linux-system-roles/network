@@ -1,0 +1,14 @@
+FROM quay.io/centos/centos:stream9-development
+
+RUN dnf -y install dnf-plugins-core && \
+    dnf config-manager --set-enabled crb && \
+    dnf -y upgrade && \
+    dnf -y install NetworkManager NetworkManager-wifi \
+        procps-ng iproute openssh-server openssh-clients systemd-udev \
+        dnsmasq wpa_supplicant openssl ethtool iputils python3-gobject-base \
+        python3-pip python3-jmespath && \
+    pip3 install ansible==2.9.*
+
+VOLUME [ "/sys/fs/cgroup" ]
+
+CMD ["/usr/sbin/init"]
