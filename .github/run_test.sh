@@ -10,22 +10,43 @@ PODMAN_OPTS="--systemd=true --privileged"
 
 # FIXME: test_wireless has been removed because is not supported on CI
 # container EL7. We need to add this back for EL8 or greater.
+EXCLUDE_TESTS='
+-e tests/tests_802_1x_updated_nm.yml
+-e tests/tests_auto_gateway_initscripts.yml
+-e tests/tests_bond_deprecated_initscripts.yml
+-e tests/tests_bond_deprecated_nm.yml
+-e tests/tests_bond_initscripts.yml
+-e tests/tests_default_initscripts.yml
+-e tests/tests_default_nm.yml
+-e tests/tests_default.yml
+-e tests/tests_ethernet_initscripts.yml
+-e tests/tests_ethernet_nm.yml
+-e tests/tests_eth_pci_address_match_nm.yml
+-e tests/tests_ethtool_coalesce_initscripts.yml
+-e tests/tests_ethtool_features_initscripts.yml
+-e tests/tests_ethtool_ring_initscripts.yml
+-e tests/tests_helpers_and_asserts.yml
+-e tests/tests_integration_pytest.yml
+-e tests/tests_ipv6_dns_search_nm.yml
+-e tests/tests_ipv6_initscripts.yml
+-e tests/tests_provider_nm.yml
+-e tests/tests_reapply_nm.yml
+-e tests/tests_regression_nm.yml
+-e tests/tests_route_table_nm.yml
+-e tests/tests_states_initscripts.yml
+-e tests/tests_states_nm.yml
+-e tests/tests_team_nm.yml
+-e tests/tests_team_plugin_installation_nm.yml
+-e tests/tests_unit.yml
+-e tests/tests_vlan_mtu_initscripts.yml
+-e tests/tests_wireless_nm.yml
+-e tests/tests_wireless_plugin_installation_nm.yml
+-e tests/tests_wireless_wpa3_owe_nm.yml
+-e tests/tests_wireless_wpa3_sae_nm.yml
+'
+
 read -r -d '' TEST_FILES << EOF || :
-tests_802_1x_nm.yml
-tests_bond_nm.yml
-tests_auto_gateway_nm.yml
-tests_bridge_initscripts.yml
-tests_bridge_nm.yml
-tests_change_indication_on_repeat_run.yml
-tests_dummy_nm.yml
-tests_eth_dns_support_nm.yml
-tests_ethtool_coalesce_nm.yml
-tests_ethtool_features_nm.yml
-tests_ethtool_ring_nm.yml
-tests_ipv6_disabled_nm.yml
-tests_ipv6_nm.yml
-tests_vlan_mtu_nm.yml
-tests_switch_provider.yml
+$(find tests/tests_*.yml | egrep -v ${EXCLUDE_TESTS})
 EOF
 
 EXEC_PATH=$(dirname "$(realpath "$0")")
@@ -120,7 +141,7 @@ for test_file in $TEST_FILES; do
             "cd $TEST_SOURCE_DIR;
              env ANSIBLE_HOST_KEY_CHECKING=False \
                  ansible-playbook -i localhost, \
-                 ./tests/$test_file"
+                 $test_file"
 done
 
 if [ -n "${DEBUG:-}" ];then
