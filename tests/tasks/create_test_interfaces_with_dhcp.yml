@@ -75,3 +75,18 @@
             --enable-ra --interface=testbr --bind-interfaces
     fi
   changed_when: false
+
+  # When running with initscripts provider over Fedora target hosts, the
+  # carrier flag of the controller device can not be set if the port devices
+  # are not brought up. As a result, the controller device can not be brought
+  # up. Therefore, bring up ports before activating the connection profiles on
+  # the controller.
+- name: Bring up ports before activating the connection on controller
+  shell: |
+    set -euo pipefail
+    ip link set {{ dhcp_interface1 }} up
+    ip link set {{ dhcp_interface2 }} up
+  when:
+    - ansible_distribution == 'Fedora'
+    - network_provider == 'initscripts'
+  changed_when: false
