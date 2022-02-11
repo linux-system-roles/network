@@ -145,6 +145,7 @@
                       features:
                         tx_tcp_segmentation: "no"
                         tx-tcp-segmentation: "no"
+                __header: "# Ansible managed test header"
               register: __network_connections_result
           rescue:
             - name: Show network_connections result
