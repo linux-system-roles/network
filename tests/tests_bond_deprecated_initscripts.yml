@@ -13,5 +13,4 @@
 
 - import_playbook: playbooks/tests_bond_deprecated.yml
   when: (ansible_distribution in ['CentOS','RedHat'] and
-    ansible_distribution_major_version | int < 9) or
-    ansible_distribution == 'Fedora'
+    ansible_distribution_major_version | int < 9)

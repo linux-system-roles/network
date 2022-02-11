@@ -150,8 +150,7 @@ RUN_PLAYBOOK_WITH_INITSCRIPTS = """# SPDX-License-Identifier: BSD-3-Clause
 
 - import_playbook: {test_playbook}
   when: (ansible_distribution in ['CentOS','RedHat'] and\n    \
-ansible_distribution_major_version | int < 9) or\n    \
-ansible_distribution == 'Fedora'
+ansible_distribution_major_version | int < 9)
 """
 
 
