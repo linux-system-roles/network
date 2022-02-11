@@ -9,4 +9,3 @@
     # run on RHEL/CentOS 7, RHEL/CentOS 8, or Fedora
     - ansible_distribution in ['CentOS', 'RedHat'] and
       ansible_distribution_major_version in ['7', '8']
-      or ansible_distribution == 'Fedora'
