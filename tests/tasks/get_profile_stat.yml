@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- name: Initialize NM profile exist flag
-  set_fact: lsr_net_profile_exists=false
+- name: Initialize NM profile exist and ansible_managed comment flag
+  set_fact:
+    lsr_net_profile_exists: false
+    lsr_net_profile_ansible_managed: false
 
 - name: stat profile file
   stat:
@@ -12,7 +14,8 @@
   register: profile_stat
 
 - name: Set NM profile exist flag based on the profile files
-  set_fact: lsr_net_profile_exists=true
+  set_fact:
+    lsr_net_profile_exists: true
   when: profile_stat.stat.exists
 
 # When certain profile is marked as absent but still up, the `nmcli connection`
@@ -24,6 +27,30 @@
   ignore_errors: yes
   changed_when: false
 
-- name: Set NM profile exist flag based on the nmcli output
-  set_fact: lsr_net_profile_exists=true
+# lsr_net_profile_ansible_managed:
+# under NetworkManager's control, the comment is not added by design.
+# Thus, set it always to true.
+- name: >-
+    Set NM profile exist flag and ansible_managed flag true
+    based on the nmcli output
+  set_fact:
+    lsr_net_profile_exists: true
+    lsr_net_profile_ansible_managed: true
   when: nm_profile_exists.rc == 0
+
+- name: Check ansible_managed comment for the initscripts case
+  block:
+    - name: Get the ansible_managed comment in ifcfg-{{ profile }}
+      command: >-
+        grep "^# Ansible managed"
+        /etc/sysconfig/network-scripts/ifcfg-{{ profile }}
+      register: _result
+
+    - name: Verify the ansible_managed comment in ifcfg-{{ profile }}
+      set_fact:
+        lsr_net_profile_ansible_managed: true
+      when:
+        - _result.stdout_lines | length == 1
+  when:
+    - profile_stat.stat.exists
+    - nm_profile_exists.rc != 0

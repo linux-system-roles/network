@@ -1528,6 +1528,7 @@ class RunEnvironmentAnsible(RunEnvironment):
         "force_state_change": {"required": False, "default": False, "type": "bool"},
         "provider": {"required": True, "default": None, "type": "str"},
         "connections": {"required": False, "default": None, "type": "list"},
+        "__header": {"required": True, "default": None, "type": "str"},
         "__debug_flags": {"required": False, "default": "", "type": "str"},
     }
 
@@ -1541,7 +1542,7 @@ class RunEnvironmentAnsible(RunEnvironment):
 
     @property
     def ifcfg_header(self):
-        return "# this file was created by ansible"
+        return self.module.params["__header"]
 
     def run_command(self, argv, encoding=None):
         return self.module.run_command(argv, encoding=encoding)

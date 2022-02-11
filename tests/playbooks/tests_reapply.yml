@@ -46,6 +46,7 @@
                     - 192.0.2.72/31
                   dhcp4: false
                   auto6: false
+            __header: "# Ansible managed test header"
           ignore_errors: true
           register: test_module_run
         - name: Show test_module_run

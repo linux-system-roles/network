@@ -5,3 +5,8 @@
   assert:
     that: lsr_net_profile_exists
     msg: "profile {{ profile }} does not exist"
+
+- name: "assert that ansible managed comment in '{{ profile }}' is present"
+  assert:
+    that: lsr_net_profile_ansible_managed
+    msg: "profile {{ profile }} does not have the ansible managed comment"
