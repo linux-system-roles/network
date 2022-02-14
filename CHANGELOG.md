@@ -1,6 +1,13 @@
 Changelog
 =========
 
+[1.7.0] - 2022-02-14
+--------------------
+
+### New features
+
+- NetworkManager provider: Support all available bonding modes and options
+
 [1.6.0] - 2022-02-02
 --------------------
 
