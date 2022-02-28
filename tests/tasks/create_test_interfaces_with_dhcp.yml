@@ -5,12 +5,28 @@
     name: dnsmasq
     state: present
 
+- name: Install pgrep, sysctl
+  package:
+    name: procps
+    state: present
+  when:
+    - ansible_os_family == 'RedHat'
+    - ansible_distribution_major_version is version('6', '<=')
+
+- name: Install pgrep, sysctl
+  package:
+    name: procps-ng
+    state: present
+  when:
+    - ansible_os_family == 'RedHat'
+    - ansible_distribution_major_version is version('7', '>=')
 
 - name: Create test interfaces
   shell: |
+    set -euo pipefail
     ip link add {{ dhcp_interface1 }} type veth peer name {{ dhcp_interface1 }}p
     ip link add {{ dhcp_interface2 }} type veth peer name {{ dhcp_interface2 }}p
-    if [ -n "$(pidof NetworkManager)" ];then
+    if [ -n "$(pgrep NetworkManager)" ];then
       nmcli d set {{ dhcp_interface1 }} managed true
       nmcli d set {{ dhcp_interface2 }} managed true
       # NetworkManager should not manage DHCP server ports
@@ -22,7 +38,7 @@
 
     # Create the 'testbr' - providing both 10.x ipv4 and 2620:52:0 ipv6 dhcp
     ip link add name testbr type bridge forward_delay 0
-    if [ -n "$(pidof NetworkManager)" ];then
+    if [ -n "$(pgrep NetworkManager)" ];then
       # NetworkManager should not manage DHCP server ports
       nmcli d set testbr managed false
     fi
