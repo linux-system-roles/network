@@ -16,6 +16,7 @@ EXCLUDE_TESTS='
 -e tests/tests_bond_deprecated_initscripts.yml
 -e tests/tests_bond_deprecated_nm.yml
 -e tests/tests_bond_initscripts.yml
+-e tests/tests_bond_removal_initscripts.yml
 -e tests/tests_default_initscripts.yml
 -e tests/tests_default_nm.yml
 -e tests/tests_default.yml

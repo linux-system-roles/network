@@ -1,0 +1,239 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    controller_profile: bond0
+    controller_device: nm-bond
+    port1_profile: bond0.0
+    dhcp_interface1: test1
+    port2_profile: bond0.1
+    dhcp_interface2: test2
+  tasks:
+    - name: "INIT Prepare setup"
+      debug:
+        msg: "##################################################"
+    - import_tasks: tasks/create_test_interfaces_with_dhcp.yml
+    - import_tasks: tasks/assert_device_present.yml
+      vars:
+        interface: "{{ dhcp_interface1 }}"
+    - import_tasks: tasks/assert_device_present.yml
+      vars:
+        interface: "{{ dhcp_interface2 }}"
+    - name: "Backup the /etc/resolv.conf for initscript"
+      command: cp -vf /etc/resolv.conf /etc/resolv.conf.bak
+      when:
+        - network_provider == "initscripts"
+    - block:
+        - name: "TEST Add Bond with 2 ports"
+          debug:
+            msg: "##################################################"
+        - name: Import network role
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              # Create a bond controller
+              - name: "{{ controller_profile }}"
+                state: up
+                type: bond
+                interface_name: "{{ controller_device }}"
+                bond:
+                  mode: active-backup
+                  miimon: 110
+              # add an ethernet to the bond
+              - name: "{{ port1_profile }}"
+                state: up
+                type: ethernet
+                interface_name: "{{ dhcp_interface1 }}"
+                controller: "{{ controller_profile }}"
+              # add a second ethernet to the bond
+              - name: "{{ port2_profile }}"
+                state: up
+                type: ethernet
+                interface_name: "{{ dhcp_interface2 }}"
+                controller: "{{ controller_profile }}"
+        - import_tasks: tasks/assert_device_present.yml
+          vars:
+            interface: "{{ controller_device }}"
+        - include_tasks: tasks/assert_profile_present.yml
+          vars:
+            profile: "{{ item }}"
+          loop:
+            - "{{ controller_profile }}"
+            - "{{ port1_profile }}"
+            - "{{ port2_profile }}"
+        - command: grep 'Polling Interval'
+                   /proc/net/bonding/{{ controller_device }}
+          name: "** TEST check polling interval"
+          register: result
+          until: "'110' in result.stdout"
+        - command: ip -4 a s {{ controller_device }}
+          name: "** TEST check IPv4"
+          register: result
+          until: "'192.0.2' in result.stdout"
+          retries: 20
+          delay: 2
+        - command: ip -6 a s {{ controller_device }}
+          name: "** TEST check IPv6"
+          register: result
+          until: "'2001' in result.stdout"
+          retries: 20
+          delay: 2
+
+        - name: Deactivate and remove the bond controller profile
+            "{{ controller_profile }}"
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ controller_profile }}"
+                persistent_state: absent
+                state: down
+
+        - name: Get the port1 profile "{{ port1_profile }}" from the active
+            connection
+          command: nmcli c show --active {{ port1_profile }}
+          register: active_port1_profile
+          ignore_errors: yes
+          changed_when: false
+          when: network_provider == "nm"
+
+        - name: Get the port2 profile "{{ port2_profile }}" from the active
+            connection
+          command: nmcli c show --active {{ port2_profile }}
+          register: active_port2_profile
+          ignore_errors: yes
+          changed_when: false
+          when: network_provider == "nm"
+
+        - name: Assert that the port1 profile is not activated
+          assert:
+            that:
+              - active_port1_profile.stdout | length == 0
+            msg: the port1 profile "{{ port1_profile }}" is still activated
+          when: network_provider == "nm"
+
+        - name: Assert that the port2 profile is not activated
+          assert:
+            that:
+              - active_port2_profile.stdout | length == 0
+            msg: the port2 profile "{{ port2_profile }}" is still activated
+          when: network_provider == "nm"
+
+        - name: Get the port1 device state
+          command: ip a s test1
+          register: port1_state
+          ignore_errors: yes
+          changed_when: false
+          when: network_provider == "initscripts"
+
+        - name: Get the port2 device state
+          command: ip a s test2
+          register: port2_state
+          ignore_errors: yes
+          changed_when: false
+          when: network_provider == "initscripts"
+
+        - name: Assert that the port1 device is in DOWN state
+          assert:
+            that:
+              - "'state DOWN' in port1_state.stdout"
+            msg: the port1 device "{{ dhcp_interface1 }}" is not in DOWN state
+          when: network_provider == "initscripts"
+
+        - name: Assert that the port2 device is in DOWN state
+          assert:
+            that:
+              - "'state DOWN' in port2_state.stdout"
+            msg: the port2 device "{{ dhcp_interface2 }}" is not in DOWN state
+          when: network_provider == "initscripts"
+
+        - name: Activate the bonding connection again
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              # Create a bond controller
+              - name: "{{ controller_profile }}"
+                state: up
+                type: bond
+                interface_name: "{{ controller_device }}"
+                bond:
+                  mode: active-backup
+                  miimon: 110
+              # add an ethernet to the bond
+              - name: "{{ port1_profile }}"
+                state: up
+                type: ethernet
+                interface_name: "{{ dhcp_interface1 }}"
+                controller: "{{ controller_profile }}"
+              # add a second ethernet to the bond
+              - name: "{{ port2_profile }}"
+                state: up
+                type: ethernet
+                interface_name: "{{ dhcp_interface2 }}"
+                controller: "{{ controller_profile }}"
+
+        - name: Deactivate and remove all the port profiles
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ port1_profile }}"
+                persistent_state: absent
+                state: down
+              - name: "{{ port2_profile }}"
+                persistent_state: absent
+                state: down
+
+        - name: Get the controller profile "{{ controller_profile }}" from the
+            active connection
+          command: nmcli c show --active {{ controller_profile }}
+          register: active_controller_profile
+          ignore_errors: yes
+          changed_when: false
+          when: network_provider == "nm"
+
+        - name: Assert that the controller profile is activated
+          assert:
+            that:
+              - active_controller_profile.stdout | length != 0
+            msg: the controller profile "{{ controller_profile }}" is
+              deactivated
+          when: network_provider == "nm"
+
+        - name: Get the controller device details
+          command: ip -d a s nm-bond
+          register: controller_state
+          ignore_errors: yes
+          changed_when: false
+          when: network_provider == "initscripts"
+
+        - name: Assert that the controller profile is activated
+          assert:
+            that:
+              - "'192.0.2' in controller_state.stdout"
+            msg: the controller profile "{{ controller_profile }}" is
+              deactivated
+          when: network_provider == "initscripts"
+
+      always:
+        - block:
+            - name: Import network role
+              import_role:
+                name: linux-system-roles.network
+              vars:
+                network_connections:
+                  - name: "{{ controller_profile }}"
+                    state: down
+                    persistent_state: absent
+              ignore_errors: true
+            - command: ip link del {{ controller_device }}
+              ignore_errors: true
+            - import_tasks: tasks/remove_test_interfaces_with_dhcp.yml
+            - name: "Restore the /etc/resolv.conf for initscript"
+              command: mv -vf /etc/resolv.conf.bak /etc/resolv.conf
+              when:
+                - network_provider == "initscripts"
+          tags:
+            - "tests::cleanup"
