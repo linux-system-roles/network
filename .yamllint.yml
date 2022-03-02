@@ -34,3 +34,4 @@ rules:
       /tests/tests_eth_pci_address_match_nm.yml
       /tests/playbooks/tests_eth_pci_address_match.yml
       /tests/tasks/setup_802_1x_server.yml
+      /tests/tests_bond_removal_initscripts.yml

@@ -262,6 +262,10 @@ specified first. Also, `--check` ignores the value of the `controller` and assum
 will be present during a real run. That means, in presence of an invalid `controller`,
 `--check` may signal success but the actual play run fails.
 
+If only bringing down the `controller` profile , then the port profiles will be brought
+down automatically. If bringing down the connection on some or all ports, then the
+controller profile stay active.
+
 The `team` type uses `roundrobin` as the `runner` configuration. No further
 configuration is supported at the moment.
 
