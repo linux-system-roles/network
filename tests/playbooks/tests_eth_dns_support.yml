@@ -4,122 +4,122 @@
 
 - name: Test configuring ethernet devices
   hosts: all
-  vars:
-    type: veth
-    interface: ethtest0
-
-
   tasks:
-    - name: "set type={{ type }} and interface={{ interface }}"
-      set_fact:
-        type: "{{ type }}"
-        interface: "{{ interface }}"
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/manage_test_interface.yml
+    - block:
+        - include_tasks: tasks/show_interfaces.yml
+        - include_tasks: tasks/manage_test_interface.yml
+          vars:
+            state: present
+        - include_tasks: tasks/assert_device_present.yml
+
+        - name: Import network role
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                interface_name: "{{ interface }}"
+                state: up
+                type: ethernet
+                autoconnect: yes
+                ip:
+                  route_metric4: 100
+                  dhcp4: no
+                  gateway4: 192.0.2.1
+                  dns:
+                    - 192.0.2.2
+                    - 198.51.100.5
+                    - 2001:db8::20
+                  dns_search:
+                    - example.com
+                    - example.org
+                  dns_options:
+                    - rotate
+                    - timeout:1
+
+                  route_metric6: -1
+                  auto6: no
+                  gateway6: 2001:db8::1
+
+                  address:
+                    - 192.0.2.3/24
+                    - 198.51.100.3/26
+                    - 2001:db8::80/7
+
+                  route:
+                    - network: 198.51.100.128
+                      prefix: 26
+                      gateway: 198.51.100.1
+                      metric: 2
+                    - network: 198.51.100.64
+                      prefix: 26
+                      gateway: 198.51.100.6
+                      metric: 4
+                  route_append_only: no
+                  rule_append_only: yes
+
+        - name: Verify nmcli connection DNS entry for IPv4
+          shell: |
+            set -euxo pipefail
+            nmcli connection show {{ interface }} | grep ipv4.dns
+          register: ipv4_dns
+          ignore_errors: yes
+          changed_when: false
+
+        - name: Verify nmcli connection DNS entry for IPv6
+          shell: |
+            set -euxo pipefail
+            nmcli connection show {{ interface }} | grep ipv6.dns
+          register: ipv6_dns
+          ignore_errors: yes
+          changed_when: false
+
+        - name: "Assert that DNS addresses are configured correctly"
+          assert:
+            that:
+              - "'192.0.2.2' in ipv4_dns.stdout"
+              - "'198.51.100.5' in ipv4_dns.stdout"
+              - "'2001:db8::20' in ipv6_dns.stdout"
+            msg: "DNS addresses are configured incorrectly"
+
+        - name: "Assert that DNS search domains are configured correctly"
+          assert:
+            that:
+              - "'example.com' in ipv4_dns.stdout"
+              - "'example.org' in ipv4_dns.stdout"
+              - "'example.com' in ipv6_dns.stdout"
+              - "'example.org' in ipv6_dns.stdout"
+            msg: "DNS search domains are configured incorrectly"
+
+        - name: "Assert that DNS options are configured correctly"
+          assert:
+            that:
+              - "'rotate' in ipv4_dns.stdout"
+              - "'timeout:1' in ipv4_dns.stdout"
+              - "'rotate' in ipv6_dns.stdout"
+              - "'timeout:1' in ipv6_dns.stdout"
+            msg: "DNS options are configured incorrectly"
       vars:
-        state: present
-    - include_tasks: tasks/assert_device_present.yml
-
-    - name: Import network role
-      import_role:
-        name: linux-system-roles.network
-      vars:
-        network_connections:
-          - name: "{{ interface }}"
-            interface_name: "{{ interface }}"
-            state: up
-            type: ethernet
-            autoconnect: yes
-            ip:
-              route_metric4: 100
-              dhcp4: no
-              gateway4: 192.0.2.1
-              dns:
-                - 192.0.2.2
-                - 198.51.100.5
-                - 2001:db8::20
-              dns_search:
-                - example.com
-                - example.org
-              dns_options:
-                - rotate
-                - timeout:1
-
-              route_metric6: -1
-              auto6: no
-              gateway6: 2001:db8::1
-
-              address:
-                - 192.0.2.3/24
-                - 198.51.100.3/26
-                - 2001:db8::80/7
-
-              route:
-                - network: 198.51.100.128
-                  prefix: 26
-                  gateway: 198.51.100.1
-                  metric: 2
-                - network: 198.51.100.64
-                  prefix: 26
-                  gateway: 198.51.100.6
-                  metric: 4
-              route_append_only: no
-              rule_append_only: yes
-
-    - name: Verify nmcli connection DNS entry for IPv4
-      shell: |
-        set -euxo pipefail
-        nmcli connection show {{ interface }} | grep ipv4.dns
-      register: ipv4_dns
-      ignore_errors: yes
-      changed_when: false
-
-    - name: Verify nmcli connection DNS entry for IPv6
-      shell: |
-        set -euxo pipefail
-        nmcli connection show {{ interface }} | grep ipv6.dns
-      register: ipv6_dns
-      ignore_errors: yes
-      changed_when: false
-
-    - name: "Assert that DNS addresses are configured correctly"
-      assert:
-        that:
-          - "'192.0.2.2' in ipv4_dns.stdout"
-          - "'198.51.100.5' in ipv4_dns.stdout"
-          - "'2001:db8::20' in ipv6_dns.stdout"
-        msg: "DNS addresses are configured incorrectly"
-
-    - name: "Assert that DNS search domains are configured correctly"
-      assert:
-        that:
-          - "'example.com' in ipv4_dns.stdout"
-          - "'example.org' in ipv4_dns.stdout"
-          - "'example.com' in ipv6_dns.stdout"
-          - "'example.org' in ipv6_dns.stdout"
-        msg: "DNS search domains are configured incorrectly"
-
-    - name: "Assert that DNS options are configured correctly"
-      assert:
-        that:
-          - "'rotate' in ipv4_dns.stdout"
-          - "'timeout:1' in ipv4_dns.stdout"
-          - "'rotate' in ipv6_dns.stdout"
-          - "'timeout:1' in ipv6_dns.stdout"
-        msg: "DNS options are configured incorrectly"
+        type: veth
+        interface: ethtest0
 
 - import_playbook: down_profile+delete_interface.yml
   vars:
+    interface: ethtest0
     profile: "{{ interface }}"
 # FIXME: assert profile/device down
 - import_playbook: remove_profile.yml
   vars:
+    interface: ethtest0
     profile: "{{ interface }}"
 - name: Assert profile and device are absent
   hosts: all
   tasks:
-    - include_tasks: tasks/assert_profile_absent.yml
+    - block:
+        - include_tasks: tasks/assert_profile_absent.yml
+          vars:
+            profile: "{{ interface }}"
+        - include_tasks: tasks/assert_device_absent.yml
       vars:
-        profile: "{{ interface }}"
-    - include_tasks: tasks/assert_device_absent.yml
+        interface: ethtest0
 ...

@@ -4,147 +4,149 @@
 
 - name: Test configuring ethernet devices
   hosts: all
-  vars:
-    type: veth
-    interface: ethtest0
-
 
   tasks:
-    - name: "set type={{ type }} and interface={{ interface }}"
-      set_fact:
-        type: "{{ type }}"
-        interface: "{{ interface }}"
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/manage_test_interface.yml
+    - block:
+        - name: "set type={{ type }} and interface={{ interface }}"
+          set_fact:
+            type: "{{ type }}"
+            interface: "{{ interface }}"
+        - include_tasks: tasks/show_interfaces.yml
+        - include_tasks: tasks/manage_test_interface.yml
+          vars:
+            state: present
+        - include_tasks: tasks/assert_device_present.yml
+
+        - name: Configure connection profile and specify the numeric table in
+            static routes
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                interface_name: "{{ interface }}"
+                state: up
+                type: ethernet
+                autoconnect: yes
+                ip:
+                  dhcp4: no
+                  address:
+                    - 198.51.100.3/26
+                  route:
+                    - network: 198.51.100.128
+                      prefix: 26
+                      gateway: 198.51.100.1
+                      metric: 2
+                      table: 30400
+                    - network: 198.51.100.64
+                      prefix: 26
+                      gateway: 198.51.100.6
+                      metric: 4
+                      table: 30200
+
+        - name: Get the routes from the route table 30200
+          command: ip route show table 30200
+          register: route_table_30200
+          ignore_errors: yes
+          changed_when: false
+
+        - name: Get the routes from the route table 30400
+          command: ip route show table 30400
+          register: route_table_30400
+          ignore_errors: yes
+          changed_when: false
+
+        - name: Assert that the route table 30200 contains the specified route
+          assert:
+            that:
+              - route_table_30200.stdout is search("198.51.100.64/26 via
+                198.51.100.6 dev ethtest0 proto static metric 4")
+            msg: "the route table 30200 does not exist or does not contain the
+              specified route"
+
+        - name: Assert that the route table 30400 contains the specified route
+          assert:
+            that:
+              - route_table_30400.stdout is search("198.51.100.128/26 via
+                198.51.100.1 dev ethtest0 proto static metric 2")
+            msg: "the route table 30400 does not exist or does not contain the
+              specified route"
+
+        - name: Create a dedicated test file in `/etc/iproute2/rt_tables.d/` and
+                add a new routing table
+          lineinfile:
+            path: /etc/iproute2/rt_tables.d/table.conf
+            line: "200 custom"
+            mode: "0644"
+            create: yes
+
+        - name: Reconfigure connection profile and specify the named table in
+            static routes
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                interface_name: "{{ interface }}"
+                state: up
+                type: ethernet
+                autoconnect: yes
+                ip:
+                  dhcp4: no
+                  address:
+                    - 198.51.100.3/26
+                  route:
+                    - network: 198.51.100.128
+                      prefix: 26
+                      gateway: 198.51.100.1
+                      metric: 2
+                      table: custom
+                    - network: 198.51.100.64
+                      prefix: 26
+                      gateway: 198.51.100.6
+                      metric: 4
+                      table: custom
+
+        - name: Get the routes from the named route table 'custom'
+          command: ip route show table custom
+          register: route_table_custom
+          ignore_errors: yes
+          changed_when: false
+
+        - name: Assert that the named route table 'custom' contains the
+            specified route
+          assert:
+            that:
+              - route_table_custom.stdout is search("198.51.100.128/26 via
+                198.51.100.1 dev ethtest0 proto static metric 2")
+              - route_table_custom.stdout is search("198.51.100.64/26 via
+                198.51.100.6 dev ethtest0 proto static metric 4")
+            msg: "the named route table 'custom' does not exist or does not
+              contain the specified route"
+
+        - name: Remove the dedicated test file in `/etc/iproute2/rt_tables.d/`
+          file:
+            state: absent
+            path: /etc/iproute2/rt_tables.d/table.conf
       vars:
-        state: present
-    - include_tasks: tasks/assert_device_present.yml
-
-    - name: Configure connection profile and specify the numeric table in
-        static routes
-      import_role:
-        name: linux-system-roles.network
-      vars:
-        network_connections:
-          - name: "{{ interface }}"
-            interface_name: "{{ interface }}"
-            state: up
-            type: ethernet
-            autoconnect: yes
-            ip:
-              dhcp4: no
-              address:
-                - 198.51.100.3/26
-              route:
-                - network: 198.51.100.128
-                  prefix: 26
-                  gateway: 198.51.100.1
-                  metric: 2
-                  table: 30400
-                - network: 198.51.100.64
-                  prefix: 26
-                  gateway: 198.51.100.6
-                  metric: 4
-                  table: 30200
-
-    - name: Get the routes from the route table 30200
-      command: ip route show table 30200
-      register: route_table_30200
-      ignore_errors: yes
-      changed_when: false
-
-    - name: Get the routes from the route table 30400
-      command: ip route show table 30400
-      register: route_table_30400
-      ignore_errors: yes
-      changed_when: false
-
-    - name: Assert that the route table 30200 contains the specified route
-      assert:
-        that:
-          - route_table_30200.stdout is search("198.51.100.64/26 via
-            198.51.100.6 dev ethtest0 proto static metric 4")
-        msg: "the route table 30200 does not exist or does not contain the
-          specified route"
-
-
-    - name: Assert that the route table 30400 contains the specified route
-      assert:
-        that:
-          - route_table_30400.stdout is search("198.51.100.128/26 via
-            198.51.100.1 dev ethtest0 proto static metric 2")
-        msg: "the route table 30400 does not exist or does not contain the
-          specified route"
-
-    - name: Create a dedicated test file in `/etc/iproute2/rt_tables.d/` and
-            add a new routing table
-      lineinfile:
-        path: /etc/iproute2/rt_tables.d/table.conf
-        line: "200 custom"
-        mode: "0644"
-        create: yes
-
-    - name: Reconfigure connection profile and specify the named table in
-        static routes
-      import_role:
-        name: linux-system-roles.network
-      vars:
-        network_connections:
-          - name: "{{ interface }}"
-            interface_name: "{{ interface }}"
-            state: up
-            type: ethernet
-            autoconnect: yes
-            ip:
-              dhcp4: no
-              address:
-                - 198.51.100.3/26
-              route:
-                - network: 198.51.100.128
-                  prefix: 26
-                  gateway: 198.51.100.1
-                  metric: 2
-                  table: custom
-                - network: 198.51.100.64
-                  prefix: 26
-                  gateway: 198.51.100.6
-                  metric: 4
-                  table: custom
-
-    - name: Get the routes from the named route table 'custom'
-      command: ip route show table custom
-      register: route_table_custom
-      ignore_errors: yes
-      changed_when: false
-
-    - name: Assert that the named route table 'custom' contains the
-        specified route
-      assert:
-        that:
-          - route_table_custom.stdout is search("198.51.100.128/26 via
-            198.51.100.1 dev ethtest0 proto static metric 2")
-          - route_table_custom.stdout is search("198.51.100.64/26 via
-            198.51.100.6 dev ethtest0 proto static metric 4")
-        msg: "the named route table 'custom' does not exist or does not contain
-          the specified route"
-
-    - name: Remove the dedicated test file in `/etc/iproute2/rt_tables.d/`
-      file:
-        state: absent
-        path: /etc/iproute2/rt_tables.d/table.conf
+        type: veth
+        interface: ethtest0
 
 - import_playbook: down_profile+delete_interface.yml
   vars:
+    interface: ethtest0
     profile: "{{ interface }}"
 # FIXME: assert profile/device down
 - import_playbook: remove_profile.yml
   vars:
+    interface: ethtest0
     profile: "{{ interface }}"
 - name: Assert device and profile are absent
   hosts: all
   tasks:
     - include_tasks: tasks/assert_profile_absent.yml
       vars:
+        interface: ethtest0
         profile: "{{ interface }}"
     - include_tasks: tasks/assert_device_absent.yml
 ...

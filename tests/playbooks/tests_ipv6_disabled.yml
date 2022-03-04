@@ -4,58 +4,62 @@
 
 - name: Test configuring ethernet devices
   hosts: all
-  vars:
-    type: veth
-    interface: ethtest0
 
   tasks:
-    - name: "set type={{ type }} and interface={{ interface }}"
-      set_fact:
-        type: "{{ type }}"
-        interface: "{{ interface }}"
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/manage_test_interface.yml
+    - block:
+        - name: "set type={{ type }} and interface={{ interface }}"
+          set_fact:
+            type: "{{ type }}"
+            interface: "{{ interface }}"
+        - include_tasks: tasks/show_interfaces.yml
+        - include_tasks: tasks/manage_test_interface.yml
+          vars:
+            state: present
+        - include_tasks: tasks/assert_device_present.yml
+
+        - name: Import network role
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                interface_name: "{{ interface }}"
+                type: ethernet
+                ip:
+                  ipv6_disabled: true
+
+        - name: Verify nmcli connection ipv6.method
+          shell: |
+            set -euxo pipefail
+            nmcli connection show {{ interface }} | grep ipv6.method
+          register: ipv6_method
+          ignore_errors: yes
+          changed_when: false
+
+        - name: "Assert that ipv6.method disabled is configured correctly"
+          assert:
+            that:
+              - "'disabled' in ipv6_method.stdout"
+            msg: "ipv6.method disabled is configured incorrectly"
       vars:
-        state: present
-    - include_tasks: tasks/assert_device_present.yml
-
-    - name: Import network role
-      import_role:
-        name: linux-system-roles.network
-      vars:
-        network_connections:
-          - name: "{{ interface }}"
-            interface_name: "{{ interface }}"
-            type: ethernet
-            ip:
-              ipv6_disabled: true
-
-    - name: Verify nmcli connection ipv6.method
-      shell: |
-        set -euxo pipefail
-        nmcli connection show {{ interface }} | grep ipv6.method
-      register: ipv6_method
-      ignore_errors: yes
-      changed_when: false
-
-    - name: "Assert that ipv6.method disabled is configured correctly"
-      assert:
-        that:
-          - "'disabled' in ipv6_method.stdout"
-        msg: "ipv6.method disabled is configured incorrectly"
+        type: veth
+        interface: ethtest0
 
 - import_playbook: down_profile+delete_interface.yml
   vars:
+    interface: ethtest0
     profile: "{{ interface }}"
 # FIXME: assert profile/device down
 - import_playbook: remove_profile.yml
   vars:
+    interface: ethtest0
     profile: "{{ interface }}"
 - name: Assert device and profile are absent
   hosts: all
   tasks:
     - include_tasks: tasks/assert_profile_absent.yml
       vars:
+        interface: ethtest0
         profile: "{{ interface }}"
     - include_tasks: tasks/assert_device_absent.yml
 ...
