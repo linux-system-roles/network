@@ -363,6 +363,10 @@ class IfcfgUtil:
             opts = ["mode=%s" % (connection["bond"]["mode"])]
             if connection["bond"]["miimon"] is not None:
                 opts.append(" miimon=%s" % (connection["bond"]["miimon"]))
+            if connection["bond"]["xmit_hash_policy"] is not None:
+                opts.append(" xmit_hash_policy=%s" % (connection["bond"]["xmit_hash_policy"]))
+            if connection["bond"]["lacp_rate"] is not None:
+                opts.append(" lacp_rate=%s" % (connection["bond"]["lacp_rate"]))
             ifcfg["BONDING_OPTS"] = " ".join(opts)
         elif connection["type"] == "team":
             ifcfg["DEVICETYPE"] = "Team"
