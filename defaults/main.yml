@@ -9,7 +9,8 @@ network_provider_os_default: "{{
     'initscripts' if ansible_distribution in [
       'RedHat',
       'CentOS',
-      'OracleLinux'
+      'OracleLinux',
+      'Rocky'
     ] and ansible_distribution_major_version is version('7', '<')
     else 'nm' }}"
 # If NetworkManager.service is running, assume that 'nm' is currently in-use,
@@ -75,11 +76,11 @@ __network_service_name_default_initscripts: network
 __network_packages_default_initscripts_bridge: ["{%
 if network_connections|selectattr('type', 'defined')|
    selectattr('type', 'match', '^bridge$')|list|count>0 and
-   ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux'] and
+   ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux', 'Rocky'] and
    ansible_distribution_major_version is version('7', '<=')
 %}bridge-utils{% endif %}"]
 __network_packages_default_initscripts_network_scripts: ["{%
-if ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux'] and
+if ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux', 'Rocky'] and
     ansible_distribution_major_version is version('7', '<=')
 %}initscripts{% else %}network-scripts{% endif %}"]
 # convert _network_packages_default_initscripts_bridge to an empty list if it
