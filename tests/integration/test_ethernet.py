@@ -78,6 +78,15 @@ def testnic1():
         yield veth_name
     finally:
         subprocess.call(["ip", "link", "delete", veth_name])
+        if os.path.isfile("/etc/sysconfig/network-scripts/ifcfg-" + veth_name):
+            os.unlink("/etc/sysconfig/network-scripts/ifcfg-" + veth_name)
+            subprocess.call(
+                [
+                    "nmcli",
+                    "con",
+                    "reload",
+                ]
+            )
 
 
 def _get_ip_addresses(interface):
