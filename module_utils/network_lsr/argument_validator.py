@@ -2079,7 +2079,7 @@ class ArgValidator_ListConnections(ArgValidatorList):
                             "type by '%s'" % (connection["controller"], c["type"]),
                         )
                     if connection["type"] == "infiniband":
-                        if c["type"] == "bond" and c["bond"]["mode"] != "active_backup":
+                        if c["type"] == "bond" and c["bond"]["mode"] != "active-backup":
                             raise ValidationError(
                                 name + "[" + str(idx) + "].controller",
                                 "bond only supports infiniband ports in active-backup mode",
