@@ -19,6 +19,10 @@
         state: present
     - include_tasks: tasks/assert_device_present.yml
 
+    - name: Initialize the connection_failed flag
+      set_fact:
+        connection_failed: false
+
     - name: Import network role
       import_role:
         name: linux-system-roles.network
@@ -29,6 +33,21 @@
             type: ethernet
             ip:
               ipv6_disabled: true
+        __header: "# Ansible managed test header"
+      ignore_errors: true  # noqa ignore-errors
+      changed_when: false
+
+    - name: Assert that configuring `ipv6_disabled` will only fail when the
+            running version of NetworKManager does not support it
+      assert:
+        that:
+          - __network_connections_result.stderr is
+            search("ip.ipv6_disabled is not supported by the running version
+            of NetworkManager")
+        msg: Reconfiguring network connection is not failed with the error
+             "ip.ipv6_disabled is not supported by the running version of
+             NetworkManger"
+      when: __network_connections_result.failed
 
     - name: Verify nmcli connection ipv6.method
       shell: |
@@ -37,23 +56,33 @@
       register: ipv6_method
       ignore_errors: yes
       changed_when: false
+      when: not __network_connections_result.failed
 
     - name: "Assert that ipv6.method disabled is configured correctly"
       assert:
         that:
           - "'disabled' in ipv6_method.stdout"
         msg: "ipv6.method disabled is configured incorrectly"
+      when: not __network_connections_result.failed
 
-- import_playbook: down_profile+delete_interface.yml
+    - name: set the connection_failed flag
+      set_fact:
+        connection_failed: true
+      when: __network_connections_result.failed
+
+- import_playbook: down_profile.yml
   vars:
     profile: "{{ interface }}"
+  when: not connection_failed
+
 # FIXME: assert profile/device down
 - import_playbook: remove_profile.yml
   vars:
     profile: "{{ interface }}"
-- name: Assert device and profile are absent
+- name: Delete the interface, then assert that device and profile are absent
   hosts: all
   tasks:
+    - include_tasks: tasks/delete_interface.yml
     - include_tasks: tasks/assert_profile_absent.yml
       vars:
         profile: "{{ interface }}"

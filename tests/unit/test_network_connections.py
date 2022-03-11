@@ -10,8 +10,10 @@ import unittest
 
 try:
     from unittest import mock
+    from unittest.mock import MagicMock
 except ImportError:  # py2
     import mock
+    from mock import MagicMock
 
 sys.modules["ansible.module_utils.basic"] = mock.Mock()
 
@@ -3723,6 +3725,8 @@ class TestValidator(Python26CompatTestCase):
                 },
             }
         ]
+        old_util_nm = Util.NM
+        Util.NM = MagicMock(spec=["SETTING_IP6_CONFIG_METHOD_DISABLED"])
         self.assertRaisesRegex(
             ValidationError,
             "IPv6 needs to be enabled to support IPv6 nameservers.",
@@ -3731,6 +3735,7 @@ class TestValidator(Python26CompatTestCase):
             validator.validate(ipv6_dns_with_ipv6_disabled),
             0,
         )
+        Util.NM = old_util_nm
 
     def test_ipv6_dns_with_static_ipv6_configuration(self):
         """
@@ -3804,6 +3809,8 @@ class TestValidator(Python26CompatTestCase):
                 },
             }
         ]
+        old_util_nm = Util.NM
+        Util.NM = MagicMock(spec=["SETTING_IP6_CONFIG_METHOD_DISABLED"])
         self.assertRaises(
             ValidationError,
             validator.validate_connection_one,
@@ -3811,6 +3818,7 @@ class TestValidator(Python26CompatTestCase):
             validator.validate(ipv6_dns_options_without_ipv6_config),
             0,
         )
+        Util.NM = old_util_nm
 
     def test_dns_search_without_ipv4_and_ipv6_configuration(self):
         """
