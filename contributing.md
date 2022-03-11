@@ -84,16 +84,23 @@ of this repository.
    changes you need to complete an issue.
 
 3. Do not forget to run unit and integration tests before pushing any changes!
-    1. This project uses [tox](https://tox.readthedocs.io/en/latest/) to run unit tests.
-       You can try it with `tox -e py36` in case you want to try it using Python 3.6, or
+    1. This project uses [tox](https://tox.readthedocs.io/en/latest/) with a plugin to
+       run unit tests. Install the
+       [tox_lsr](https://github.com/linux-system-roles/tox-lsr) plugin with:
+       `pip install --user git+https://github.com/linux-system-roles/tox-lsr@main`.
+       This installs the latest development version. The CI tests might use a different
+       version. Check the [GitHub workflow](https://github.com/linux-system-roles/network/blob/main/.github/workflows/tox.yml#L7)`
+       for the version that is used in the CI.
+
+    2. You can try it with `tox -e py36` in case you want to try it using Python 3.6, or
        just `tox` if you want to run all the tests.
 
-    2. Check the formatting of the code with
+    3. Check the formatting of the code with
       [Python Black](https://black.readthedocs.io/en/stable/)
 
-    3. Check the YAML files are correctly formatted using `tox -e yamllint`.
+    4. Check the YAML files are correctly formatted using `tox -e yamllint`.
 
-    4. Integration tests are executed as
+    5. Integration tests are executed as
        [Ansible Playbooks](https://docs.ansible.com/ansible/latest/user_guide/playbooks.html).
 
        To run them you can use a cloud image like the [CentOS Linux 8.1
@@ -113,7 +120,7 @@ of this repository.
        tests/test_default.yml
        ```
 
-    5. Check the markdown format with
+    6. Check the markdown format with
        [mdl](https://github.com/markdownlint/markdownlint) after changing any
        markdown document.
 
