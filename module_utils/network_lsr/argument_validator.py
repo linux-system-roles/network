@@ -2216,6 +2216,17 @@ class ArgValidator_ListConnections(ArgValidatorList):
                     idx,
                     "ip.ipv6_disabled is not supported by initscripts.",
                 )
+            if not hasattr(Util.NM(), "SETTING_IP6_CONFIG_METHOD_DISABLED"):
+                raise ValidationError.from_connection(
+                    idx,
+                    "ip.ipv6_disabled is not supported by the running version of "
+                    "NetworkManager, it requires at least version 1.20. But you can "
+                    "disable IPv6 auto configuration by setting ip.auto6 to False. "
+                    "Then NetworkManager will ignore IPv6 for this connection. This "
+                    "will still leave the sysctl value 'disable_ipv6' unchanged, but "
+                    "setting ip.ipv6_disabled to True in the role will set the sysctl "
+                    "value 'disable_ipv6' to True ",
+                )
         # Setting ip.dns is not allowed when corresponding IP method for that
         # nameserver is disabled
         for nameserver in connection["ip"]["dns"]:
