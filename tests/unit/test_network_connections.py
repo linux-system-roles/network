@@ -58,9 +58,9 @@ def pprint(msg, obj):
 class Python26CompatTestCase(unittest.TestCase):
     # pylint: disable=no-member
     def assertRaisesRegex(self, exception, regex, *args, **kwargs):
-        if sys.version[:3] == "2.6":
+        if sys.version_info[:2] == (2, 6):
             self.assertRaises(exception, *args, **kwargs)
-        elif sys.version[:3] < "3.2":
+        elif sys.version_info[:2] < (3, 2):
             self.assertRaisesRegexp(exception, regex, *args, **kwargs)
         else:
             super(Python26CompatTestCase, self).assertRaisesRegex(
