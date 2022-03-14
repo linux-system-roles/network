@@ -1,6 +1,17 @@
 Changelog
 =========
 
+[1.7.1] - 2022-03-14
+--------------------
+
+### New features
+
+- Add support for Rocky Linux
+
+### Bug fixes
+
+- bond: Fix supporting the infiniband ports in active-backup mode
+
 [1.7.0] - 2022-02-14
 --------------------
 
