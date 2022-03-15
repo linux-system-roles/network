@@ -8,47 +8,46 @@ C7_CONTAINER_IMAGE="quay.io/linux-system-roles/c7-network-role"
 C9S_CONTAINER_IMAGE="quay.io/linux-system-roles/c9s-network-role"
 PODMAN_OPTS="--systemd=true --privileged"
 
-# FIXME: test_wireless has been removed because is not supported on CI
-# container EL7. We need to add this back for EL8 or greater.
-EXCLUDE_TESTS='
--e tests/tests_802_1x_updated_nm.yml
+# exclude bond tests since missing the bonding kernel module
+# exclude tests/tests_wireless_nm.yml since failing to load mac80211_hwsim kernel
+# module to mock a wifi network
+EXCLUDE_TESTS_C7='
 -e tests/tests_auto_gateway_initscripts.yml
 -e tests/tests_bond_deprecated_initscripts.yml
--e tests/tests_bond_deprecated_nm.yml
 -e tests/tests_bond_initscripts.yml
 -e tests/tests_bond_removal_initscripts.yml
--e tests/tests_default_initscripts.yml
--e tests/tests_default_nm.yml
--e tests/tests_default.yml
--e tests/tests_ethernet_initscripts.yml
--e tests/tests_ethernet_nm.yml
--e tests/tests_eth_pci_address_match_nm.yml
--e tests/tests_ethtool_coalesce_initscripts.yml
--e tests/tests_ethtool_features_initscripts.yml
--e tests/tests_ethtool_ring_initscripts.yml
--e tests/tests_helpers_and_asserts.yml
--e tests/tests_integration_pytest.yml
--e tests/tests_ipv6_dns_search_nm.yml
--e tests/tests_ipv6_initscripts.yml
--e tests/tests_provider_nm.yml
--e tests/tests_reapply_nm.yml
--e tests/tests_regression_nm.yml
--e tests/tests_route_table_nm.yml
--e tests/tests_states_initscripts.yml
--e tests/tests_states_nm.yml
 -e tests/tests_team_nm.yml
--e tests/tests_team_plugin_installation_nm.yml
 -e tests/tests_unit.yml
--e tests/tests_vlan_mtu_initscripts.yml
 -e tests/tests_wireless_nm.yml
--e tests/tests_wireless_plugin_installation_nm.yml
+'
+
+# exclude bond tests since missing the bonding kernel module
+# exclude tests/tests_wireless_wpa3_owe_nm.yml and tests/tests_wireless_wpa3_sae_nm.yml
+# since failing to install mac80211_hwsim kernel module
+EXCLUDE_TESTS_C8S='
+-e tests/tests_auto_gateway_initscripts.yml
+-e tests/tests_bond_deprecated_initscripts.yml
+-e tests/tests_bond_initscripts.yml
+-e tests/tests_bond_removal_initscripts.yml
+-e tests/tests_integration_pytest.yml
+-e tests/tests_team_nm.yml
+-e tests/tests_unit.yml
 -e tests/tests_wireless_wpa3_owe_nm.yml
 -e tests/tests_wireless_wpa3_sae_nm.yml
 '
 
-read -r -d '' TEST_FILES << EOF || :
-$(find tests/tests_*.yml | egrep -v ${EXCLUDE_TESTS})
-EOF
+# exclude tests_provider_nm.yml and tests_regression_nm.yml since no package
+# network-scripts available
+# exclude tests/tests_wireless_wpa3_owe_nm.yml and tests/tests_wireless_wpa3_sae_nm.yml
+# since failing to install mac80211_hwsim kernel module
+EXCLUDE_TESTS_C9S='
+-e tests/tests_provider_nm.yml
+-e tests/tests_regression_nm.yml
+-e tests/tests_team_nm.yml
+-e tests/tests_unit.yml
+-e tests/tests_wireless_wpa3_owe_nm.yml
+-e tests/tests_wireless_wpa3_sae_nm.yml
+'
 
 EXEC_PATH=$(dirname "$(realpath "$0")")
 PROJECT_PATH=$(dirname "$(realpath "$EXEC_PATH../")")
@@ -73,19 +72,28 @@ while [[ $# -gt 0 ]]; do
 done
 
 case $OS_TYPE in
-    "c8s")
-        CONTAINER_IMAGE=$C8S_CONTAINER_IMAGE
-        ;;
-    "c7")
-        CONTAINER_IMAGE=$C7_CONTAINER_IMAGE
-        ;;
-    "c9s")
-        CONTAINER_IMAGE=$C9S_CONTAINER_IMAGE
-        ;;
-    *)
-        echo "Unsupported OS type $OS_TYPE"
-        exit 1
-        ;;
+"c8s")
+    CONTAINER_IMAGE=$C8S_CONTAINER_IMAGE
+    read -r -d '' TEST_FILES <<EOF || :
+    $(find tests/tests_*.yml | egrep -v ${EXCLUDE_TESTS_C8S})
+EOF
+    ;;
+"c7")
+    CONTAINER_IMAGE=$C7_CONTAINER_IMAGE
+    read -r -d '' TEST_FILES <<EOF || :
+    $(find tests/tests_*.yml | egrep -v ${EXCLUDE_TESTS_C7})
+EOF
+    ;;
+"c9s")
+    CONTAINER_IMAGE=$C9S_CONTAINER_IMAGE
+    read -r -d '' TEST_FILES <<EOF || :
+    $(find tests/tests_*.yml | egrep -v ${EXCLUDE_TESTS_C9S})
+EOF
+    ;;
+*)
+    echo "Unsupported OS type $OS_TYPE"
+    exit 1
+    ;;
 esac
 
 # shellcheck disable=SC2086
