@@ -353,6 +353,67 @@ class ArgValidatorNum(ArgValidator):
         return v
 
 
+class ArgValidatorRange(ArgValidator):
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        name,
+        required=False,
+        val_min=None,
+        val_max=None,
+        default_value=None,
+    ):
+        ArgValidator.__init__(self, name, required, default_value)
+        self.val_min = val_min
+        self.val_max = val_max
+
+    def _validate_impl(self, value, name):
+        range = None
+        if isinstance(value, Util.STRING_TYPE):
+            match_group = re.match(r"^ *([0-9]+) *- *([0-9]+) *$", value)
+            if match_group:
+                try:
+                    range = (int(match_group.group(1)), int(match_group.group(2)))
+                except Exception:
+                    pass
+            else:
+                try:
+                    range = (int(value), int(value))
+                except Exception:
+                    pass
+        elif isinstance(value, bool):
+            # bool can (probably) be converted to integer type,
+            # but here we don't want to accept a boolean value.
+            pass
+        elif isinstance(value, int):
+            range = (value, value)
+
+        if range is None:
+            raise ValidationError(name, "the range value {0} is invalid".format(value))
+        if range[0] > range[1]:
+            raise ValidationError(
+                name,
+                "the range start cannot be greater than range end",
+            )
+        if self.val_min is not None:
+            if range[0] < self.val_min:
+                raise ValidationError(
+                    name,
+                    "lower range value is {0} but cannot be less than {1}".format(
+                        range[0], self.val_min
+                    ),
+                )
+        if self.val_max is not None:
+            if range[1] > self.val_max:
+                raise ValidationError(
+                    name,
+                    "upper range value is {0} but cannot be greater than {1}".format(
+                        range[1], self.val_max
+                    ),
+                )
+
+        return range
+
+
 class ArgValidatorBool(ArgValidator):
     def __init__(self, name, required=False, default_value=False):
         ArgValidator.__init__(self, name, required, default_value)
@@ -633,6 +694,133 @@ class ArgValidatorIPRoute(ArgValidatorDict):
         return result
 
 
+class ArgValidatorIPRoutingRule(ArgValidatorDict):
+    def __init__(self, name, required=False):
+        ArgValidatorDict.__init__(
+            self,
+            name,
+            required,
+            nested=[
+                ArgValidatorNum(
+                    "priority",
+                    default_value=None,
+                    required=True,
+                    val_min=0,
+                    val_max=0xFFFFFFFF,
+                ),
+                ArgValidatorStr(
+                    "action",
+                    default_value="to-table",
+                    enum_values=["to-table", "blackhole", "prohibit", "unreachable"],
+                ),
+                ArgValidatorRange("dport", val_min=1, val_max=65534),
+                ArgValidatorStr(
+                    "family",
+                    default_value=None,
+                    enum_values=["ipv4", "ipv6"],
+                ),
+                ArgValidatorIPAddr("from"),
+                ArgValidatorNum(
+                    "fwmark", default_value=None, val_min=1, val_max=0xFFFFFFFF
+                ),
+                ArgValidatorNum(
+                    "fwmask", default_value=None, val_min=1, val_max=0xFFFFFFFF
+                ),
+                ArgValidatorStr("iif", default_value=None),
+                ArgValidatorBool("invert", default_value=False),
+                ArgValidatorNum("ipproto", default_value=None, val_min=1, val_max=255),
+                ArgValidatorStr("oif", default_value=None),
+                ArgValidatorRange("sport", val_min=1, val_max=65534),
+                ArgValidatorNum("suppress_prefixlength", default_value=None, val_min=0),
+                ArgValidatorRouteTable("table"),
+                ArgValidatorIPAddr("to"),
+                ArgValidatorNum("tos", default_value=None, val_min=1, val_max=255),
+                ArgValidatorRange("uid", val_min=0, val_max=0xFFFFFFFF),
+            ],
+            default_value=None,
+        )
+
+    def _validate_post(self, value, name, result):
+        family = None
+        if result["family"]:
+            family = Util.addr_family_norm(result["family"])
+        elif result["from"]:
+            family = result["from"]["family"]
+        elif result["to"]:
+            family = result["to"]["family"]
+        if not family:
+            raise ValidationError(name, "specify the address family 'family'")
+
+        if result["from"]:
+            if result["from"]["family"] != family:
+                raise ValidationError(name, "invalid address family in 'from'")
+
+        if result["to"]:
+            if result["to"]["family"] != family:
+                raise ValidationError(name, "invalid address family in 'to'")
+
+        result["family"] = family
+        if result["action"] == "to-table":
+            if result["table"] is None:
+                raise ValidationError(
+                    name,
+                    "missing 'table' for the routing rule",
+                )
+
+        if result["from"] is not None:
+            if result["from"]["prefix"] == 0:
+                raise ValidationError(
+                    name,
+                    "the prefix length for 'from' cannot be zero",
+                )
+
+        if result["to"] is not None:
+            if result["to"]["prefix"] == 0:
+                raise ValidationError(
+                    name,
+                    "the prefix length for 'to' cannot be zero",
+                )
+
+        if (result["fwmask"] is None) != (result["fwmark"] is None):
+            raise ValidationError(
+                name,
+                "'fwmask' and 'fwmark' must be set together",
+            )
+
+        if result["iif"] is not None:
+            if not Util.ifname_valid(result["iif"]):
+                raise ValidationError(
+                    name,
+                    "the incoming interface '{0}' specified in the routing rule is "
+                    "invalid interface_name".format(result["iif"]),
+                )
+
+        if result["oif"] is not None:
+            if not Util.ifname_valid(result["oif"]):
+                raise ValidationError(
+                    name,
+                    "the outgoing interface '{0}' specified in the routing rule is "
+                    "invalid interface_name".format(result["oif"]),
+                )
+
+        if result["suppress_prefixlength"] is not None:
+            if not Util.addr_family_valid_prefix(
+                result["family"], result["suppress_prefixlength"]
+            ):
+                raise ValidationError(
+                    name,
+                    "The specified 'suppress_prefixlength' cannot be greater than "
+                    "{0}".format(Util.addr_family_prefix_length(result["family"])),
+                )
+
+            if result["action"] != "to-table":
+                raise ValidationError(
+                    name,
+                    "'suppress_prefixlength' is only allowed with the to-table action",
+                )
+        return result
+
+
 class ArgValidator_DictIP(ArgValidatorDict):
     REGEX_DNS_OPTIONS = [
         r"^attempts:([1-9]\d*|0)$",
@@ -699,6 +887,11 @@ class ArgValidator_DictIP(ArgValidatorDict):
                     ),
                     default_value=list,
                 ),
+                ArgValidatorList(
+                    "routing_rule",
+                    nested=ArgValidatorIPRoutingRule("routing_rule[?]"),
+                    default_value=list,
+                ),
             ],
             default_value=lambda: {
                 "dhcp4": True,
@@ -712,6 +905,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 "address": [],
                 "auto_gateway": None,
                 "route": [],
+                "routing_rule": [],
                 "route_append_only": False,
                 "rule_append_only": False,
                 "dns": [],
@@ -2311,6 +2505,34 @@ class ArgValidator_ListConnections(ArgValidatorList):
                         "the bond option peer_notif_delay is not supported in "
                         "NetworkManger until NM 1.30",
                     )
+
+        if connection["ip"]["routing_rule"]:
+            if mode == self.VALIDATE_ONE_MODE_INITSCRIPTS:
+                raise ValidationError.from_connection(
+                    idx,
+                    "ip.routing_rule is not supported by initscripts",
+                )
+            for routing_rule in connection["ip"]["routing_rule"]:
+                if routing_rule["suppress_prefixlength"] is not None:
+                    if not hasattr(
+                        Util.NM(), "NM_IP_ROUTING_RULE_ATTR_SUPPRESS_PREFIXLENGTH"
+                    ):
+                        raise ValidationError.from_connection(
+                            idx,
+                            "the routing rule selector 'suppress_prefixlength' is not "
+                            "supported in NetworkManger until NM 1.20",
+                        )
+            for routing_rule in connection["ip"]["routing_rule"]:
+                if routing_rule["uid"] is not None:
+                    if not hasattr(
+                        Util.NM(), "NM_IP_ROUTING_RULE_ATTR_UID_RANGE_START"
+                    ):
+                        raise ValidationError.from_connection(
+                            idx,
+                            "the routing rule selector 'uid' is not supported in "
+                            "NetworkManger until NM 1.34",
+                        )
+
         self.validate_route_tables(connection, idx)
 
 

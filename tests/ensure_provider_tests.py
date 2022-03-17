@@ -84,6 +84,7 @@ ibution_major_version | int < 9",
     },
     "playbooks/tests_reapply.yml": {},
     "playbooks/tests_route_table.yml": {},
+    "playbooks/tests_routing_rules.yml": {},
     # team interface is not supported on Fedora
     "playbooks/tests_team.yml": {
         EXTRA_RUN_CONDITION: "ansible_distribution != 'Fedora'",
