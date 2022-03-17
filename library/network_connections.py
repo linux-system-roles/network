@@ -1148,6 +1148,76 @@ class NMUtil:
                     s_ip4.add_route(rr)
                 else:
                     s_ip6.add_route(rr)
+            for routing_rule in ip["routing_rule"]:
+                nm_routing_rule = NM.IPRoutingRule.new(routing_rule["family"])
+                NM.IPRoutingRule.set_priority(nm_routing_rule, routing_rule["priority"])
+
+                # check the link below for the enum value of supported action
+                # https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/uapi/linux/fib_rules.h?id=f443e374ae131c168a065ea1748feac6b2e76613#n88
+                action_ids = {
+                    "to-table": 1,
+                    "blackhole": 6,
+                    "prohibit": 7,
+                    "unreachable": 8,
+                }
+                NM.IPRoutingRule.set_action(
+                    nm_routing_rule, action_ids[routing_rule["action"]]
+                )
+                if routing_rule["dport"]:
+                    NM.IPRoutingRule.set_destination_port(
+                        nm_routing_rule,
+                        routing_rule["dport"][0],
+                        routing_rule["dport"][1],
+                    )
+                if routing_rule["from"]:
+                    NM.IPRoutingRule.set_from(
+                        nm_routing_rule,
+                        routing_rule["from"]["address"],
+                        routing_rule["from"]["prefix"],
+                    )
+                if routing_rule["fwmark"]:
+                    NM.IPRoutingRule.set_fwmark(
+                        nm_routing_rule, routing_rule["fwmark"], routing_rule["fwmask"]
+                    )
+                if routing_rule["iif"]:
+                    NM.IPRoutingRule.set_iifname(nm_routing_rule, routing_rule["iif"])
+                NM.IPRoutingRule.set_invert(nm_routing_rule, routing_rule["invert"])
+                if routing_rule["ipproto"]:
+                    NM.IPRoutingRule.set_ipproto(
+                        nm_routing_rule, routing_rule["ipproto"]
+                    )
+                if routing_rule["oif"]:
+                    NM.IPRoutingRule.set_oifname(nm_routing_rule, routing_rule["oif"])
+                if routing_rule["sport"]:
+                    NM.IPRoutingRule.set_source_port(
+                        nm_routing_rule,
+                        routing_rule["sport"][0],
+                        routing_rule["sport"][1],
+                    )
+                if routing_rule["suppress_prefixlength"] is not None:
+                    NM.IPRoutingRule.set_suppress_prefixlength(
+                        nm_routing_rule, routing_rule["suppress_prefixlength"]
+                    )
+                if routing_rule["table"]:
+                    NM.IPRoutingRule.set_table(nm_routing_rule, routing_rule["table"])
+                if routing_rule["to"]:
+                    NM.IPRoutingRule.set_to(
+                        nm_routing_rule,
+                        routing_rule["to"]["address"],
+                        routing_rule["to"]["prefix"],
+                    )
+                if routing_rule["tos"]:
+                    NM.IPRoutingRule.set_tos(nm_routing_rule, routing_rule["tos"])
+                if routing_rule["uid"]:
+                    NM.IPRoutingRule.set_uid_range(
+                        nm_routing_rule,
+                        routing_rule["uid"][0],
+                        routing_rule["uid"][1],
+                    )
+                if routing_rule["family"] == socket.AF_INET:
+                    s_ip4.add_routing_rule(nm_routing_rule)
+                else:
+                    s_ip6.add_routing_rule(nm_routing_rule)
 
         if connection["ieee802_1x"]:
             s_8021x = self.connection_ensure_setting(con, NM.Setting8021x)

@@ -1,0 +1,223 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+
+- name: Test configuring ethernet devices
+  hosts: all
+  vars:
+    type: veth
+    interface: ethtest0
+
+  tasks:
+    - name: "set type={{ type }} and interface={{ interface }}"
+      set_fact:
+        type: "{{ type }}"
+        interface: "{{ interface }}"
+    - include_tasks: tasks/show_interfaces.yml
+    - include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: present
+    - include_tasks: tasks/assert_device_present.yml
+
+    - name: Configure connection profile and specify the numeric table in
+        static routes
+      import_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: "{{ interface }}"
+            interface_name: "{{ interface }}"
+            state: up
+            type: ethernet
+            autoconnect: yes
+            ip:
+              dhcp4: no
+              address:
+                - 198.51.100.3/26
+                - 2001:db8::2/32
+              route:
+                - network: 198.51.100.64
+                  prefix: 26
+                  gateway: 198.51.100.6
+                  metric: 4
+                  table: 30200
+                - network: 198.51.100.128
+                  prefix: 26
+                  gateway: 198.51.100.1
+                  metric: 2
+                  table: 30400
+                - network: 2001:db8::4
+                  prefix: 32
+                  gateway: 2001:db8::1
+                  metric: 2
+                  table: 30600
+              routing_rule:
+                - priority: 30200
+                  from: 198.51.100.58/26
+                  table: 30200
+                - priority: 30201
+                  family: ipv4
+                  fwmark: 1
+                  fwmask: 1
+                  table: 30200
+                - priority: 30202
+                  family: ipv4
+                  ipproto: 6
+                  table: 30200
+                - priority: 30203
+                  family: ipv4
+                  sport: 128 - 256
+                  table: 30200
+                - priority: 30204
+                  family: ipv4
+                  tos: 8
+                  table: 30200
+                - priority: 30400
+                  to: 198.51.100.128/26
+                  table: 30400
+                - priority: 30401
+                  family: ipv4
+                  iif: iiftest
+                  table: 30400
+                - priority: 30402
+                  family: ipv4
+                  oif: oiftest
+                  table: 30400
+                - priority: 30600
+                  to: 2001:db8::4/32
+                  table: 30600
+                - priority: 30601
+                  family: ipv6
+                  dport: 128 - 256
+                  invert: True
+                  table: 30600
+    # the routing rule selector sport and ipproto are not supported by iproute
+    # since v4.17.0, and the iproute installed in CentOS-7 and RHEL-7 is
+    # v4.11.0
+    - name: Get the routing rule for looking up the table 30200
+      command: ip rule list table 30200
+      register: route_rule_table_30200
+      ignore_errors: yes
+      changed_when: false
+      when: ansible_distribution_major_version != "7"
+
+    - name: Get the routing rule for looking up the table 30400
+      command: ip rule list table 30400
+      register: route_rule_table_30400
+      ignore_errors: yes
+      changed_when: false
+      when: ansible_distribution_major_version != "7"
+
+    - name: Get the routing rule for looking up the table 30600
+      command: ip -6 rule list table 30600
+      register: route_rule_table_30600
+      ignore_errors: yes
+      changed_when: false
+      when: ansible_distribution_major_version != "7"
+
+    - name: Get the IPv4 routing rule for the connection "{{ interface }}"
+      command: nmcli -f ipv4.routing-rules c show "{{ interface }}"
+      register: connection_route_rule
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Get the IPv6 routing rule for the connection "{{ interface }}"
+      command: nmcli -f ipv6.routing-rules c show "{{ interface }}"
+      register: connection_route_rule6
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Assert that the routing rule with table lookup 30200 matches the
+        specified rule
+      assert:
+        that:
+          - route_rule_table_30200.stdout is search("30200:(\s+)from
+            198.51.100.58/26 lookup 30200")
+          - route_rule_table_30200.stdout is search("30201:(\s+)from all fwmark
+            0x1/0x1 lookup 30200")
+          - route_rule_table_30200.stdout is search("30202:(\s+)from all
+            ipproto tcp lookup 30200")
+          - route_rule_table_30200.stdout is search("30203:(\s+)from all sport
+            128-256 lookup 30200")
+          - route_rule_table_30200.stdout is search("30204:(\s+)from all tos
+            (0x08|throughput) lookup 30200")
+        msg: "the routing rule with table lookup 30200 does not match the
+          specified rule"
+      when: ansible_distribution_major_version != "7"
+
+    - name: Assert that the routing rule with table lookup 30400 matches the
+        specified rule
+      assert:
+        that:
+          - route_rule_table_30400.stdout is search("30400:(\s+)from all to
+            198.51.100.128/26 lookup 30400")
+          - route_rule_table_30400.stdout is search("30401:(\s+)from all iif
+            iiftest \[detached\] lookup 30400")
+          - route_rule_table_30400.stdout is search("30402:(\s+)from all oif
+            oiftest \[detached\] lookup 30400")
+        msg: "the routing rule with table lookup 30400 does not match the
+          specified rule"
+      when: ansible_distribution_major_version != "7"
+
+    - name: Assert that the routing rule with table lookup 30600 matches the
+        specified rule
+      assert:
+        that:
+          - route_rule_table_30600.stdout is search("30600:(\s+)from all to
+            2001:db8::4/32 lookup 30600")
+          - route_rule_table_30600.stdout is search("30601:(\s+)not from all
+            dport 128-256 lookup 30600")
+        msg: "the routing rule with table lookup 30600 does not match the
+          specified rule"
+      when: ansible_distribution_major_version != "7"
+
+    - name: Assert that the IPv4 routing rule in the connection
+        "{{ interface }}" matches the specified rule
+      assert:
+        that:
+          - connection_route_rule.stdout is search("priority 30200 from
+            198.51.100.58/26 table 30200")
+          - connection_route_rule.stdout is search("priority 30201 from
+            0.0.0.0/0 fwmark 0x1/0x1 table 30200")
+          - connection_route_rule.stdout is search("priority 30202 from
+            0.0.0.0/0 ipproto 6 table 30200")
+          - connection_route_rule.stdout is search("priority 30203 from
+            0.0.0.0/0 sport 128-256 table 30200")
+          - connection_route_rule.stdout is search("priority 30204 from
+            0.0.0.0/0 tos 0x08 table 30200")
+          - connection_route_rule.stdout is search("priority 30400 to
+            198.51.100.128/26 table 30400")
+          - connection_route_rule.stdout is search("priority 30401 from
+            0.0.0.0/0 iif iiftest table 30400")
+          - connection_route_rule.stdout is search("priority 30402 from
+            0.0.0.0/0 oif oiftest table 30400")
+        msg: "the IPv4 routing rule in the connection '{{ interface }}' does
+          not match the specified rule"
+
+    - name: Assert that the IPv6 routing rule in the connection
+        "{{ interface }}" matches the specified rule
+      assert:
+        that:
+          - connection_route_rule6.stdout is search("priority 30600 to
+            2001:db8::4/32 table 30600")
+          - connection_route_rule6.stdout is search("priority 30601 not from
+            ::/0 dport 128-256 table 30600") or
+            connection_route_rule6.stdout is search("not priority 30601 from
+            ::/0 dport 128-256 table 30600")
+        msg: "the IPv6 routing rule in the connection '{{ interface }}' does
+          not match the specified rule"
+- import_playbook: down_profile+delete_interface.yml
+  vars:
+    profile: "{{ interface }}"
+# FIXME: assert profile/device down
+- import_playbook: remove_profile.yml
+  vars:
+    profile: "{{ interface }}"
+- name: Assert device and profile are absent
+  hosts: all
+  tasks:
+    - include_tasks: tasks/assert_profile_absent.yml
+      vars:
+        profile: "{{ interface }}"
+    - include_tasks: tasks/assert_device_absent.yml
+...

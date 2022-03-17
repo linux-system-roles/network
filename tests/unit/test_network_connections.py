@@ -194,6 +194,7 @@ class TestValidator(Python26CompatTestCase):
                 "rule_append_only": False,
                 "route": [],
                 "route_metric6": None,
+                "routing_rule": [],
                 "dhcp4_send_hostname": None,
                 "dns": [],
                 "dns_options": [],
@@ -409,6 +410,45 @@ class TestValidator(Python26CompatTestCase):
         self.assertValidationError(v, False)
         self.assertValidationError(v, True)
 
+    def test_validate_range(self):
+
+        v = network_lsr.argument_validator.ArgValidatorRange(
+            "range", val_min=0, val_max=65534
+        )
+        self.assertEqual((1, 1), v.validate(1))
+        self.assertEqual((10, 1000), v.validate("10-1000"))
+        self.assertEqual((256, 256), v.validate("256"))
+        self.assertRaisesRegex(
+            ValidationError,
+            "the range value True is invalid",
+            v.validate,
+            True,
+        )
+        self.assertRaisesRegex(
+            ValidationError,
+            "the range value 2.5 is invalid",
+            v.validate,
+            2.5,
+        )
+        self.assertRaisesRegex(
+            ValidationError,
+            "the range start cannot be greater than range end",
+            v.validate,
+            "2000-1000",
+        )
+        self.assertRaisesRegex(
+            ValidationError,
+            "upper range value is 65535 but cannot be greater than 65534",
+            v.validate,
+            "1-65535",
+        )
+        self.assertRaisesRegex(
+            ValidationError,
+            "lower range value is -1 but cannot be less than 0",
+            v.validate,
+            -1,
+        )
+
     def test_validate_bool(self):
 
         v = network_lsr.argument_validator.ArgValidatorBool("state")
@@ -543,6 +583,7 @@ class TestValidator(Python26CompatTestCase):
                         "rule_append_only": False,
                         "route": [],
                         "route_metric6": None,
+                        "routing_rule": [],
                         "dhcp4_send_hostname": None,
                         "dns": [],
                         "dns_options": [],
@@ -602,6 +643,7 @@ class TestValidator(Python26CompatTestCase):
                         "dns_options": [],
                         "dns_search": [],
                         "route_metric6": None,
+                        "routing_rule": [],
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
@@ -652,6 +694,7 @@ class TestValidator(Python26CompatTestCase):
                         "dns_options": [],
                         "dns_search": [],
                         "route_metric6": None,
+                        "routing_rule": [],
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
@@ -747,6 +790,7 @@ class TestValidator(Python26CompatTestCase):
                         "route_append_only": False,
                         "rule_append_only": False,
                         "route": [],
+                        "routing_rule": [],
                     },
                     "mac": "52:54:00:44:9f:ba",
                     "controller": None,
@@ -813,6 +857,7 @@ class TestValidator(Python26CompatTestCase):
                         "route_append_only": False,
                         "rule_append_only": False,
                         "route": [],
+                        "routing_rule": [],
                     },
                     "mac": None,
                     "match": {},
@@ -887,6 +932,7 @@ class TestValidator(Python26CompatTestCase):
                         "dns_options": [],
                         "dns_search": [],
                         "route_metric6": None,
+                        "routing_rule": [],
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
@@ -980,6 +1026,7 @@ class TestValidator(Python26CompatTestCase):
                         "route": [],
                         "route_metric6": None,
                         "route_metric4": None,
+                        "routing_rule": [],
                         "dns_options": [],
                         "dns_search": [],
                         "dhcp4_send_hostname": None,
@@ -1048,6 +1095,7 @@ class TestValidator(Python26CompatTestCase):
                                 "table": None,
                             }
                         ],
+                        "routing_rule": [],
                     },
                     "mac": None,
                     "controller": None,
@@ -1124,6 +1172,7 @@ class TestValidator(Python26CompatTestCase):
                         "route_append_only": False,
                         "rule_append_only": False,
                         "route": [],
+                        "routing_rule": [],
                     },
                     "mac": None,
                     "match": {},
@@ -1200,6 +1249,7 @@ class TestValidator(Python26CompatTestCase):
                         "route_append_only": False,
                         "rule_append_only": False,
                         "route": [],
+                        "routing_rule": [],
                     },
                     "mac": None,
                     "match": {},
@@ -1299,6 +1349,7 @@ class TestValidator(Python26CompatTestCase):
                         "route": [],
                         "route_metric6": None,
                         "route_metric4": None,
+                        "routing_rule": [],
                         "dns_options": [],
                         "dns_search": [],
                         "dhcp4_send_hostname": None,
@@ -1368,6 +1419,7 @@ class TestValidator(Python26CompatTestCase):
                                 "table": None,
                             }
                         ],
+                        "routing_rule": [],
                     },
                     "mac": None,
                     "controller": None,
@@ -1444,6 +1496,7 @@ class TestValidator(Python26CompatTestCase):
                         "route": [],
                         "route_metric6": None,
                         "route_metric4": None,
+                        "routing_rule": [],
                         "dns_options": [],
                         "ipv6_disabled": False,
                         "dns_search": [],
@@ -1507,6 +1560,7 @@ class TestValidator(Python26CompatTestCase):
                                 "table": None,
                             }
                         ],
+                        "routing_rule": [],
                     },
                     "mac": None,
                     "macvlan": {"mode": "bridge", "promiscuous": True, "tap": False},
@@ -1564,6 +1618,7 @@ class TestValidator(Python26CompatTestCase):
                                 "table": None,
                             }
                         ],
+                        "routing_rule": [],
                     },
                     "mac": None,
                     "macvlan": {"mode": "passthru", "promiscuous": False, "tap": True},
@@ -1654,6 +1709,7 @@ class TestValidator(Python26CompatTestCase):
                         "route_append_only": False,
                         "route_metric4": None,
                         "route_metric6": None,
+                        "routing_rule": [],
                         "rule_append_only": False,
                     },
                     "mac": None,
@@ -1696,6 +1752,7 @@ class TestValidator(Python26CompatTestCase):
                         "route_append_only": False,
                         "route_metric4": None,
                         "route_metric6": None,
+                        "routing_rule": [],
                         "rule_append_only": False,
                     },
                     "mac": None,
@@ -1790,6 +1847,7 @@ class TestValidator(Python26CompatTestCase):
                         "route_append_only": False,
                         "rule_append_only": False,
                         "route": [],
+                        "routing_rule": [],
                     },
                     "mac": None,
                     "match": {},
@@ -1868,6 +1926,7 @@ class TestValidator(Python26CompatTestCase):
                         "route_append_only": False,
                         "rule_append_only": False,
                         "route": [],
+                        "routing_rule": [],
                     },
                     "mac": None,
                     "match": {},
@@ -1918,6 +1977,7 @@ class TestValidator(Python26CompatTestCase):
                         "route_append_only": False,
                         "rule_append_only": False,
                         "route": [],
+                        "routing_rule": [],
                         "auto6": True,
                         "ipv6_disabled": False,
                         "dhcp4": True,
@@ -1977,6 +2037,7 @@ class TestValidator(Python26CompatTestCase):
                         "dns_options": [],
                         "dns_search": [],
                         "route_metric6": None,
+                        "routing_rule": [],
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
@@ -2054,6 +2115,7 @@ class TestValidator(Python26CompatTestCase):
                         "route_append_only": False,
                         "route_metric4": None,
                         "route_metric6": None,
+                        "routing_rule": [],
                         "rule_append_only": False,
                     },
                     "mac": None,
@@ -2096,6 +2158,7 @@ class TestValidator(Python26CompatTestCase):
                         "route_append_only": False,
                         "route_metric4": None,
                         "route_metric6": None,
+                        "routing_rule": [],
                         "rule_append_only": False,
                     },
                     "mac": None,
@@ -2154,6 +2217,7 @@ class TestValidator(Python26CompatTestCase):
                         "route_append_only": False,
                         "route_metric4": None,
                         "route_metric6": None,
+                        "routing_rule": [],
                         "rule_append_only": False,
                     },
                     "mac": None,
@@ -2229,6 +2293,7 @@ class TestValidator(Python26CompatTestCase):
                         "route_append_only": False,
                         "route_metric4": None,
                         "route_metric6": None,
+                        "routing_rule": [],
                         "rule_append_only": False,
                     },
                     "mac": "11:22:33:44:55:66:77:88:99:00:"
@@ -2324,6 +2389,7 @@ class TestValidator(Python26CompatTestCase):
                                 "table": None,
                             },
                         ],
+                        "routing_rule": [],
                         "dns": [],
                         "dns_options": [],
                         "dns_search": ["aa", "bb"],
@@ -2431,6 +2497,7 @@ class TestValidator(Python26CompatTestCase):
                                 "table": None,
                             },
                         ],
+                        "routing_rule": [],
                         "dns": [],
                         "dns_options": [],
                         "dns_search": ["aa", "bb"],
@@ -2552,6 +2619,7 @@ class TestValidator(Python26CompatTestCase):
                         "dns_options": [],
                         "dns_search": [],
                         "route_metric6": None,
+                        "routing_rule": [],
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
@@ -2631,6 +2699,7 @@ class TestValidator(Python26CompatTestCase):
                         "dns_options": [],
                         "dns_search": [],
                         "route_metric6": None,
+                        "routing_rule": [],
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
@@ -2710,6 +2779,7 @@ class TestValidator(Python26CompatTestCase):
                         "dns_options": [],
                         "dns_search": [],
                         "route_metric6": None,
+                        "routing_rule": [],
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
@@ -2787,6 +2857,7 @@ class TestValidator(Python26CompatTestCase):
                         "dns_options": [],
                         "dns_search": [],
                         "route_metric6": None,
+                        "routing_rule": [],
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
@@ -2854,6 +2925,7 @@ class TestValidator(Python26CompatTestCase):
                         "dns_options": [],
                         "dns_search": [],
                         "route_metric6": None,
+                        "routing_rule": [],
                         "dhcp4_send_hostname": None,
                     },
                     "mac": None,
@@ -4371,6 +4443,216 @@ class TestValidatorRouteTable(Python26CompatTestCase):
             self.validator.validate_route_tables,
             self.test_connections[0],
             self.connection_index,
+        )
+
+
+class TestValidatorRoutingRules(Python26CompatTestCase):
+    def setUp(self):
+        self.test_connections = [
+            {
+                "name": "eth0",
+                "type": "ethernet",
+                "ip": {
+                    "dhcp4": False,
+                    "address": ["198.51.100.3/26"],
+                    "route": [
+                        {
+                            "network": "198.51.100.128",
+                            "prefix": 26,
+                            "gateway": "198.51.100.1",
+                            "metric": 2,
+                            "table": 30400,
+                        },
+                    ],
+                    "routing_rule": [
+                        {
+                            "action": "to-table",
+                            "priority": 256,
+                        },
+                    ],
+                },
+            }
+        ]
+        self.validator = network_lsr.argument_validator.ArgValidator_ListConnections()
+
+    def test_routing_rule_missing_address_family(self):
+        """
+        Test that the address family has to be specified if cannot be derived from src
+        or dst address
+        """
+        self.test_connections[0]["ip"]["routing_rule"][0]["table"] = 256
+        self.test_connections[0]["ip"]["routing_rule"][0]["suppress_prefixlength"] = 32
+
+        self.assertRaisesRegex(
+            ValidationError,
+            "specify the address family 'family'",
+            self.validator.validate,
+            self.test_connections,
+        )
+
+    def test_routing_rule_validate_address_family(self):
+        """
+        Test that the derived address family and the specified address family should be
+        consistent
+        """
+        self.test_connections[0]["ip"]["routing_rule"][0]["table"] = 256
+        self.test_connections[0]["ip"]["routing_rule"][0]["family"] = "ipv6"
+        self.test_connections[0]["ip"]["routing_rule"][0]["from"] = "198.51.100.58/24"
+        self.assertRaisesRegex(
+            ValidationError,
+            "invalid address family in 'from'",
+            self.validator.validate,
+            self.test_connections,
+        )
+        self.test_connections[0]["ip"]["routing_rule"][0]["from"] = "2001:db8::2/32"
+        self.test_connections[0]["ip"]["routing_rule"][0]["to"] = "198.51.100.60/24"
+        self.assertRaisesRegex(
+            ValidationError,
+            "invalid address family in 'to'",
+            self.validator.validate,
+            self.test_connections,
+        )
+
+    def test_routing_rule_missing_table(self):
+        """
+        Test that table has to be defined when the action of the routing rule is
+        "to-table"
+        """
+        self.test_connections[0]["ip"]["routing_rule"][0]["family"] = "ipv4"
+        self.assertRaisesRegex(
+            ValidationError,
+            "missing 'table' for the routing rule",
+            self.validator.validate,
+            self.test_connections,
+        )
+
+    def test_routing_rule_invalid_from_prefix_length(self):
+        """
+        Test that the prefix length for from/src cannot be zero when from/src is
+        specified
+        """
+        self.test_connections[0]["ip"]["routing_rule"][0]["table"] = 256
+        self.test_connections[0]["ip"]["routing_rule"][0]["from"] = "198.51.100.58/0"
+        self.assertRaisesRegex(
+            ValidationError,
+            "the prefix length for 'from' cannot be zero",
+            self.validator.validate,
+            self.test_connections,
+        )
+
+    def test_routing_rule_invalid_to_prefix_length(self):
+        """
+        Test that the prefix length for to/dst cannot be zero when to/dst is specified
+        """
+        self.test_connections[0]["ip"]["routing_rule"][0]["table"] = 256
+        self.test_connections[0]["ip"]["routing_rule"][0]["to"] = "198.51.100.58/0"
+        self.assertRaisesRegex(
+            ValidationError,
+            "the prefix length for 'to' cannot be zero",
+            self.validator.validate,
+            self.test_connections,
+        )
+
+    def test_routing_rule_validate_fwmark(self):
+        """
+        Test that fwmark requires fwmask to be specified
+        """
+        self.test_connections[0]["ip"]["routing_rule"][0]["table"] = 256
+        self.test_connections[0]["ip"]["routing_rule"][0]["family"] = "ipv4"
+        self.test_connections[0]["ip"]["routing_rule"][0]["fwmark"] = 1
+        self.assertRaisesRegex(
+            ValidationError,
+            "'fwmask' and 'fwmark' must be set together",
+            self.validator.validate,
+            self.test_connections,
+        )
+
+    def test_routing_rule_validate_fwmask(self):
+        """
+        Test that fwmask requires fwmark to be specified
+        """
+        self.test_connections[0]["ip"]["routing_rule"][0]["table"] = 256
+        self.test_connections[0]["ip"]["routing_rule"][0]["family"] = "ipv4"
+        self.test_connections[0]["ip"]["routing_rule"][0]["fwmask"] = 1
+        self.assertRaisesRegex(
+            ValidationError,
+            "'fwmask' and 'fwmark' must be set together",
+            self.validator.validate,
+            self.test_connections,
+        )
+
+    def test_routing_rule_invalid_incoming_interface_name(self):
+        """
+        Test the invalid incoming interface name specified in the routing rule
+        """
+        self.test_connections[0]["ip"]["routing_rule"][0]["iif"] = " test "
+        self.test_connections[0]["ip"]["routing_rule"][0]["family"] = "ipv4"
+        self.test_connections[0]["ip"]["routing_rule"][0]["table"] = 256
+        self.assertRaisesRegex(
+            ValidationError,
+            "the incoming interface '{0}' specified in the routing rule is invalid "
+            "interface_name".format(
+                self.test_connections[0]["ip"]["routing_rule"][0]["iif"]
+            ),
+            self.validator.validate,
+            self.test_connections,
+        )
+
+    def test_routing_rule_invalid_outgoing_interface_name(self):
+        """
+        Test the invalid outgoing interface name specified in the routing rule
+        """
+        self.test_connections[0]["ip"]["routing_rule"][0]["oif"] = " test "
+        self.test_connections[0]["ip"]["routing_rule"][0]["family"] = "ipv4"
+        self.test_connections[0]["ip"]["routing_rule"][0]["table"] = 256
+        self.assertRaisesRegex(
+            ValidationError,
+            "the outgoing interface '{0}' specified in the routing rule is invalid "
+            "interface_name".format(
+                self.test_connections[0]["ip"]["routing_rule"][0]["oif"]
+            ),
+            self.validator.validate,
+            self.test_connections,
+        )
+
+    def test_routing_rule_validate_uid(self):
+        """
+        Test the invalid uid specified in the routing rule
+        """
+        self.test_connections[0]["ip"]["routing_rule"][0]["table"] = 256
+        self.test_connections[0]["ip"]["routing_rule"][0]["uid"] = "2000 - 1000"
+        self.assertRaisesRegex(
+            ValidationError,
+            "the range start cannot be greater than range end",
+            self.validator.validate,
+            self.test_connections,
+        )
+
+    def test_routing_rule_validate_suppress_prefixlength(self):
+        """
+        Test the invalid suppress_prefixlength setting
+        """
+        self.test_connections[0]["ip"]["routing_rule"][0]["suppress_prefixlength"] = 40
+        self.test_connections[0]["ip"]["routing_rule"][0]["family"] = "ipv4"
+        self.test_connections[0]["ip"]["routing_rule"][0]["table"] = 256
+        suppress_prefixlength_val_max = Util.addr_family_prefix_length(
+            self.test_connections[0]["ip"]["routing_rule"][0]["family"]
+        )
+        self.assertRaisesRegex(
+            ValidationError,
+            "The specified 'suppress_prefixlength' cannot be greater than {0}".format(
+                suppress_prefixlength_val_max
+            ),
+            self.validator.validate,
+            self.test_connections,
+        )
+        self.test_connections[0]["ip"]["routing_rule"][0]["family"] = "ipv6"
+        self.test_connections[0]["ip"]["routing_rule"][0]["action"] = "blackhole"
+        self.assertRaisesRegex(
+            ValidationError,
+            "'suppress_prefixlength' is only allowed with the to-table action",
+            self.validator.validate,
+            self.test_connections,
         )
 
 

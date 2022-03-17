@@ -501,6 +501,57 @@ The IP configuration supports the following options:
     Note that Classless inter-domain routing (CIDR) notation or network mask notation
     are not supported yet.
 
+- `routing_rule`
+
+    The policy routing rules can be specified via a list of rules given in the
+    `routing_rule` option, which allow routing the packets on other packet fields
+    except for destination address. The default value is a an empty list. Each rule is
+    a dictionary with the following entries:
+   - `priority` -
+      The priority of the rule. A valid priority ranges from 0 to 4294967295. Higher
+      number means lower priority.
+   - `action` -
+      The action of the rule. The possible values are `to-table` (default),
+      `blackhole`, `prohibit`, `unreachable`.
+   - `dport`-
+      The range of the destination port (e.g. `1000 - 2000`). A valid dport value for
+      both start and end ranges from 0 to 65534. And the start cannot be greater than
+      the end.
+   - `family` -
+      The IP family of the rule. The possible values are `ipv4` and `ipv6`.
+   - `from` -
+      The source address of the packet to match (e.g. `192.168.100.58/24`).
+   - `fwmark` -
+      The fwmark value of the packet to match.
+   - `fwmask` -
+      The fwmask value of the packet to match.
+   - `iif` -
+      Select the incoming interface name to match.
+   - `invert` -
+      Invert the selected match of the rule. The possible values are boolean values
+      `True` and `False` (default). If the value is `True`, this is equivalent to match
+      any packet that not satisfying selected match of the rule.
+   - `ipproto` -
+      Select the IP protocol value to match, the valid value ranges from 1 to 255.
+   - `oif` -
+      Select the outgoing interface name to match.
+   - `sport` -
+      The range of the source port (e.g. `1000 - 2000`). A valid sport value for both
+      start and end ranges from 0 to 65534. And the start cannot be greater than the
+      end.
+   - `suppress_prefixlength` -
+      Reject routing decisions that have a prefix length of the specified or less.
+   - `table` -
+      The route table to look up for the `to-table` action.
+   - `to` -
+      The destination address of the packet to match (e.g. `192.168.100.58/24`).
+   - `tos` -
+      Select the tos value to match.
+   - `uid` -
+      The range of the uid to match (e.g. `1000 - 2000`). A valid uid value for both
+      start and end ranges from 0 to 4294967295. And the start cannot be greater than
+      the end.
+
 - `route_append_only`
 
     The `route_append_only` option allows only to add new routes to the
