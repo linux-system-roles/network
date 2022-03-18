@@ -38,12 +38,10 @@ For each host a list of networking profiles can be configured via the
 `network_connections` variable.
 
 - For `initscripts`, profiles correspond to ifcfg files in the
-  `/etc/sysconfig/network-scripts/ifcfg-*` directory.
+  `/etc/sysconfig/network-scripts/` directory.
 
-- For `NetworkManager`, profiles correspond to connection profiles as handled by
-  NetworkManager.  Fedora and RHEL use the `ifcfg-rh-plugin` for NetworkManager,
-  which also writes or reads configuration files to `/etc/sysconfig/network-scripts/ifcfg-*`
-  for compatibility.
+- For `nm`, profiles correspond to connection profiles as handled by
+  NetworkManager.
 
 Note that the `network` role primarily operates on networking profiles
 (connections) and not on devices, but it uses the profile name by default as
