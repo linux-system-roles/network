@@ -329,12 +329,29 @@ class Util:
             return 64
 
     @staticmethod
+    def addr_family_norm(addr_family):
+        if addr_family in [socket.AF_INET, socket.AF_INET6]:
+            return addr_family
+        if addr_family is None or addr_family == socket.AF_UNSPEC:
+            return None
+        if addr_family in ["4", "inet", "ip4", "ipv4", "IPv4"]:
+            return socket.AF_INET
+        if addr_family in ["6", "inet6", "ip6", "ipv6", "IPv6"]:
+            return socket.AF_INET6
+        Util.addr_family_check(addr_family)
+
+    @staticmethod
+    def addr_family_prefix_length(family):
+        addr_family = Util.addr_family_norm(family)
+        if addr_family == socket.AF_INET:
+            return 32
+        if addr_family == socket.AF_INET6:
+            return 128
+        Util.addr_family_check(addr_family)
+
+    @staticmethod
     def addr_family_valid_prefix(family, prefix):
-        Util.addr_family_check(family)
-        if family == socket.AF_INET:
-            m = 32
-        else:
-            m = 128
+        m = Util.addr_family_prefix_length(family)
         return prefix >= 0 and prefix <= m
 
     @staticmethod
