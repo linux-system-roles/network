@@ -1553,6 +1553,8 @@ class ArgValidator_DictBond(ArgValidatorDict):
 
 
 class ArgValidator_DictInfiniband(ArgValidatorDict):
+    DEFAULT_PKEY = -1
+
     def __init__(self):
         ArgValidatorDict.__init__(
             self,
@@ -1561,13 +1563,21 @@ class ArgValidator_DictInfiniband(ArgValidatorDict):
                 ArgValidatorStr(
                     "transport_mode", enum_values=["datagram", "connected"]
                 ),
-                ArgValidatorNum("p_key", val_min=-1, val_max=0xFFFF, default_value=-1),
+                ArgValidatorNum(
+                    "p_key",
+                    val_min=-1,
+                    val_max=0xFFFF,
+                    default_value=ArgValidator_DictInfiniband.DEFAULT_PKEY,
+                ),
             ],
             default_value=ArgValidator.MISSING,
         )
 
     def get_default_infiniband(self):
-        return {"transport_mode": "datagram", "p_key": -1}
+        return {
+            "transport_mode": "datagram",
+            "p_key": ArgValidator_DictInfiniband.DEFAULT_PKEY,
+        }
 
 
 class ArgValidator_DictVlan(ArgValidatorDict):

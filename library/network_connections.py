@@ -44,6 +44,7 @@ from ansible.module_utils.network_lsr.myerror import MyError  # noqa:E501
 
 from ansible.module_utils.network_lsr.argument_validator import (  # noqa:E501
     ArgUtil,
+    ArgValidator_DictInfiniband,
     ArgValidator_ListConnections,
     ValidationError,
 )
@@ -348,7 +349,10 @@ class IfcfgUtil:
                 if (connection["infiniband"]["transport_mode"] == "connected")
                 else "no"
             )
-            if connection["infiniband"]["p_key"] != -1:
+            if (
+                connection["infiniband"]["p_key"]
+                != ArgValidator_DictInfiniband.DEFAULT_PKEY
+            ):
                 ifcfg["PKEY"] = "yes"
                 ifcfg["PKEY_ID"] = str(connection["infiniband"]["p_key"])
                 if connection["parent"]:
@@ -846,7 +850,10 @@ class NMUtil:
                 NM.SETTING_INFINIBAND_TRANSPORT_MODE,
                 connection["infiniband"]["transport_mode"],
             )
-            if connection["infiniband"]["p_key"] != -1:
+            if (
+                connection["infiniband"]["p_key"]
+                != ArgValidator_DictInfiniband.DEFAULT_PKEY
+            ):
                 s_infiniband.set_property(
                     NM.SETTING_INFINIBAND_P_KEY, connection["infiniband"]["p_key"]
                 )
@@ -2012,7 +2019,10 @@ class Cmd(object):
                                 "interface exists" % (connection["interface_name"]),
                             )
                         elif connection["type"] == "infiniband":
-                            if connection["infiniband"]["p_key"] != -1:
+                            if (
+                                connection["infiniband"]["p_key"]
+                                == ArgValidator_DictInfiniband.DEFAULT_PKEY
+                            ):
                                 self.log_fatal(
                                     idx,
                                     "profile specifies interface_name '%s' but no such "
