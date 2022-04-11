@@ -11,11 +11,13 @@ PODMAN_OPTS="--systemd=true --privileged"
 # exclude bond tests since missing the bonding kernel module
 # exclude tests/tests_wireless_nm.yml since failing to load mac80211_hwsim kernel
 # module to mock a wifi network
+# exclude tests/tests_infiniband_nm.yml since missing the infiniband device
 EXCLUDE_TESTS_C7='
 -e tests/tests_auto_gateway_initscripts.yml
 -e tests/tests_bond_deprecated_initscripts.yml
 -e tests/tests_bond_initscripts.yml
 -e tests/tests_bond_removal_initscripts.yml
+-e tests/tests_infiniband_nm.yml
 -e tests/tests_team_nm.yml
 -e tests/tests_unit.yml
 -e tests/tests_wireless_nm.yml
@@ -24,11 +26,13 @@ EXCLUDE_TESTS_C7='
 # exclude bond tests since missing the bonding kernel module
 # exclude tests/tests_wireless_wpa3_owe_nm.yml and tests/tests_wireless_wpa3_sae_nm.yml
 # since failing to install mac80211_hwsim kernel module
+# exclude tests/tests_infiniband_nm.yml since missing the infiniband device
 EXCLUDE_TESTS_C8S='
 -e tests/tests_auto_gateway_initscripts.yml
 -e tests/tests_bond_deprecated_initscripts.yml
 -e tests/tests_bond_initscripts.yml
 -e tests/tests_bond_removal_initscripts.yml
+-e tests/tests_infiniband_nm.yml
 -e tests/tests_integration_pytest.yml
 -e tests/tests_team_nm.yml
 -e tests/tests_unit.yml
@@ -40,7 +44,9 @@ EXCLUDE_TESTS_C8S='
 # network-scripts available
 # exclude tests/tests_wireless_wpa3_owe_nm.yml and tests/tests_wireless_wpa3_sae_nm.yml
 # since failing to install mac80211_hwsim kernel module
+# exclude tests/tests_infiniband_nm.yml since missing the infiniband device
 EXCLUDE_TESTS_C9S='
+-e tests/tests_infiniband_nm.yml
 -e tests/tests_provider_nm.yml
 -e tests/tests_regression_nm.yml
 -e tests/tests_team_nm.yml

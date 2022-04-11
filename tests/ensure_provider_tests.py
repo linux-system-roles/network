@@ -70,6 +70,7 @@ ibution_major_version | int < 9",
     "playbooks/tests_bond_options.yml": {},
     "playbooks/tests_eth_dns_support.yml": {},
     "playbooks/tests_dummy.yml": {},
+    "playbooks/tests_infiniband.yml": {},
     "playbooks/tests_ipv6_disabled.yml": {},
     "playbooks/tests_ipv6_dns_search.yml": {},
     "playbooks/tests_provider.yml": {
