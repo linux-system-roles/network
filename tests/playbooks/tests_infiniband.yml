@@ -1,0 +1,81 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  tasks:
+    - block:
+        - name: TEST Configuring infiniband devices
+          debug:
+            msg: "##################################################"
+        - name: Setup the IP over the infiniband device
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: ib0
+                type: infiniband
+                interface_name: ib0
+
+              - name: ib0-10
+                type: infiniband
+                autoconnect: yes
+                infiniband:
+                  p_key: 10
+                  transport_mode: datagram
+                parent: ib0
+                state: up
+                ip:
+                  dhcp4: no
+                  auto6: no
+                  address:
+                    - 198.51.100.133/30
+                    - 2001:db8::2/32
+
+        - name: Get the details for the virtual device ib0.000a
+          command: ip -d a s ib0.000a
+          register: virtual_device_setting
+          ignore_errors: yes
+          changed_when: false
+
+        - name: Assert that the settings in the virtual device
+            ib0.000a match the specified settings
+          assert:
+            that:
+              - virtual_device_setting.stdout is search("ipoib pkey 0x800a mode
+                datagram")
+            msg: the settings in the virtual device ib0.000a
+              match the specified settings
+
+        - command: ip -4 a s ib0.000a
+          name: "** TEST check IPv4"
+          register: result
+          until: "'198.51.100.133/30' in result.stdout"
+          retries: 20
+          delay: 2
+
+        - command: ip -6 a s ib0.000a
+          name: "** TEST check IPv6"
+          register: result
+          until: "'2001:db8::2/32' in result.stdout"
+          retries: 20
+          delay: 2
+
+      always:
+        - block:
+            - name: Import network role
+              import_role:
+                name: linux-system-roles.network
+              vars:
+                network_connections:
+                  - name: ib0
+                    persistent_state: absent
+                    state: down
+                  - name: ib0-10
+                    persistent_state: absent
+                    state: down
+              ignore_errors: true
+            - command: ip link del ib0.000a
+              ignore_errors: true
+          tags:
+            - "tests::cleanup"
+  tags:
+    - "tests::infiniband"
