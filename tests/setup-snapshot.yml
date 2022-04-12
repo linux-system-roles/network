@@ -1,0 +1,12 @@
+- hosts: all
+  tasks:
+    - name: Set facts used by role
+      include_role:
+        name: linux-system-roles.network
+        tasks_from: set_facts.yml
+        public: true
+
+    - name: Install test packages
+      package:
+        name: "{{ network_packages }}"
+        state: present
