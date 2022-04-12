@@ -2,6 +2,7 @@
 ---
 - name: Test executing the role with default parameters
   hosts: all
+  gather_facts: false
   roles:
     - linux-system-roles.network
   tasks:

@@ -1,6 +1,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # get service facts, used in defaults/main.yml
 ---
+- name: Ensure ansible_facts used by role
+  setup:
+    gather_subset: min
+  when: not ansible_facts.keys() | list |
+    intersect(__network_required_facts) == __network_required_facts
+  no_log: true
+
 - name: Check which services are running
   service_facts:
   no_log: true
