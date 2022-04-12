@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Ensure ansible_facts used by role are present
+  setup:
+    gather_subset: min
+  when: not ansible_facts.keys() | list |
+    intersect(__network_required_facts) == __network_required_facts
+  no_log: true
+
+- name: Check which services are running
+  service_facts:
+  no_log: true
+
+# needed for ansible_facts.packages
+- name: Check which packages are installed
+  package_facts:
+  no_log: true
