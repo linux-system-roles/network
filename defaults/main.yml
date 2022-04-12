@@ -121,3 +121,11 @@ network_packages: "{{
     __network_provider_setup[network_provider]['packages'] }}"
 network_service_name: "{{
     __network_provider_setup[network_provider]['service_name'] }}"
+
+# ansible_facts required by the role
+__network_required_facts:
+  - distribution
+  - distribution_major_version
+  - distribution_version
+  - os_family
+  - python
