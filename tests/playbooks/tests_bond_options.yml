@@ -128,11 +128,6 @@
                   arp_ip_target: 192.0.2.128
                   arp_validate: none
                   primary: "{{ dhcp_interface1 }}"
-              # add an infiniband port to the bond
-              - name: ib0
-                type: infiniband
-                interface_name: ib0
-                controller: "{{ controller_profile }}"
         - command: cat
             /sys/class/net/{{ controller_device }}/bonding/'{{ item.key }}'
           name: "** TEST check bond settings"
@@ -157,14 +152,6 @@
           until: "'2001' in result.stdout"
           retries: 20
           delay: 2
-
-        - command: nmcli -f '{{ item.key }}' connection show ib0
-          name: "** TEST check the infiniband port profile"
-          register: result
-          until: "'{{ item.value }}' in result.stdout"
-          loop:
-            - { key: 'connection.interface-name', value: 'ib0'}
-            - { key: 'connection.type', value: 'infiniband'}
 
       always:
         - block:
