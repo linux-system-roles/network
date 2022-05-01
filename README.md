@@ -279,6 +279,21 @@ role.
 Similar to `controller` and `vlan`, the `parent` references the connection profile in
 the ansible role.
 
+#### `type: infiniband`
+
+For the infiniband connection, currently it is only supported for the nm provider, and
+the following options are supported:
+
+- `p_key`: The infiniband P_Key to use for the device. When it is not specified, then
+  the connection is created on the physical infiniband fabrics. Otherwise, it is a
+  16-bit unsigned integer and the ipoib (IP over Infiniband) connection will be
+  created, the high bit should be set if it is a "full membership" P_Key. The special
+  `p_key` values 0x0000 and 0x8000 are invalid as kernel does not support them.
+- `transport_mode`: The ipoib (IP over Infiniband) connection operation mode. The
+  possible modes are `datagram` (default) and `connected`.
+
+**Note:** If the `p_key` is specified , then the `interface_name` must be unset.
+
 #### `type: wireless`
 
 The `wireless` type supports WPA-PSK (password) authentication, WPA-EAP (802.1x)
