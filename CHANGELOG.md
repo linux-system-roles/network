@@ -1,6 +1,19 @@
 Changelog
 =========
 
+[1.8.0] - 2022-05-19
+--------------------
+
+### New features
+
+- Support routing rules
+- Support the ipoib (IP over Infiniband) connection
+
+### Bug fixes
+
+- Reject configuring `ipv6_disabled` if not supported in NM
+- Support playbooks which use `gather_facts: false`
+
 [1.7.1] - 2022-03-14
 --------------------
 
