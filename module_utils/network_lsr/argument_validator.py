@@ -2097,6 +2097,14 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                             "a infiniband device with 'infiniband.p_key' "
                             "property also needs 'mac' or 'parent' property",
                         )
+                    if "interface_name" in result:
+                        raise ValidationError(
+                            name + ".interface_name",
+                            "the 'interface_name' must be unset for the ipoib "
+                            "connection, instead it is {0}".format(
+                                result["interface_name"]
+                            ),
+                        )
             else:
                 if "infiniband" in result:
                     raise ValidationError(
@@ -2126,8 +2134,13 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                         "invalid 'interface_name' '%s'" % (result["interface_name"]),
                     )
             else:
-                if not result.get("mac") and (
-                    not result.get("match") or not result["match"].get("path")
+                if (
+                    not result.get("mac")
+                    and (not result.get("match") or not result["match"].get("path"))
+                    and not (
+                        result["type"] == "infiniband"
+                        and result["infiniband"]["p_key"] != -1
+                    )
                 ):
                     if not Util.ifname_valid(result["name"]):
                         raise ValidationError(
