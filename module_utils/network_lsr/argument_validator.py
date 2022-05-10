@@ -2091,6 +2091,15 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                     if result["infiniband"]["transport_mode"] is None:
                         result["infiniband"]["transport_mode"] = "datagram"
                 if result["infiniband"]["p_key"] != -1:
+                    if (
+                        result["infiniband"]["p_key"] == 0x0000
+                        or result["infiniband"]["p_key"] == 0x8000
+                    ):
+                        raise ValidationError(
+                            name,
+                            "the pkey value {0} is not allowed as such a pkey value is not "
+                            "supported by kernel".format(result["infiniband"]["p_key"]),
+                        )
                     if "mac" not in result and "parent" not in result:
                         raise ValidationError(
                             name + ".infiniband.p_key",

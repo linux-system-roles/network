@@ -4986,6 +4986,49 @@ class TestValidatorDictBond(Python26CompatTestCase):
         self.validator.validate(self.test_connections)
 
 
+class TestValidatorDictInfiniband(Python26CompatTestCase):
+    def setUp(self):
+        self.validator = network_lsr.argument_validator.ArgValidator_ListConnections()
+        self.test_connections = [
+            {
+                "name": "ib0",
+                "type": "infiniband",
+                "interface_name": "ib0",
+            },
+            {
+                "name": "ib0-10",
+                "type": "infiniband",
+                "infiniband": {
+                    "p_key": 10,
+                    "transport_mode": "datagram",
+                },
+                "parent": "ib0",
+            },
+        ]
+
+    def test_invalid_pkey_values(self):
+        self.test_connections[1]["infiniband"]["p_key"] = 0x0000
+        self.assertRaisesRegex(
+            ValidationError,
+            "the pkey value {0} is not allowed as such a pkey value is not "
+            "supported by kernel".format(
+                self.test_connections[1]["infiniband"]["p_key"]
+            ),
+            self.validator.validate,
+            self.test_connections,
+        )
+        self.test_connections[1]["infiniband"]["p_key"] = 0x8000
+        self.assertRaisesRegex(
+            ValidationError,
+            "the pkey value {0} is not allowed as such a pkey value is not "
+            "supported by kernel".format(
+                self.test_connections[1]["infiniband"]["p_key"]
+            ),
+            self.validator.validate,
+            self.test_connections,
+        )
+
+
 class TestSysUtils(unittest.TestCase):
     def test_link_read_permaddress(self):
         self.assertEqual(SysUtil._link_read_permaddress("lo"), "00:00:00:00:00:00")
