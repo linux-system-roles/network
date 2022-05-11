@@ -3,7 +3,7 @@
 - hosts: all
   vars:
     controller_profile: bond0
-    controller_device: nm-bond
+    controller_device: nm-bond-removal
     port1_profile: bond0.0
     dhcp_interface1: test1
     port2_profile: bond0.1
@@ -203,7 +203,7 @@
           when: network_provider == "nm"
 
         - name: Get the controller device details
-          command: ip -d a s nm-bond
+          command: ip -d a s {{ controller_device }}
           register: controller_state
           ignore_errors: yes
           changed_when: false
