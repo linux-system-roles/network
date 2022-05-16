@@ -2012,7 +2012,7 @@ class Cmd(object):
                                 "interface exists" % (connection["interface_name"]),
                             )
                         elif connection["type"] == "infiniband":
-                            if connection["infiniband"]["p_key"] != -1:
+                            if connection["infiniband"]["p_key"] == -1:
                                 self.log_fatal(
                                     idx,
                                     "profile specifies interface_name '%s' but no such "
