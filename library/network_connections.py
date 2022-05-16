@@ -348,7 +348,7 @@ class IfcfgUtil:
                 if (connection["infiniband"]["transport_mode"] == "connected")
                 else "no"
             )
-            if connection["infiniband"]["p_key"] != -1:
+            if connection["infiniband"]["p_key"] is not None:
                 ifcfg["PKEY"] = "yes"
                 ifcfg["PKEY_ID"] = str(connection["infiniband"]["p_key"])
                 if connection["parent"]:
@@ -846,7 +846,7 @@ class NMUtil:
                 NM.SETTING_INFINIBAND_TRANSPORT_MODE,
                 connection["infiniband"]["transport_mode"],
             )
-            if connection["infiniband"]["p_key"] != -1:
+            if connection["infiniband"]["p_key"] is not None:
                 s_infiniband.set_property(
                     NM.SETTING_INFINIBAND_P_KEY, connection["infiniband"]["p_key"]
                 )
@@ -2012,7 +2012,7 @@ class Cmd(object):
                                 "interface exists" % (connection["interface_name"]),
                             )
                         elif connection["type"] == "infiniband":
-                            if connection["infiniband"]["p_key"] == -1:
+                            if connection["infiniband"]["p_key"] is None:
                                 self.log_fatal(
                                     idx,
                                     "profile specifies interface_name '%s' but no such "

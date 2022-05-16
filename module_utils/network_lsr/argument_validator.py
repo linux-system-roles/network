@@ -1561,13 +1561,15 @@ class ArgValidator_DictInfiniband(ArgValidatorDict):
                 ArgValidatorStr(
                     "transport_mode", enum_values=["datagram", "connected"]
                 ),
-                ArgValidatorNum("p_key", val_min=-1, val_max=0xFFFF, default_value=-1),
+                ArgValidatorNum(
+                    "p_key", val_min=-1, val_max=0xFFFF, default_value=None
+                ),
             ],
             default_value=ArgValidator.MISSING,
         )
 
     def get_default_infiniband(self):
-        return {"transport_mode": "datagram", "p_key": -1}
+        return {"transport_mode": "datagram", "p_key": None}
 
 
 class ArgValidator_DictVlan(ArgValidatorDict):
@@ -2090,7 +2092,13 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                         )
                     if result["infiniband"]["transport_mode"] is None:
                         result["infiniband"]["transport_mode"] = "datagram"
-                if result["infiniband"]["p_key"] != -1:
+                # For the compatibility with NetworkManager API and the initial
+                # infiniband support in the role (the user may get used to set the
+                # `p_key` into `-1` to make the connection created on the physical
+                # infiniband interface), normalize the `p_key` setting as follows
+                if result["infiniband"]["p_key"] == -1:
+                    result["infiniband"]["p_key"] = None
+                if result["infiniband"]["p_key"] is not None:
                     if (
                         result["infiniband"]["p_key"] == 0x0000
                         or result["infiniband"]["p_key"] == 0x8000
@@ -2148,7 +2156,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                     and (not result.get("match") or not result["match"].get("path"))
                     and not (
                         result["type"] == "infiniband"
-                        and result["infiniband"]["p_key"] != -1
+                        and result["infiniband"]["p_key"] is not None
                     )
                 ):
                     if not Util.ifname_valid(result["name"]):
@@ -2370,7 +2378,7 @@ class ArgValidator_ListConnections(ArgValidatorList):
             )
             or (
                 (connection["type"] == "infiniband")
-                and (connection["infiniband"]["p_key"] != -1)
+                and (connection["infiniband"]["p_key"] is not None)
             )
         ):
             try:

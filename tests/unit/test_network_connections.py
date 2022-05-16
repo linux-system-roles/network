@@ -2199,7 +2199,7 @@ class TestValidator(Python26CompatTestCase):
                     "ethtool": ETHTOOL_DEFAULTS,
                     "force_state_change": None,
                     "ignore_errors": None,
-                    "infiniband": {"p_key": -1, "transport_mode": "datagram"},
+                    "infiniband": {"p_key": None, "transport_mode": "datagram"},
                     "interface_name": None,
                     "ip": {
                         "address": [],
@@ -2357,7 +2357,7 @@ class TestValidator(Python26CompatTestCase):
                     "check_iface_exists": True,
                     "ethtool": ETHTOOL_DEFAULTS,
                     "ignore_errors": None,
-                    "infiniband": {"p_key": -1, "transport_mode": "datagram"},
+                    "infiniband": {"p_key": None, "transport_mode": "datagram"},
                     "interface_name": "ib0",
                     "ip": {
                         "address": [],
