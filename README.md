@@ -43,18 +43,25 @@ For each host a list of networking profiles can be configured via the
 - For `nm`, profiles correspond to connection profiles as handled by
   NetworkManager.
 
-Note that the `network` role primarily operates on networking profiles
-(connections) and not on devices, but it uses the profile name by default as
-the interface name. It is also possible to create generic profiles, by creating
-for example a profile with a certain IP configuration without activating the
-profile. To apply the configuration to the actual networking interface, use the
-`nmcli` commands on the target system.
+For each host the network state configuration can also be applied to the interface
+directly via the `network_state` variable, and only the `nm` provider supports using
+the `network_state` variable.
+
+Note that the `network` role both operates on the connection profiles of the devices
+(via the `network_connections` variable) and on devices directly (via the
+`network_state` variable). When configuring the connection profiles through the role,
+it uses the profile name by default as the interface name. It is also possible to
+create generic profiles, by creating for example a profile with a certain IP
+configuration without activating the profile. To apply the configuration to the actual
+networking interface, use the `nmcli` commands on the target system.
 
 **Warning**: The `network` role updates or creates all connection profiles on
 the target system as specified in the `network_connections` variable. Therefore,
 the `network` role removes options from the specified profiles if the options are
 only present on the system but not in the `network_connections` variable.
-Exceptions are mentioned below.
+Exceptions are mentioned below. However, the partial networking configuration can be
+achieved via specifying the network state configuration in the `network_state`
+variable.
 
 Variables
 ---------
@@ -77,6 +84,9 @@ the name prefix. List of variables:
   NetworkManager-wifi is not installed, NetworkManager must be restarted prior
   to the connection being configured. Setting this to `no` will prevent the
   role from restarting network service.
+- `network_state` - The network state settings can be configured in the managed
+  host, and the format and the syntax of the configuration should be consistent
+  with the [nmstate state examples](https://nmstate.io/examples.html) (YAML).
 
 Examples of Variables
 ---------------------
@@ -89,6 +99,20 @@ network_connections:
   - name: eth0
     #...
 network_allow_restart: yes
+```
+
+```yaml
+network_provider: nm
+network_state:
+  interfaces:
+    - name: eth0
+    #...
+  routes:
+    config:
+      #...
+  dns-resolver:
+    config:
+      #...
 ```
 
 Options
@@ -1171,6 +1195,87 @@ network_connections:
     wireless:
       ssid: "WIFI_SSID"
       key_mgmt: "owe"
+```
+
+Examples of Applying the Network State Configuration
+-------------------
+
+Configuring the IP addresses:
+
+```yaml
+network_state:
+  interfaces:
+    - name: ethtest0
+      type: ethernet
+      state: up
+      ipv4:
+        enabled: true
+        address:
+          - ip: 192.168.122.250
+            prefix-length: 24
+        dhcp: false
+      ipv6:
+        enabled: true
+        address:
+          - ip: 2001:db8::1:1
+            prefix-length: 64
+        autoconf: false
+        dhcp: false
+    - name: ethtest1
+      type: ethernet
+      state: up
+      ipv4:
+        enabled: true
+        address:
+          - ip: 192.168.100.192
+            prefix-length: 24
+        auto-dns: false
+        dhcp: false
+      ipv6:
+        enabled: true
+        address:
+          - ip: 2001:db8::2:1
+            prefix-length: 64
+        autoconf: false
+        dhcp: false
+```
+
+Configuring the route:
+
+```yaml
+network_state:
+  interfaces:
+    - name: eth1
+      type: ethernet
+      state: up
+      ipv4:
+        enabled: true
+        address:
+          - ip: 192.0.2.251
+            prefix-length: 24
+        dhcp: false
+
+  routes:
+    config:
+      - destination: 198.51.100.0/24
+        metric: 150
+        next-hop-address: 192.0.2.251
+        next-hop-interface: eth1
+        table-id: 254
+```
+
+Configuring the DNS search and server:
+
+```yaml
+network_state:
+  dns-resolver:
+    config:
+      search:
+        - example.com
+        - example.org
+      server:
+        - 2001:4860:4860::8888
+        - 8.8.8.8
 ```
 
 ### Invalid and Wrong Configuration

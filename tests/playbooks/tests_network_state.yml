@@ -1,0 +1,218 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+
+- name: Test configuring ethernet devices
+  hosts: all
+  vars:
+    type: veth
+    interface0: ethtest0
+    interface1: ethtest1
+
+
+  tasks:
+    - name: "set type={{ type }} and interface={{ interface0 }}"
+      set_fact:
+        type: "{{ type }}"
+        interface: "{{ interface0 }}"
+    - include_tasks: tasks/show_interfaces.yml
+    - include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: present
+    - include_tasks: tasks/assert_device_present.yml
+    - name: "set type={{ type }} and interface={{ interface1 }}"
+      set_fact:
+        type: "{{ type }}"
+        interface: "{{ interface1 }}"
+    - include_tasks: tasks/show_interfaces.yml
+    - include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: present
+    - include_tasks: tasks/assert_device_present.yml
+
+
+    - name: Configure the IP addresses
+      import_role:
+        name: linux-system-roles.network
+      vars:
+        network_state:
+          interfaces:
+            - name: ethtest0
+              type: ethernet
+              state: up
+              ipv4:
+                enabled: true
+                address:
+                  - ip: 192.168.122.250
+                    prefix-length: 24
+                dhcp: false
+              ipv6:
+                enabled: true
+                address:
+                  - ip: 2001:db8::1:1
+                    prefix-length: 64
+                autoconf: false
+                dhcp: false
+            - name: ethtest1
+              type: ethernet
+              state: up
+              ipv4:
+                enabled: true
+                auto-dns: false
+                address:
+                  - ip: 192.168.122.88
+                    prefix-length: 24
+                dhcp: false
+              ipv6:
+                enabled: true
+                auto-dns: false
+                dhcp: true
+
+    - name: Get the ethtest0 state configuration
+      command: nmstatectl show ethtest0
+      register: ethtest0_state
+      ignore_errors: yes  # noqa ignore-errors
+      changed_when: false
+
+    - name: Get the ethtest1 state configuration
+      command: nmstatectl show ethtest1
+      register: ethtest1_state
+      ignore_errors: yes  # noqa ignore-errors
+      changed_when: false
+
+    - name: Assert that the ethtest0 state configuration contains the specified
+        settings
+      assert:
+        that:
+          - ethtest0_state.stdout is search("192.168.122.250")
+          - ethtest0_state.stdout is search("2001:db8::1:1")
+        msg: the ethtest0 state configuration does not contain the specified
+          settings
+
+    - name: Assert that the ethtest1 state configuration contains the specified
+        settings
+      assert:
+        that:
+          - ethtest1_state.stdout is search("192.168.122.88")
+        msg: the ethtest1 state configuration does not contain the specified
+          settings
+
+    - name: Configure the route
+      import_role:
+        name: linux-system-roles.network
+      vars:
+        network_state:
+          routes:
+            config:
+              - destination: 192.0.2.100/30
+                metric: 150
+                next-hop-address: 192.168.122.250
+                next-hop-interface: ethtest0
+                table-id: 254
+
+    - name: Get the route configuration
+      command: nmstatectl show
+      register: route
+      ignore_errors: yes  # noqa ignore-errors
+      changed_when: false
+
+    - name: Assert that the route configuration contains the specified route
+      assert:
+        that:
+          - route.stdout is search("destination:(\s+)192.0.2.100/30")
+          - route.stdout is search("metric:(\s+)150")
+          - route.stdout is search("next-hop-address:(\s+)192.168.122.250")
+          - route.stdout is search("next-hop-interface:(\s+)ethtest0")
+          - route.stdout is search("table-id:(\s+)254")
+        msg: the route configuration does not contain the specified route
+
+    - name: Set the DNS processing mode and the resolv.conf management mode
+      lineinfile:
+        path: /etc/NetworkManager/NetworkManager.conf
+        line: "rc-manager=unmanaged\ndns=systemd-resolved"
+        insertafter: \[main\]
+
+    - name: Restart the NetworkManager
+      service:
+        name: NetworkManager
+        state: restarted
+
+    - name: Install the systemd-resolved
+      package:
+        name: systemd-resolved
+        state: present
+      when:
+        - ansible_distribution_major_version | int > 8
+
+    - name: Enable the systemd-resolved service
+      service:
+        name: systemd-resolved
+        enabled: true
+
+    - name: Configure the DNS
+      import_role:
+        name: linux-system-roles.network
+      vars:
+        network_state:
+          dns-resolver:
+            config:
+              search:
+                - example.com
+                - example.org
+              server:
+                - 2001:4860:4860::8888
+
+    - name: Get the DNS configuration from nmstatectl
+      command: nmstatectl show
+      register: nmstatectl
+      ignore_errors: yes  # noqa ignore-errors
+      changed_when: false
+
+    - name: Get the DNS configuration from the file `/etc/resolv.conf`
+      command: cat /etc/resolv.conf
+      register: resolvconf
+      ignore_errors: yes  # noqa ignore-errors
+      changed_when: false
+
+    - name: Check if `/etc/resolv.conf` is generated by NM
+      command: grep "Generated by NetworkManager" /etc/resolv.conf
+      register: generateByNM
+      ignore_errors: yes  # noqa ignore-errors
+      changed_when: false
+
+    - name: Assert that the nmstatectl contains the specified DNS configuration
+      assert:
+        that:
+          - nmstatectl.stdout is search("example.com")
+          - nmstatectl.stdout is search("example.org")
+          - nmstatectl.stdout is search("2001:4860:4860::8888")
+        msg: the nmstatectl does not contain the specified DNS configuration
+
+    - name: Assert that the file `/etc/resolv.conf` does not contain the
+        specified DNS configuration
+      assert:
+        that:
+          - resolvconf.stdout is not search("example.com") and
+            resolvconf.stdout is not search("example.org") and
+            resolvconf.stdout is not search("2001:4860:4860::8888") or
+            generateByNM.stdout | length == 0
+        msg: the file `/etc/resolv.conf` contains the specified DNS
+          configuration
+
+    - command: resolvectl
+      name: "** TEST check resolvectl"
+      register: result
+      until: "'example.com' in result.stdout"
+      retries: 20
+      delay: 2
+      changed_when: false
+
+    - include_tasks: tasks/delete_interface.yml
+    - include_tasks: tasks/assert_device_absent.yml
+    - name: "set interface={{ interface0 }}"
+      set_fact:
+        type: "{{ type }}"
+        interface: "{{ interface0 }}"
+    - include_tasks: tasks/delete_interface.yml
+    - include_tasks: tasks/assert_device_absent.yml
+...

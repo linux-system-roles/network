@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: all
+  vars:
+    network_state:
+      interfaces:
+        - name: ethtest0
+          type: ethernet
+          state: up
+          ipv4:
+            enabled: true
+            address:
+              - ip: 192.168.122.250
+                prefix-length: 24
+            dhcp: false
+          ipv6:
+            enabled: true
+            address:
+              - ip: 2001:db8::1:1
+                prefix-length: 64
+            autoconf: false
+            dhcp: false
+        - name: ethtest1
+          type: ethernet
+          state: up
+          ipv4:
+            enabled: true
+            auto-dns: false
+            dhcp: true
+          ipv6:
+            enabled: true
+            auto-dns: false
+            dhcp: true
+      routes:
+        config:
+          - destination: 192.0.2.100/30
+            metric: 150
+            next-hop-address: 192.168.122.250
+            next-hop-interface: ethtest0
+            table-id: 254
+      dns-resolver:
+        config:
+          search:
+            - example.com
+            - example.org
+          server:
+            - 2001:4860:4860::8888
+            - 8.8.8.8
+  roles:
+    - linux-system-roles.network
+...
