@@ -659,7 +659,7 @@ class IfcfgUtil:
                     text_file.write(h)
 
     @classmethod
-    def connection_seems_active(cls, name):
+    def connection_seems_active(cls, name, run_env):
         # we don't know whether a ifcfg file is currently active,
         # and we also don't know which.
         #
@@ -683,7 +683,25 @@ class IfcfgUtil:
             return None
 
         if i_content.strip() != "up":
-            return False
+            # For the active bonding/bridge connection, when all the port connection
+            # profiles are brought down firstly, then the operstate of the controller
+            # device will change into "down" automatically, which denotes missing the
+            # carrier for the controller device. However, the connection for the
+            # controller device stays active in such a situation.
+            try:
+                _unused_, out, _ignored_ = run_env.run_command(
+                    ["ip", "address", "show", content["DEVICE"]],
+                    "utf-8",
+                )
+            except Exception:
+                return None
+            if "inet" in out:
+                if out.count("inet") == 1 and "inet6 fe80" in out:
+                    return False
+                else:
+                    return True
+            else:
+                return False
 
         return True
 
@@ -2614,7 +2632,7 @@ class Cmd_initscripts(Cmd):
                 )
             return
 
-        is_active = IfcfgUtil.connection_seems_active(name)
+        is_active = IfcfgUtil.connection_seems_active(name, self.run_env)
         is_modified = self.connection_modified_earlier(idx)
         force_state_change = self.connection_force_state_change(connection)
 
