@@ -4551,12 +4551,40 @@ class TestValidatorRouteTable(Python26CompatTestCase):
             return mapping
 
         self.assertEqual(parse(b""), {})
+        self.assertEqual(parse(b"5x"), {})
+        self.assertEqual(parse(b"0xF5 x"), {"x": 0xF5})
+        self.assertEqual(parse(b"0x5a x"), {"x": 0x5A})
+        self.assertEqual(parse(b" 0x5a x"), {"x": 0x5A})
+        self.assertEqual(parse(b"0x0 x"), {"x": 0x0})
+        self.assertEqual(parse(b"0x x"), {})
         self.assertEqual(parse(b"5 x"), {"x": 5})
-        self.assertEqual(parse(b"   7   y   "), {})
+        self.assertEqual(parse(b"   7   y   "), {"y": 7})
         self.assertEqual(parse(b"5 x\n0x4 y"), {"x": 5, "y": 4})
         self.assertEqual(parse(b"5 x #df\n0x4 y"), {"x": 5, "y": 4})
-        self.assertEqual(parse(b"5 x #df\n0x4 y\n7\ty"), {"x": 5, "y": 4})
+        self.assertEqual(parse(b"5 x #df\n0x4 y\n7\ty"), {"x": 5, "y": 7})
         self.assertEqual(parse(b"-1 x #df\n0x4 y\n5 x"), {"x": 5, "y": 4})
+        self.assertEqual(
+            parse(b"5 x #df\n0x4 y\n7\t \ty\n\t\t44    7\n 66  a%\n 67  ab"),
+            {"x": 5, "y": 7, "7": 44, "ab": 67},
+        )
+
+        # https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/tree/etc/iproute2/rt_tables?id=11e41a635cfab54e8e02fbff2a03715467e77ae9
+        self.assertEqual(
+            parse(
+                b"#\n"
+                b"# reserved values\n"
+                b"#\n"
+                b"255	local\n"
+                b"254	main\n"
+                b"253	default\n"
+                b"0	unspec\n"
+                b"#\n"
+                b"# local\n"
+                b"#\n"
+                b"#1	inr.ruhep\n"
+            ),
+            {"local": 255, "main": 254, "default": 253, "unspec": 0},
+        )
 
     def test_table_found_when_validate_route_tables(self):
         """
