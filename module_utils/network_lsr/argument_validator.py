@@ -2568,65 +2568,61 @@ class ArgValidator_ListConnections(ArgValidatorList):
 
 class IPRouteUtils(object):
 
+    # iproute2 does not care much about the valid characters of a
+    # table alias (it doesn't even require UTF-8 encoding, the only
+    # forbidden parts are whitespace).
+    #
+    # We don't allow such flexibility. Aliases must only contain a
+    # certain set of ASCII characters. These aliases are what we accept
+    # as input (in the playbook), and there is no need to accept
+    # user input with unusual characters or non-ASCII names.
     ROUTE_TABLE_ALIAS_RE = re.compile("^[a-zA-Z0-9_.-]+$")
 
     @classmethod
     def _parse_route_tables_mapping(cls, file_content, mapping):
+
+        # This parses the /etc/iproute2/rt_tables file and constructs
+        # the mapping from table aliases the table numeric IDs.
+        #
+        # It is thus similar to rtnl_rttable_a2n(), from here:
+        # https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/tree/lib/rt_names.c?id=11e41a635cfab54e8e02fbff2a03715467e77ae9#n447
+        regex = re.compile(
+            b"^\\s*(0x[0-9a-fA-F]+|[0-9]+)\\s+([a-zA-Z0-9_.-]+)(\\s*|\\s+#.*)$"
+        )
         for line in file_content.split(b"\n"):
 
-            # iproute2 only skips over leading ' ' and '\t'.
-            line = line.lstrip()
-
-            # skip empty lines or comments
-            if not line:
+            rmatch = regex.match(line)
+            if not rmatch:
                 continue
 
-            # In Python 2.x, there is no new type called `bytes`. And Python 2.x
-            # `bytes` is just an alias to the str type
-            if Util.PY3:
-                if line[0] == ord(b"#"):
-                    continue
-            else:
-                if line[0] == "#":
-                    continue
+            table = rmatch.group(1)
+            name = rmatch.group(2)
 
-            # iproute2 splits at the first space.
-            ll = line.split(b" ", 1)
-            if len(ll) != 2:
-                continue
-            line1 = ll[0]
-            line2 = ll[1]
+            name = name.decode("utf-8")
 
-            comment_space = line2.find(b" ")
-            if comment_space >= 0:
-                # when commenting the route table entry in the same line,
-                # iproute2 only accepts one ' ', followed by '#'
-                if not re.match(b"^[a-zA-Z0-9_.-]+ #", line2):
-                    continue
-                line2 = line2[:comment_space]
-
-            # convert to UTF-8 and only accept benign characters.
-            try:
-                line2 = line2.decode("utf-8")
-            except Exception:
-                continue
-
-            if not cls.ROUTE_TABLE_ALIAS_RE.match(line2):
-                continue
+            if not cls.ROUTE_TABLE_ALIAS_RE.match(name):
+                raise AssertionError(
+                    "bug: table alias contains unexpected characters: %s" % (name,)
+                )
 
             tableid = None
             try:
-                tableid = int(line1)
+                tableid = int(table)
             except Exception:
-                if line.startswith(b"0x"):
+                if table.startswith(b"0x"):
                     try:
-                        tableid = int(line1[2:], 16)
+                        tableid = int(table[2:], 16)
                     except Exception:
                         pass
             if tableid is None or tableid < 0 or tableid > 0xFFFFFFFF:
                 continue
 
-            mapping[line2] = tableid
+            # In case of duplicates, the latter wins. That is unlike iproute2's
+            # rtnl_rttable_a2n(), which does a linear search over the
+            # hash table (thus, the first found name depends on the content
+            # of the hash table and the result in face of duplicates is
+            # not well defined).
+            mapping[name] = tableid
 
     @classmethod
     def _parse_route_tables_mapping_from_file(cls, filename, mapping):
