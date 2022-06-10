@@ -1,6 +1,13 @@
 Changelog
 =========
 
+[Unreleased]
+--------------------
+### New features
+
+- Add AlmaLinux to various groups
+- Add Rocky and Alma to testing
+
 [1.8.0] - 2022-05-19
 --------------------
 
