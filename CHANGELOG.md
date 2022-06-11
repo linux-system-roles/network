@@ -3,6 +3,7 @@ Changelog
 
 [Unreleased]
 --------------------
+
 ### New features
 
 - Add AlmaLinux to various groups
