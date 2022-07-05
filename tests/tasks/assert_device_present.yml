@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- include: get_interface_stat.yml
+- include_tasks: get_interface_stat.yml
 - name: "assert that interface {{ interface }} is present"
   assert:
     that: interface_stat.stat.exists
