@@ -1,0 +1,57 @@
+# yamllint disable rule:line-length
+name: Pushing CHANGELOG.md triggers tagging
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - CHANGELOG.md
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # This token is provided by Actions, you do not need to create your own token
+jobs:
+  tagging:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout PR
+        uses: actions/checkout@v2
+      - name: Get tag and message from the latest CHANGELOG.md commit
+        id: tag
+        run: |
+          set -euxo pipefail
+          pat='\[[0-9]*\.[0-9]*\.[0-9]*\] - [0-9\-]*'
+          print=false
+          cat CHANGELOG.md | while read -r line; do
+              if [[ $line =~ $pat ]] && [[ $print == false ]]; then
+                  echo $line
+                  print=true
+              elif [[ $line =~ $pat ]] && [[ $print == true ]]; then
+                  break
+              elif [[ $print == true ]]; then
+                  echo $line
+              fi
+          done > ./.tagmsg.txt
+          _tagname=$( grep -m 1 "[0-9]*\.[0-9]*\.[0-9]*" CHANGELOG.md | sed -e "s/^.*\[\([0-9]*\.[0-9]*\.[0-9]*\)\].*/\1/" )
+          git fetch --all --tags
+          for t in $( git tag -l ); do
+              if [[ $t == "$_tagname" ]]; then
+                  echo INFO: tag $t already exists
+                  exit 1
+              fi
+          done
+          echo ::set-output name=tagname::"$_tagname"
+      - name: Create tag
+        uses: mathieudutour/github-tag-action@v6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          custom_tag: ${{ steps.tag.outputs.tagname }}
+          tag_prefix: ''
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ steps.tag.outputs.tagname }}
+          release_name: Version ${{ steps.tag.outputs.tagname }}
+          body_path: ./.tagmsg.txt
+          draft: false
+          prerelease: false
