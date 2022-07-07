@@ -1,6 +1,22 @@
 Changelog
 =========
 
+[1.9.0] - 2022-07-07
+--------------------
+
+### New features
+
+- Support the nmstate network state configuration
+
+### Bug Fixes
+
+- IfcfgUtil: Remediate `connection_seems_active()` for controller
+
+### Other Changes
+
+- use `include_tasks` instead of `include`
+- make `min_ansible_version` a string in meta/main.yml
+
 [1.8.0] - 2022-05-19
 --------------------
 
