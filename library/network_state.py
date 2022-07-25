@@ -39,18 +39,27 @@ class NetworkState:
         self.params = module.params
         self.result = dict(changed=False)
         self.module_name = module_name
-        self.previous_state = libnmstate.show()
+        self.previous_state = self.get_state_config()
 
     def run(self):
         desired_state = self.params["desired_state"]
         libnmstate.apply(desired_state)
-        current_state = libnmstate.show()
+        current_state = self.get_state_config()
         if current_state != self.previous_state:
             self.result["changed"] = True
 
         self.result["state"] = current_state
 
         self.module.exit_json(**self.result)
+
+    def get_state_config(self):
+        if hasattr(libnmstate, "show_running_config") and callable(
+            getattr(libnmstate, "show_running_config")
+        ):
+            state_config = libnmstate.show_running_config()
+        else:
+            state_config = libnmstate.show()
+        return state_config
 
 
 def run_module():
