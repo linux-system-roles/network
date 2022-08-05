@@ -1,6 +1,23 @@
 Changelog
 =========
 
+[1.9.1] - 2022-08-05
+--------------------
+
+### New features
+
+- none
+
+### Bug Fixes
+
+- network_state: improve state comparison for achieving idempotency
+- argument_validator: fix IPRouteUtils.get_route_tables_mapping() for whitespace
+  sequence
+
+### Other Changes
+
+- none
+
 [1.9.0] - 2022-07-07
 --------------------
 
