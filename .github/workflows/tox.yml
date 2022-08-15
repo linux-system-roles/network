@@ -4,7 +4,7 @@ on:  # yamllint disable-line rule:truthy
   - pull_request
   - push
 env:
-  TOX_LSR: "git+https://github.com/linux-system-roles/tox-lsr@2.11.0"
+  TOX_LSR: "git+https://github.com/linux-system-roles/tox-lsr@2.13.0"
   LSR_ANSIBLE_TEST_DOCKER: "true"
   LSR_ANSIBLES: 'ansible==2.9.*'
   LSR_MSCENARIOS: default
@@ -41,7 +41,7 @@ jobs:
           36) toxenvs="${toxenvs},coveralls,ensure_provider_tests,black,yamllint" ;;
           38) toxenvs="${toxenvs},coveralls,ansible-lint,ansible-plugin-scan,collection,ansible-test" ;;
           39) toxenvs="${toxenvs},coveralls,ansible-managed-var-comment" ;;
-          310) toxenvs="${toxenvs},coveralls" ;;
+          310) toxenvs="${toxenvs},coveralls,check-meta-versions" ;;
           esac
           TOXENV="$toxenvs" lsr_ci_runtox
   python-26:
