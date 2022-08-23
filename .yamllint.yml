@@ -38,3 +38,6 @@ rules:
       /tests/playbooks/tests_eth_pci_address_match.yml
       /tests/tasks/setup_802_1x_server.yml
       /tests/tests_bond_removal_initscripts.yml
+      /tests/tests_bond_cloned_mac_initscripts.yml
+      /tests/tests_bridge_cloned_mac_initscripts.yml
+      /tests/tests_bridge_cloned_mac_nm.yml

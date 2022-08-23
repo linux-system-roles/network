@@ -334,6 +334,8 @@ class IfcfgUtil:
             ifcfg["ONBOOT"] = "no"
 
         ifcfg["DEVICE"] = connection["interface_name"]
+        if connection["cloned_mac"] != "default":
+            ifcfg["MACADDR"] = connection["cloned_mac"]
 
         if connection["type"] == "ethernet":
             ifcfg["TYPE"] = "Ethernet"
@@ -959,6 +961,18 @@ class NMUtil:
                 )
         else:
             raise MyError("unsupported type %s" % (connection["type"]))
+
+        if connection["cloned_mac"] != "default":
+            if connection["type"] == "wireless":
+                s_wireless = self.connection_ensure_setting(con, NM.SettingWireless)
+                s_wireless.set_property(
+                    NM.SETTING_WIRELESS_CLONED_MAC_ADDRESS, connection["cloned_mac"]
+                )
+            else:
+                s_wired = self.connection_ensure_setting(con, NM.SettingWired)
+                s_wired.set_property(
+                    NM.SETTING_WIRED_CLONED_MAC_ADDRESS, connection["cloned_mac"]
+                )
 
         if "ethernet" in connection:
             if connection["ethernet"]["autoneg"] is not None:

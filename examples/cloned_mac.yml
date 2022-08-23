@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- hosts: network-test
+  vars:
+    network_connections:
+      # specify the bond profile
+      - name: bond0
+        state: up
+        type: bond
+        interface_name: bond0
+        # define cloned_mac for the bond interface
+        cloned_mac: "12:23:34:45:56:60"
+
+      # add an ethernet profile to the bond
+      - name: member1
+        state: up
+        type: ethernet
+        interface_name: eth1
+        controller: bond0
+        # define cloned_mac for eth1 interface
+        cloned_mac: "21:23:34:45:56:60"
+
+      # add a second ethernet profile to the bond without a cloned mac
+      - name: member2
+        state: up
+        type: ethernet
+        interface_name: eth2
+        controller: bond0
+  roles:
+    - linux-system-roles.network

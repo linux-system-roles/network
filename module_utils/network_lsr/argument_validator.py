@@ -578,21 +578,34 @@ class ArgValidatorIP(ArgValidatorStr):
 
 
 class ArgValidatorMac(ArgValidatorStr):
-    def __init__(self, name, force_len=None, required=False, default_value=None):
+    def __init__(
+        self, name, force_len=None, required=False, default_value=None, enum_values=None
+    ):
         ArgValidatorStr.__init__(self, name, required, default_value, None)
         self.force_len = force_len
+        self.enum_values_mac = enum_values
 
     def _validate_impl(self, value, name):
         v = ArgValidatorStr._validate_impl(self, value, name)
+
+        if self.enum_values_mac is not None and value in self.enum_values_mac:
+            return v
+
         try:
             addr = Util.mac_aton(v, self.force_len)
         except MyError:
+            enum_ex = ""
+            if self.enum_values_mac is not None:
+                enum_ex = " nor one of %s" % (self.enum_values_mac)
             raise ValidationError(
-                name, "value '%s' is not a valid MAC address" % (value)
+                name, "value '%s' is not a valid MAC address%s" % (value, enum_ex)
             )
         if not addr:
+            enum_ex = ""
+            if self.enum_values_mac is not None:
+                enum_ex = " nor one of %s" % (self.enum_values_mac)
             raise ValidationError(
-                name, "value '%s' is not a valid MAC address" % (value)
+                name, "value '%s' is not a valid MAC address%s" % (value, enum_ex)
             )
         return Util.mac_ntoa(addr)
 
@@ -1822,6 +1835,17 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidatorDeprecated("master", deprecated_by="controller"),
                 ArgValidatorStr("interface_name", allow_empty=True),
                 ArgValidatorMac("mac"),
+                ArgValidatorMac(
+                    "cloned_mac",
+                    enum_values=[
+                        "default",
+                        "preserve",
+                        "permanent",
+                        "random",
+                        "stable",
+                    ],
+                    default_value="default",
+                ),
                 ArgValidatorNum(
                     "mtu", val_min=0, val_max=0xFFFFFFFF, default_value=None
                 ),
@@ -2576,6 +2600,17 @@ class ArgValidator_ListConnections(ArgValidatorList):
                             "the routing rule selector 'uid' is not supported in "
                             "NetworkManger until NM 1.34",
                         )
+
+        if mode == self.VALIDATE_ONE_MODE_INITSCRIPTS and connection["cloned_mac"] in [
+            "preserve",
+            "permanent",
+            "random",
+            "stable",
+        ]:
+            raise ValidationError.from_connection(
+                idx,
+                "Non-MAC argument is not supported by initscripts.",
+            )
 
         self.validate_route_tables(connection, idx)
 
