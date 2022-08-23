@@ -364,6 +364,19 @@ with double quotes and sometimes it is necessary.
 
 - For `initscripts`,  `mac` is the currently configured MAC address of the device (`HWADDR`).
 
+### `cloned_mac`
+
+The `cloned_mac` address is optional and allow to specify the strategy to get the default
+mac or to set your own mac. The value of the `cloned_mac` address needs to be specified in
+hexadecimal notation like `mac` property. Besides explicitly specifying the value as a MAC
+address with hexadecimal notation, the following special values are also supported:
+
+- `default`: honor the default behavior in NetworkManager
+- `permanent`: use the permanent MAC address of the device
+- `preserve`: don't change the MAC address of the device upon activation
+- `random`: generate a randomized value upon each connect
+- `stable`: generate a stable, hashed MAC address
+
 ### `mtu`
 
 The `mtu` option denotes the maximum transmission unit for the profile's

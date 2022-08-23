@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Test configuring bridges
+  hosts: all
+  tasks:
+    - name: define vars
+      set_fact:
+        interface: "LSR-TST-br31"
+        cloned_mac: "12:23:34:45:56:70"
+
+- name: Add test bridge
+  hosts: all
+  vars:
+    network_connections:
+      - name: "{{ interface }}"
+        interface_name: "{{ interface }}"
+        state: up
+        type: bridge
+        ip:
+          dhcp4: no
+          auto6: yes
+        cloned_mac: "{{ cloned_mac }}"
+  roles:
+    - linux-system-roles.network
+  tasks:
+    - name: Verify ifcfg MACADDR entry
+      command: >-
+        grep ^MACADDR= /etc/sysconfig/network-scripts/ifcfg-{{ interface }}
+      register: cloned_mac_address_init
+      changed_when: false
+      when:
+        - network_provider == "initscripts"
+
+    - name: Verify nmcli cloned-mac-address entry
+      command: >-
+        nmcli -f 802-3-ethernet.cloned-mac-address con show {{ interface }}
+      register: cloned_mac_address_nm
+      ignore_errors: yes
+      changed_when: false
+      when:
+        - network_provider == "nm"
+
+    - name: Assert that cloned-mac-address addresses are configured correctly
+      assert:
+        that:
+          - >-
+            cloned_mac_address_init.stdout is not defined or
+            cloned_mac_address_init.stdout.find(cloned_mac) != -1
+          - >-
+            cloned_mac_address_nm.stdout is not defined or
+            cloned_mac_address_nm.stdout.find(cloned_mac) != -1
+        msg: "cloned-mac-address is configured incorrectly"
+
+- import_playbook: down_profile+delete_interface.yml
+  vars:
+    profile: "{{ interface }}"
+
+- import_playbook: remove_profile.yml
+  vars:
+    profile: "{{ interface }}"

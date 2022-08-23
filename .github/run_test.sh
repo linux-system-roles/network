@@ -16,6 +16,7 @@ EXCLUDE_TESTS_C7='
 -e tests/tests_auto_gateway_initscripts.yml
 -e tests/tests_bond_deprecated_initscripts.yml
 -e tests/tests_bond_initscripts.yml
+-e tests/tests_bond_cloned_mac_initscripts.yml
 -e tests/tests_bond_removal_initscripts.yml
 -e tests/tests_infiniband_nm.yml
 -e tests/tests_team_nm.yml
@@ -31,6 +32,7 @@ EXCLUDE_TESTS_C8S='
 -e tests/tests_auto_gateway_initscripts.yml
 -e tests/tests_bond_deprecated_initscripts.yml
 -e tests/tests_bond_initscripts.yml
+-e tests/tests_bond_cloned_mac_initscripts.yml
 -e tests/tests_bond_removal_initscripts.yml
 -e tests/tests_infiniband_nm.yml
 -e tests/tests_integration_pytest.yml
