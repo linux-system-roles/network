@@ -662,6 +662,9 @@ class ArgValidatorIPRoute(ArgValidatorDict):
                     "metric", default_value=-1, val_min=-1, val_max=0xFFFFFFFF
                 ),
                 ArgValidatorRouteTable("table"),
+                ArgValidatorIP(
+                    "src", family=family, default_value=None, plain_address=False
+                ),
             ],
             default_value=None,
         )
@@ -690,6 +693,16 @@ class ArgValidatorIPRoute(ArgValidatorDict):
             result["prefix"] = prefix
         elif not Util.addr_family_valid_prefix(family, prefix):
             raise ValidationError(name, "invalid prefix %s in '%s'" % (prefix, value))
+
+        src = result["src"]
+        if src is not None:
+            if family != src["family"]:
+                raise ValidationError(
+                    name,
+                    "conflicting address family between network and src address '%s'"
+                    % (src["address"]),
+                )
+            result["src"] = src["address"]
 
         return result
 

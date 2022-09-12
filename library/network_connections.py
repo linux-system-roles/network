@@ -525,6 +525,9 @@ class IfcfgUtil:
                 if r["metric"] != -1:
                     line += " metric " + str(r["metric"])
 
+                if r["src"]:
+                    line += " src " + r["src"]
+
                 if r["family"] == socket.AF_INET:
                     route4.append(line)
                 else:
@@ -1162,10 +1165,16 @@ class NMUtil:
                         rr, "table", Util.GLib().Variant.new_uint32(r["table"])
                     )
 
+                if r["src"]:
+                    NM.IPRoute.set_attribute(
+                        rr, "src", Util.GLib().Variant.new_string(r["src"])
+                    )
+
                 if r["family"] == socket.AF_INET:
                     s_ip4.add_route(rr)
                 else:
                     s_ip6.add_route(rr)
+
             for routing_rule in ip["routing_rule"]:
                 nm_routing_rule = NM.IPRoutingRule.new(routing_rule["family"])
                 NM.IPRoutingRule.set_priority(nm_routing_rule, routing_rule["priority"])
