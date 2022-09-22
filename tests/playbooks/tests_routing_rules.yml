@@ -19,6 +19,14 @@
         state: present
     - include_tasks: tasks/assert_device_present.yml
 
+    - name: Create a dedicated test file in `/etc/iproute2/rt_tables.d/` and
+            add a new routing table
+      lineinfile:
+        path: /etc/iproute2/rt_tables.d/table.conf
+        line: "200 custom"
+        mode: "0644"
+        create: yes
+
     - name: Configure connection profile and specify the numeric table in
         static routes
       import_role:
@@ -91,6 +99,9 @@
                   dport: 128 - 256
                   invert: True
                   table: 30600
+                - priority: 200
+                  from: 198.51.100.56/26
+                  table: custom
     # the routing rule selector sport and ipproto are not supported by iproute
     # since v4.17.0, and the iproute installed in CentOS-7 and RHEL-7 is
     # v4.11.0
@@ -111,6 +122,13 @@
     - name: Get the routing rule for looking up the table 30600
       command: ip -6 rule list table 30600
       register: route_rule_table_30600
+      ignore_errors: yes
+      changed_when: false
+      when: ansible_distribution_major_version != "7"
+
+    - name: Get the routing rule for looking up the table 'custom'
+      command: ip rule list table custom
+      register: route_rule_table_custom
       ignore_errors: yes
       changed_when: false
       when: ansible_distribution_major_version != "7"
@@ -171,6 +189,16 @@
           specified rule"
       when: ansible_distribution_major_version != "7"
 
+    - name: Assert that the routing rule with 'custom' table lookup matches the
+        specified rule
+      assert:
+        that:
+          - route_rule_table_custom.stdout is search("200:(\s+)from
+            198.51.100.56/26 lookup custom")
+        msg: "the routing rule with 'custom' table lookup does not match the
+          specified rule"
+      when: ansible_distribution_major_version != "7"
+
     - name: Assert that the IPv4 routing rule in the connection
         "{{ interface }}" matches the specified rule
       assert:
@@ -191,6 +219,8 @@
             0.0.0.0/0 iif iiftest table 30400")
           - connection_route_rule.stdout is search("priority 30402 from
             0.0.0.0/0 oif oiftest table 30400")
+          - connection_route_rule.stdout is search("priority 200 from
+            198.51.100.56/26 table 200")
         msg: "the IPv4 routing rule in the connection '{{ interface }}' does
           not match the specified rule"
 
@@ -206,6 +236,12 @@
             ::/0 dport 128-256 table 30600")
         msg: "the IPv6 routing rule in the connection '{{ interface }}' does
           not match the specified rule"
+
+    - name: Remove the dedicated test file in `/etc/iproute2/rt_tables.d/`
+      file:
+        state: absent
+        path: /etc/iproute2/rt_tables.d/table.conf
+
 - import_playbook: down_profile+delete_interface.yml
   vars:
     profile: "{{ interface }}"

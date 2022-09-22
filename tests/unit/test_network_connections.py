@@ -4395,6 +4395,7 @@ class TestValidatorRouteTable(Python26CompatTestCase):
                             "table": 30400,
                         },
                     ],
+                    "routing_rule": [],
                 },
             }
         ]
@@ -4650,6 +4651,25 @@ class TestValidatorRoutingRules(Python26CompatTestCase):
             }
         ]
         self.validator = network_lsr.argument_validator.ArgValidator_ListConnections()
+        self.old_getter = (
+            network_lsr.argument_validator.IPRouteUtils.get_route_tables_mapping
+        )
+        network_lsr.argument_validator.IPRouteUtils.get_route_tables_mapping = (
+            classmethod(
+                lambda cls: {
+                    "custom": 200,
+                    "eth": 30400,
+                }
+            )
+        )
+        # the connection index is 0 because there is only one connection profile
+        # defined here
+        self.connection_index = 0
+
+    def tearDown(self):
+        network_lsr.argument_validator.IPRouteUtils.get_route_tables_mapping = (
+            self.old_getter
+        )
 
     def test_routing_rule_missing_address_family(self):
         """
@@ -4829,6 +4849,23 @@ class TestValidatorRoutingRules(Python26CompatTestCase):
             "'suppress_prefixlength' is only allowed with the to-table action",
             self.validator.validate,
             self.test_connections,
+        )
+
+    def test_table_found_when_lookup_named_table(self):
+        """
+        Test that the `validate_route_tables()` will find the table id mapping from
+        `IPRouteUtils.get_route_tables_mapping()`.
+        """
+
+        self.test_connections[0]["ip"]["routing_rule"][0]["table"] = "custom"
+
+        self.validator.validate_route_tables(
+            self.test_connections[0],
+            self.connection_index,
+        )
+        self.assertEqual(
+            self.test_connections[0]["ip"]["routing_rule"][0]["table"],
+            200,
         )
 
 

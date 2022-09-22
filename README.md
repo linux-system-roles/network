@@ -581,7 +581,10 @@ The IP configuration supports the following options:
    - `suppress_prefixlength` -
       Reject routing decisions that have a prefix length of the specified or less.
    - `table` -
-      The route table to look up for the `to-table` action.
+      The route table to look up for the `to-table` action. `table` supports both the
+      numeric table and named table. In order to specify the named table, the users
+      have to ensure the named table is properly defined in `/etc/iproute2/rt_tables`
+      or `/etc/iproute2/rt_tables.d/*.conf`.
    - `to` -
       The destination address of the packet to match (e.g. `192.168.100.58/24`).
    - `tos` -
