@@ -2336,7 +2336,10 @@ class ArgValidator_ListConnections(ArgValidatorList):
     VALIDATE_ONE_MODE_INITSCRIPTS = "initscripts"
 
     def validate_route_tables(self, connection, idx):
-        for r in connection["ip"]["route"]:
+        rule_route_combined_list = (
+            connection["ip"]["route"] + connection["ip"]["routing_rule"]
+        )
+        for r in rule_route_combined_list:
             if isinstance(r["table"], Util.STRING_TYPE):
                 mapping = IPRouteUtils.get_route_tables_mapping()
                 if r["table"] in mapping:
