@@ -40,7 +40,6 @@
                   ad_select: stable
                   ad_user_port_key: 1023
                   all_ports_active: True
-                  arp_all_targets: all
                   downdelay: 0
                   lacp_rate: slow
                   lp_interval: 128
@@ -88,7 +87,6 @@
             - { key: 'ad_select', value: 'stable'}
             - { key: 'ad_user_port_key', value: '1023'}
             - { key: 'all_slaves_active', value: '1'}
-            - { key: 'arp_all_targets', value: 'all'}
             - { key: 'downdelay', value: '0'}
             - { key: 'lacp_rate', value: 'slow'}
             - { key: 'lp_interval', value: '128'}

@@ -20,7 +20,6 @@
           ad_select: stable
           ad_user_port_key: 1023
           all_ports_active: True
-          arp_all_targets: all
           downdelay: 0
           lacp_rate: slow
           lp_interval: 128
