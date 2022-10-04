@@ -309,7 +309,7 @@ class IfcfgUtil:
 
     @classmethod
     def ifcfg_create(
-        cls, connections, idx, warn_fcn=lambda msg: None, content_current=None
+        cls, connections, idx, warn_fcn=lambda msg: None, content_current=None, test_flags={},
     ):
         connection = connections[idx]
         ip = connection["ip"]
@@ -513,6 +513,9 @@ class IfcfgUtil:
             if ip["auto_gateway"] is not None:
                 if ip["auto_gateway"]:
                     ifcfg["DEFROUTE"] = "yes"
+                    metric = test_flags.get("metric")
+                    if metric:
+                        ifcfg["METRIC"] = str(metric)
                 else:
                     ifcfg["DEFROUTE"] = "no"
 
@@ -1618,6 +1621,7 @@ class RunEnvironmentAnsible(RunEnvironment):
         "connections": {"required": False, "default": None, "type": "list"},
         "__header": {"required": True, "default": None, "type": "str"},
         "__debug_flags": {"required": False, "default": "", "type": "str"},
+        "__test_flags": {"required": False, "default": {}, "type": "dict"},
     }
 
     def __init__(self):
@@ -1769,6 +1773,7 @@ class Cmd(object):
         ignore_errors=False,
         force_state_change=False,
         debug_flags="",
+        test_flags={},
     ):
         self.run_env = run_env
         self.validate_one_type = None
@@ -1783,6 +1788,7 @@ class Cmd(object):
         self._check_mode = CheckMode.PREPARE
         self._is_changed_modified_system = False
         self._debug_flags = debug_flags
+        self._test_flags = test_flags
 
     def run_command(self, argv, encoding=None):
         return self.run_env.run_command(argv, encoding=encoding)
@@ -2579,7 +2585,7 @@ class Cmd_initscripts(Cmd):
             return
 
         ifcfg_all = IfcfgUtil.ifcfg_create(
-            self.connections, idx, lambda msg: self.log_warn(idx, msg), old_content
+            self.connections, idx, lambda msg: self.log_warn(idx, msg), old_content, self._test_flags,
         )
 
         new_content = IfcfgUtil.content_from_dict(
@@ -2707,6 +2713,7 @@ def main():
             ignore_errors=params["ignore_errors"],
             force_state_change=params["force_state_change"],
             debug_flags=params["__debug_flags"],
+            test_flags=params["__test_flags"],
         )
         connections = cmd.connections
         run_env_ansible.on_failure = cmd.on_failure

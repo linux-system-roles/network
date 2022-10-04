@@ -323,6 +323,17 @@ ansible-playbook --skip-tags tests::cleanup \
     -i testhost, tests/playbooks/tests_802_1x.yml
 ```
 
+### Test Hacks
+
+There is a parameter `__network_test_flags` which is a `dict` and can be used to
+pass values required by the test infrastructure into the module.  For example:
+Some of the `initscripts` tests create default routes, that, on some systems,
+will override the "default" default route and cause an interruption in network
+connectivity. This will cause Ansible to hang as `ssh` requires a network
+connection.  The test flags are used to pass in a `metric` parameter which will
+ensure that the test route created is given a lower priority than the "default"
+default route.
+
 ### NetworkManager Documentation
 
 - [NM 1.0](https://lazka.github.io/pgi-docs/#NM-1.0), it contains a full explanation

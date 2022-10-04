@@ -31,6 +31,8 @@
                 - "203.0.113.2/24"
               gateway6: "2001:db8::1"
               gateway4: "203.0.113.1"
+        __network_test_flags:
+          metric: 4294967295
     - include_tasks: tasks/assert_device_present.yml
     - include_tasks: tasks/assert_profile_present.yml
       vars:

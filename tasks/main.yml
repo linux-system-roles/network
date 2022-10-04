@@ -121,6 +121,7 @@
     connections: "{{ network_connections | default([]) }}"
     __debug_flags: "{{ __network_debug_flags | default(omit) }}"
     __header: "{{ __lsr_ansible_managed }}"
+    __test_flags: "{{ __network_test_flags | default(omit) }}"
   vars:
     __lsr_ansible_managed: "{{ lookup('template', 'get_ansible_managed.j2') }}"
   register: __network_connections_result
