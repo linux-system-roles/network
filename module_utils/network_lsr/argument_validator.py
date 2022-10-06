@@ -1494,7 +1494,7 @@ class ArgValidator_DictBond(ArgValidatorDict):
                 name,
                 "the bond option downdelay or updelay is only valid with miimon enabled",
             )
-        if result["peer_notif_delay"] is not None:
+        if result["peer_notif_delay"]:
             if not result["miimon"] or result["peer_notif_delay"] % result["miimon"]:
                 raise ValidationError(
                     name,
