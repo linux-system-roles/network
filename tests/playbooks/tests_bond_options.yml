@@ -126,6 +126,18 @@
                   arp_ip_target: 192.0.2.128
                   arp_validate: none
                   primary: "{{ dhcp_interface1 }}"
+              # add an ethernet to the bond
+              - name: "{{ port1_profile }}"
+                state: up
+                type: ethernet
+                interface_name: "{{ dhcp_interface1 }}"
+                controller: "{{ controller_profile }}"
+              # add a second ethernet to the bond
+              - name: "{{ port2_profile }}"
+                state: up
+                type: ethernet
+                interface_name: "{{ dhcp_interface2 }}"
+                controller: "{{ controller_profile }}"
         - command: cat
             /sys/class/net/{{ controller_device }}/bonding/'{{ item.key }}'
           name: "** TEST check bond settings"
