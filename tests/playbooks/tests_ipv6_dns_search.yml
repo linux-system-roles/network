@@ -138,11 +138,11 @@
           assert:
             that:
               - __network_connections_result.stderr is search("Setting
-                'dns_search' or 'dns_options' is not allowed when both IPv4 and
-                IPv6 are disabled.")
+                'dns_search', 'dns_options' and 'dns_priority' are not allowed
+                when both IPv4 and IPv6 are disabled.")
             msg: Reconfiguring network connection is not failed with the error
-              "Setting 'dns_search' or 'dns_options' is not allowed when both
-              IPv4 and IPv6 are disabled."
+              "Setting 'dns_search', 'dns_options', and 'dns_priority' are not
+              allowed when both IPv4 and IPv6 are disabled."
           when: ansible_distribution_major_version | int > 7
 
       always:

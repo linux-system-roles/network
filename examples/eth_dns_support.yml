@@ -9,6 +9,7 @@
           route_metric4: 100
           dhcp4: no
           gateway4: 192.0.2.1
+          dns_priority: 9999
           dns:
             - 192.0.2.2
             - 198.51.100.5

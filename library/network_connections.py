@@ -1092,6 +1092,10 @@ class NMUtil:
             s_ip4.clear_dns_options(False)
             for option in ip["dns_options"]:
                 s_ip4.add_dns_option(option)
+            if ip["dns_priority"] is not None:
+                s_ip4.set_property(
+                    NM.SETTING_IP_CONFIG_DNS_PRIORITY, ip["dns_priority"]
+                )
 
             is_ipv6_configured = False
             if ip["ipv6_disabled"]:
@@ -1144,6 +1148,10 @@ class NMUtil:
             s_ip6.clear_dns_options(False)
             for option in ip["dns_options"]:
                 s_ip6.add_dns_option(option)
+            if ip["dns_priority"] is not None:
+                s_ip6.set_property(
+                    NM.SETTING_IP_CONFIG_DNS_PRIORITY, ip["dns_priority"]
+                )
 
             if ip["route_append_only"] and connection_current:
                 for r in self.setting_ip_config_get_routes(
