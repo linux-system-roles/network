@@ -323,8 +323,6 @@ class IfcfgUtil:
 
         if ip["dhcp4_send_hostname"] is not None:
             warn_fcn("ip.dhcp4_send_hostname is not supported by initscripts provider")
-        if ip["route_metric4"] is not None and ip["route_metric4"] >= 0:
-            warn_fcn("ip.route_metric4 is not supported by initscripts provider")
         if ip["route_metric6"] is not None and ip["route_metric6"] >= 0:
             warn_fcn("ip.route_metric6 is not supported by initscripts provider")
 
@@ -515,6 +513,9 @@ class IfcfgUtil:
                     ifcfg["DEFROUTE"] = "yes"
                 else:
                     ifcfg["DEFROUTE"] = "no"
+
+            if ip["route_metric4"] is not None and ip["route_metric4"] >= 0:
+                ifcfg["METRIC"] = str(ip["route_metric4"])
 
             route4 = []
             route6 = []
