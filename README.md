@@ -526,7 +526,8 @@ The IP configuration supports the following options:
     [`ipv6.route-metric`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv6.route-metric)
     properties, respectively. If specified, it determines the route metric for DHCP
     assigned routes and the default route, and thus the priority for multiple
-    interfaces.
+    interfaces. For `initscripts`, `route_metric4` sets the metric for the default
+    route and `route_metric6` is not supported.
 
 - `route`
 
