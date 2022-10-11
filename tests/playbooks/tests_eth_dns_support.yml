@@ -34,6 +34,7 @@
               route_metric4: 100
               dhcp4: no
               gateway4: 192.0.2.1
+              dns_priority: 9999
               dns:
                 - 192.0.2.2
                 - 198.51.100.5
@@ -107,6 +108,13 @@
           - "'rotate' in ipv6_dns.stdout"
           - "'timeout:1' in ipv6_dns.stdout"
         msg: "DNS options are configured incorrectly"
+
+    - name: "Assert that DNS priority is configured correctly"
+      assert:
+        that:
+          - "'9999' in ipv4_dns.stdout"
+          - "'9999' in ipv6_dns.stdout"
+        msg: "DNS priority is configured incorrectly"
 
 - import_playbook: down_profile+delete_interface.yml
   vars:

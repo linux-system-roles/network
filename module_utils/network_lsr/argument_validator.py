@@ -887,6 +887,12 @@ class ArgValidator_DictIP(ArgValidatorDict):
                     ),
                     default_value=list,
                 ),
+                ArgValidatorNum(
+                    "dns_priority",
+                    val_min=-2147483648,
+                    val_max=2147483647,
+                    default_value=0,
+                ),
                 ArgValidatorList(
                     "routing_rule",
                     nested=ArgValidatorIPRoutingRule("routing_rule[?]"),
@@ -911,6 +917,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 "dns": [],
                 "dns_search": [],
                 "dns_options": [],
+                "dns_priority": 0,
             },
         )
 
@@ -2470,19 +2477,23 @@ class ArgValidator_ListConnections(ArgValidatorList):
                     "IPv6 needs to be enabled to support IPv6 nameservers.",
                 )
         # when IPv4 and IPv6 are disabled, setting ip.dns_options or
-        # ip.dns_search is not allowed
-        if connection["ip"]["dns_search"] or connection["ip"]["dns_options"]:
+        # ip.dns_search or ip.dns_priority is not allowed
+        if (
+            connection["ip"]["dns_search"]
+            or connection["ip"]["dns_options"]
+            or connection["ip"]["dns_priority"]
+        ):
             if not _ipv4_enabled(connection) and connection["ip"]["ipv6_disabled"]:
                 raise ValidationError.from_connection(
                     idx,
-                    "Setting 'dns_search' or 'dns_options' is not allowed when "
-                    "both IPv4 and IPv6 are disabled.",
+                    "Setting 'dns_search', 'dns_options' and 'dns_priority' are not "
+                    "allowed when both IPv4 and IPv6 are disabled.",
                 )
             elif not _ipv4_enabled(connection) and _ipv6_is_not_configured(connection):
                 raise ValidationError.from_connection(
                     idx,
-                    "Setting 'dns_search' or 'dns_options' is not allowed when "
-                    "IPv4 is disabled and IPv6 is not configured.",
+                    "Setting 'dns_search', 'dns_options' and 'dns_priority' are not "
+                    "allowed when IPv4 is disabled and IPv6 is not configured.",
                 )
         # DNS options 'inet6', 'ip6-bytestring', 'ip6-dotint', 'no-ip6-dotint' are only
         # supported for IPv6 configuration, so raise errors when IPv6 is disabled
