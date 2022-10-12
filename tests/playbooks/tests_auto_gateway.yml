@@ -31,6 +31,10 @@
                 - "203.0.113.2/24"
               gateway6: "2001:db8::1"
               gateway4: "203.0.113.1"
+              # change the default route metric to higher value so that it will
+              # not take precedence over other routes or not ignore other
+              # routes
+              route_metric4: 4294967295
     - include_tasks: tasks/assert_device_present.yml
     - include_tasks: tasks/assert_profile_present.yml
       vars:
