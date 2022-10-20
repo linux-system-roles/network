@@ -95,7 +95,7 @@ Changelog
 
 - Drop the support for Ansible 2.8
 - Display the `stderr_lines` only by default
-  - All the config parameters can still be displayed as previous using
+- All the config parameters can still be displayed as previous using
     `ansible-playbook -v`
 
 ### New features
@@ -118,8 +118,8 @@ Changelog
 ### Changes
 
 - Use inclusive language
-  - `slave` is deprecated in favor of `port`
-  - `master` is deprecated in favor of `controller`
+- `slave` is deprecated in favor of `port`
+- `master` is deprecated in favor of `controller`
 
 ### New features
 
