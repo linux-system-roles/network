@@ -48,6 +48,8 @@
                 type: ethernet
                 interface_name: "{{ dhcp_interface2 }}"
                 master: "{{ controller_profile }}"
+        - name: debug1
+          command: ls
         - import_tasks: tasks/assert_device_present.yml
           vars:
             interface: "{{ controller_device }}"

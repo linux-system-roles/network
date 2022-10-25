@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
+- name: debug3
+  command: ls
 - name: "Get stat for interface {{ interface }}"
   stat:
     get_attributes: false

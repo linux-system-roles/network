@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
+- name: debug2
+  command: ls
 - include_tasks: get_interface_stat.yml
 - name: "assert that interface {{ interface }} is present"
   assert:
