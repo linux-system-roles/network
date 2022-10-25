@@ -148,3 +148,6 @@
 
 - name: Re-test connectivity
   ping:
+
+- name: Ping works, try a command
+  command: ls
