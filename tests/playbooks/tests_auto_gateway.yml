@@ -34,7 +34,7 @@
               # change the default route metric to higher value so that it will
               # not take precedence over other routes or not ignore other
               # routes
-              route_metric4: 4294967295
+              route_metric4: 65535
     - include_tasks: tasks/assert_device_present.yml
     - include_tasks: tasks/assert_profile_present.yml
       vars:

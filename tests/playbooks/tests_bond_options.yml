@@ -51,6 +51,8 @@
                   updelay: 0
                   use_carrier: True
                   xmit_hash_policy: encap2+3
+                ip:
+                  route_metric4: 65535
 
               # add an ethernet to the bond
               - name: "{{ port1_profile }}"
@@ -126,6 +128,8 @@
                   arp_ip_target: 192.0.2.128
                   arp_validate: none
                   primary: "{{ dhcp_interface1 }}"
+                ip:
+                  route_metric4: 65535
               # add an ethernet to the bond
               - name: "{{ port1_profile }}"
                 state: up
