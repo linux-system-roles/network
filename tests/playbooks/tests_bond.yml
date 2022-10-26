@@ -40,6 +40,8 @@
                 bond:
                   mode: active-backup
                   miimon: 110
+                ip:
+                  route_metric4: 4294967295
               # add an ethernet to the bond
               - name: "{{ port1_profile }}"
                 state: up
