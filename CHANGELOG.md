@@ -1,6 +1,28 @@
 Changelog
 =========
 
+[1.10.0] - 2022-11-01
+--------------------
+
+### New Features
+
+- Support looking up named route table in routing rule
+- Support 'route_metric4' for initscripts provider
+- Support the DNS priority
+
+### Bug Fixes
+
+- bond: improve the validation for setting peer_notif_delay
+- bond: test arp_all_targets only when arp_interval is enabled
+- bond: attach ports when creating the bonding connection
+
+### Other Changes
+
+- Set the route metric when testing the 'auto_gateway'
+- Fix markdownlint 'unordered list indentation' issue
+- add ip.route_metric4: 65535 to failing bond tests
+- use rpm -i instead of yum install for epel7
+
 [1.9.1] - 2022-08-05
 --------------------
 
