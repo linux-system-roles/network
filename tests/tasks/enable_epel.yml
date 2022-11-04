@@ -3,10 +3,18 @@
 - block:
     - name: Create EPEL {{ ansible_distribution_major_version }}
       # yamllint disable-line rule:line-length
-      command: yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
+      command: rpm -iv https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
       args:
         warn: false
         creates: /etc/yum.repos.d/epel.repo
+      register: __epel_status
+      # sometimes the rpm download returns a 403 - I think it is when too
+      # many parallel jobs attempt the download from the same controller in
+      # too short a period of time, so the epel server throttles additional
+      # downloads - use a retry here to mitigate
+      until: __epel_status is success
+      retries: 6
+      delay: 10
 
     - name: Enable EPEL 7
       command: yum-config-manager --enable epel

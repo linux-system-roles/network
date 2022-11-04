@@ -40,7 +40,6 @@
                   ad_select: stable
                   ad_user_port_key: 1023
                   all_ports_active: True
-                  arp_all_targets: all
                   downdelay: 0
                   lacp_rate: slow
                   lp_interval: 128
@@ -52,6 +51,8 @@
                   updelay: 0
                   use_carrier: True
                   xmit_hash_policy: encap2+3
+                ip:
+                  route_metric4: 65535
 
               # add an ethernet to the bond
               - name: "{{ port1_profile }}"
@@ -88,7 +89,6 @@
             - { key: 'ad_select', value: 'stable'}
             - { key: 'ad_user_port_key', value: '1023'}
             - { key: 'all_slaves_active', value: '1'}
-            - { key: 'arp_all_targets', value: 'all'}
             - { key: 'downdelay', value: '0'}
             - { key: 'lacp_rate', value: 'slow'}
             - { key: 'lp_interval', value: '128'}
@@ -128,6 +128,20 @@
                   arp_ip_target: 192.0.2.128
                   arp_validate: none
                   primary: "{{ dhcp_interface1 }}"
+                ip:
+                  route_metric4: 65535
+              # add an ethernet to the bond
+              - name: "{{ port1_profile }}"
+                state: up
+                type: ethernet
+                interface_name: "{{ dhcp_interface1 }}"
+                controller: "{{ controller_profile }}"
+              # add a second ethernet to the bond
+              - name: "{{ port2_profile }}"
+                state: up
+                type: ethernet
+                interface_name: "{{ dhcp_interface2 }}"
+                controller: "{{ controller_profile }}"
         - command: cat
             /sys/class/net/{{ controller_device }}/bonding/'{{ item.key }}'
           name: "** TEST check bond settings"

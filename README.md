@@ -514,6 +514,15 @@ The IP configuration supports the following options:
     When using a caching DNS plugin (dnsmasq or systemd-resolved in NetworkManager.conf)
     then "edns0" and "trust-ad" are automatically added.
 
+- `dns_priority`
+
+    DNS servers priority. The relative priority for DNS servers specified by this
+    setting. The default value is 0, a lower numerical value has higher priority.
+    The valid value of `dns_priority` ranges from -2147483648 to 2147483647. Negative
+    values have the special effect of excluding other configurations with a greater
+    numerical priority value; so in presence of at least one negative priority, only
+    DNS servers from connections with the lowest priority value will be used.
+
 - `gateway4` and `gateway6`
 
     The default gateway for IPv4 (`gateway4`) or IPv6 (`gateway6`) packets.
@@ -526,7 +535,8 @@ The IP configuration supports the following options:
     [`ipv6.route-metric`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv6.route-metric)
     properties, respectively. If specified, it determines the route metric for DHCP
     assigned routes and the default route, and thus the priority for multiple
-    interfaces.
+    interfaces. For `initscripts`, `route_metric4` sets the metric for the default
+    route and `route_metric6` is not supported.
 
 - `route`
 
@@ -582,7 +592,10 @@ The IP configuration supports the following options:
    - `suppress_prefixlength` -
       Reject routing decisions that have a prefix length of the specified or less.
    - `table` -
-      The route table to look up for the `to-table` action.
+      The route table to look up for the `to-table` action. `table` supports both the
+      numeric table and named table. In order to specify the named table, the users
+      have to ensure the named table is properly defined in `/etc/iproute2/rt_tables`
+      or `/etc/iproute2/rt_tables.d/*.conf`.
    - `to` -
       The destination address of the packet to match (e.g. `192.168.100.58/24`).
    - `tos` -

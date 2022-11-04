@@ -323,8 +323,6 @@ class IfcfgUtil:
 
         if ip["dhcp4_send_hostname"] is not None:
             warn_fcn("ip.dhcp4_send_hostname is not supported by initscripts provider")
-        if ip["route_metric4"] is not None and ip["route_metric4"] >= 0:
-            warn_fcn("ip.route_metric4 is not supported by initscripts provider")
         if ip["route_metric6"] is not None and ip["route_metric6"] >= 0:
             warn_fcn("ip.route_metric6 is not supported by initscripts provider")
 
@@ -515,6 +513,9 @@ class IfcfgUtil:
                     ifcfg["DEFROUTE"] = "yes"
                 else:
                     ifcfg["DEFROUTE"] = "no"
+
+            if ip["route_metric4"] is not None and ip["route_metric4"] >= 0:
+                ifcfg["METRIC"] = str(ip["route_metric4"])
 
             route4 = []
             route6 = []
@@ -1094,6 +1095,10 @@ class NMUtil:
             s_ip4.clear_dns_options(False)
             for option in ip["dns_options"]:
                 s_ip4.add_dns_option(option)
+            if ip["dns_priority"] is not None:
+                s_ip4.set_property(
+                    NM.SETTING_IP_CONFIG_DNS_PRIORITY, ip["dns_priority"]
+                )
 
             is_ipv6_configured = False
             if ip["ipv6_disabled"]:
@@ -1146,6 +1151,10 @@ class NMUtil:
             s_ip6.clear_dns_options(False)
             for option in ip["dns_options"]:
                 s_ip6.add_dns_option(option)
+            if ip["dns_priority"] is not None:
+                s_ip6.set_property(
+                    NM.SETTING_IP_CONFIG_DNS_PRIORITY, ip["dns_priority"]
+                )
 
             if ip["route_append_only"] and connection_current:
                 for r in self.setting_ip_config_get_routes(
