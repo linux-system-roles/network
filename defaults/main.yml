@@ -2,24 +2,26 @@
 ---
 network_connections: []
 
-network_allow_restart: no
+network_allow_restart: false
+
+# Ansible distribution identifiers that the role treats like RHEL
+__network_rh_distros:
+  - CentOS
+  - OracleLinux
+  - RedHat
+  - Rocky
 
 # Use initscripts for RHEL/CentOS < 7, nm otherwise
 network_provider_os_default: "{{
-    'initscripts' if ansible_distribution in [
-      'RedHat',
-      'CentOS',
-      'OracleLinux',
-      'Rocky'
-    ] and ansible_distribution_major_version is version('7', '<')
-    else 'nm' }}"
+    'initscripts' if ansible_distribution in __network_rh_distros and
+        ansible_distribution_major_version is version('7', '<')
+        else 'nm' }}"
 # If NetworkManager.service is running, assume that 'nm' is currently in-use,
 # otherwise initscripts
 __network_provider_current: "{{
     'nm' if 'NetworkManager.service' in ansible_facts.services and
         ansible_facts.services['NetworkManager.service']['state'] == 'running'
-        else 'initscripts'
-    }}"
+        else 'initscripts' }}"
 # Default to the auto-detected value
 network_provider: "{{ __network_provider_current }}"
 
@@ -60,27 +62,27 @@ __network_packages_default_wpa_supplicant: ["{%
 # - python-gobject-base on RHEL7 (no python2-gobject-base :-/)
 # - python3-gobject-base on Fedora 28+
 __network_packages_default_gobject_packages: ["python{{
-      ansible_python['version']['major'] | replace('2', '')}}-gobject-base"]
+      ansible_python['version']['major'] | replace('2', '') }}-gobject-base"]
 
 __network_service_name_default_nm: NetworkManager
-__network_packages_default_nm: "{{['NetworkManager']
-      + __network_packages_default_gobject_packages|select()|list()
-      + __network_packages_default_wpa_supplicant|select()|list()
-      + __network_packages_default_wireless|select()|list()
-      + __network_packages_default_team|select()|list()}}"
+__network_packages_default_nm: "{{ ['NetworkManager']
+      + __network_packages_default_gobject_packages | select() | list()
+      + __network_packages_default_wpa_supplicant | select() | list()
+      + __network_packages_default_wireless | select() | list()
+      + __network_packages_default_team | select() | list() }}"
 
 __network_service_name_default_initscripts: network
 
 # initscripts requires bridge-utils to manage bridges, install it when the
 # 'bridge' type is used in network_connections
 __network_packages_default_initscripts_bridge: ["{%
-if network_connections|selectattr('type', 'defined')|
-   selectattr('type', 'match', '^bridge$')|list|count>0 and
-   ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux', 'Rocky'] and
+if network_connections | selectattr('type', 'defined') |
+   selectattr('type', 'match', '^bridge$') | list | count > 0 and
+   ansible_distribution in __network_rh_distros and
    ansible_distribution_major_version is version('7', '<=')
 %}bridge-utils{% endif %}"]
 __network_packages_default_initscripts_network_scripts: ["{%
-if ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux', 'Rocky'] and
+if ansible_distribution in __network_rh_distros and
     ansible_distribution_major_version is version('7', '<=')
 %}initscripts{% else %}network-scripts{% endif %}"]
 # convert _network_packages_default_initscripts_bridge to an empty list if it
@@ -89,8 +91,8 @@ if ansible_distribution in ['RedHat', 'CentOS', 'OracleLinux', 'Rocky'] and
 #     (the empty string is false)
 # |list() converts the generator that |select() creates to a list
 __network_packages_default_initscripts: "{{
-__network_packages_default_initscripts_bridge|select()|list()
-+ __network_packages_default_initscripts_network_scripts|select()|list()
+__network_packages_default_initscripts_bridge | select() | list()
++ __network_packages_default_initscripts_network_scripts | select() | list()
 }}"
 
 

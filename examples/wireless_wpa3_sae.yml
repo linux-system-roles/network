@@ -6,12 +6,11 @@
       - name: wlan0
         type: wireless
         wireless:
-          ssid: "My WPA3-Personal Network"
-          key_mgmt: "sae"
+          ssid: My WPA3-Personal Network
+          key_mgmt: sae
           # recommend vault encrypting the wireless password
           # see https://docs.ansible.com/ansible/latest/user_guide/vault.html
-          password: "p@55w0rD"
-
+          password: p@55w0rD
 
   roles:
     - linux-system-roles.network

@@ -2,7 +2,8 @@
 ---
 - hosts: all
   tasks:
-    - include_role:
+    - name: Configure ethernet paramters
+      include_role:
         name: linux-system-roles.network
       vars:
         network_connections:
@@ -10,10 +11,10 @@
             state: up
             type: ethernet
             ip:
-              dhcp4: "no"
-              auto6: "no"
+              dhcp4: false
+              auto6: false
             ethtool:
               features:
-                gro: "no"
-                gso: "yes"
-                tx_sctp_segmentation: "no"
+                gro: false
+                gso: true
+                tx_sctp_segmentation: false

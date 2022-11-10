@@ -46,7 +46,6 @@
 - name: Get NetworkManager version
   command:
     cmd: rpm -qa NetworkManager
-    warn: false
   register: __network_NM_NVR
   changed_when: false
 - block:

@@ -9,4 +9,3 @@
           ipv6_disabled: true
   roles:
     - linux-system-roles.network
-...

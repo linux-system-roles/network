@@ -3,15 +3,14 @@
 - hosts: network-test
   vars:
     network_connections:
-
       # Create a bridge profile, which is the parent of VLAN.
       - name: prod2
         state: up
         type: bridge
         interface_name: bridge2
         ip:
-          dhcp4: no
-          auto6: no
+          dhcp4: false
+          auto6: false
 
       # set an ethernet port to the bridge
       - name: prod2-port1
@@ -30,7 +29,7 @@
         vlan_id: 100
         ip:
           address:
-            - "192.0.2.{{ network_iphost }}/24"
+            - 192.0.2.{{ network_iphost }}/24
 
   roles:
     - linux-system-roles.network

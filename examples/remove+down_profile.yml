@@ -9,4 +9,3 @@
         state: down
   roles:
     - linux-system-roles.network
-...

@@ -18,8 +18,6 @@ GET_NM_VERSION = """
             state: present
         - name: Get NetworkManager version
           command: rpm -q --qf "%{version}" NetworkManager
-          args:
-            warn: false
           register: NetworkManager_version
           when: true
       when:

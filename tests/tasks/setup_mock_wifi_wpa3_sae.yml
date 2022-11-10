@@ -39,8 +39,6 @@
     dnf -y install koji
     koji download-build --arch=$(uname -p) kernel-modules-internal-$(uname -r)
     dnf -y install kernel-modules*.rpm
-  args:
-    warn: false
   when:
     - ansible_distribution == 'Fedora'
 
