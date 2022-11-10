@@ -7,7 +7,7 @@
         type: ethernet
         ip:
           route_metric4: 100
-          dhcp4: no
+          dhcp4: false
           gateway4: 192.0.2.1
           dns_priority: 9999
           dns:
@@ -21,7 +21,7 @@
             - timeout:1
 
           route_metric6: -1
-          auto6: no
+          auto6: false
           gateway6: 2001:db8::1
 
           address:
@@ -38,8 +38,7 @@
               prefix: 26
               gateway: 198.51.100.6
               metric: 4
-          route_append_only: no
-          rule_append_only: yes
+          route_append_only: false
+          rule_append_only: true
   roles:
     - linux-system-roles.network
-...

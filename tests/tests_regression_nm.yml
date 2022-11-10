@@ -14,8 +14,6 @@
         state: present
     - name: Get NetworkManager version
       command: rpm -q --qf "%{version}" NetworkManager
-      args:
-        warn: "no"
       when: true
       register: NetworkManager_version
 

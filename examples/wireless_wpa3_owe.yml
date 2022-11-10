@@ -6,7 +6,7 @@
       - name: wlan0
         type: wireless
         wireless:
-          ssid: "My Enhanced Open(OWE) Network"
-          key_mgmt: "owe"
+          ssid: My Enhanced Open(OWE) Network
+          key_mgmt: owe
   roles:
     - linux-system-roles.network

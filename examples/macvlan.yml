@@ -3,7 +3,6 @@
 - hosts: network-test
   vars:
     network_connections:
-
       - name: eth0
         type: ethernet
         state: up
@@ -19,8 +18,8 @@
         parent: eth0
         macvlan:
           mode: bridge
-          promiscuous: True
-          tap: False
+          promiscuous: true
+          tap: false
         ip:
           address:
             - 192.168.1.1/24

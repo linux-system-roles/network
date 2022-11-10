@@ -2,7 +2,8 @@
 ---
 - hosts: all
   tasks:
-    - include_role:
+    - name: Configure ethernet coalesce
+      include_role:
         name: linux-system-roles.network
       vars:
         network_connections:
@@ -10,12 +11,12 @@
             state: up
             type: ethernet
             ip:
-              dhcp4: no
-              auto6: no
+              dhcp4: false
+              auto6: false
             ethtool:
               coalesce:
-                adaptive_rx: yes
-                adaptive_tx: no
+                adaptive_rx: true
+                adaptive_tx: false
                 pkt_rate_high: 128
                 pkt_rate_low: 128
                 rx_frames: 128

@@ -82,7 +82,7 @@ the name prefix. List of variables:
 - `network_allow_restart` - Certain configurations require the role to restart
   network services. For example, if a wireless connection is configured and
   NetworkManager-wifi is not installed, NetworkManager must be restarted prior
-  to the connection being configured. Setting this to `no` will prevent the
+  to the connection being configured. Setting this to `false` will prevent the
   role from restarting network service.
 - `network_state` - The network state settings can be configured in the managed
   host, and the format and the syntax of the configuration should be consistent
@@ -98,7 +98,7 @@ network_provider: nm
 network_connections:
   - name: eth0
     #...
-network_allow_restart: yes
+network_allow_restart: true
 ```
 
 ```yaml
@@ -255,12 +255,12 @@ If the type is `ethernet`, then there can be an extra `ethernet` dictionary with
 items (options): `autoneg`, `speed` and `duplex`, which correspond to the
 settings of the `ethtool` utility with the same name.
 
-- `autoneg`: `yes` (default) or `no` [if auto-negotiation is enabled or disabled]
+- `autoneg`: `true` (default) or `false` [if auto-negotiation is enabled or disabled]
 - `speed`: speed in Mbit/s
 - `duplex`: `half` or `full`
 
 Note that the `speed` and `duplex` link settings are required when autonegotiation is
-disabled (`autoneg: no`).
+disabled (`autoneg: false`).
 
 #### `type: bridge`, `type: bond`, `type: team`
 
@@ -454,7 +454,7 @@ The IP configuration supports the following options:
     If this variable is not specified, the role will use the default behavior of the
     `network_provider` selected.
 
-    Setting this option to `no` is equivalent to:
+    Setting this option to `false` is equivalent to:
     - `DEFROUTE = no` in initscripts, or
     - `ipv4.never-default/ipv6.never-default yes` in nmcli
 
@@ -578,7 +578,7 @@ The IP configuration supports the following options:
       Select the incoming interface name to match.
    - `invert` -
       Invert the selected match of the rule. The possible values are boolean values
-      `True` and `False` (default). If the value is `True`, this is equivalent to match
+      `true` and `false` (default). If the value is `true`, this is equivalent to match
       any packet that not satisfying selected match of the rule.
    - `ipproto` -
       Select the IP protocol value to match, the valid value ranges from 1 to 255.
@@ -609,9 +609,9 @@ The IP configuration supports the following options:
     The `route_append_only` option allows only to add new routes to the
     existing routes on the system.
 
-    If the `route_append_only` boolean option is set to `yes`, the specified routes are
-    appended to the existing routes. If `route_append_only` is set to `no` (default),
-    the current routes are replaced. Note that setting `route_append_only` to `yes`
+    If the `route_append_only` boolean option is set to `true`, the specified routes are
+    appended to the existing routes. If `route_append_only` is set to `false` (default),
+    the current routes are replaced. Note that setting `route_append_only` to `true`
     without setting `route` has the effect of preserving the current static routes.
 
 - `rule_append_only`
@@ -644,61 +644,61 @@ The ethtool configuration supports the following options:
 ```yaml
   ethtool:
     features:
-      esp_hw_offload: yes|no  # optional
-      esp_tx_csum_hw_offload: yes|no  # optional
-      fcoe_mtu: yes|no  # optional
-      gro: yes|no  # optional
-      gso: yes|no  # optional
-      highdma: yes|no  # optional
-      hw_tc_offload: yes|no  # optional
-      l2_fwd_offload: yes|no  # optional
-      loopback: yes|no  # optional
-      lro: yes|no  # optional
-      ntuple: yes|no  # optional
-      rx: yes|no  # optional
-      rx_all: yes|no  # optional
-      rx_fcs: yes|no  # optional
-      rx_gro_hw: yes|no  # optional
-      rx_udp_tunnel_port_offload: yes|no  # optional
-      rx_vlan_filter: yes|no  # optional
-      rx_vlan_stag_filter: yes|no  # optional
-      rx_vlan_stag_hw_parse: yes|no  # optional
-      rxhash: yes|no  # optional
-      rxvlan: yes|no  # optional
-      sg: yes|no  # optional
-      tls_hw_record: yes|no  # optional
-      tls_hw_tx_offload: yes|no  # optional
-      tso: yes|no  # optional
-      tx: yes|no  # optional
-      tx_checksum_fcoe_crc: yes|no  # optional
-      tx_checksum_ip_generic: yes|no  # optional
-      tx_checksum_ipv4: yes|no  # optional
-      tx_checksum_ipv6: yes|no  # optional
-      tx_checksum_sctp: yes|no  # optional
-      tx_esp_segmentation: yes|no  # optional
-      tx_fcoe_segmentation: yes|no  # optional
-      tx_gre_csum_segmentation: yes|no  # optional
-      tx_gre_segmentation: yes|no  # optional
-      tx_gso_partial: yes|no  # optional
-      tx_gso_robust: yes|no  # optional
-      tx_ipxip4_segmentation: yes|no  # optional
-      tx_ipxip6_segmentation: yes|no  # optional
-      tx_nocache_copy: yes|no  # optional
-      tx_scatter_gather: yes|no  # optional
-      tx_scatter_gather_fraglist: yes|no  # optional
-      tx_sctp_segmentation: yes|no  # optional
-      tx_tcp_ecn_segmentation: yes|no  # optional
-      tx_tcp_mangleid_segmentation: yes|no  # optional
-      tx_tcp_segmentation: yes|no  # optional
-      tx_tcp6_segmentation: yes|no  # optional
-      tx_udp_segmentation: yes|no  # optional
-      tx_udp_tnl_csum_segmentation: yes|no  # optional
-      tx_udp_tnl_segmentation: yes|no  # optional
-      tx_vlan_stag_hw_insert: yes|no  # optional
-      txvlan: yes|no  # optional
+      esp_hw_offload: true|false  # optional
+      esp_tx_csum_hw_offload: true|false  # optional
+      fcoe_mtu: true|false  # optional
+      gro: true|false  # optional
+      gso: true|false  # optional
+      highdma: true|false  # optional
+      hw_tc_offload: true|false  # optional
+      l2_fwd_offload: true|false  # optional
+      loopback: true|false  # optional
+      lro: true|false  # optional
+      ntuple: true|false  # optional
+      rx: true|false  # optional
+      rx_all: true|false  # optional
+      rx_fcs: true|false  # optional
+      rx_gro_hw: true|false  # optional
+      rx_udp_tunnel_port_offload: true|false  # optional
+      rx_vlan_filter: true|false  # optional
+      rx_vlan_stag_filter: true|false  # optional
+      rx_vlan_stag_hw_parse: true|false  # optional
+      rxhash: true|false  # optional
+      rxvlan: true|false  # optional
+      sg: true|false  # optional
+      tls_hw_record: true|false  # optional
+      tls_hw_tx_offload: true|false  # optional
+      tso: true|false  # optional
+      tx: true|false  # optional
+      tx_checksum_fcoe_crc: true|false  # optional
+      tx_checksum_ip_generic: true|false  # optional
+      tx_checksum_ipv4: true|false  # optional
+      tx_checksum_ipv6: true|false  # optional
+      tx_checksum_sctp: true|false  # optional
+      tx_esp_segmentation: true|false  # optional
+      tx_fcoe_segmentation: true|false  # optional
+      tx_gre_csum_segmentation: true|false  # optional
+      tx_gre_segmentation: true|false  # optional
+      tx_gso_partial: true|false  # optional
+      tx_gso_robust: true|false  # optional
+      tx_ipxip4_segmentation: true|false  # optional
+      tx_ipxip6_segmentation: true|false  # optional
+      tx_nocache_copy: true|false  # optional
+      tx_scatter_gather: true|false  # optional
+      tx_scatter_gather_fraglist: true|false  # optional
+      tx_sctp_segmentation: true|false  # optional
+      tx_tcp_ecn_segmentation: true|false  # optional
+      tx_tcp_mangleid_segmentation: true|false  # optional
+      tx_tcp_segmentation: true|false  # optional
+      tx_tcp6_segmentation: true|false  # optional
+      tx_udp_segmentation: true|false  # optional
+      tx_udp_tnl_csum_segmentation: true|false  # optional
+      tx_udp_tnl_segmentation: true|false  # optional
+      tx_vlan_stag_hw_insert: true|false  # optional
+      txvlan: true|false  # optional
     coalesce:
-      adaptive_rx: yes|no  # optional
-      adaptive_tx: yes|no  # optional
+      adaptive_rx: true|false  # optional
+      adaptive_tx: true|false  # optional
       pkt_rate_high: 0  # optional mininum=0 maximum=0xffffffff
       pkt_rate_low: 0  # optional mininum=0 maximum=0xffffffff
       rx_frames: 0  # optional mininum=0 maximum=0xffffffff
@@ -787,7 +787,7 @@ SSL certificates and keys must be deployed on the host prior to running the role
 
 - `system_ca_certs`
 
-    If set to `True`, NetworkManager will use the system's trusted ca
+    If set to `true`, NetworkManager will use the system's trusted ca
     certificates to verify the EAP server.
 
 - `domain_suffix_match`
@@ -830,8 +830,8 @@ following options:
 
 - `all_ports_active`
 
-    `all_slaves_active` in kernel and NetworkManager. The boolean value `False` drops
-    the duplicate frames (received on inactive ports) and the boolean value `True`
+    `all_slaves_active` in kernel and NetworkManager. The boolean value `false` drops
+    the duplicate frames (received on inactive ports) and the boolean value `true`
     delivers the duplicate frames.
 
 - `arp_all_targets`
@@ -920,7 +920,7 @@ following options:
 - `tlb_dynamic_lb`
 
     This option specifies if dynamic shuffling of flows is enabled in tlb mode. The
-    boolean value `True` enables the flow shuffling while the boolean value `False`
+    boolean value `true` enables the flow shuffling while the boolean value `false`
     disables it.
 
 - `updelay`
@@ -931,8 +931,8 @@ following options:
 - `use_carrier`
 
     This options specifies whether or not miimon should use MII or ETHTOOL ioctls
-    versus netif_carrier_ok() to determine the link sattus. The boolean value `True`
-    enables the use of netif_carrier_ok() while the boolean value `False` uses MII or
+    versus netif_carrier_ok() to determine the link sattus. The boolean value `true`
+    enables the use of netif_carrier_ok() while the boolean value `false` uses MII or
     ETHTOOL ioctls instead.
 
 - `xmit_hash_policy`
@@ -952,7 +952,7 @@ network_connections:
     type: ethernet
     interface_name: eth0
     ip:
-      dhcp4: yes
+      dhcp4: true
 
   - name: Wired0
     state: up
@@ -981,10 +981,10 @@ network_connections:
   - name: eth0
     #persistent_state: present  # default
     type: ethernet
-    autoconnect: yes
+    autoconnect: true
     mac: "00:00:5e:00:53:5d"
     ip:
-      dhcp4: yes
+      dhcp4: true
 ```
 
 Specifying a connecting profile for an ethernet device with the `ID_PATH`:
@@ -1033,7 +1033,7 @@ network_connections:
     type: ethernet
 
     ethernet:
-      autoneg: no
+      autoneg: false
       speed: 1000
       duplex: full
 ```
@@ -1055,8 +1055,8 @@ network_connections:
     interface_name: br0
     type: bridge
     ip:
-      dhcp4: no
-      auto6: no
+      dhcp4: false
+      auto6: false
 ```
 
 Setting `controller` and `port_type`:
@@ -1081,15 +1081,15 @@ Configuring VLANs:
 ```yaml
 network_connections:
   - name: eth1-profile
-    autoconnet: no
+    autoconnect: false
     type: ethernet
     interface_name: eth1
     ip:
-      dhcp4: no
-      auto6: no
+      dhcp4: false
+      auto6: false
 
   - name: eth1.6
-    autoconnect: no
+    autoconnect: false
     type: vlan
     parent: eth1-profile
     vlan:
@@ -1097,7 +1097,7 @@ network_connections:
     ip:
       address:
         - 192.0.2.5/24
-      auto6: no
+      auto6: false
 ```
 
 Configuring MACVLAN:
@@ -1116,8 +1116,8 @@ network_connections:
     parent: eth0-profile
     macvlan:
       mode: bridge
-      promiscuous: yes
-      tap: no
+      promiscuous: true
+      tap: false
     ip:
       address:
         - 192.168.1.1/24
@@ -1145,8 +1145,8 @@ network_connections:
     type: ethernet
     ip:
       route_metric4: 100
-      dhcp4: no
-      #dhcp4_send_hostname: no
+      dhcp4: false
+      #dhcp4_send_hostname: false
       gateway4: 192.0.2.1
 
       dns:
@@ -1160,7 +1160,7 @@ network_connections:
         - timeout:1
 
       route_metric6: -1
-      auto6: no
+      auto6: false
       gateway6: 2001:db8::1
 
       address:
@@ -1177,8 +1177,8 @@ network_connections:
           prefix: 26
           gateway: 198.51.100.6
           metric: 4
-      route_append_only: no
-      rule_append_only: yes
+      route_append_only: false
+      rule_append_only: true
 ```
 
 Configuring 802.1x:

@@ -11,17 +11,17 @@
           private_key: /etc/pki/tls/client.key
           # recommend vault encrypting the private key password
           # see https://docs.ansible.com/ansible/latest/user_guide/vault.html
-          private_key_password: "p@55w0rD"
+          private_key_password: p@55w0rD
           client_cert: /etc/pki/tls/client.pem
           ca_cert: /etc/pki/tls/cacert.pem
           domain_suffix_match: example.com
 
   # certs have to be deployed first
   pre_tasks:
-    - name: copy certs/keys for 802.1x auth
+    - name: Copy certs/keys for 802.1x auth
       copy:
         src: "{{ item }}"
-        dest: "/etc/pki/tls/{{ item }}"
+        dest: /etc/pki/tls/{{ item }}
       with_items:
         - client.key
         - client.pem

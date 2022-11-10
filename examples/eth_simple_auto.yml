@@ -3,14 +3,13 @@
 - hosts: network-test
   vars:
     network_connections:
-
       # Create one ethernet profile and activate it.
       # The profile uses automatic IP addressing
       # and is tied to the interface by MAC address.
       - name: prod1
         state: up
         type: ethernet
-        autoconnect: yes
+        autoconnect: true
         mac: "{{ network_mac1 }}"
         mtu: 1450
 

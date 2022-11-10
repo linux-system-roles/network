@@ -3,7 +3,6 @@
 - hosts: network-test
   vars:
     network_connections:
-
       - name: ib0
         type: infiniband
         interface_name: ib0
@@ -12,13 +11,13 @@
       - name: ib0-10
         interface_name: ib0.000a
         type: infiniband
-        autoconnect: yes
+        autoconnect: true
         infiniband_p_key: 10
         parent: ib0
         state: up
         ip:
-          dhcp4: no
-          auto6: no
+          dhcp4: false
+          auto6: false
           address:
             - 198.51.100.133/30
 

@@ -15,6 +15,9 @@ extends: yamllint_defaults.yml
 # have to copy all of the rules from the base config
 # rules:
 #   line-length: disable
+ignore: |
+  tests/roles/
+  .tox/
 rules:
   truthy: disable
   line-length:

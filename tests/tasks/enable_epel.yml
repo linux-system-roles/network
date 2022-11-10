@@ -2,10 +2,10 @@
 ---
 - block:
     - name: Create EPEL {{ ansible_distribution_major_version }}
-      # yamllint disable-line rule:line-length
-      command: rpm -iv https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm
-      args:
-        warn: false
+      command:
+        cmd: >-
+          rpm -iv https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{
+          ansible_distribution_major_version }}.noarch.rpm
         creates: /etc/yum.repos.d/epel.repo
       register: __epel_status
       # sometimes the rpm download returns a 403 - I think it is when too
@@ -19,14 +19,10 @@
     - name: Enable EPEL 7
       command: yum-config-manager --enable epel
       when: ansible_distribution_major_version == '7'
-      args:
-        warn: false
 
     - name: Enable EPEL 8
       command: dnf config-manager --set-enabled epel
       when: ansible_distribution_major_version == '8'
-      args:
-        warn: false
   when:
     - ansible_distribution in ['RedHat', 'CentOS']
     - ansible_distribution_major_version in ['7', '8']
