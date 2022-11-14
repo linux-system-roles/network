@@ -1,6 +1,21 @@
 Changelog
 =========
 
+[1.10.1] - 2022-11-14
+--------------------
+
+### New Features
+
+- none
+
+### Bug Fixes
+
+- none
+
+### Other Changes
+
+- support ansible-core-2.14, ansible-lint 6.x
+
 [1.10.0] - 2022-11-01
 --------------------
 
