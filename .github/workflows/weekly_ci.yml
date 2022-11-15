@@ -2,36 +2,17 @@
 name: Weekly CI trigger
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
+  schedule:
+    - cron: '0 13 * * 6'
 env:
   BRANCH_NAME: "weekly-ci"
-  COMMIT_MESSAGE: "Weekly CI check"
+  COMMIT_MESSAGE: "This PR is to trigger periodic CI testing"
+  BODY_MESSAGE: "This PR is for the purpose of triggering periodic CI testing. We don't currently have a way to trigger CI without a PR, so this PR serves that purpose."
   COMMENT: "[citest]"
 jobs:
   weekly_ci:
     runs-on: ubuntu-latest
     steps:
-      - name: Delete the previous branch if exists
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const response = await github.rest.git.listMatchingRefs({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              branch: "heads/${{ env.BRANCH_NAME }}",
-            });
-            for (ref in response.data){
-              if (response.data[ref].ref == "refs/heads/${{ env.BRANCH_NAME }}"){
-                console.log("deleting branch");
-                console.log(response.data[ref]);
-                await github.rest.git.deleteRef({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  ref: "heads/${{ env.BRANCH_NAME }}",
-                });
-              }
-            }
-
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -39,27 +20,60 @@ jobs:
       - name: Create and push empty commit
         run: |
           set -euxo pipefail
+
+          get_main_branch() {
+              local br
+              br=$(git branch --list main)
+              if [ -n "$br" ]; then
+                  echo main
+                  return 0
+              fi
+              br=$(git branch --list master)
+              if [ -n "$br" ]; then
+                  echo master
+                  return 0
+              fi
+              echo UNKNOWN
+              return 1
+          }
+
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -b weekly-ci
+          git checkout ${{ env.BRANCH_NAME }} || git checkout -b ${{ env.BRANCH_NAME }}
+          git rebase $(get_main_branch)
           git commit --allow-empty -m "${{ env.COMMIT_MESSAGE }}"
-          git push --set-upstream origin ${{ env.BRANCH_NAME }}
+          git push -f --set-upstream origin ${{ env.BRANCH_NAME }}
 
       - name: Create and comment pull request
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GH_PUSH_TOKEN }}
           script: |
-            const response = await github.rest.pulls.create({
+            const head = [context.repo.owner, ":", "${{ env.BRANCH_NAME }}"].join("");
+            const response = await github.rest.pulls.list({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: "${{ env.COMMIT_MESSAGE }}",
-              head: "${{ env.BRANCH_NAME }}",
-              base: context.ref
+              head: head,
+              base: context.ref,
+              state: "open"
             });
+            if (response.data.length === 0) {
+              const response = await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: "${{ env.COMMIT_MESSAGE }}",
+                body: "${{ env.BODY_MESSAGE }}",
+                head: "${{ env.BRANCH_NAME }}",
+                base: context.ref,
+                draft: true
+              });
+              var pr_number = response.data.number;
+            } else {
+              var pr_number = response.data[0].number;
+            }
             github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: response.data.number,
+              issue_number: pr_number,
               body: "${{ env.COMMENT }}",
             });
