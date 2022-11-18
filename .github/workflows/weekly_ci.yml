@@ -2,8 +2,6 @@
 name: Weekly CI trigger
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
-  schedule:
-    - cron: '0 13 * * 6'
 env:
   BRANCH_NAME: "weekly-ci"
   COMMIT_MESSAGE: "Weekly CI check"
