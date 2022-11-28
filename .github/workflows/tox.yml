@@ -12,17 +12,29 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 jobs:
   python:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        pyver: ['2.7', '3.6', '3.8', '3.9', '3.10']
+        pyver_os:
+          - ver: '2.7'
+            os: ubuntu-20.04
+          - ver: '3.6'
+            os: ubuntu-20.04
+          - ver: '3.8'
+            os: ubuntu-latest
+          - ver: '3.9'
+            os: ubuntu-latest
+          - ver: '3.10'
+            os: ubuntu-latest
+          - ver: '3.11'
+            os: ubuntu-latest
+    runs-on: ${{ matrix.pyver_os.os }}
     steps:
       - name: checkout PR
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.pyver }}
+          python-version: ${{ matrix.pyver_os.ver }}
       - name: Install platform dependencies, python, tox, tox-lsr
         run: |
           set -euxo pipefail
@@ -34,7 +46,7 @@ jobs:
       - name: Run tox tests
         run: |
           set -euxo pipefail
-          toxpyver=$(echo "${{ matrix.pyver }}" | tr -d .)
+          toxpyver=$(echo "${{ matrix.pyver_os.ver }}" | tr -d .)
           toxenvs="py${toxpyver}"
           case "$toxpyver" in
           27) toxenvs="${toxenvs},coveralls,flake8,pylint" ;;
@@ -42,6 +54,7 @@ jobs:
           38) toxenvs="${toxenvs},coveralls,ansible-lint,ansible-plugin-scan,collection,ansible-test" ;;
           39) toxenvs="${toxenvs},coveralls,ansible-managed-var-comment" ;;
           310) toxenvs="${toxenvs},coveralls,check-meta-versions" ;;
+          311) toxenvs="${toxenvs},coveralls" ;;
           esac
           TOXENV="$toxenvs" lsr_ci_runtox
   python-26:
