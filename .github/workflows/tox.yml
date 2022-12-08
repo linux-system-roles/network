@@ -4,7 +4,7 @@ on:  # yamllint disable-line rule:truthy
   - pull_request
   - push
 env:
-  TOX_LSR: "git+https://github.com/linux-system-roles/tox-lsr@2.13.0"
+  TOX_LSR: "git+https://github.com/linux-system-roles/tox-lsr@2.13.1"
   LSR_ANSIBLE_TEST_DOCKER: "true"
   LSR_ANSIBLES: 'ansible==2.9.*'
   LSR_MSCENARIOS: default
