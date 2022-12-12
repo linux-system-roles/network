@@ -1,6 +1,21 @@
 Changelog
 =========
 
+[1.11.0] - 2022-12-12
+--------------------
+
+### New Features
+
+- Support cloned MAC address
+
+### Bug Fixes
+
+- none
+
+### Other Changes
+
+- none
+
 [1.10.1] - 2022-11-14
 --------------------
 
