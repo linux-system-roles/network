@@ -19,6 +19,12 @@ ignore: |
   tests/roles/
   .tox/
 rules:
+  braces:
+    max-spaces-inside: 1
+    level: error
+  brackets:
+    max-spaces-inside: 1
+    level: error
   truthy: disable
   document-start: disable
   line-length:
