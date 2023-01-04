@@ -1,5 +1,6 @@
 ---
 skip_list:
+  - role-name
   - fqcn-builtins
 warn_list:
   - load-failure  # allow include_tasks with tasks/ directory
