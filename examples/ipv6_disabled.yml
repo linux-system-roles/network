@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Disable ipv6
+  hosts: all
   vars:
     network_connections:
       - name: eth0

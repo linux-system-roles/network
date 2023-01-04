@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Manage ethernet coalesce
+  hosts: all
   tasks:
     - name: Configure ethernet coalesce
       include_role:

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: network-test
+- name: Manage ethernet with VLAN
+  hosts: network-test
   vars:
     network_connections:
       # Create a profile for the underlying device of the VLAN.

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 ---
-extends: yamllint_defaults.yml
+extends: default
 # possible customizations over the base yamllint config
 # skip the yaml files in the /tests/ directory
 # NOTE: If you want to customize `ignore` you'll have to
@@ -19,7 +19,6 @@ ignore: |
   tests/roles/
   .tox/
 rules:
-  truthy: disable
   line-length:
     ignore: |
       /tests/tasks/setup_mock_wifi_wpa3_owe.yml

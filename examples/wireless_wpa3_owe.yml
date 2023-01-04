@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Manage Wireless with OWE
+  hosts: all
   vars:
     network_connections:
       - name: wlan0

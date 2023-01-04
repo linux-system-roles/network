@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Manage network using network_state
+  hosts: all
   vars:
     network_state:
       interfaces:

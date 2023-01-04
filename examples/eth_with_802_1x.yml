@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: network-test
+- name: Manage 802.1x with certs
+  hosts: network-test
   vars:
     network_connections:
       - name: eth0
@@ -22,6 +23,7 @@
       copy:
         src: "{{ item }}"
         dest: /etc/pki/tls/{{ item }}
+        mode: 0600
       with_items:
         - client.key
         - client.pem
