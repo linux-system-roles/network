@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Manage ethernet parameters
+  hosts: all
   tasks:
-    - name: Configure ethernet paramters
+    - name: Configure ethernet parameters
       include_role:
         name: linux-system-roles.network
       vars:

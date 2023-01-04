@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Manage ethtool ring
+  hosts: all
   tasks:
     - name: Configure ring parameters
       include_role:

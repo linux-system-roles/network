@@ -1,10 +1,19 @@
 ---
-exclude_paths:
-  - tests/
-  - .github/
-  - .ansible-lint
 skip_list:
-  - role-name
-  - fqcn
+  - fqcn-builtins
 warn_list:
   - load-failure  # allow include_tasks with tasks/ directory
+exclude_paths:
+  - tests/
+  - tests/roles/
+  - .github/
+  - examples/roles/
+kinds:
+  - playbook: "**/tests/tests_*.yml"
+  - playbook: "**/tests/setup-snapshot.yml"
+  - tasks: "**/tests/*.yml"
+  - playbook: "**/tests/playbooks/*.yml"
+  - tasks: "**/tests/tasks/*.yml"
+  - tasks: "**/tests/tasks/*/*.yml"
+  - vars: "**/tests/vars/*.yml"
+  - playbook: "**/examples/*.yml"

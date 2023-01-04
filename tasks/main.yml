@@ -74,7 +74,7 @@
     # ansible-lint wants this to be a handler, but this is not appropriate as
     # NetworkManager must be restarted prior to the connections being created.
     # see (https://docs.ansible.com/ansible-lint/rules/default_rules.html)
-    - __network_package_install.changed  # noqa 503
+    - __network_package_install.changed  # noqa no-handler
 
 - name: Enable and start NetworkManager
   service:

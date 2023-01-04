@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Manage routing tables
+  hosts: all
   tasks:
     - name: Add a new routing table
       lineinfile:

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Manage network using match path for interface
+  hosts: all
   vars:
     network_connections:
       - name: eth0

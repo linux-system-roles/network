@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: network-test
+- name: Manage bond options
+  hosts: network-test
   vars:
     network_connections:
       # Specify the bond profile

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Manage ethernet features
+  hosts: all
   tasks:
     - name: Configure ethernet features
       include_role:

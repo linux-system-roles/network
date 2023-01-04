@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: network-test
+- name: Manage WPA PSK
+  hosts: network-test
   vars:
     network_connections:
       - name: wlan0
