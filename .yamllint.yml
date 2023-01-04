@@ -19,6 +19,8 @@ ignore: |
   tests/roles/
   .tox/
 rules:
+  truthy: disable
+  document-start: disable
   line-length:
     ignore: |
       /tests/tasks/setup_mock_wifi_wpa3_owe.yml
