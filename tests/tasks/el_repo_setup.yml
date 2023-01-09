@@ -1,4 +1,17 @@
 # SPDX-License-Identifier: BSD-3-Clause
+- name: Gather the minimum subset of ansible_facts required by the network
+    role test
+  setup:
+    gather_subset: min
+  when: not ansible_facts.keys() | list |
+    intersect(network_test_required_facts) == network_test_required_facts
+  vars:
+    network_test_required_facts:
+      - distribution
+      - distribution_major_version
+      - distribution_version
+      - os_family
+
 - name: Fix CentOS6 Base repo
   copy:
     dest: /etc/yum.repos.d/CentOS-Base.repo
