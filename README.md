@@ -1341,7 +1341,7 @@ limitations to be considered:
 
 The `network` role does not support bootstraping networking configuration. One option
 may be
-[ansible-pull](https://docs.ansible.com/ansible/playbooks_intro.html#ansible-pull).
+[ansible-pull](https://docs.ansible.com/ansible/latest/cli/ansible-pull.html).
 Another option maybe be to initially auto-configure the host during installation (ISO
 based, kickstart, etc.), so that the host is connected to a management LAN or VLAN. It
 strongly depends on your environment.
