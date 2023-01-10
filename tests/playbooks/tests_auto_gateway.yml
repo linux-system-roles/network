@@ -5,11 +5,11 @@
     type: veth
     interface: veth0
   tasks:
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/manage_test_interface.yml
+    - include_tasks: tasks/show_interfaces.yml  # noqa name
+    - include_tasks: tasks/manage_test_interface.yml  # noqa name
       vars:
         state: present
-    - include_tasks: tasks/assert_device_present.yml
+    - include_tasks: tasks/assert_device_present.yml  # noqa name
     - name: >-
         TEST: I can configure an interface with auto_gateway enabled
       debug:
@@ -23,9 +23,9 @@
             type: ethernet
             state: up
             ip:
-              auto_gateway: yes
-              dhcp4: no
-              auto6: no
+              auto_gateway: true
+              dhcp4: false
+              auto6: false
               address:
                 - "2001:db8::2/64"
                 - "203.0.113.2/24"
@@ -35,8 +35,8 @@
               # not take precedence over other routes or not ignore other
               # routes
               route_metric4: 65535
-    - include_tasks: tasks/assert_device_present.yml
-    - include_tasks: tasks/assert_profile_present.yml
+    - include_tasks: tasks/assert_device_present.yml  # noqa name
+    - include_tasks: tasks/assert_profile_present.yml  # noqa name
       vars:
         profile: "{{ interface }}"
     - name: "Show ipv4 routes"
@@ -72,14 +72,14 @@
             persistent_state: absent
             state: down
       ignore_errors: true  # noqa ignore-errors
-    - include_tasks: tasks/manage_test_interface.yml
+    - include_tasks: tasks/manage_test_interface.yml  # noqa name
       vars:
         state: absent
     - name: >-
         TEST: I can configure an interface with auto_gateway disabled
       debug:
         msg: "##################################################"
-    - include_tasks: tasks/manage_test_interface.yml
+    - include_tasks: tasks/manage_test_interface.yml  # noqa name
       vars:
         state: present
     - name: Import network role
@@ -91,16 +91,16 @@
             type: ethernet
             state: up
             ip:
-              auto_gateway: no
-              dhcp4: no
-              auto6: no
+              auto_gateway: false
+              dhcp4: false
+              auto6: false
               address:
                 - "2001:db8::2/64"
                 - "203.0.113.2/24"
               gateway6: "2001:db8::1"
               gateway4: "203.0.113.1"
-    - include_tasks: tasks/assert_device_present.yml
-    - include_tasks: tasks/assert_profile_present.yml
+    - include_tasks: tasks/assert_device_present.yml  # noqa name
+    - include_tasks: tasks/assert_profile_present.yml  # noqa name
       vars:
         profile: "{{ interface }}"
     - name: "Show ipv4 routes"
@@ -136,6 +136,6 @@
             persistent_state: absent
             state: down
       ignore_errors: true  # noqa ignore-errors
-    - include_tasks: tasks/manage_test_interface.yml
+    - include_tasks: tasks/manage_test_interface.yml  # noqa name
       vars:
         state: absent

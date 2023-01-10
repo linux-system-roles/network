@@ -3,10 +3,10 @@
 - name: Install dependencies for integration tests
   hosts: all
   vars:
-    - rpmdependencies:
-        - git
-        - python3-pip
-        - rsync
+    rpmdependencies:
+      - git
+      - python3-pip
+      - rsync
 
   tasks:
     - name: Install rpm dependencies
@@ -32,22 +32,22 @@
   hosts: all
   tasks:
     - block:
-        - name: create tempdir for code to test
+        - name: Create tempdir for code to test
           tempfile:
             state: directory
             prefix: lsrtest_
           register: _rundir
 
-        - name: get tempfile for tar
+        - name: Get tempfile for tar
           tempfile:
             prefix: lsrtest_
             suffix: ".tar"
           register: temptar
           delegate_to: localhost
 
-        - include_tasks: ../tasks/get_modules_and_utils_paths.yml
+        - include_tasks: ../tasks/get_modules_and_utils_paths.yml  # noqa name
 
-        - name: get tests directory
+        - name: Get tests directory
           set_fact:
             tests_directory: "{{ lookup('first_found', params) }}"
           vars:
@@ -62,7 +62,7 @@
         # synchronize module that does not work in test-harness. Related issue:
         # https://github.com/linux-system-roles/test-harness/issues/102
         #
-        - name: Create Tar file
+        - name: Create Tar file  # noqa command-instead-of-module
           command: >
             tar -cvf {{ temptar.path }} --exclude "*.pyc"
                 --exclude "__pycache__"
@@ -73,6 +73,7 @@
                 -C {{ module_utils_parent_and_dir.stdout_lines[0] }}
                 {{ module_utils_parent_and_dir.stdout_lines[1] }}
           delegate_to: localhost
+          changed_when: false
 
         - name: Copy testrepo.tar to the remote system
           copy:
@@ -80,12 +81,13 @@
             dest: "{{ _rundir.path }}"
             mode: preserve
 
-        - name: Untar testrepo.tar
+        - name: Untar testrepo.tar  # noqa command-instead-of-module
           command: tar xf {{ temptar.path | basename }}
           args:
             chdir: "{{ _rundir.path }}"
+          changed_when: false
 
-        - name: "Create {{ _rundir.path }}/ansible"
+        - name: Create /ansible directory in {{ _rundir.path }}
           file:
             state: directory
             path: "{{ _rundir.path }}/ansible"
@@ -96,6 +98,7 @@
             if [ -d {{ _rundir.path }}/module_utils ]; then
               mv {{ _rundir.path }}/module_utils {{ _rundir.path }}/ansible
             fi
+          changed_when: false
 
         - name: Fake out python module directories, primarily for python2
           shell: |
@@ -104,6 +107,7 @@
                 touch "$dir/__init__.py"
               fi
             done
+          changed_when: false
 
         - name: Set _lsr_python_path
           set_fact:
@@ -116,24 +120,27 @@
           debug:
             msg: path {{ _lsr_python_path }}
 
-        - name: "ls -alrtFR {{ _rundir.path }}"
+        - name: "List the files in {{ _rundir.path }}"
           command: ls -alrtFR {{ _rundir.path }}
+          changed_when: false
 
-        - block:
+        - block:  # noqa name
             - name: Run pytest with nm
               command: >
                 pytest
                 {{ _rundir.path }}/{{ tests_directory | basename }}/integration/
                 --provider=nm
               register: playbook_run
+              changed_when: false
               environment:
                 PYTHONPATH: "{{ _lsr_python_path }}"
           always:
-            - debug:
+            - name: Debug stdout_lines of the running playbook with nm
+              debug:
                 var: playbook_run.stdout_lines
 
-        - block:
-            - name: install network-scripts when running pytest with initscripts
+        - block:  # noqa name
+            - name: Install network-scripts when running pytest with initscripts
               package:
                 name: network-scripts
                 state: present
@@ -143,19 +150,21 @@
                 {{ _rundir.path }}/{{ tests_directory | basename }}/integration/
                 --provider=initscripts
               register: playbook_run
+              changed_when: false
               environment:
                 PYTHONPATH: "{{ _lsr_python_path }}"
           always:
-            - debug:
+            - name: Debug stdout_lines of the running playbook with initscripts
+              debug:
                 var: playbook_run.stdout_lines
       always:
-        - name: remove local tar file
+        - name: Remove local tar file
           file:
             state: absent
             path: "{{ temptar.path }}"
           delegate_to: localhost
 
-        - name: remove tempdir
+        - name: Remove tempdir
           file:
             state: absent
             path: "{{ _rundir.path }}"

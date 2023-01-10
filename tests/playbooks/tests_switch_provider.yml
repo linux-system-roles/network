@@ -5,13 +5,14 @@
 - hosts: all
   name: Switch initscripts provider to nm
   tasks:
-    - name: set fact to use initscripts network_provider
+    - name: Set fact to use initscripts network_provider
       set_fact:
         network_provider: initscripts
         interface: LST-TST-br34
       tags:
         - always
-    - name: "Create test bridge {{ interface }} via initscripts provider"
+    - name: "Create test bridge {{ interface }} via initscripts
+        provider"  # noqa name
       include_role:
         name: linux-system-roles.network
       vars:
@@ -22,18 +23,18 @@
             ip:
               dhcp4: false
               auto6: false
-    - include_tasks: tasks/assert_device_present.yml
-    - include_tasks: tasks/remove+down_profile.yml
+    - include_tasks: tasks/assert_device_present.yml  # noqa name
+    - include_tasks: tasks/remove+down_profile.yml  # noqa name
       vars:
         profile: "{{ interface }}"
     # The initscripts should not remove the interface for down/absent
-    - include_tasks: tasks/assert_device_present.yml
-    - name: set fact to use nm network_provider
+    - include_tasks: tasks/assert_device_present.yml  # noqa name
+    - name: Set fact to use nm network_provider
       set_fact:
         network_provider: nm
       tags:
         - always
-    - name: "Create test bridge {{ interface }} via nm provider"
+    - name: "Create test bridge {{ interface }} via nm provider"  # noqa name
       include_role:
         name: linux-system-roles.network
       vars:
@@ -44,11 +45,11 @@
             ip:
               dhcp4: false
               auto6: false
-    - include_tasks: tasks/assert_device_present.yml
-    - include_tasks: tasks/remove+down_profile.yml
+    - include_tasks: tasks/assert_device_present.yml  # noqa name
+    - include_tasks: tasks/remove+down_profile.yml  # noqa name
       vars:
         profile: "{{ interface }}"
     # NetworkManager should not remove pre-exist interface for down/absent
-    - include_tasks: tasks/assert_device_present.yml
-    - include_tasks: tasks/delete_interface.yml
-    - include_tasks: tasks/assert_device_absent.yml
+    - include_tasks: tasks/assert_device_present.yml  # noqa name
+    - include_tasks: tasks/delete_interface.yml  # noqa name
+    - include_tasks: tasks/assert_device_absent.yml  # noqa name

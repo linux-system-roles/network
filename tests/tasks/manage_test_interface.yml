@@ -10,7 +10,7 @@
     msg: "type needs to be dummy, tap or veth, not '{{ type }}'"
   when: type not in ["dummy", "tap", "veth"]
 
-- include_tasks: show_interfaces.yml
+- include_tasks: show_interfaces.yml  # noqa name
 
 - name: Install iproute
   package:
@@ -30,7 +30,7 @@
   command: nmcli d set {{ interface }} managed true
   # The varible for `network_provider` is not exists yet,
   # just ignore error for initscripts
-  ignore_errors: yes  # noqa ignore-errors
+  ignore_errors: true  # noqa ignore-errors
   when: "type == 'veth' and state == 'present'"
 
 - name: Delete veth interface {{ interface }}

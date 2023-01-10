@@ -6,11 +6,11 @@
     interface: LSR-TST-br31
 
   tasks:
-    - name: "set interface={{ interface }}"
+    - name: "Set interface={{ interface }}"
       set_fact:
         interface: "{{ interface }}"
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/assert_device_absent.yml
+    - include_tasks: tasks/show_interfaces.yml  # noqa name
+    - include_tasks: tasks/assert_device_absent.yml  # noqa name
 
 - name: Add test bridge
   hosts: all
@@ -21,8 +21,8 @@
         state: up
         type: bridge
         ip:
-          dhcp4: no
-          auto6: yes
+          dhcp4: false
+          auto6: true
   roles:
     - linux-system-roles.network
 

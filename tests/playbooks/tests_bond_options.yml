@@ -14,11 +14,11 @@
     - name: "INIT Prepare setup"
       debug:
         msg: "##################################################"
-    - import_tasks: tasks/create_test_interfaces_with_dhcp.yml
-    - import_tasks: tasks/assert_device_present.yml
+    - import_tasks: tasks/create_test_interfaces_with_dhcp.yml  # noqa name
+    - import_tasks: tasks/assert_device_present.yml  # noqa name
       vars:
         interface: "{{ dhcp_interface1 }}"
-    - import_tasks: tasks/assert_device_present.yml
+    - import_tasks: tasks/assert_device_present.yml  # noqa name
       vars:
         interface: "{{ dhcp_interface2 }}"
     - block:
@@ -41,7 +41,7 @@
                   ad_actor_system: 00:00:5e:00:53:5d
                   ad_select: stable
                   ad_user_port_key: 1023
-                  all_ports_active: True
+                  all_ports_active: true
                   downdelay: 0
                   lacp_rate: slow
                   lp_interval: 128
@@ -51,7 +51,7 @@
                   primary_reselect: better
                   resend_igmp: 225
                   updelay: 0
-                  use_carrier: True
+                  use_carrier: true
                   xmit_hash_policy: encap2+3
                 ip:
                   route_metric4: 65535
@@ -68,10 +68,10 @@
                 type: ethernet
                 interface_name: "{{ dhcp_interface2 }}"
                 controller: "{{ controller_profile }}"
-        - import_tasks: tasks/assert_device_present.yml
+        - import_tasks: tasks/assert_device_present.yml  # noqa name
           vars:
             interface: "{{ controller_device }}"
-        - include_tasks: tasks/assert_profile_present.yml
+        - include_tasks: tasks/assert_profile_present.yml  # noqa name
           vars:
             profile: "{{ item }}"
           loop:
@@ -83,6 +83,7 @@
             /sys/class/net/{{ controller_device }}/bonding/'{{ item.key }}'
           name: "** TEST check bond settings"
           register: result
+          changed_when: false
           until: "'{{ item.value }}' in result.stdout"
           loop:
             - { key: 'mode', value: '802.3ad'}
@@ -108,12 +109,14 @@
           until: "'192.0.2' in result.stdout"
           retries: 20
           delay: 2
+          changed_when: false
         - command: ip -6 a s {{ controller_device }}
           name: "** TEST check IPv6"
           register: result
           until: "'2001' in result.stdout"
           retries: 20
           delay: 2
+          changed_when: false
 
         - name: Reconfigure the bond options
           import_role:
@@ -149,6 +152,7 @@
             /sys/class/net/{{ controller_device }}/bonding/'{{ item.key }}'
           name: "** TEST check bond settings"
           register: result
+          changed_when: false
           until: "'{{ item.value }}' in result.stdout"
           loop:
             - { key: 'mode', value: 'active-backup'}
@@ -163,12 +167,14 @@
           until: "'192.0.2' in result.stdout"
           retries: 20
           delay: 2
+          changed_when: false
         - command: ip -6 a s {{ controller_device }}
           name: "** TEST check IPv6"
           register: result
           until: "'2001' in result.stdout"
           retries: 20
           delay: 2
+          changed_when: false
 
       always:
         - block:
@@ -186,9 +192,12 @@
                   - name: "{{ controller_profile }}"
                     persistent_state: absent
                     state: down
-              ignore_errors: true
-            - command: ip link del {{ controller_device }}
-              ignore_errors: true
+              failed_when: false
+            - name: Delete the interface "{{ controller_device }}"
+              command: ip link del {{ controller_device }}
+              changed_when: false
+              failed_when: false
             - import_tasks: tasks/remove_test_interfaces_with_dhcp.yml
+            # noqa name
           tags:
             - "tests::cleanup"

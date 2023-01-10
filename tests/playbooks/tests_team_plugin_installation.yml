@@ -2,12 +2,12 @@
 ---
 - hosts: all
   tasks:
-    - name: remove the NetworkManager-team package
+    - name: Remove the NetworkManager-team package
       package:
         name: "NetworkManager-team"
         state: absent
 
-    - name: "get the rpm package facts"
+    - name: "Get the rpm package facts"
       package_facts:
         manager: "auto"
 
@@ -28,7 +28,7 @@
             type: team
             interface_name: team0
 
-    - name: "get the rpm package facts"
+    - name: "Get the rpm package facts"
       package_facts:
         manager: "auto"
 

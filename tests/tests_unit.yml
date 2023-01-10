@@ -3,14 +3,14 @@
 - hosts: all
   name: Setup for test running
   tasks:
-    - include_tasks: tasks/el_repo_setup.yml
+    - include_tasks: tasks/el_repo_setup.yml  # noqa name
 
     - name: Install dependencies
       package:
         name: "{{ item }}"
         state: present
       # Ignore error because some package names might not be available
-      ignore_errors: true
+      failed_when: false
       loop:
         - NetworkManager-libnm
         - python2-gobject-base
@@ -19,29 +19,29 @@
         - python2-mock
 
 - hosts: all
-  name: execute python unit tests
+  name: Execute python unit tests
   tasks:
     - block:
-        - name: create tempdir for code to test
+        - name: Create tempdir for code to test
           tempfile:
             state: directory
             prefix: lsrtest_
           register: _rundir
 
-        - name: get tempfile for tar
+        - name: Get tempfile for tar
           tempfile:
             prefix: lsrtest_
             suffix: ".tar"
           register: temptar
           delegate_to: localhost
 
-        - include_tasks: tasks/get_modules_and_utils_paths.yml
+        - include_tasks: tasks/get_modules_and_utils_paths.yml  # noqa name
 
         # TODO: using tar and copying the file is a workaround for the
         # synchronize module that does not work in test-harness. Related issue:
         # https://github.com/linux-system-roles/test-harness/issues/102
         #
-        - name: Create Tar file
+        - name: Create Tar file  # noqa command-instead-of-module
           command: >
             tar -cvf {{ temptar.path }} --exclude "*.pyc"
                 --exclude "__pycache__"
@@ -50,6 +50,7 @@
                 -C {{ module_utils_parent_and_dir.stdout_lines[0] }}
                 {{ module_utils_parent_and_dir.stdout_lines[1] }}
           delegate_to: localhost
+          changed_when: false
 
         - name: Copy testrepo.tar to the remote system
           copy:
@@ -57,12 +58,13 @@
             dest: "{{ _rundir.path }}"
             mode: preserve
 
-        - name: Untar testrepo.tar
+        - name: Untar testrepo.tar  # noqa command-instead-of-module
           command: tar -xvf {{ temptar.path | basename }}
           args:
             chdir: "{{ _rundir.path }}"
+          changed_when: false
 
-        - name: Create {{ _rundir.path }}/ansible/module_utils
+        - name: Create {{ _rundir.path }}/ansible/module_utils  # noqa name
           file:
             state: directory
             path: "{{ item }}"
@@ -76,6 +78,7 @@
             if [ -d {{ _rundir.path }}/module_utils ]; then
               mv {{ _rundir.path }}/module_utils {{ _rundir.path }}/ansible
             fi
+          changed_when: false
 
         - name: Fake out python module directories, primarily for python2
           shell: |
@@ -84,6 +87,7 @@
                 touch "$dir/__init__.py"
               fi
             done
+          changed_when: false
 
         - name: Copy unit test to remote system
           copy:
@@ -103,9 +107,11 @@
               _rundir.path
             }}"
 
-        - name: "ls -alrtFR {{ _rundir.path }}"
+        - name: "List the files in {{ _rundir.path }}"
           command: ls -alrtFR {{ _rundir.path }}
-        - debug:
+          changed_when: false
+        - name: Debug the lsr Python path
+          debug:
             msg: path {{ _lsr_python_path }}
 
         - name: Check if python2 is available
@@ -148,13 +154,13 @@
           when: python3_result is succeeded
 
       always:
-        - name: remove local tar file
+        - name: Remove local tar file
           file:
             state: absent
             path: "{{ temptar.path }}"
           delegate_to: localhost
 
-        - name: remove tempdir
+        - name: Remove tempdir
           file:
             state: absent
             path: "{{ _rundir.path }}"

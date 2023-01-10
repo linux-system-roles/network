@@ -5,7 +5,7 @@
     lsr_net_profile_exists: false
     lsr_net_profile_ansible_managed: false
 
-- name: stat profile file
+- name: Stat profile file
   stat:
     get_attributes: false
     get_checksum: false
@@ -24,7 +24,7 @@
 - name: Get NM profile info
   shell: nmcli -f NAME,FILENAME connection show |grep {{ profile }} | grep /etc
   register: nm_profile_exists
-  ignore_errors: yes
+  ignore_errors: true
   changed_when: false
 
 # lsr_net_profile_ansible_managed:
@@ -45,6 +45,7 @@
         grep "^# Ansible managed"
         /etc/sysconfig/network-scripts/ifcfg-{{ profile }}
       register: _result
+      changed_when: false
 
     - name: Verify the ansible_managed comment in ifcfg-{{ profile }}
       set_fact:

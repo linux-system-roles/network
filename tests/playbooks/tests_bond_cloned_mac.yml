@@ -14,7 +14,7 @@
     - name: INIT Prepare setup
       debug:
         msg: "##################################################"
-    - import_tasks: tasks/create_test_interfaces_with_dhcp.yml
+    - import_tasks: tasks/create_test_interfaces_with_dhcp.yml  # noqa name
     - name: Backup the /etc/resolv.conf for initscript
       command: cp -vf /etc/resolv.conf /etc/resolv.conf.bak
       when:
@@ -57,7 +57,7 @@
           command: >-
             nmcli -f 802-3-ethernet.cloned-mac-address con show {{ item.name }}
           register: cloned_mac_address
-          ignore_errors: yes
+          ignore_errors: true
           changed_when: false
           loop:
             - { name: "{{ controller_profile }}", mac: "12:23:34:45:56:60"}
@@ -79,7 +79,7 @@
             grep 'MACADDR'
             /etc/sysconfig/network-scripts/ifcfg-{{ controller_profile }}
           register: mac_address_controller
-          ignore_errors: yes
+          ignore_errors: true
           changed_when: false
           when: network_provider == 'initscripts'
 
@@ -88,7 +88,7 @@
             grep 'MACADDR'
             /etc/sysconfig/network-scripts/ifcfg-{{ port1_profile }}
           register: mac_address_port1
-          ignore_errors: yes
+          ignore_errors: true
           changed_when: false
           when: network_provider == 'initscripts'
 
@@ -118,10 +118,13 @@
                   - name: "{{ controller_profile }}"
                     persistent_state: absent
                     state: down
-              ignore_errors: true
-            - command: ip link del {{ controller_device }}
-              ignore_errors: true
+              failed_when: false
+            - name: Delete the interface "{{ controller_device }}"
+              command: ip link del {{ controller_device }}
+              failed_when: false
+              changed_when: false
             - import_tasks: tasks/remove_test_interfaces_with_dhcp.yml
+            # noqa name
             - name: Restore the /etc/resolv.conf for initscript
               command: mv -vf /etc/resolv.conf.bak /etc/resolv.conf
               when:

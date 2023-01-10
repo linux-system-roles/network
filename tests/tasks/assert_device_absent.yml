@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- include_tasks: get_interface_stat.yml
-- name: "assert that interface {{ interface }} is absent"
+- include_tasks: get_interface_stat.yml  # noqa name
+- name: "Assert that interface {{ interface }} is absent"  # noqa name
   assert:
     that: not interface_stat.stat.exists
     msg: "{{ interface }} exists"

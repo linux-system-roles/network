@@ -18,31 +18,31 @@
         - lsr_fail_debug
         - lsr_cleanup
 
-    - include_tasks: tasks/show_interfaces.yml
+    - include_tasks: tasks/show_interfaces.yml  # noqa name
 
-    - name: setup
+    - name: Setup
       include_tasks: "{{ item }}"
       loop: "{{ lsr_setup }}"
       tags:
         - "tests::setup"
 
-    - name: test
+    - name: Test
       include_tasks: "{{ item }}"
       loop: "{{ lsr_test }}"
       tags:
         - "tests::test"
 
-    - name: asserts
+    - name: Asserts
       include_tasks: "{{ item }}"
       loop: "{{ lsr_assert }}"
       tags:
         - "tests::assert"
 
-    - name: conditional asserts
+    - name: Conditional asserts
       include_tasks: "{{ item['what'] }}"
       when:
         - "{{ item['when'] }}"
-      loop: "{{ lsr_assert_when|default([]) }}"
+      loop: "{{ lsr_assert_when | default([]) }}"
 
     - name: "Success in test '{{ lsr_description }}'"
       debug:
@@ -63,7 +63,7 @@
         msg: "!!!!! Failure in test '{{ lsr_description }}' !!!!!"
 
   always:
-    - name: cleanup
+    - name: Cleanup
       include_tasks: "{{ item }}"
       loop: "{{ lsr_cleanup }}"
       tags:

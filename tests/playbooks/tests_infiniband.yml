@@ -2,7 +2,7 @@
 ---
 - hosts: all
   tasks:
-    - block:
+    - block:  # noqa name
         - name: TEST Configuring infiniband devices
           debug:
             msg: "##################################################"
@@ -17,15 +17,15 @@
 
               - name: ib0-10
                 type: infiniband
-                autoconnect: yes
+                autoconnect: true
                 infiniband:
                   p_key: 10
                   transport_mode: datagram
                 parent: ib0
                 state: up
                 ip:
-                  dhcp4: no
-                  auto6: no
+                  dhcp4: false
+                  auto6: false
                   address:
                     - 198.51.100.133/30
                     - 2001:db8::2/32
@@ -33,7 +33,7 @@
         - name: Get the details for the virtual device ib0.000a
           command: ip -d a s ib0.000a
           register: virtual_device_setting
-          ignore_errors: yes
+          ignore_errors: true
           changed_when: false
 
         - name: Assert that the settings in the virtual device
@@ -51,6 +51,7 @@
           until: "'198.51.100.133/30' in result.stdout"
           retries: 20
           delay: 2
+          changed_when: false
 
         - command: ip -6 a s ib0.000a
           name: "** TEST check IPv6"
@@ -58,9 +59,10 @@
           until: "'2001:db8::2/32' in result.stdout"
           retries: 20
           delay: 2
+          changed_when: false
 
       always:
-        - block:
+        - block:  # noqa name
             - name: Import network role
               import_role:
                 name: linux-system-roles.network
@@ -72,9 +74,11 @@
                   - name: ib0-10
                     persistent_state: absent
                     state: down
-              ignore_errors: true
-            - command: ip link del ib0.000a
-              ignore_errors: true
+              failed_when: false
+            - name: Delete the interface ib0.000a
+              command: ip link del ib0.000a
+              failed_when: false
+              changed_when: false
           tags:
             - "tests::cleanup"
   tags:

@@ -1,4 +1,4 @@
-- include_tasks: tasks/setup_802_1x_server.yml
+- include_tasks: tasks/setup_802_1x_server.yml  # noqa name
 - name: Copy client certs
   copy:
     src: "{{ item }}"

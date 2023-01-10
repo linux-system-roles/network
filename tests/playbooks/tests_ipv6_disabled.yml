@@ -9,15 +9,15 @@
     interface: ethtest0
 
   tasks:
-    - name: "set type={{ type }} and interface={{ interface }}"
+    - name: "Set type={{ type }} and interface={{ interface }}"  # noqa name
       set_fact:
         type: "{{ type }}"
         interface: "{{ interface }}"
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/manage_test_interface.yml
+    - include_tasks: tasks/show_interfaces.yml  # noqa name
+    - include_tasks: tasks/manage_test_interface.yml  # noqa name
       vars:
         state: present
-    - include_tasks: tasks/assert_device_present.yml
+    - include_tasks: tasks/assert_device_present.yml  # noqa name
 
     - name: Initialize the connection_failed flag
       set_fact:
@@ -54,7 +54,7 @@
         set -euxo pipefail
         nmcli connection show {{ interface }} | grep ipv6.method
       register: ipv6_method
-      ignore_errors: yes
+      ignore_errors: true
       changed_when: false
       when: not __network_connections_result.failed
 
@@ -65,7 +65,7 @@
         msg: "ipv6.method disabled is configured incorrectly"
       when: not __network_connections_result.failed
 
-    - name: set the connection_failed flag
+    - name: Set the connection_failed flag
       set_fact:
         connection_failed: true
       when: __network_connections_result.failed
@@ -82,9 +82,9 @@
 - name: Delete the interface, then assert that device and profile are absent
   hosts: all
   tasks:
-    - include_tasks: tasks/delete_interface.yml
-    - include_tasks: tasks/assert_profile_absent.yml
+    - include_tasks: tasks/delete_interface.yml  # noqa name
+    - include_tasks: tasks/assert_profile_absent.yml  # noqa name
       vars:
         profile: "{{ interface }}"
-    - include_tasks: tasks/assert_device_absent.yml
+    - include_tasks: tasks/assert_device_absent.yml  # noqa name
 ...

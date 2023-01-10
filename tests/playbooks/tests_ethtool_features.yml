@@ -14,11 +14,11 @@
     - name: "INIT: Ethtool feeatures tests"
       debug:
         msg: "##################################################"
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/manage_test_interface.yml
+    - include_tasks: tasks/show_interfaces.yml  # noqa name
+    - include_tasks: tasks/manage_test_interface.yml  # noqa name
       vars:
         state: present
-    - include_tasks: tasks/assert_device_present.yml
+    - include_tasks: tasks/assert_device_present.yml  # noqa name
     - name: Install ethtool (test dependency)
       package:
         name: ethtool
@@ -33,6 +33,7 @@
         - name: Get current device features
           command: "ethtool --show-features {{ interface }}"
           register: original_ethtool_features
+          changed_when: false
         - name: Import network role
           import_role:
             name: linux-system-roles.network
@@ -47,6 +48,7 @@
         - name: Get current device features
           command: "ethtool --show-features {{ interface }}"
           register: ethtool_features
+          changed_when: false
         - name: "ASSERT: The profile does not change the ethtool features"
           assert:
             that:
@@ -76,6 +78,7 @@
         - name: Get current device features
           command: "ethtool --show-features {{ interface }}"
           register: ethtool_features
+          changed_when: false
         - name: Show ethtool_features
           debug:
             var: ethtool_features.stdout_lines
@@ -114,6 +117,7 @@
         - name: Get current device features
           command: "ethtool --show-features {{ interface }}"
           register: ethtool_features
+          changed_when: false
         - name: Show ethtool_features
           debug:
             var: ethtool_features.stdout_lines
@@ -132,7 +136,7 @@
                 TEST: Change feature with both underscores and dashes.
               debug:
                 msg: "##################################################"
-            - network_connections:
+            - network_connections:  # noqa name
                 provider: "{{ network_provider | mandatory }}"
                 connections:
                   - name: "{{ interface }}"
@@ -151,12 +155,16 @@
             - name: Show network_connections result
               debug:
                 var: __network_connections_result
-            - assert:
+            - name: Assert the duplicate key "tx_tcp_segmentation"
+                configuration error happened
+              vars:
+                errmsg: >-
+                  fatal error: configuration error:
+                  connections[0].ethtool.features:
+                  duplicate key 'tx_tcp_segmentation'
+              assert:
                 that:
-                  - '{{  "fatal error: configuration error:
-                      connections[0].ethtool.features: duplicate key
-                      ''tx_tcp_segmentation''" in
-                      __network_connections_result.msg }}'
+                  - errmsg in __network_connections_result.msg
           always:
             - name: Check failure
               debug:
@@ -183,6 +191,7 @@
         - name: Get current device features
           command: "ethtool --show-features {{ interface }}"
           register: ethtool_features
+          changed_when: false
         # Resetting the ethtools only works with NetworkManager
         - name: "ASSERT: The profile does not change the ethtool features"
           assert:
@@ -200,8 +209,8 @@
                   - name: "{{ interface }}"
                     persistent_state: absent
                     state: down
-              ignore_errors: true
-            - include_tasks: tasks/manage_test_interface.yml
+              failed_when: false
+            - include_tasks: tasks/manage_test_interface.yml  # noqa name
               vars:
                 state: absent
           tags:

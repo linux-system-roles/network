@@ -16,14 +16,14 @@
               path:
                 - pci-0001:00:00.0
             ip:
-              dhcp4: no
+              dhcp4: false
               address:
                 - 192.0.2.3/24
-    - block:
+    - block:  # noqa name
         - name: Get match.path setting for connection
           command: nmcli -f match.path connection show pseudo-pci-test-only
           register: match_path
-          ignore_errors: yes
+          ignore_errors: true
           changed_when: false
 
         - name: Assert that the connection profile contains the specified PCI
@@ -55,7 +55,7 @@
         - name: Get match.path setting for connection
           command: nmcli -f match.path connection show pseudo-pci-test-only
           register: clear_path
-          ignore_errors: yes
+          ignore_errors: true
           changed_when: false
 
         - name: "Assert that the PCI address is removed"
@@ -64,7 +64,7 @@
               - "'pci-0001:00:00.0' not in clear_path.stdout"
             msg: "The PCI address is not removed"
       always:
-        - block:
+        - block:  # noqa name
             - name: Import network role
               import_role:
                 name: linux-system-roles.network
@@ -73,6 +73,6 @@
                   - name: pseudo-pci-test-only
                     persistent_state: absent
                     state: down
-              ignore_errors: true
+              failed_when: false
           tags:
             - "tests::cleanup"

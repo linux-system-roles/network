@@ -13,8 +13,8 @@
     - name: Show test banner
       debug:
         msg: Inside states tests
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/assert_device_absent.yml
+    - include_tasks: tasks/show_interfaces.yml  # noqa name
+    - include_tasks: tasks/assert_device_absent.yml  # noqa name
   roles:
     - linux-system-roles.network
   tasks:
@@ -31,8 +31,8 @@
                 ip:
                   dhcp4: false
                   auto6: false
-        - include_tasks: tasks/assert_device_present.yml
-        - include_tasks: tasks/assert_profile_present.yml
+        - include_tasks: tasks/assert_device_present.yml  # noqa name
+        - include_tasks: tasks/assert_profile_present.yml  # noqa name
         # Use internal module to get output
         - name: Get network_connections output
           network_connections:
@@ -57,15 +57,17 @@
             fail_msg: Reapply not found in log output
             that: "{{ 'connection reapplied' in test_module_run.stderr }}"
       always:
-        - block:
+        - block:  # noqa name
             # Use internal module directly for speedup
-            - network_connections:
+            - network_connections:  # noqa name
                 provider: nm
                 connections:
                   - name: "{{ interface }}"
                     persistent_state: absent
                     state: down
-            - command: ip link del "{{ interface }}"
-          ignore_errors: true
+            - name: Delete the interface "{{ interface }}"
+              command: ip link del "{{ interface }}"
+              changed_when: false
+          ignore_errors: true  # noqa ignore-errors
           tags:
             - "tests::cleanup"

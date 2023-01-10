@@ -14,11 +14,11 @@
     - name: "INIT Prepare setup"
       debug:
         msg: "##################################################"
-    - import_tasks: tasks/create_test_interfaces_with_dhcp.yml
-    - import_tasks: tasks/assert_device_present.yml
+    - import_tasks: tasks/create_test_interfaces_with_dhcp.yml  # noqa name
+    - import_tasks: tasks/assert_device_present.yml  # noqa name
       vars:
         interface: "{{ dhcp_interface1 }}"
-    - import_tasks: tasks/assert_device_present.yml
+    - import_tasks: tasks/assert_device_present.yml  # noqa name
       vars:
         interface: "{{ dhcp_interface2 }}"
     - name: "Backup the /etc/resolv.conf for initscript"
@@ -56,10 +56,10 @@
                 type: ethernet
                 interface_name: "{{ dhcp_interface2 }}"
                 controller: "{{ controller_profile }}"
-        - import_tasks: tasks/assert_device_present.yml
+        - import_tasks: tasks/assert_device_present.yml  # noqa name
           vars:
             interface: "{{ controller_device }}"
-        - include_tasks: tasks/assert_profile_present.yml
+        - include_tasks: tasks/assert_profile_present.yml  # noqa name
           vars:
             profile: "{{ item }}"
           loop:
@@ -70,6 +70,7 @@
                    /proc/net/bonding/{{ controller_device }}
           name: "** TEST check polling interval"
           register: result
+          changed_when: false
           until: "'110' in result.stdout"
         - command: ip -4 a s {{ controller_device }}
           name: "** TEST check IPv4"
@@ -77,12 +78,14 @@
           until: "'192.0.2' in result.stdout"
           retries: 20
           delay: 2
+          changed_when: false
         - command: ip -6 a s {{ controller_device }}
           name: "** TEST check IPv6"
           register: result
           until: "'2001' in result.stdout"
           retries: 20
           delay: 2
+          changed_when: false
       always:
         - block:
             - name: Import network role
@@ -99,10 +102,13 @@
                   - name: "{{ controller_profile }}"
                     persistent_state: absent
                     state: down
-              ignore_errors: true
-            - command: ip link del {{ controller_device }}
-              ignore_errors: true
+              failed_when: false
+            - name: Delete the interface "{{ controller_device }}"
+              command: ip link del {{ controller_device }}
+              failed_when: false
+              changed_when: false
             - import_tasks: tasks/remove_test_interfaces_with_dhcp.yml
+            # noqa name
             - name: "Restore the /etc/resolv.conf for initscript"
               command: mv -vf /etc/resolv.conf.bak /etc/resolv.conf
               when:

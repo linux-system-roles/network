@@ -7,10 +7,10 @@
     type: veth
   name: Test change indication on repeat run
   tasks:
-    - include_tasks: tasks/manage_test_interface.yml
+    - include_tasks: tasks/manage_test_interface.yml  # noqa name
       vars:
         state: present
-    - include_tasks: tasks/assert_device_present.yml
+    - include_tasks: tasks/assert_device_present.yml  # noqa name
     - block:
         - vars:
             network_connections:
@@ -20,14 +20,16 @@
                 ip:
                   address:
                     - 192.0.2.2/24
-          block:
-            - include_role:
+          block:  # noqa name
+            - name: Import the network role
+              include_role:
                 name: linux-system-roles.network
               register: __network_connections_result
             - name: Assert change:true
               assert:
                 that: __network_connections_result is changed
-            - include_role:
+            - name: Import the network role
+              include_role:
                 name: linux-system-roles.network
               register: __network_connections_result
             - name: Assert change:false
@@ -41,14 +43,16 @@
                 ip:
                   dhcp4: "no"
                   auto6: "no"
-          block:
-            - include_role:
+          block:  # noqa name
+            - name: Import the network role
+              include_role:
                 name: linux-system-roles.network
               register: __network_connections_result
             - name: Assert change:true
               assert:
                 that: __network_connections_result is changed
-            - include_role:
+            - name: Import the network role
+              include_role:
                 name: linux-system-roles.network
               register: __network_connections_result
             - name: Assert change:false
@@ -56,15 +60,16 @@
                 that: not __network_connections_result is changed
       always:
         - block:
-            - include_role:
+            - name: Bring down the connection and remove the connection profile
+              include_role:
                 name: linux-system-roles.network
               vars:
                 network_connections:
                   - name: "{{ interface }}"
                     persistent_state: absent
                     state: down
-              ignore_errors: true
-            - include_tasks: tasks/manage_test_interface.yml
+              ignore_errors: true  # noqa ignore-errors
+            - include_tasks: tasks/manage_test_interface.yml  # noqa name
               vars:
                 state: absent
           tags:

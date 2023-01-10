@@ -4,4 +4,4 @@
 - name: Delete the interface
   hosts: all
   tasks:
-    - include_tasks: tasks/delete_interface.yml
+    - include_tasks: tasks/delete_interface.yml  # noqa name

@@ -5,8 +5,8 @@
     type: veth
     interface: veth0
   tasks:
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/manage_test_interface.yml
+    - include_tasks: tasks/show_interfaces.yml  # noqa name
+    - include_tasks: tasks/manage_test_interface.yml  # noqa name
       vars:
         state: present
     - name: Set up gateway ip on veth peer
@@ -39,13 +39,14 @@
                     - "2001:db8::3/32"
                     - "2001:db8::4/32"
                   gateway6: "2001:db8::1"
-        - include_tasks: tasks/assert_device_present.yml
-        - include_tasks: tasks/assert_profile_present.yml
+        - include_tasks: tasks/assert_device_present.yml  # noqa name
+        - include_tasks: tasks/assert_profile_present.yml  # noqa name
           vars:
             profile: "{{ interface }}"
         - name: Get ip address information
           command: "ip addr show {{ interface }}"
           register: ip_addr
+          changed_when: false
         - name: Show ip_addr
           debug:
             var: ip_addr.stdout
@@ -61,6 +62,7 @@
         - name: Get ipv6 routes
           command: "ip -6 route"
           register: ipv6_route
+          changed_when: false
         - name: Show ipv6_route
           debug:
             var: ipv6_route.stdout
@@ -87,7 +89,7 @@
                 persistent_state: absent
                 state: down
           ignore_errors: true  # noqa ignore-errors
-        - include_tasks: tasks/manage_test_interface.yml
+        - include_tasks: tasks/manage_test_interface.yml  # noqa name
           vars:
             state: absent
         - name: Clean up namespace

@@ -11,14 +11,14 @@ import sys
 
 
 GET_NM_VERSION = """
-    - block:
+    - block:  # noqa name
         - name: Install NetworkManager
           package:
             name: NetworkManager
             state: present
-        - name: Get NetworkManager version
+        - name: Get NetworkManager version  # noqa command-instead-of-module
           command: rpm -q --qf "%{version}" NetworkManager
-          register: NetworkManager_version
+          register: networkmanager_version
           when: true
       when:
         - ansible_distribution_major_version != '6'
@@ -27,7 +27,7 @@ GET_NM_VERSION = """
 """
 
 MINIMUM_NM_VERSION_CHECK = """
-    - NetworkManager_version.stdout is version({minimum_nm_version}, '>=')
+    - networkmanager_version.stdout is version({minimum_nm_version}, '>=')
 """
 
 EXTRA_RUN_CONDITION_PREFIX = "    - "
@@ -39,7 +39,7 @@ RUN_PLAYBOOK_WITH_NM = """# SPDX-License-Identifier: BSD-3-Clause
 - hosts: all
   name: Run playbook '{test_playbook}' with nm as provider
   tasks:
-    - include_tasks: tasks/el_repo_setup.yml
+    - include_tasks: tasks/el_repo_setup.yml  # noqa name
     - name: Set network provider to 'nm'
       set_fact:
         network_provider: nm
@@ -143,7 +143,7 @@ RUN_PLAYBOOK_WITH_INITSCRIPTS = """# SPDX-License-Identifier: BSD-3-Clause
 - hosts: all
   name: Run playbook '{test_playbook}' with initscripts as provider
   tasks:
-    - include_tasks: tasks/el_repo_setup.yml
+    - include_tasks: tasks/el_repo_setup.yml  # noqa name
     - name: Set network provider to 'initscripts'
       set_fact:
         network_provider: initscripts

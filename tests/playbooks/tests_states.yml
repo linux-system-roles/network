@@ -15,7 +15,7 @@
 
 
     - block:
-        - include_tasks: tasks/run_test.yml
+        - include_tasks: tasks/run_test.yml  # noqa name
           vars:
             lsr_description: I can create a profile
             lsr_setup:
@@ -29,14 +29,14 @@
               # Device should be present because of autoconnect: true by
               # default for NM (this might be considered a bug)
               - what: tasks/assert_device_present.yml
-                when: "{{ network_provider == 'nm' }}"
+                when: network_provider == 'nm'
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
       tags:
         - tests::states:create
 
     - block:
-        - include_tasks: tasks/run_test.yml
+        - include_tasks: tasks/run_test.yml  # noqa name
           vars:
             lsr_description: I can create a profile without autoconnect
             lsr_setup:
@@ -54,7 +54,7 @@
         - tests::states:create_without_autoconnect
 
     - block:
-        - include_tasks: tasks/run_test.yml
+        - include_tasks: tasks/run_test.yml  # noqa name
           vars:
             lsr_description: I can activate an existing profile
             lsr_setup:
@@ -70,7 +70,7 @@
         - tests::states:activate
 
     - block:
-        - include_tasks: tasks/run_test.yml
+        - include_tasks: tasks/run_test.yml  # noqa name
           vars:
             lsr_description: I can remove an existing profile without taking it
               down
@@ -88,7 +88,7 @@
         - tests::states:remove_up
 
     - block:
-        - include_tasks: tasks/run_test.yml
+        - include_tasks: tasks/run_test.yml  # noqa name
           vars:
             lsr_description: I can take a profile down that is absent
             lsr_setup:
@@ -101,14 +101,14 @@
               - tasks/assert_profile_absent.yml
             lsr_assert_when:
               - what: tasks/assert_device_absent.yml
-                when: "{{ network_provider == 'nm' }}"
+                when: network_provider == 'nm'
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
       tags:
         - tests::states:remove_down
 
     - block:
-        - include_tasks: tasks/run_test.yml
+        - include_tasks: tasks/run_test.yml  # noqa name
           vars:
             lsr_description: I will not get an error when I try to
               remove an absent profile
@@ -126,7 +126,7 @@
               - tasks/get_NetworkManager_NVR.yml
             lsr_assert_when:
               - what: tasks/assert_device_absent.yml
-                when: "{{ network_provider == 'nm' }}"
+                when: network_provider == 'nm'
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
       tags:

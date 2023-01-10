@@ -1,7 +1,7 @@
 ---
 - hosts: all
   tasks:
-    - block:
+    - block:  # noqa name
         - name: Configure the static IPv4 address and not configure the IPv6
             address
           import_role:
@@ -21,13 +21,13 @@
         - name: Get DNS search entry for IPv4
           command: nmcli -f ipv4.dns-search connection show br-example
           register: ipv4_dns_search
-          ignore_errors: yes
+          ignore_errors: true
           changed_when: false
 
         - name: Get DNS search entry for IPv6
           command: nmcli -f ipv6.dns-search connection show br-example
           register: ipv6_dns_search
-          ignore_errors: yes
+          ignore_errors: true
           changed_when: false
 
         - name: Assert that IPv4 DNS search entry is configured correctly
@@ -67,7 +67,7 @@
         - name: Get DNS search entry for IPv6
           command: nmcli -f ipv6.dns-search connection show br-example
           register: ipv6_dns_search_static
-          ignore_errors: yes
+          ignore_errors: true
           changed_when: false
 
         - name: Assert that DNS search setting for IPv6 is configured when
@@ -99,7 +99,7 @@
         - name: Get DNS search entry for IPv6
           command: nmcli -f ipv6.dns-search connection show br-example
           register: ipv6_dns_search_static_only
-          ignore_errors: yes
+          ignore_errors: true
           changed_when: false
 
         - name: Assert that DNS search setting for IPv6 is configured when only
@@ -146,14 +146,15 @@
           when: ansible_distribution_major_version | int > 7
 
       always:
-        - block:
-            - import_role:
+        - block:  # noqa name
+            - name: Deactivate the connection and remove the connection profile
+              import_role:
                 name: linux-system-roles.network
               vars:
                 network_connections:
                   - name: br-example
                     persistent_state: absent
                     state: down
-              ignore_errors: true
+              failed_when: false
           tags:
             - "tests::cleanup"

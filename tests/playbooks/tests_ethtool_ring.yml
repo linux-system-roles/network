@@ -14,11 +14,11 @@
     - name: "INIT: Ethtool ring tests"
       debug:
         msg: "##################################################"
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/manage_test_interface.yml
+    - include_tasks: tasks/show_interfaces.yml  # noqa name
+    - include_tasks: tasks/manage_test_interface.yml  # noqa name
       vars:
         state: present
-    - include_tasks: tasks/assert_device_present.yml
+    - include_tasks: tasks/assert_device_present.yml  # noqa name
     - name: Install ethtool (test dependency)
       package:
         name: ethtool
@@ -38,8 +38,8 @@
                 type: ethernet
                 state: up
                 ip:
-                  dhcp4: no
-                  auto6: no
+                  dhcp4: false
+                  auto6: false
 
         - name: Get profile's ring options
           command: nmcli -g ethtool.ring-rx c show {{ interface }}
@@ -77,8 +77,8 @@
                 type: ethernet
                 state: up
                 ip:
-                  dhcp4: no
-                  auto6: no
+                  dhcp4: false
+                  auto6: false
                 ethtool:
                   ring:
                     rx: 128
@@ -156,8 +156,8 @@
                 type: ethernet
                 state: up
                 ip:
-                  dhcp4: no
-                  auto6: no
+                  dhcp4: false
+                  auto6: false
 
         - name: Get profile's ring options
           command: nmcli -g ethtool.ring-rx c show {{ interface }}
@@ -191,8 +191,8 @@
                 network_connections:
                   - name: "{{ interface }}"
                     persistent_state: absent
-              ignore_errors: true
-            - include_tasks: tasks/manage_test_interface.yml
+              failed_when: false
+            - include_tasks: tasks/manage_test_interface.yml  # noqa name
               vars:
                 state: absent
           tags:

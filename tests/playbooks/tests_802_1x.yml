@@ -7,7 +7,7 @@
     - name: "INIT: 802.1x tests"
       debug:
         msg: "##################################################"
-    - include_tasks: tasks/setup_802.1x.yml
+    - include_tasks: tasks/setup_802.1x.yml  # noqa name
     - block:
         - name: "TEST: 802.1x profile with private key password and ca cert"
           debug:
@@ -37,6 +37,7 @@
                   ca_cert: /etc/pki/tls/cacert.pem
         - name: "TEST: I can ping the EAP server"
           command: ping -c1 203.0.113.1
+          changed_when: false
         - name: Import network role
           import_role:
             name: linux-system-roles.network
@@ -57,6 +58,7 @@
             mode: 0644
         - name: Update ca trust
           command: update-ca-trust
+          changed_when: false
         - name: Import network role
           import_role:
             name: linux-system-roles.network
@@ -78,10 +80,11 @@
                   client_cert: /etc/pki/tls/client.pem
                   private_key_password_flags:
                     - not-required
-                  system_ca_certs: True
+                  system_ca_certs: true
                   domain_suffix_match: example.com
         - name: "TEST: I can ping the EAP server"
           command: ping -c1 203.0.113.1
+          changed_when: false
         - name: Import network role
           import_role:
             name: linux-system-roles.network
@@ -91,10 +94,11 @@
                 persistent_state: absent
                 state: down
 
-        - include_tasks: tasks/test_802.1x_capath.yml
+        - include_tasks: tasks/test_802.1x_capath.yml  # noqa name
       always:
         - block:
-            - import_role:
+            - name: Deactivate the connection and remove the connection profile
+              import_role:
                 name: linux-system-roles.network
               vars:
                 network_connections:
@@ -104,8 +108,8 @@
                   - name: br1
                     persistent_state: absent
                     state: down
-              ignore_errors: true
-            - include_tasks: tasks/cleanup_802_1x_server.yml
+              failed_when: false
+            - include_tasks: tasks/cleanup_802_1x_server.yml  # noqa name
             - name: Remove test certificates
               file:
                 state: absent
@@ -124,5 +128,6 @@
                 - /etc/pki/ca-trust/source/anchors/cacert.pem
             - name: Update ca trust
               command: update-ca-trust
+              changed_when: false
           tags:
             - "tests::cleanup"

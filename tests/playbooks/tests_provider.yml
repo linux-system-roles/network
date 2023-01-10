@@ -15,7 +15,7 @@
 
 
     - block:
-        - include_tasks: tasks/run_test.yml
+        - include_tasks: tasks/run_test.yml  # noqa name
           vars:
             state: present
             lsr_description: I can manage a veth interface with NM after I

@@ -5,21 +5,21 @@
 - hosts: all
   name: Run playbook 'playbooks/tests_provider.yml' with nm as provider
   tasks:
-    - include_tasks: tasks/el_repo_setup.yml
+    - include_tasks: tasks/el_repo_setup.yml  # noqa name
     - name: Set network provider to 'nm'
       set_fact:
         network_provider: nm
       tags:
         - always
 
-    - block:
+    - block:  # noqa name
         - name: Install NetworkManager
           package:
             name: NetworkManager
             state: present
-        - name: Get NetworkManager version
+        - name: Get NetworkManager version  # noqa command-instead-of-module
           command: rpm -q --qf "%{version}" NetworkManager
-          register: NetworkManager_version
+          register: networkmanager_version
           when: true
       when:
         - ansible_distribution_major_version != '6'
@@ -34,6 +34,6 @@
   when:
     - ansible_distribution_major_version != '6'
 
-    - NetworkManager_version.stdout is version('1.20.0', '>=')
+    - networkmanager_version.stdout is version('1.20.0', '>=')
     - ansible_distribution != 'RedHat' or
       ansible_distribution_major_version | int < 9

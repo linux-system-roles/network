@@ -8,11 +8,11 @@
     - name: "INIT: Ethtool coalesce tests"
       debug:
         msg: "##################################################"
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/manage_test_interface.yml
+    - include_tasks: tasks/show_interfaces.yml  # noqa name
+    - include_tasks: tasks/manage_test_interface.yml  # noqa name
       vars:
         state: present
-    - include_tasks: tasks/assert_device_present.yml
+    - include_tasks: tasks/assert_device_present.yml  # noqa name
     - name: Install ethtool (test dependency)
       package:
         name: ethtool
@@ -25,6 +25,7 @@
         - name: Get current device coalesce
           command: "ethtool --show-coalesce {{ interface }}"
           register: original_ethtool_coalesce
+          changed_when: false
         - name: Import network role
           import_role:
             name: linux-system-roles.network
@@ -39,6 +40,7 @@
         - name: Get current device coalesce
           command: "ethtool --show-coalesce {{ interface }}"
           register: ethtool_coalesce
+          changed_when: false
         - name: "ASSERT: The profile does not change the ethtool coalesce"
           assert:
             that:
@@ -65,6 +67,7 @@
         - name: Get current device coalesce
           command: "ethtool --show-coalesce {{ interface }}"
           register: ethtool_coalesce
+          changed_when: false
         - name: Show ethtool_coalesce output
           debug:
             var: ethtool_coalesce.stdout_lines
@@ -94,6 +97,7 @@
         - name: Get current device coalesce
           command: "ethtool --show-coalesce {{ interface }}"
           register: ethtool_coalesce
+          changed_when: false
         # Resetting the ethtools only works with NetworkManager
         - name: "ASSERT: The profile does not change the ethtool coalesce"
           assert:
@@ -103,15 +107,16 @@
             network_provider == 'nm'
       always:
         - block:
-            - import_role:
+            - name: Deactivate the connection and remove the connection profile
+              import_role:
                 name: linux-system-roles.network
               vars:
                 network_connections:
                   - name: "{{ interface }}"
                     persistent_state: absent
                     state: down
-              ignore_errors: true
-            - include_tasks: tasks/manage_test_interface.yml
+              failed_when: false
+            - include_tasks: tasks/manage_test_interface.yml  # noqa name
               vars:
                 state: absent
           tags:

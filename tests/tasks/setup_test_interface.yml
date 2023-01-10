@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- include_tasks: tasks/manage_test_interface.yml
+- include_tasks: tasks/manage_test_interface.yml  # noqa name
   vars:
     state: present
     type: veth

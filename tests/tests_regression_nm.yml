@@ -3,7 +3,7 @@
 # set network provider and gather facts
 - hosts: all
   tasks:
-    - include_tasks: tasks/el_repo_setup.yml
+    - include_tasks: tasks/el_repo_setup.yml  # noqa name
 
     - name: Set network provider to 'nm'
       set_fact:
@@ -12,10 +12,10 @@
       package:
         name: NetworkManager
         state: present
-    - name: Get NetworkManager version
+    - name: Get NetworkManager version  # noqa command-instead-of-module
       command: rpm -q --qf "%{version}" NetworkManager
       when: true
-      register: NetworkManager_version
+      register: networkmanager_version
 
 # workaround for: https://github.com/ansible/ansible/issues/27973
 # There is no way in Ansible to abort a playbook hosts with specific OS
@@ -26,6 +26,6 @@
   when:
     - ansible_distribution_major_version != '6'
     # The test depends on behavior that is only visible with newer NM
-    - NetworkManager_version.stdout is version('1.22.0', '>=')
+    - networkmanager_version.stdout is version('1.22.0', '>=')
     - ansible_distribution != 'RedHat' or
       ansible_distribution_major_version | int < 9

@@ -7,7 +7,7 @@
     - name: "INIT: wireless tests"
       debug:
         msg: "##################################################"
-    - include_tasks: tasks/setup_mock_wifi.yml
+    - include_tasks: tasks/setup_mock_wifi.yml  # noqa name
     - name: Copy client certs
       copy:
         src: "{{ item }}"
@@ -86,7 +86,7 @@
                   - name: "{{ interface }}"
                     persistent_state: absent
                     state: down
-              ignore_errors: true
-            - include_tasks: tasks/cleanup_mock_wifi.yml
+              failed_when: false
+            - include_tasks: tasks/cleanup_mock_wifi.yml  # noqa name
           tags:
             - "tests::cleanup"

@@ -2,7 +2,7 @@
 ---
 - hosts: all
   tasks:
-    - name: Update NetworkManager
+    - name: Update NetworkManager  # noqa package-latest
       package:
         name: NetworkManager
         state: latest

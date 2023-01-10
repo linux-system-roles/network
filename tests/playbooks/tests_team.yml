@@ -14,7 +14,7 @@
         - always
 
     - block:
-        - include_tasks: tasks/run_test.yml
+        - include_tasks: tasks/run_test.yml  # noqa name
           vars:
             lsr_description: Create a team interface without any port attached
             lsr_setup:

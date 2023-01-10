@@ -1,6 +1,7 @@
 ---
 profile: production
 kinds:
+  - playbook: "**/tests/get_coverage.yml"
   - yaml: "**/meta/collection-requirements.yml"
   - yaml: "**/tests/collection-requirements.yml"
   - playbook: "**/tests/tests_*.yml"
@@ -13,12 +14,13 @@ kinds:
   - playbook: "**/examples/*.yml"
 skip_list:
   - fqcn-builtins
+  - name[play]
+  - key-order[task]
 warn_list:
   - load-failure
 exclude_paths:
   - tests/roles/
   - .github/
   - examples/roles/
-  - tests/
 mock_roles:
   - linux-system-roles.network

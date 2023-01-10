@@ -10,15 +10,16 @@
 
 
   tasks:
-    - name: "set type={{ type }} and interface={{ interface }}"
+    - name: "Set type={{ type }} and interface={{ interface }}"
+      # noqa name
       set_fact:
         type: "{{ type }}"
         interface: "{{ interface }}"
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/manage_test_interface.yml
+    - include_tasks: tasks/show_interfaces.yml  # noqa name
+    - include_tasks: tasks/manage_test_interface.yml  # noqa name
       vars:
         state: present
-    - include_tasks: tasks/assert_device_present.yml
+    - include_tasks: tasks/assert_device_present.yml  # noqa name
 
     - name: Import network role
       import_role:
@@ -29,10 +30,10 @@
             interface_name: "{{ interface }}"
             state: up
             type: ethernet
-            autoconnect: yes
+            autoconnect: true
             ip:
               route_metric4: 100
-              dhcp4: no
+              dhcp4: false
               gateway4: 192.0.2.1
               dns_priority: 9999
               dns:
@@ -47,7 +48,7 @@
                 - timeout:1
 
               route_metric6: -1
-              auto6: no
+              auto6: false
               gateway6: 2001:db8::1
 
               address:
@@ -64,15 +65,15 @@
                   prefix: 26
                   gateway: 198.51.100.6
                   metric: 4
-              route_append_only: no
-              rule_append_only: yes
+              route_append_only: false
+              rule_append_only: true
 
     - name: Verify nmcli connection DNS entry for IPv4
       shell: |
         set -euxo pipefail
         nmcli connection show {{ interface }} | grep ipv4.dns
       register: ipv4_dns
-      ignore_errors: yes
+      ignore_errors: true
       changed_when: false
 
     - name: Verify nmcli connection DNS entry for IPv6
@@ -80,7 +81,7 @@
         set -euxo pipefail
         nmcli connection show {{ interface }} | grep ipv6.dns
       register: ipv6_dns
-      ignore_errors: yes
+      ignore_errors: true
       changed_when: false
 
     - name: "Assert that DNS addresses are configured correctly"
@@ -126,8 +127,8 @@
 - name: Assert profile and device are absent
   hosts: all
   tasks:
-    - include_tasks: tasks/assert_profile_absent.yml
+    - include_tasks: tasks/assert_profile_absent.yml  # noqa name
       vars:
         profile: "{{ interface }}"
-    - include_tasks: tasks/assert_device_absent.yml
+    - include_tasks: tasks/assert_device_absent.yml  # noqa name
 ...

@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- include_tasks: get_profile_stat.yml
-- name: "assert that profile '{{ profile }}' is present"
+- include_tasks: get_profile_stat.yml  # noqa name
+- name: "Assert that profile '{{ profile }}' is present"  # noqa name
   assert:
     that: lsr_net_profile_exists
     msg: "profile {{ profile }} does not exist"
 
-- name: "assert that ansible managed comment in '{{ profile }}' is present"
+- name: "Assert that ansible managed comment in '{{ profile }}' is
+    present"  # noqa name
   assert:
     that: lsr_net_profile_ansible_managed
     msg: "profile {{ profile }} does not have the ansible managed comment"

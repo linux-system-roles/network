@@ -16,15 +16,15 @@
     interface: lsr27
 
   tasks:
-    - name: "set type={{ type }} and interface={{ interface }}"
+    - name: "Set type={{ type }} and interface={{ interface }}"  # noqa name
       set_fact:
         type: "{{ type }}"
         interface: "{{ interface }}"
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/manage_test_interface.yml
+    - include_tasks: tasks/show_interfaces.yml  # noqa name
+    - include_tasks: tasks/manage_test_interface.yml  # noqa name
       vars:
         state: present
-    - include_tasks: tasks/assert_device_present.yml
+    - include_tasks: tasks/assert_device_present.yml  # noqa name
 
 - name: Test static interface up
   hosts: all
@@ -34,13 +34,14 @@
         interface_name: "{{ interface }}"
         state: up
         type: ethernet
-        autoconnect: yes
+        autoconnect: true
         ip:
           address: 192.0.2.1/24
   roles:
     - linux-system-roles.network
   tasks:
     - include_tasks: tasks/assert_output_in_stderr_without_warnings.yml
+    # noqa name
 
 - hosts: all
   tasks:
@@ -60,7 +61,7 @@
 - name: Assert device and profile are absent
   hosts: all
   tasks:
-    - include_tasks: tasks/assert_profile_absent.yml
+    - include_tasks: tasks/assert_profile_absent.yml  # noqa name
       vars:
         profile: "{{ interface }}"
-    - include_tasks: tasks/assert_device_absent.yml
+    - include_tasks: tasks/assert_device_absent.yml  # noqa name

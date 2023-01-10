@@ -13,14 +13,14 @@
     - name: Show test banner
       debug:
         msg: Inside states tests
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/assert_device_absent.yml
+    - include_tasks: tasks/show_interfaces.yml  # noqa name
+    - include_tasks: tasks/assert_device_absent.yml  # noqa name
   roles:
     - linux-system-roles.network
   tasks:
     - block:
         # Workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1832897
-        - name: install dbus-tools
+        - name: Install dbus-tools
           package:
             name: dbus-tools
             state: present
@@ -37,10 +37,10 @@
                 ip:
                   dhcp4: false
                   auto6: false
-        - include_tasks: tasks/assert_device_present.yml
-        - include_tasks: tasks/assert_profile_present.yml
+        - include_tasks: tasks/assert_device_present.yml  # noqa name
+        - include_tasks: tasks/assert_profile_present.yml  # noqa name
         # Use internal module directly for speedup
-        - name: use network_connections
+        - name: Use network_connections
           network_connections:
             provider: nm
             connections:
@@ -52,16 +52,17 @@
                   auto6: false
           ignore_errors: true
           register: error_trigger
-        - name: assert that the module call did not fail
+        - name: Assert that the module call did not fail
           assert:
             fail_msg: The module call did not fail. Therefore the test
               condition was not triggered. This test needs to be adjusted or
               dropped.
             that: error_trigger.failed
         # yamllint disable-line rule:line-length
-        - name: get NM dbus objects
+        - name: Get NM dbus objects
           command: busctl --system tree --list org.freedesktop.NetworkManager
           register: nm_dbus_objects
+          changed_when: false
         - name: Show nm_dbus_objects
           debug:
             var: nm_dbus_objects
@@ -72,18 +73,21 @@
               '/org/freedesktop/NetworkManager/Checkpoint/' not in
               nm_dbus_objects.stdout_lines
       always:
-        - block:
+        - block:  # noqa name
             # Use internal module directly for speedup
-            - network_connections:
+            - network_connections:  # noqa name
                 provider: nm
                 connections:
                   - name: "{{ interface }}"
                     persistent_state: absent
                     state: down
-            - file:
+            - name: Delete the file "ifcfg-{{ interface }}"
+              file:
                 dest: "/etc/sysconfig/network-scripts/ifcfg-{{ interface }}"
                 state: absent
-            - command: ip link del "{{ interface }}"
-          ignore_errors: true
+            - name: Delete the interface "{{ interface }}"
+              command: ip link del "{{ interface }}"
+              changed_when: false
+          ignore_errors: true  # noqa ignore-errors
           tags:
             - "tests::cleanup"

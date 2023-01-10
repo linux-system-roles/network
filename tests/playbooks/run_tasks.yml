@@ -3,4 +3,4 @@
 - name: Run the tasklist {{ task }}
   hosts: all
   tasks:
-    - include_tasks: "{{ task }}"
+    - include_tasks: "{{ task }}"  # noqa name

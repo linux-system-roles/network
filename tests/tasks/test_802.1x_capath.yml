@@ -3,7 +3,7 @@
     TEST: 802.1x profile with unencrypted private key and ca_path
   debug:
     msg: "##################################################"
-- name: Set __NM_capath_ignored_NVRs
+- name: Set nm_capath_ignored_nvr
   set_fact:
     # Fixed versions/NVRs:
     # 1.25.2
@@ -11,7 +11,7 @@
     # NetworkManager-1.22.14-1.fc32
     # NetworkManager-1.20.12-1.fc31
     # 1.18.8
-    __NM_capath_ignored_NVRs:
+    nm_capath_ignored_nvr:
       - NetworkManager-1.18.0-5.el7.x86_64
       - NetworkManager-1.18.4-3.el7.x86_64
       - NetworkManager-1.20.0-3.el8.x86_64
@@ -43,12 +43,12 @@
     state: link
     path: "/etc/pki/tls/my_ca_certs/{{ cacert_hash.stdout }}.0"
     src: cacert.pem
-- name: Get NetworkManager version
+- name: Get NetworkManager version  # noqa command-instead-of-module
   command:
     cmd: rpm -qa NetworkManager
-  register: __network_NM_NVR
+  register: __network_nm_nvr
   changed_when: false
-- block:
+- block:  # noqa name
     - name: Import network role
       import_role:
         name: linux-system-roles.network
@@ -73,7 +73,8 @@
               ca_path: /etc/pki/tls/my_ca_certs
     - name: "TEST: I can ping the EAP server"
       command: ping -c1 203.0.113.1
-    - name: trigger failure in case the role did not fail
+      changed_when: false
+    - name: Trigger failure in case the role did not fail
       fail:
         msg: after test
   rescue:
@@ -83,20 +84,20 @@
       with_items:
         - ansible_failed_result
         - ansible_failed_task
-        - __network_NM_NVR.stdout
-        - __NM_capath_ignored_NVRs
+        - __network_nm_nvr.stdout
+        - nm_capath_ignored_nvr
       changed_when: false
 
     - name: Assert role behavior
       vars:
-        expected_failure: __network_NM_NVR.stdout in __NM_capath_ignored_NVRs
+        expected_failure: __network_nm_nvr.stdout in nm_capath_ignored_nvr
         failure: __network_connections_result.failed
       assert:
         that: (failure and expected_failure) or
           (not failure and not expected_failure)
         msg: "Role {{ failure and 'failed' or 'did not fail' }} but was expected
           {{ expected_failure and '' or 'not' }} to fail.
-          NM NVR: {{ __network_NM_NVR.stdout }}"
+          NM NVR: {{ __network_nm_nvr.stdout }}"
     - name: Assert role failure
       assert:
         that: "
