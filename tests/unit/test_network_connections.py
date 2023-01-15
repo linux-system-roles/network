@@ -4226,8 +4226,10 @@ class TestValidator(Python26CompatTestCase):
             route_metric6_configured_ipv6_disabled,
         )
 
+    # wokeignore:rule=master
     def test_set_deprecated_master(self):
         """
+        wokeignore:rule=master
         When passing the deprecated "master" it is updated to "controller".
         """
         input_connections = [
@@ -4241,17 +4243,20 @@ class TestValidator(Python26CompatTestCase):
                 "state": "up",
                 "type": "ethernet",
                 "interface_name": "eth1",
-                "master": "prod2",
+                "master": "prod2",  # wokeignore:rule=master
             },
         ]
         connections = ARGS_CONNECTIONS.validate(input_connections)
         self.assertTrue(len(connections) == 2)
         for connection in connections:
             self.assertTrue("controller" in connection)
+            # wokeignore:rule=master
             self.assertTrue("master" not in connection)
 
+    # wokeignore:rule=slave
     def test_set_deprecated_slave_type(self):
         """
+        wokeignore:rule=slave
         When passing the deprecated "slave_type" it is updated to "port_type".
         """
         input_connections = [
@@ -4266,13 +4271,14 @@ class TestValidator(Python26CompatTestCase):
                 "type": "ethernet",
                 "interface_name": "eth1",
                 "controller": "prod2",
-                "slave_type": "bridge",
+                "slave_type": "bridge",  # wokeignore:rule=slave
             },
         ]
         connections = ARGS_CONNECTIONS.validate(input_connections)
         self.assertTrue(len(connections) == 2)
         for connection in connections:
             self.assertTrue("port_type" in connection)
+            # wokeignore:rule=slave
             self.assertTrue("slave_type" not in connection)
 
 
@@ -4376,7 +4382,7 @@ class TestValidatorMatch(Python26CompatTestCase):
         result = self.validator.validate(self.test_profile)
         self.assertEqual(result["match"], {"path": ["pci-0000:00:03.0"]})
 
-        self.test_profile["type"] = "dummy"
+        self.test_profile["type"] = "dummy"  # wokeignore:rule=dummy
         self.assertRaisesRegex(
             ValidationError,
             "'match.path' settings are only supported for type 'ethernet' or 'infiniband'",

@@ -88,6 +88,7 @@
             - { key: 'ad_actor_system', value: '00:00:5e:00:53:5d'}
             - { key: 'ad_select', value: 'stable'}
             - { key: 'ad_user_port_key', value: '1023'}
+            # wokeignore:rule=slave
             - { key: 'all_slaves_active', value: '1'}
             - { key: 'downdelay', value: '0'}
             - { key: 'lacp_rate', value: 'slow'}

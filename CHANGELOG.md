@@ -170,15 +170,15 @@ Changelog
 ### Changes
 
 - Use inclusive language
-- `slave` is deprecated in favor of `port`
-- `master` is deprecated in favor of `controller`
+- `slave` is deprecated in favor of `port` <!--- wokeignore:rule=slave -->
+- `master` is deprecated in favor of `controller` <!--- wokeignore:rule=master -->
 
 ### New features
 
 - Support disabling IPv6
 - Support `dns_options` when using one or more IPv4 nameservers
 - Support Ethtool coalesce settings
-- Support dummy interfaces
+- Support dummy interfaces <!--- wokeignore:rule=dummy -->
 
 ### Bug fixes
 
