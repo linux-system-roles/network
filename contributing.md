@@ -399,7 +399,7 @@ comment. The available commands are:
 - [citest] - Trigger a re-test for all machines.
 - [citest bad] - Trigger a re-test for all machines with an error or failure status.
 - [citest pending] - Trigger a re-test for all machines with a pending status.
-- [citest commit:<sha1\>] - Whitelist a commit to be tested if the submitter is not
+- [citest commit:<sha1\>] - Specify a commit to be tested if the submitter is not
   trusted.
 
 How to reach us

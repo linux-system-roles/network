@@ -140,9 +140,11 @@ class SysUtil:
         links = {}
         for ifname in os.listdir("/sys/class/net/"):
             if not os.path.islink("/sys/class/net/" + ifname):
-                # /sys/class/net may contain certain entries that are not
-                # interface names, like 'bonding_master'. Skip over files
-                # that are not links.
+                # /sys/class/net may contain certain entries
+                # that are not interface names, like
+                # wokeignore:rule=master
+                # 'bonding_master'.
+                # Skip over files that are not links.
                 continue
             links[ifname] = {
                 "ifindex": SysUtil._link_read_ifindex(ifname),
@@ -359,6 +361,7 @@ class IfcfgUtil:
             ifcfg["TYPE"] = "Bridge"
         elif connection["type"] == "bond":
             ifcfg["TYPE"] = "Bond"
+            # wokeignore:rule=master
             ifcfg["BONDING_MASTER"] = "yes"
             opts = ["mode=%s" % (connection["bond"]["mode"])]
             if connection["bond"]["miimon"] is not None:
@@ -452,9 +455,12 @@ class IfcfgUtil:
             if connection["port_type"] == "bridge":
                 ifcfg["BRIDGE"] = m
             elif connection["port_type"] == "bond":
+                # wokeignore:rule=master
                 ifcfg["MASTER"] = m
+                # wokeignore:rule=slave
                 ifcfg["SLAVE"] = "yes"
             elif connection["port_type"] == "team":
+                # wokeignore:rule=master
                 ifcfg["TEAM_MASTER"] = m
                 if "TYPE" in ifcfg:
                     del ifcfg["TYPE"]
@@ -894,13 +900,17 @@ class NMUtil:
                 if option in ["all_ports_active", "use_carrier", "tlb_dynamic_lb"]:
                     value = int(value)
                 if option in ["all_ports_active", "packets_per_port"]:
+                    # wokeignore:rule=slave
                     option = option.replace("port", "slave")
                 s_bond.add_option(option, str(value))
         elif connection["type"] == "team":
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, NM.SETTING_TEAM_SETTING_NAME)
+        # wokeignore:rule=dummy
         elif connection["type"] == "dummy":
             s_con.set_property(
-                NM.SETTING_CONNECTION_TYPE, NM.SETTING_DUMMY_SETTING_NAME
+                # wokeignore:rule=dummy
+                NM.SETTING_CONNECTION_TYPE,
+                NM.SETTING_DUMMY_SETTING_NAME,
             )
         elif connection["type"] == "vlan":
             s_con.set_property(NM.SETTING_CONNECTION_TYPE, NM.SETTING_VLAN_SETTING_NAME)
@@ -1045,9 +1055,12 @@ class NMUtil:
 
         if connection["controller"] is not None:
             s_con.set_property(
-                NM.SETTING_CONNECTION_SLAVE_TYPE, connection["port_type"]
+                # wokeignore:rule=slave
+                NM.SETTING_CONNECTION_SLAVE_TYPE,
+                connection["port_type"],
             )
             s_con.set_property(
+                # wokeignore:rule=master
                 NM.SETTING_CONNECTION_MASTER,
                 ArgUtil.connection_find_controller_uuid(
                     connection["controller"], connections, idx

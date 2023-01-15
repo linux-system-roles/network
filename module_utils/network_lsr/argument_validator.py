@@ -1794,6 +1794,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
         "vlan",
         "macvlan",
         "wireless",
+        # wokeignore:rule=dummy
         "dummy",
     ]
     VALID_PORT_TYPES = ["bridge", "bond", "team"]
@@ -1828,10 +1829,12 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                     enum_values=ArgValidator_DictConnection.VALID_PORT_TYPES,
                 ),
                 ArgValidatorDeprecated(
+                    # wokeignore:rule=slave
                     "slave_type",
                     deprecated_by="port_type",
                 ),
                 ArgValidatorStr("controller"),
+                # wokeignore:rule=master
                 ArgValidatorDeprecated("master", deprecated_by="controller"),
                 ArgValidatorStr("interface_name", allow_empty=True),
                 ArgValidatorMac("mac"),

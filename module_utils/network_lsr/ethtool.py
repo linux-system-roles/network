@@ -23,7 +23,9 @@ def get_perm_addr(ifname):
     ETHTOOL_GPERMADDR ioctl command.
 
     Please for further documentation, see:
+    wokeignore:rule=master
     https://github.com/torvalds/linux/blob/master/include/uapi/linux/ethtool.h#L734
+    wokeignore:rule=master
     https://github.com/torvalds/linux/blob/master/include/uapi/linux/ethtool.h#L1388
     https://git.kernel.org/pub/scm/network/ethtool/ethtool.git/tree/ethtool.c#n4172
     """
