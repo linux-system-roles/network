@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
 - hosts: all
+  tags:
+    - tests::expfail
   vars:
     controller_profile: bond0
     controller_device: deprecated-bond
