@@ -1,6 +1,26 @@
 Changelog
 =========
 
+[1.11.1] - 2023-01-24
+--------------------
+
+### New Features
+
+- none
+
+### Bug Fixes
+
+- none
+
+### Other Changes
+
+- ansible-lint 6.x updates
+- Support running the tests with ANSIBLE_GATHERING=explicit
+- Clean up / Workaround non-inclusive words
+- Add check for non-inclusive language
+- fix the ansible-pull link, the old do not work
+- tag all bond tests with expfail
+
 [1.11.0] - 2022-12-12
 --------------------
 
