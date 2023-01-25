@@ -82,20 +82,23 @@ done
 case $OS_TYPE in
 "c8s")
     CONTAINER_IMAGE=$C8S_CONTAINER_IMAGE
+    # shellcheck disable=SC2086
     read -r -d '' TEST_FILES <<EOF || :
-    $(find tests/tests_*.yml | egrep -v ${EXCLUDE_TESTS_C8S})
+    $(find tests/tests_*.yml | grep -E -v ${EXCLUDE_TESTS_C8S})
 EOF
     ;;
 "c7")
     CONTAINER_IMAGE=$C7_CONTAINER_IMAGE
+    # shellcheck disable=SC2086
     read -r -d '' TEST_FILES <<EOF || :
-    $(find tests/tests_*.yml | egrep -v ${EXCLUDE_TESTS_C7})
+    $(find tests/tests_*.yml | grep -E -v ${EXCLUDE_TESTS_C7})
 EOF
     ;;
 "c9s")
     CONTAINER_IMAGE=$C9S_CONTAINER_IMAGE
+    # shellcheck disable=SC2086
     read -r -d '' TEST_FILES <<EOF || :
-    $(find tests/tests_*.yml | egrep -v ${EXCLUDE_TESTS_C9S})
+    $(find tests/tests_*.yml | grep -E -v ${EXCLUDE_TESTS_C9S})
 EOF
     ;;
 *)
