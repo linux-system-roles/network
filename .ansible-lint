@@ -1,15 +1,8 @@
 ---
-skip_list:
-  - role-name
-  - fqcn-builtins
-warn_list:
-  - load-failure  # allow include_tasks with tasks/ directory
-exclude_paths:
-  - tests/
-  - tests/roles/
-  - .github/
-  - examples/roles/
+profile: production
 kinds:
+  - yaml: "**/meta/collection-requirements.yml"
+  - yaml: "**/tests/collection-requirements.yml"
   - playbook: "**/tests/tests_*.yml"
   - playbook: "**/tests/setup-snapshot.yml"
   - tasks: "**/tests/*.yml"
@@ -18,3 +11,14 @@ kinds:
   - tasks: "**/tests/tasks/*/*.yml"
   - vars: "**/tests/vars/*.yml"
   - playbook: "**/examples/*.yml"
+skip_list:
+  - fqcn-builtins
+warn_list:
+  - load-failure
+exclude_paths:
+  - tests/roles/
+  - .github/
+  - examples/roles/
+  - tests/
+mock_roles:
+  - linux-system-roles.network

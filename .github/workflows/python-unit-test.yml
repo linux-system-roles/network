@@ -1,0 +1,67 @@
+---
+# yamllint disable rule:line-length
+name: Python Unit Tests
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+jobs:
+  python:
+    strategy:
+      matrix:
+        pyver_os:
+          - ver: "2.7"
+            os: ubuntu-20.04
+          - ver: "3.6"
+            os: ubuntu-20.04
+          - ver: "3.8"
+            os: ubuntu-latest
+          - ver: "3.9"
+            os: ubuntu-latest
+          - ver: "3.10"
+            os: ubuntu-latest
+          - ver: "3.11"
+            os: ubuntu-latest
+    runs-on: ${{ matrix.pyver_os.os }}
+    steps:
+      - name: Update git
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y git
+      - name: checkout PR
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.pyver_os.ver }}
+      - name: Install platform dependencies, python, tox, tox-lsr
+        run: |
+          set -euxo pipefail
+          python -m pip install --upgrade pip
+          pip install "git+https://github.com/linux-system-roles/tox-lsr@2.13.1"
+          # If you have additional OS dependency packages e.g. libcairo2-dev
+          # then put them in .github/config/ubuntu-requirements.txt, one
+          # package per line.
+          if [ -f .github/config/ubuntu-requirements.txt ]; then
+            sudo apt-get install -y $(cat .github/config/ubuntu-requirements.txt)
+          fi
+      - name: Run unit tests
+        run: |
+          set -euxo pipefail
+          toxpyver=$(echo "${{ matrix.pyver_os.ver }}" | tr -d .)
+          toxenvs="py${toxpyver}"
+          # NOTE: The use of flake8, pylint, black with specific
+          # python envs is arbitrary and must be changed in tox-lsr
+          # We really should either do those checks using the latest
+          # version of python, or in every version of python
+          case "$toxpyver" in
+          27) toxenvs="${toxenvs},coveralls,flake8,pylint" ;;
+          36) toxenvs="${toxenvs},coveralls,black" ;;
+          *) toxenvs="${toxenvs},coveralls" ;;
+          esac
+          TOXENV="$toxenvs" lsr_ci_runtox

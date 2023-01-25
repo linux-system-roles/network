@@ -1,0 +1,50 @@
+---
+name: Ansible Test
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+env:
+  LSR_ROLE2COLL_NAMESPACE: fedora
+  LSR_ROLE2COLL_NAME: linux_system_roles
+jobs:
+  ansible_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update pip, git
+        run: |
+          set -euxo pipefail
+          python3 -m pip install --upgrade pip
+          sudo apt-get update
+          sudo apt-get install -y git
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Install tox, tox-lsr
+        run: |
+          set -euxo pipefail
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@2.13.1"
+      - name: Convert role to collection format
+        run: |
+          set -euxo pipefail
+          TOXENV=collection lsr_ci_runtox
+          # copy the ignore files
+          coll_dir=".tox/ansible_collections/$LSR_ROLE2COLL_NAMESPACE/$LSR_ROLE2COLL_NAME"
+          # wokeignore:rule=sanity
+          ignore_dir="$coll_dir/tests/sanity"
+          if [ ! -d "$ignore_dir" ]; then
+            mkdir -p "$ignore_dir"
+          fi
+          # wokeignore:rule=sanity
+          for file in .sanity-ansible-ignore-*.txt; do
+            if [ -f "$file" ]; then
+              # wokeignore:rule=sanity
+              cp "$file" "$ignore_dir/${file//*.sanity-ansible-}"
+            fi
+          done
+      - name: Run ansible-test
+        uses: ansible-community/ansible-test-gh-action@release/v1
+        with:
+          testing-type: sanity  # wokeignore:rule=sanity
+          collection-src-directory: .tox/ansible_collections/${{ env.LSR_ROLE2COLL_NAMESPACE }}/${{ env.LSR_ROLE2COLL_NAME }}
