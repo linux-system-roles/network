@@ -1,0 +1,33 @@
+---
+name: Ansible Lint
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  ansible_lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update pip, git
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y git
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Fix up role meta/main.yml namespace and name
+        run: |
+          set -euxo pipefail
+          mm=meta/main.yml
+          if [ -f "$mm" ]; then
+            if ! grep -q '^  *namespace:' "$mm"; then
+              sed "/galaxy_info:/a\  namespace: linux_system_roles" -i "$mm"
+            fi
+            if ! grep -q '^  *role_name:' "$mm"; then
+              sed "/galaxy_info:/a\  role_name: network" -i "$mm"
+            fi
+          fi
+      - name: Run ansible-lint
+        uses: ansible-community/ansible-lint-action@v6

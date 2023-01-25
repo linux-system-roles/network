@@ -1,0 +1,28 @@
+---
+name: Ansible Plugin Scan
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  ansible_plugin_scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update pip, git
+        run: |
+          set -euxo pipefail
+          python3 -m pip install --upgrade pip
+          sudo apt-get update
+          sudo apt-get install -y git
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Install tox, tox-lsr
+        run: |
+          set -euxo pipefail
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@2.13.1"
+      - name: Run ansible-plugin-scan
+        run: |
+          set -euxo pipefail
+          TOXENV=ansible-plugin-scan lsr_ci_runtox
