@@ -339,6 +339,7 @@ class Util:
         if addr_family in ["6", "inet6", "ip6", "ipv6", "IPv6"]:
             return socket.AF_INET6
         Util.addr_family_check(addr_family)
+        return None
 
     @staticmethod
     def addr_family_prefix_length(family):
@@ -348,6 +349,7 @@ class Util:
         if addr_family == socket.AF_INET6:
             return 128
         Util.addr_family_check(addr_family)
+        return None
 
     @staticmethod
     def addr_family_valid_prefix(family, prefix):

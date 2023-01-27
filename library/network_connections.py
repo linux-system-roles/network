@@ -818,12 +818,14 @@ class NMUtil:
             try:
                 con_a.normalize()
             except Exception:
+                # We ignore any errors that might happen
                 pass
         if normalize_b:
             con_b = NM.SimpleConnection.new_clone(con_b)
             try:
                 con_b.normalize()
             except Exception:
+                # We ignore any errors that might happen
                 pass
         if compare_flags is None:
             compare_flags = NM.SettingCompareFlags.IGNORE_TIMESTAMP

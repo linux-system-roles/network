@@ -258,20 +258,17 @@ class ArgValidatorRouteTable(ArgValidator):
 
     def _validate_impl(self, value, name):
         table = None
-        try:
-            if isinstance(value, bool):
-                # bool can (probably) be converted to integer type,
-                # but here we don't want to accept a boolean value.
-                pass
-            elif isinstance(value, int):
-                table = int(value)
-            elif isinstance(value, Util.STRING_TYPE):
-                try:
-                    table = int(value)
-                except Exception:
-                    table = value
-        except Exception:
+        if isinstance(value, bool):
+            # bool can (probably) be converted to integer type,
+            # but here we don't want to accept a boolean value.
             pass
+        elif isinstance(value, int):
+            table = value
+        elif isinstance(value, Util.STRING_TYPE):
+            try:
+                table = int(value)
+            except Exception:
+                table = value
         if table is None:
             raise ValidationError(
                 name,
@@ -336,6 +333,7 @@ class ArgValidatorNum(ArgValidator):
                 if isinstance(value, Util.STRING_TYPE) or v2 == value:
                     v = v2
         except Exception:
+            # Exception handling is done next.
             pass
         if v is None:
             raise ValidationError(
@@ -374,11 +372,13 @@ class ArgValidatorRange(ArgValidator):
                 try:
                     range = (int(match_group.group(1)), int(match_group.group(2)))
                 except Exception:
+                    # Exception handling is done below.
                     pass
             else:
                 try:
                     range = (int(value), int(value))
                 except Exception:
+                    # Exception handling is done below.
                     pass
         elif isinstance(value, bool):
             # bool can (probably) be converted to integer type,
@@ -425,6 +425,7 @@ class ArgValidatorBool(ArgValidator):
             if isinstance(value, Util.STRING_TYPE) or isinstance(value, int):
                 return Util.boolean(value)
         except Exception:
+            # Exception handling is done next.
             pass
         raise ValidationError(name, "must be an boolean but is '%s'" % (value))
 
@@ -2665,6 +2666,7 @@ class IPRouteUtils(object):
                     try:
                         tableid = int(table[2:], 16)
                     except Exception:
+                        # Exception handling is done next.
                         pass
             if tableid is None or tableid < 0 or tableid > 0xFFFFFFFF:
                 continue

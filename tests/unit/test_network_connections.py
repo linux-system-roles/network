@@ -19,10 +19,8 @@ sys.modules["ansible.module_utils.basic"] = mock.Mock()
 
 # pylint: disable=import-error, wrong-import-position
 
-import network_lsr
 import network_lsr.argument_validator
 from network_connections import IfcfgUtil, NMUtil, SysUtil, Util
-from network_lsr.argument_validator import ValidationError
 
 try:
     my_test_skipIf = unittest.skipIf
@@ -215,7 +213,9 @@ class TestValidator(Python26CompatTestCase):
         }
 
     def assertValidationError(self, v, value):
-        self.assertRaises(ValidationError, v.validate, value)
+        self.assertRaises(
+            network_lsr.argument_validator.ValidationError, v.validate, value
+        )
 
     def assert_nm_connection_routes_expected(self, connection, route_list_expected):
         parser = network_lsr.argument_validator.ArgValidatorIPRoute("route[?]")
@@ -257,7 +257,7 @@ class TestValidator(Python26CompatTestCase):
         for idx, connection in enumerate(connections):
             try:
                 ARGS_CONNECTIONS.validate_connection_one(mode, connections, idx)
-            except ValidationError:
+            except network_lsr.argument_validator.ValidationError:
                 continue
             if "type" in connection:
                 con_new = nmutil.connection_create(connections, idx)
@@ -304,7 +304,7 @@ class TestValidator(Python26CompatTestCase):
         for idx, connection in enumerate(connections):
             try:
                 ARGS_CONNECTIONS.validate_connection_one(mode, connections, idx)
-            except ValidationError:
+            except network_lsr.argument_validator.ValidationError:
                 continue
             if "type" not in connection:
                 continue
@@ -421,31 +421,31 @@ class TestValidator(Python26CompatTestCase):
         self.assertEqual((10, 1000), v.validate("10-1000"))
         self.assertEqual((256, 256), v.validate("256"))
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the range value True is invalid",
             v.validate,
             True,
         )
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the range value 2.5 is invalid",
             v.validate,
             2.5,
         )
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the range start cannot be greater than range end",
             v.validate,
             "2000-1000",
         )
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "upper range value is 65535 but cannot be greater than 65534",
             v.validate,
             "1-65535",
         )
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "lower range value is -1 but cannot be less than 0",
             v.validate,
             -1,
@@ -535,7 +535,7 @@ class TestValidator(Python26CompatTestCase):
             ),
         )
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "must be a string but is 'None'",
             v.validate,
             ["pci-0001:00:00.0", None],
@@ -3291,7 +3291,7 @@ class TestValidator(Python26CompatTestCase):
         connections = ARGS_CONNECTIONS.validate(input_connections)
 
         self.assertRaises(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             ARGS_CONNECTIONS.validate_connection_one,
             VALIDATE_ONE_MODE_INITSCRIPTS,
             connections,
@@ -3340,7 +3340,7 @@ class TestValidator(Python26CompatTestCase):
         connections = ARGS_CONNECTIONS.validate(input_connections)
 
         self.assertRaises(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             ARGS_CONNECTIONS.validate_connection_one,
             VALIDATE_ONE_MODE_INITSCRIPTS,
             connections,
@@ -3461,7 +3461,7 @@ class TestValidator(Python26CompatTestCase):
         """Use the profile name as interface_name for ethernet profiles"""
         cons_without_interface_name = [{"name": "eth0", "type": "ethernet"}]
         connections = ARGS_CONNECTIONS.validate(cons_without_interface_name)
-        self.assertTrue(connections[0]["interface_name"] == "eth0")
+        self.assertEqual(connections[0]["interface_name"], "eth0")
 
     def test_interface_name_ethernet_mac(self):
         """Do not set interface_name when mac is specified"""
@@ -3486,7 +3486,9 @@ class TestValidator(Python26CompatTestCase):
             {"name": "internal_network", "type": "ethernet", "interface_name": None}
         ]
         self.assertRaises(
-            ValidationError, ARGS_CONNECTIONS.validate, network_connections
+            network_lsr.argument_validator.ValidationError,
+            ARGS_CONNECTIONS.validate,
+            network_connections,
         )
 
     def test_interface_name_ethernet_explicit(self):
@@ -3502,20 +3504,24 @@ class TestValidator(Python26CompatTestCase):
         valid interface_name"""
         network_connections = [{"name": "internal:main", "type": "ethernet"}]
         self.assertRaises(
-            ValidationError, ARGS_CONNECTIONS.validate, network_connections
+            network_lsr.argument_validator.ValidationError,
+            ARGS_CONNECTIONS.validate,
+            network_connections,
         )
         network_connections = [
             {"name": "internal:main", "type": "ethernet", "interface_name": "eth0"}
         ]
         connections = ARGS_CONNECTIONS.validate(network_connections)
-        self.assertTrue(connections[0]["interface_name"] == "eth0")
+        self.assertEqual(connections[0]["interface_name"], "eth0")
 
     def test_interface_name_ethernet_invalid_interface_name(self):
         network_connections = [
             {"name": "internal", "type": "ethernet", "interface_name": "invalid:name"}
         ]
         self.assertRaises(
-            ValidationError, ARGS_CONNECTIONS.validate, network_connections
+            network_lsr.argument_validator.ValidationError,
+            ARGS_CONNECTIONS.validate,
+            network_connections,
         )
 
     def test_interface_name_bond_empty_interface_name(self):
@@ -3523,7 +3529,9 @@ class TestValidator(Python26CompatTestCase):
             {"name": "internal", "type": "bond", "interface_name": "invalid:name"}
         ]
         self.assertRaises(
-            ValidationError, ARGS_CONNECTIONS.validate, network_connections
+            network_lsr.argument_validator.ValidationError,
+            ARGS_CONNECTIONS.validate,
+            network_connections,
         )
 
     def test_interface_name_bond_profile_as_interface_name(self):
@@ -3559,19 +3567,25 @@ class TestValidator(Python26CompatTestCase):
     def test_invalid_persistent_state_up(self):
         network_connections = [{"name": "internal", "persistent_state": "up"}]
         self.assertRaises(
-            ValidationError, ARGS_CONNECTIONS.validate, network_connections
+            network_lsr.argument_validator.ValidationError,
+            ARGS_CONNECTIONS.validate,
+            network_connections,
         )
 
     def test_invalid_persistent_state_down(self):
         network_connections = [{"name": "internal", "persistent_state": "down"}]
         self.assertRaises(
-            ValidationError, ARGS_CONNECTIONS.validate, network_connections
+            network_lsr.argument_validator.ValidationError,
+            ARGS_CONNECTIONS.validate,
+            network_connections,
         )
 
     def test_invalid_state_test(self):
         network_connections = [{"name": "internal", "state": "test"}]
         self.assertRaises(
-            ValidationError, ARGS_CONNECTIONS.validate, network_connections
+            network_lsr.argument_validator.ValidationError,
+            ARGS_CONNECTIONS.validate,
+            network_connections,
         )
 
     def test_default_states_type(self):
@@ -3830,7 +3844,7 @@ class TestValidator(Python26CompatTestCase):
     def test_valid_persistent_state(self):
         """
         Test that when persistent_state is present and state is set to present
-        or absent, a ValidationError raises.
+        or absent, a network_lsr.argument_validator.ValidationError raises.
         """
         validator = network_lsr.argument_validator.ArgValidator_DictConnection()
         input_connection = {
@@ -3992,7 +4006,7 @@ class TestValidator(Python26CompatTestCase):
             }
         ]
         self.assertRaises(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             validator.validate_connection_one,
             "nm",
             validator.validate(ipv4_dns_without_ipv4_config),
@@ -4018,7 +4032,7 @@ class TestValidator(Python26CompatTestCase):
         old_util_nm = Util.NM
         Util.NM = MagicMock(spec=["SETTING_IP6_CONFIG_METHOD_DISABLED"])
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "IPv6 needs to be enabled to support IPv6 nameservers.",
             validator.validate_connection_one,
             "nm",
@@ -4075,7 +4089,7 @@ class TestValidator(Python26CompatTestCase):
         ]
 
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "IPv6 needs to be enabled to support IPv6 nameservers.",
             validator.validate_connection_one,
             "nm",
@@ -4102,7 +4116,7 @@ class TestValidator(Python26CompatTestCase):
         old_util_nm = Util.NM
         Util.NM = MagicMock(spec=["SETTING_IP6_CONFIG_METHOD_DISABLED"])
         self.assertRaises(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             validator.validate_connection_one,
             "nm",
             validator.validate(ipv6_dns_options_without_ipv6_config),
@@ -4128,7 +4142,7 @@ class TestValidator(Python26CompatTestCase):
             }
         ]
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "Setting 'dns_search', 'dns_options' and 'dns_priority' are not allowed "
             "when IPv4 is disabled and IPv6 is not configured",
             validator.validate_connection_one,
@@ -4153,7 +4167,7 @@ class TestValidator(Python26CompatTestCase):
             }
         ]
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "'auto6' and 'ipv6_disabled' are mutually exclusive",
             validator.validate,
             auto6_enabled_ipv6_disabled,
@@ -4175,7 +4189,7 @@ class TestValidator(Python26CompatTestCase):
             }
         ]
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "'ipv6_disabled' and static IPv6 addresses are mutually exclusive",
             validator.validate,
             static_ipv6_configured_ipv6_disabled,
@@ -4197,7 +4211,7 @@ class TestValidator(Python26CompatTestCase):
             }
         ]
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "'ipv6_disabled' and 'gateway6' are mutually exclusive",
             validator.validate,
             gateway6_configured_ipv6_disabled,
@@ -4220,7 +4234,7 @@ class TestValidator(Python26CompatTestCase):
             }
         ]
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "'ipv6_disabled' and 'route_metric6' are mutually exclusive",
             validator.validate,
             route_metric6_configured_ipv6_disabled,
@@ -4247,7 +4261,7 @@ class TestValidator(Python26CompatTestCase):
             },
         ]
         connections = ARGS_CONNECTIONS.validate(input_connections)
-        self.assertTrue(len(connections) == 2)
+        self.assertEqual(len(connections), 2)
         for connection in connections:
             self.assertTrue("controller" in connection)
             # wokeignore:rule=master
@@ -4275,7 +4289,7 @@ class TestValidator(Python26CompatTestCase):
             },
         ]
         connections = ARGS_CONNECTIONS.validate(input_connections)
-        self.assertTrue(len(connections) == 2)
+        self.assertEqual(len(connections), 2)
         for connection in connections:
             self.assertTrue("port_type" in connection)
             # wokeignore:rule=slave
@@ -4360,14 +4374,14 @@ class TestValidatorMatch(Python26CompatTestCase):
         """
         self.test_profile["match"] = {"path": ["&", ""]}
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "['&'] will only match the devices that have no PCI path",
             self.validator.validate,
             self.test_profile,
         )
         self.test_profile["match"] = {"path": ["|", None]}
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "['|'] will only match the devices that have no PCI path",
             self.validator.validate,
             self.test_profile,
@@ -4376,7 +4390,7 @@ class TestValidatorMatch(Python26CompatTestCase):
     def test_match_path_invalid_connection_type(self):
         """
         Test that when 'match.path' setting is correctly defined but the connection
-        type is neither ethernet nor infiniband, a ValidationError raises.
+        type is neither ethernet nor infiniband, a network_lsr.argument_validator.ValidationError raises.
         """
         self.test_profile["match"] = {"path": ["pci-0000:00:03.0"]}
         result = self.validator.validate(self.test_profile)
@@ -4384,7 +4398,7 @@ class TestValidatorMatch(Python26CompatTestCase):
 
         self.test_profile["type"] = "dummy"  # wokeignore:rule=dummy
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "'match.path' settings are only supported for type 'ethernet' or 'infiniband'",
             self.validator.validate,
             self.test_profile,
@@ -4532,7 +4546,7 @@ class TestValidatorRouteTable(Python26CompatTestCase):
         val_min = 1
         val_max = 0xFFFFFFFF
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "route table value is {0} but cannot be less than {1}".format(
                 self.test_connections[0]["ip"]["route"][0]["table"],
                 val_min,
@@ -4543,7 +4557,7 @@ class TestValidatorRouteTable(Python26CompatTestCase):
 
         self.test_connections[0]["ip"]["route"][0]["table"] = 4294967296
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "route table value is {0} but cannot be greater than {1}".format(
                 self.test_connections[0]["ip"]["route"][0]["table"],
                 val_max,
@@ -4559,7 +4573,7 @@ class TestValidatorRouteTable(Python26CompatTestCase):
 
         self.test_connections[0]["ip"]["route"][0]["table"] = ""
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "route table name cannot be empty string",
             self.validator.validate,
             self.test_connections,
@@ -4573,7 +4587,7 @@ class TestValidatorRouteTable(Python26CompatTestCase):
 
         self.test_connections[0]["ip"]["route"][0]["table"] = False
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "route table must be the named or numeric tables but is {0}".format(
                 self.test_connections[0]["ip"]["route"][0]["table"]
             ),
@@ -4583,7 +4597,7 @@ class TestValidatorRouteTable(Python26CompatTestCase):
 
         self.test_connections[0]["ip"]["route"][0]["table"] = 2.5
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "route table must be the named or numeric tables but is {0}".format(
                 self.test_connections[0]["ip"]["route"][0]["table"]
             ),
@@ -4599,7 +4613,7 @@ class TestValidatorRouteTable(Python26CompatTestCase):
 
         self.test_connections[0]["ip"]["route"][0]["table"] = "test*"
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "route table name contains invalid characters",
             self.validator.validate,
             self.test_connections,
@@ -4607,7 +4621,7 @@ class TestValidatorRouteTable(Python26CompatTestCase):
 
         self.test_connections[0]["ip"]["route"][0]["table"] = "!!!"
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "route table name contains invalid characters",
             self.validator.validate,
             self.test_connections,
@@ -4688,7 +4702,7 @@ class TestValidatorRouteTable(Python26CompatTestCase):
 
         self.test_connections[0]["ip"]["route"][0]["table"] = "test"
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "cannot find route table {0} in `/etc/iproute2/rt_tables` or "
             "`/etc/iproute2/rt_tables.d/`".format(
                 self.test_connections[0]["ip"]["route"][0]["table"]
@@ -4756,7 +4770,7 @@ class TestValidatorRoutingRules(Python26CompatTestCase):
         self.test_connections[0]["ip"]["routing_rule"][0]["suppress_prefixlength"] = 32
 
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "specify the address family 'family'",
             self.validator.validate,
             self.test_connections,
@@ -4771,7 +4785,7 @@ class TestValidatorRoutingRules(Python26CompatTestCase):
         self.test_connections[0]["ip"]["routing_rule"][0]["family"] = "ipv6"
         self.test_connections[0]["ip"]["routing_rule"][0]["from"] = "198.51.100.58/24"
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "invalid address family in 'from'",
             self.validator.validate,
             self.test_connections,
@@ -4779,7 +4793,7 @@ class TestValidatorRoutingRules(Python26CompatTestCase):
         self.test_connections[0]["ip"]["routing_rule"][0]["from"] = "2001:db8::2/32"
         self.test_connections[0]["ip"]["routing_rule"][0]["to"] = "198.51.100.60/24"
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "invalid address family in 'to'",
             self.validator.validate,
             self.test_connections,
@@ -4792,7 +4806,7 @@ class TestValidatorRoutingRules(Python26CompatTestCase):
         """
         self.test_connections[0]["ip"]["routing_rule"][0]["family"] = "ipv4"
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "missing 'table' for the routing rule",
             self.validator.validate,
             self.test_connections,
@@ -4806,7 +4820,7 @@ class TestValidatorRoutingRules(Python26CompatTestCase):
         self.test_connections[0]["ip"]["routing_rule"][0]["table"] = 256
         self.test_connections[0]["ip"]["routing_rule"][0]["from"] = "198.51.100.58/0"
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the prefix length for 'from' cannot be zero",
             self.validator.validate,
             self.test_connections,
@@ -4819,7 +4833,7 @@ class TestValidatorRoutingRules(Python26CompatTestCase):
         self.test_connections[0]["ip"]["routing_rule"][0]["table"] = 256
         self.test_connections[0]["ip"]["routing_rule"][0]["to"] = "198.51.100.58/0"
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the prefix length for 'to' cannot be zero",
             self.validator.validate,
             self.test_connections,
@@ -4833,7 +4847,7 @@ class TestValidatorRoutingRules(Python26CompatTestCase):
         self.test_connections[0]["ip"]["routing_rule"][0]["family"] = "ipv4"
         self.test_connections[0]["ip"]["routing_rule"][0]["fwmark"] = 1
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "'fwmask' and 'fwmark' must be set together",
             self.validator.validate,
             self.test_connections,
@@ -4847,7 +4861,7 @@ class TestValidatorRoutingRules(Python26CompatTestCase):
         self.test_connections[0]["ip"]["routing_rule"][0]["family"] = "ipv4"
         self.test_connections[0]["ip"]["routing_rule"][0]["fwmask"] = 1
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "'fwmask' and 'fwmark' must be set together",
             self.validator.validate,
             self.test_connections,
@@ -4861,7 +4875,7 @@ class TestValidatorRoutingRules(Python26CompatTestCase):
         self.test_connections[0]["ip"]["routing_rule"][0]["family"] = "ipv4"
         self.test_connections[0]["ip"]["routing_rule"][0]["table"] = 256
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the incoming interface '{0}' specified in the routing rule is invalid "
             "interface_name".format(
                 self.test_connections[0]["ip"]["routing_rule"][0]["iif"]
@@ -4878,7 +4892,7 @@ class TestValidatorRoutingRules(Python26CompatTestCase):
         self.test_connections[0]["ip"]["routing_rule"][0]["family"] = "ipv4"
         self.test_connections[0]["ip"]["routing_rule"][0]["table"] = 256
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the outgoing interface '{0}' specified in the routing rule is invalid "
             "interface_name".format(
                 self.test_connections[0]["ip"]["routing_rule"][0]["oif"]
@@ -4894,7 +4908,7 @@ class TestValidatorRoutingRules(Python26CompatTestCase):
         self.test_connections[0]["ip"]["routing_rule"][0]["table"] = 256
         self.test_connections[0]["ip"]["routing_rule"][0]["uid"] = "2000 - 1000"
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the range start cannot be greater than range end",
             self.validator.validate,
             self.test_connections,
@@ -4911,7 +4925,7 @@ class TestValidatorRoutingRules(Python26CompatTestCase):
             self.test_connections[0]["ip"]["routing_rule"][0]["family"]
         )
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "The specified 'suppress_prefixlength' cannot be greater than {0}".format(
                 suppress_prefixlength_val_max
             ),
@@ -4921,7 +4935,7 @@ class TestValidatorRoutingRules(Python26CompatTestCase):
         self.test_connections[0]["ip"]["routing_rule"][0]["family"] = "ipv6"
         self.test_connections[0]["ip"]["routing_rule"][0]["action"] = "blackhole"
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "'suppress_prefixlength' is only allowed with the to-table action",
             self.validator.validate,
             self.test_connections,
@@ -4965,7 +4979,7 @@ class TestValidatorDictBond(Python26CompatTestCase):
         """
         self.test_connections[0]["bond"]["ad_actor_sys_prio"] = 65535
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the bond option ad_actor_sys_prio is only valid with mode 802.3ad",
             self.validator.validate,
             self.test_connections,
@@ -4980,7 +4994,7 @@ class TestValidatorDictBond(Python26CompatTestCase):
         self.test_connections[0]["bond"]["mode"] = "802.3ad"
         self.test_connections[0]["bond"]["packets_per_port"] = 2
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the bond option packets_per_port is only valid with mode balance-rr",
             self.validator.validate,
             self.test_connections,
@@ -4997,7 +5011,7 @@ class TestValidatorDictBond(Python26CompatTestCase):
         self.test_connections[0]["bond"]["arp_ip_target"] = "198.51.100.3"
 
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the bond option arp_interval is only valid with mode balance-rr, active-backup, balance-xor or broadcast",
             self.validator.validate,
             self.test_connections,
@@ -5011,7 +5025,7 @@ class TestValidatorDictBond(Python26CompatTestCase):
         """
         self.test_connections[0]["bond"]["tlb_dynamic_lb"] = True
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the bond option tlb_dynamic_lb is only valid with mode balance-tlb or balance-alb",
             self.validator.validate,
             self.test_connections,
@@ -5025,7 +5039,7 @@ class TestValidatorDictBond(Python26CompatTestCase):
         """
         self.test_connections[0]["bond"]["primary"] = "bond0.0"
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the bond option primary is only valid with mode active-backup, balance-tlb, balance-alb",
             self.validator.validate,
             self.test_connections,
@@ -5039,7 +5053,7 @@ class TestValidatorDictBond(Python26CompatTestCase):
         """
         self.test_connections[0]["bond"]["downdelay"] = 5
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the bond option downdelay or updelay is only valid with miimon enabled",
             self.validator.validate,
             self.test_connections,
@@ -5054,7 +5068,7 @@ class TestValidatorDictBond(Python26CompatTestCase):
         self.test_connections[0]["bond"]["miimon"] = 110
         self.test_connections[0]["bond"]["peer_notif_delay"] = 222
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the bond option peer_notif_delay needs miimon enabled and must be miimon multiple",
             self.validator.validate,
             self.test_connections,
@@ -5062,7 +5076,7 @@ class TestValidatorDictBond(Python26CompatTestCase):
         self.test_connections[0]["bond"]["peer_notif_delay"] = 220
         self.test_connections[0]["bond"]["arp_interval"] = 110
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the bond option peer_notif_delay needs arp_interval disabled",
             self.validator.validate,
             self.test_connections,
@@ -5076,7 +5090,7 @@ class TestValidatorDictBond(Python26CompatTestCase):
         """
         self.test_connections[0]["bond"]["arp_interval"] = 4
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the bond option arp_interval requires arp_ip_target to be set",
             self.validator.validate,
             self.test_connections,
@@ -5085,7 +5099,7 @@ class TestValidatorDictBond(Python26CompatTestCase):
         self.test_connections[0]["bond"]["arp_ip_target"] = "198.51.100.3"
         self.test_connections[0]["bond"]["arp_interval"] = 0
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the bond option arp_ip_target requires arp_interval to be set",
             self.validator.validate,
             self.test_connections,
@@ -5118,7 +5132,7 @@ class TestValidatorDictBond(Python26CompatTestCase):
         ]
 
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "bond only supports infiniband ports in active-backup mode",
             self.validator.validate,
             test_connections_with_infiniband_port,
@@ -5150,7 +5164,7 @@ class TestValidatorDictInfiniband(Python26CompatTestCase):
     def test_invalid_pkey_values(self):
         self.test_connections[1]["infiniband"]["p_key"] = 0x0000
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the pkey value {0} is not allowed as such a pkey value is not "
             "supported by kernel".format(
                 self.test_connections[1]["infiniband"]["p_key"]
@@ -5160,7 +5174,7 @@ class TestValidatorDictInfiniband(Python26CompatTestCase):
         )
         self.test_connections[1]["infiniband"]["p_key"] = 0x8000
         self.assertRaisesRegex(
-            ValidationError,
+            network_lsr.argument_validator.ValidationError,
             "the pkey value {0} is not allowed as such a pkey value is not "
             "supported by kernel".format(
                 self.test_connections[1]["infiniband"]["p_key"]
