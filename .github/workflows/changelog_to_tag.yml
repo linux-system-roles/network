@@ -62,25 +62,24 @@ jobs:
               git branch -a
               exit 1
           fi
-          echo ::set-output name=tagname::"$_tagname"
-          echo ::set-output name=branch::"$_branch"
+          echo tagname="$_tagname" >> "$GITHUB_OUTPUT"
+          echo branch="$_branch" >> "$GITHUB_OUTPUT"
       - name: Create tag
-        uses: mathieudutour/github-tag-action@v6.0
+        uses: mathieudutour/github-tag-action@v6.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           custom_tag: ${{ steps.tag.outputs.tagname }}
           tag_prefix: ''
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: ${{ steps.tag.outputs.tagname }}
-          release_name: Version ${{ steps.tag.outputs.tagname }}
-          body_path: ./.tagmsg.txt
-          draft: false
-          prerelease: false
+          tag: ${{ steps.tag.outputs.tagname }}
+          name: Version ${{ steps.tag.outputs.tagname }}
+          bodyFile: ./.tagmsg.txt
+          makeLatest: true
       - name: Publish role to Galaxy
-        uses: robertdebock/galaxy-action@1.2.0
+        uses: robertdebock/galaxy-action@1.2.1
         with:
           galaxy_api_key: ${{ secrets.galaxy_api_key }}
           git_branch: ${{ steps.tag.outputs.branch }}
