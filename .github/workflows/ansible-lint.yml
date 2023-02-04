@@ -6,6 +6,8 @@ on:  # yamllint disable-line rule:truthy
     branches:
       - main
   workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   ansible_lint:
     runs-on: ubuntu-latest
@@ -13,10 +15,12 @@ jobs:
       - name: Update pip, git
         run: |
           set -euxo pipefail
-          sudo apt-get update
-          sudo apt-get install -y git
+          sudo apt update
+          sudo apt install -y git
+
       - name: Checkout repo
         uses: actions/checkout@v3
+
       - name: Fix up role meta/main.yml namespace and name
         run: |
           set -euxo pipefail
@@ -29,5 +33,6 @@ jobs:
               sed "/galaxy_info:/a\  role_name: network" -i "$mm"
             fi
           fi
+
       - name: Run ansible-lint
         uses: ansible-community/ansible-lint-action@v6

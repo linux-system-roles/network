@@ -6,6 +6,8 @@ on:  # yamllint disable-line rule:truthy
     branches:
       - main
   workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   ansible_managed_var_comment:
     runs-on: ubuntu-latest
@@ -14,14 +16,17 @@ jobs:
         run: |
           set -euxo pipefail
           python3 -m pip install --upgrade pip
-          sudo apt-get update
-          sudo apt-get install -y git
+          sudo apt update
+          sudo apt install -y git
+
       - name: Checkout repo
         uses: actions/checkout@v3
+
       - name: Install tox, tox-lsr
         run: |
           set -euxo pipefail
           pip3 install "git+https://github.com/linux-system-roles/tox-lsr@2.13.1"
+
       - name: Run ansible-plugin-scan
         run: |
           set -euxo pipefail
