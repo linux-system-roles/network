@@ -7,8 +7,8 @@ on:  # yamllint disable-line rule:truthy
     branches:
       - main
   workflow_dispatch:
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+permissions:
+  contents: read
 jobs:
   python:
     strategy:
@@ -31,14 +31,17 @@ jobs:
       - name: Update git
         run: |
           set -euxo pipefail
-          sudo apt-get update
-          sudo apt-get install -y git
+          sudo apt update
+          sudo apt install -y git
+
       - name: checkout PR
         uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.pyver_os.ver }}
+
       - name: Install platform dependencies, python, tox, tox-lsr
         run: |
           set -euxo pipefail
@@ -50,6 +53,7 @@ jobs:
           if [ -f .github/config/ubuntu-requirements.txt ]; then
             sudo apt-get install -y $(cat .github/config/ubuntu-requirements.txt)
           fi
+
       - name: Run unit tests
         run: |
           set -euxo pipefail

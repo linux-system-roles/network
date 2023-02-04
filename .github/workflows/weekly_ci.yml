@@ -1,3 +1,4 @@
+---
 # yamllint disable rule:line-length
 name: Weekly CI trigger
 on:  # yamllint disable-line rule:truthy
@@ -12,16 +13,24 @@ env:
     We don't currently have a way to trigger CI without a PR,
     so this PR serves that purpose.
   COMMENT: "[citest]"
+permissions:
+  contents: read
 jobs:
   weekly_ci:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: write
     steps:
       - name: Update pip, git
         run: |
           set -euxo pipefail
-          sudo apt-get update
-          sudo apt-get install -y git
-      - uses: actions/checkout@v3
+          sudo apt update
+          sudo apt install -y git
+
+      - name: Checkout latest code
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Create and push empty commit
@@ -48,8 +57,9 @@ jobs:
               base: context.ref,
               state: "open"
             });
+            let pr_number = '';
             if (response.data.length === 0) {
-              const response = await github.rest.pulls.create({
+              pr_number = (await github.rest.pulls.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: "${{ env.COMMIT_MESSAGE }}",
@@ -57,10 +67,9 @@ jobs:
                 head: "${{ env.BRANCH_NAME }}",
                 base: context.ref,
                 draft: true
-              });
-              var pr_number = response.data.number;
+              })).data.number;
             } else {
-              var pr_number = response.data[0].number;
+              pr_number = response.data[0].number;
             }
             github.rest.issues.createComment({
               owner: context.repo.owner,
