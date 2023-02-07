@@ -843,10 +843,9 @@ following options:
 
 - `all_ports_active`
 
-    <!--- wokeignore:rule=slave -->
-    `all_slaves_active` in kernel and NetworkManager. The boolean value `false` drops
-    the duplicate frames (received on inactive ports) and the boolean value `true`
-    delivers the duplicate frames.
+    `all_slaves_active` <!--- wokeignore:rule=slave ---> in kernel and NetworkManager.
+    The boolean value `false` drops the duplicate frames (received on inactive ports)
+    and the boolean value `true` delivers the duplicate frames.
 
 - `arp_all_targets`
 
