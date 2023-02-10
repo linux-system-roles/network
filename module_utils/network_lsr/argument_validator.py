@@ -2628,7 +2628,8 @@ class IPRouteUtils(object):
     # certain set of ASCII characters. These aliases are what we accept
     # as input (in the playbook), and there is no need to accept
     # user input with unusual characters or non-ASCII names.
-    ROUTE_TABLE_ALIAS_RE = re.compile("^[a-zA-Z0-9_.-]+$")
+    _ROUTE_TABLE_NAME_PATTERN = "[a-zA-Z0-9_.-]+"
+    ROUTE_TABLE_ALIAS_RE = re.compile("^" + _ROUTE_TABLE_NAME_PATTERN + "$")
 
     @classmethod
     def _parse_route_tables_mapping(cls, file_content, mapping):
@@ -2639,7 +2640,13 @@ class IPRouteUtils(object):
         # It is thus similar to rtnl_rttable_a2n(), from here:
         # https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/tree/lib/rt_names.c?id=11e41a635cfab54e8e02fbff2a03715467e77ae9#n447
         regex = re.compile(
-            b"^\\s*(0x[0-9a-fA-F]+|[0-9]+)\\s+([a-zA-Z0-9_.-]+)(\\s*|\\s+#.*)$"
+            b"^\\s*"  # optional leading whitespace
+            b"(0x[0-9a-fA-F]+|[0-9]+)"  # table ID in hex or decimal (non negative)
+            b"\\s+"  # whitespace
+            b"("  # make a pattern group for the table name
+            + cls._ROUTE_TABLE_NAME_PATTERN.encode("ascii")
+            + b")"  # close pattern group
+            b"(\\s*|\\s+#.*)$"  # trailing whitespace or comment
         )
         for line in file_content.split(b"\n"):
 
@@ -2648,25 +2655,13 @@ class IPRouteUtils(object):
                 continue
 
             table = rmatch.group(1)
-            name = rmatch.group(2)
+            name = rmatch.group(2).decode("ascii")
 
-            name = name.decode("utf-8")
-
-            if not cls.ROUTE_TABLE_ALIAS_RE.match(name):
-                raise AssertionError(
-                    "bug: table alias contains unexpected characters: %s" % (name,)
-                )
-
-            tableid = None
-            try:
+            if table.startswith(b"0x"):
+                tableid = int(table, 16)
+            else:
                 tableid = int(table)
-            except Exception:
-                if table.startswith(b"0x"):
-                    try:
-                        tableid = int(table[2:], 16)
-                    except Exception:
-                        pass
-            if tableid is None or tableid < 0 or tableid > 0xFFFFFFFF:
+            if tableid > UINT32_MAX:
                 continue
 
             # In case of duplicates, the latter wins. That is unlike iproute2's
