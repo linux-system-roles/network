@@ -295,7 +295,7 @@ class ArgValidatorRouteTable(ArgValidator):
         if isinstance(table, Util.STRING_TYPE):
             if table == "":
                 raise ValidationError(name, "route table name cannot be empty string")
-            if not IPRouteUtils.ROUTE_TABLE_ALIAS_RE.match(table):
+            if not IPRouteUtils.ROUTE_TABLE_NAME_REGEX.match(table):
                 raise ValidationError(
                     name, "route table name contains invalid characters"
                 )
@@ -2629,7 +2629,7 @@ class IPRouteUtils(object):
     # as input (in the playbook), and there is no need to accept
     # user input with unusual characters or non-ASCII names.
     _ROUTE_TABLE_NAME_PATTERN = "[a-zA-Z0-9_.-]+"
-    ROUTE_TABLE_ALIAS_RE = re.compile("^" + _ROUTE_TABLE_NAME_PATTERN + "$")
+    ROUTE_TABLE_NAME_REGEX = re.compile("^" + _ROUTE_TABLE_NAME_PATTERN + "$")
 
     @classmethod
     def _parse_route_tables_mapping(cls, file_content, mapping):
