@@ -69,3 +69,13 @@ jobs:
           *) toxenvs="${toxenvs},coveralls" ;;
           esac
           TOXENV="$toxenvs" lsr_ci_runtox
+  python-26:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout PR
+        uses: actions/checkout@v3
+
+      - name: Run py26 tests
+        uses: linux-system-roles/lsr-gh-action-py26@1.0.2
+        env:
+          TOX_LSR: "git+https://github.com/linux-system-roles/tox-lsr@2.13.1"
