@@ -285,11 +285,11 @@ class ArgValidatorRouteTable(ArgValidator):
                     name,
                     "route table value is {0} but cannot be less than 1".format(value),
                 )
-            elif table > 0xFFFFFFFF:
+            elif table > UINT32_MAX:
                 raise ValidationError(
                     name,
-                    "route table value is {0} but cannot be greater than 4294967295".format(
-                        value
+                    "route table value is {0} but cannot be greater than {1}".format(
+                        value, UINT32_MAX
                     ),
                 )
         if isinstance(table, Util.STRING_TYPE):
@@ -672,7 +672,7 @@ class ArgValidatorIPRoute(ArgValidatorDict):
                     "gateway", family=family, default_value=None, plain_address=False
                 ),
                 ArgValidatorNum(
-                    "metric", default_value=-1, val_min=-1, val_max=0xFFFFFFFF
+                    "metric", default_value=-1, val_min=-1, val_max=UINT32_MAX
                 ),
                 ArgValidatorRouteTable("table"),
             ],
@@ -719,7 +719,7 @@ class ArgValidatorIPRoutingRule(ArgValidatorDict):
                     default_value=None,
                     required=True,
                     val_min=0,
-                    val_max=0xFFFFFFFF,
+                    val_max=UINT32_MAX,
                 ),
                 ArgValidatorStr(
                     "action",
@@ -734,10 +734,10 @@ class ArgValidatorIPRoutingRule(ArgValidatorDict):
                 ),
                 ArgValidatorIPAddr("from"),
                 ArgValidatorNum(
-                    "fwmark", default_value=None, val_min=1, val_max=0xFFFFFFFF
+                    "fwmark", default_value=None, val_min=1, val_max=UINT32_MAX
                 ),
                 ArgValidatorNum(
-                    "fwmask", default_value=None, val_min=1, val_max=0xFFFFFFFF
+                    "fwmask", default_value=None, val_min=1, val_max=UINT32_MAX
                 ),
                 ArgValidatorStr("iif", default_value=None),
                 ArgValidatorBool("invert", default_value=False),
@@ -748,7 +748,7 @@ class ArgValidatorIPRoutingRule(ArgValidatorDict):
                 ArgValidatorRouteTable("table"),
                 ArgValidatorIPAddr("to"),
                 ArgValidatorNum("tos", default_value=None, val_min=1, val_max=255),
-                ArgValidatorRange("uid", val_min=0, val_max=0xFFFFFFFF),
+                ArgValidatorRange("uid", val_min=0, val_max=UINT32_MAX),
             ],
             default_value=None,
         )
@@ -864,13 +864,13 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 ArgValidatorBool("dhcp4_send_hostname", default_value=None),
                 ArgValidatorIP("gateway4", family=socket.AF_INET),
                 ArgValidatorNum(
-                    "route_metric4", val_min=-1, val_max=0xFFFFFFFF, default_value=None
+                    "route_metric4", val_min=-1, val_max=UINT32_MAX, default_value=None
                 ),
                 ArgValidatorBool("auto6", default_value=None),
                 ArgValidatorBool("ipv6_disabled", default_value=None),
                 ArgValidatorIP("gateway6", family=socket.AF_INET6),
                 ArgValidatorNum(
-                    "route_metric6", val_min=-1, val_max=0xFFFFFFFF, default_value=None
+                    "route_metric6", val_min=-1, val_max=UINT32_MAX, default_value=None
                 ),
                 ArgValidatorList(
                     "address",
@@ -1004,7 +1004,7 @@ class ArgValidator_DictEthernet(ArgValidatorDict):
             nested=[
                 ArgValidatorBool("autoneg", default_value=None),
                 ArgValidatorNum(
-                    "speed", val_min=0, val_max=0xFFFFFFFF, default_value=0
+                    "speed", val_min=0, val_max=UINT32_MAX, default_value=0
                 ),
                 ArgValidatorStr(
                     "duplex", enum_values=["half", "full"], default_value=None
@@ -1850,7 +1850,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                     default_value="default",
                 ),
                 ArgValidatorNum(
-                    "mtu", val_min=0, val_max=0xFFFFFFFF, default_value=None
+                    "mtu", val_min=0, val_max=UINT32_MAX, default_value=None
                 ),
                 ArgValidatorStr("zone"),
                 ArgValidatorBool("check_iface_exists", default_value=True),
