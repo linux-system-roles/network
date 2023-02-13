@@ -531,6 +531,19 @@ class IfcfgUtil:
                 line = r["network"] + "/" + str(r["prefix"])
                 if r["gateway"]:
                     line += " via " + r["gateway"]
+                if connection["interface_name"]:
+                    line += " dev " + connection["interface_name"]
+                else:
+                    warn_fcn(
+                        "The connection {0} does not specify an interface name. "
+                        "Therefore, the route to {1}/{2} will be configured without "
+                        "the output device and the kernel will choose it "
+                        "automatically which might result in an unwanted device being "
+                        "used. To avoid this, specify `interface_name` in the "
+                        "connection appropriately.".format(
+                            connection["name"], r["network"], r["prefix"]
+                        ),
+                    )
                 if r["metric"] != -1:
                     line += " metric " + str(r["metric"])
 
