@@ -54,7 +54,7 @@
         set -euxo pipefail
         nmcli connection show {{ interface }} | grep ipv6.method
       register: ipv6_method
-      ignore_errors: yes
+      ignore_errors: true
       changed_when: false
       when: not __network_connections_result.failed
 

@@ -17,15 +17,15 @@
 
               - name: ib0-10
                 type: infiniband
-                autoconnect: yes
+                autoconnect: true
                 infiniband:
                   p_key: 10
                   transport_mode: datagram
                 parent: ib0
                 state: up
                 ip:
-                  dhcp4: no
-                  auto6: no
+                  dhcp4: false
+                  auto6: false
                   address:
                     - 198.51.100.133/30
                     - 2001:db8::2/32
@@ -33,7 +33,7 @@
         - name: Get the details for the virtual device ib0.000a
           command: ip -d a s ib0.000a
           register: virtual_device_setting
-          ignore_errors: yes
+          ignore_errors: true
           changed_when: false
 
         - name: Assert that the settings in the virtual device

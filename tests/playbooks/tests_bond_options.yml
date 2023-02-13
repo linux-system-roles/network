@@ -41,7 +41,7 @@
                   ad_actor_system: 00:00:5e:00:53:5d
                   ad_select: stable
                   ad_user_port_key: 1023
-                  all_ports_active: True
+                  all_ports_active: true
                   downdelay: 0
                   lacp_rate: slow
                   lp_interval: 128
@@ -51,7 +51,7 @@
                   primary_reselect: better
                   resend_igmp: 225
                   updelay: 0
-                  use_carrier: True
+                  use_carrier: true
                   xmit_hash_policy: encap2+3
                 ip:
                   route_metric4: 65535

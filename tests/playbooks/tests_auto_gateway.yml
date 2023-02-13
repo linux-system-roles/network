@@ -23,9 +23,9 @@
             type: ethernet
             state: up
             ip:
-              auto_gateway: yes
-              dhcp4: no
-              auto6: no
+              auto_gateway: true
+              dhcp4: false
+              auto6: false
               address:
                 - "2001:db8::2/64"
                 - "203.0.113.2/24"
@@ -91,9 +91,9 @@
             type: ethernet
             state: up
             ip:
-              auto_gateway: no
-              dhcp4: no
-              auto6: no
+              auto_gateway: false
+              dhcp4: false
+              auto6: false
               address:
                 - "2001:db8::2/64"
                 - "203.0.113.2/24"

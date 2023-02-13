@@ -21,8 +21,8 @@
         state: up
         type: bridge
         ip:
-          dhcp4: no
-          auto6: yes
+          dhcp4: false
+          auto6: true
   roles:
     - linux-system-roles.network
 

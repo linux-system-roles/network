@@ -24,7 +24,7 @@
 - name: Get NM profile info
   shell: nmcli -f NAME,FILENAME connection show |grep {{ profile }} | grep /etc
   register: nm_profile_exists
-  ignore_errors: yes
+  ignore_errors: true
   changed_when: false
 
 # lsr_net_profile_ansible_managed:

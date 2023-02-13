@@ -38,8 +38,8 @@
                 type: ethernet
                 state: up
                 ip:
-                  dhcp4: no
-                  auto6: no
+                  dhcp4: false
+                  auto6: false
 
         - name: Get profile's coalescing options
           command: nmcli -g ethtool.coalesce-rx-frames c show {{ interface }}
@@ -77,8 +77,8 @@
                 type: ethernet
                 state: up
                 ip:
-                  dhcp4: no
-                  auto6: no
+                  dhcp4: false
+                  auto6: false
                 ethtool:
                   coalesce:
                     rx_frames: 128
@@ -118,8 +118,8 @@
                 type: ethernet
                 state: up
                 ip:
-                  dhcp4: no
-                  auto6: no
+                  dhcp4: false
+                  auto6: false
 
         - name: Get profile's coalescing options
           command: nmcli -g ethtool.coalesce-rx-frames c show {{ interface }}

@@ -34,7 +34,7 @@
         interface_name: "{{ interface }}"
         state: up
         type: ethernet
-        autoconnect: yes
+        autoconnect: true
         ip:
           address: 192.0.2.1/24
   roles:

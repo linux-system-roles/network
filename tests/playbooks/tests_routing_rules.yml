@@ -25,7 +25,7 @@
         path: /etc/iproute2/rt_tables.d/table.conf
         line: "200 custom"
         mode: "0644"
-        create: yes
+        create: true
 
     - name: Configure connection profile and specify the numeric table in
         static routes
@@ -37,9 +37,9 @@
             interface_name: "{{ interface }}"
             state: up
             type: ethernet
-            autoconnect: yes
+            autoconnect: true
             ip:
-              dhcp4: no
+              dhcp4: false
               address:
                 - 198.51.100.3/26
                 - 2001:db8::2/32
@@ -97,7 +97,7 @@
                 - priority: 30601
                   family: ipv6
                   dport: 128 - 256
-                  invert: True
+                  invert: true
                   table: 30600
                 - priority: 200
                   from: 198.51.100.56/26
@@ -108,41 +108,41 @@
     - name: Get the routing rule for looking up the table 30200
       command: ip rule list table 30200
       register: route_rule_table_30200
-      ignore_errors: yes
+      ignore_errors: true
       changed_when: false
       when: ansible_distribution_major_version != "7"
 
     - name: Get the routing rule for looking up the table 30400
       command: ip rule list table 30400
       register: route_rule_table_30400
-      ignore_errors: yes
+      ignore_errors: true
       changed_when: false
       when: ansible_distribution_major_version != "7"
 
     - name: Get the routing rule for looking up the table 30600
       command: ip -6 rule list table 30600
       register: route_rule_table_30600
-      ignore_errors: yes
+      ignore_errors: true
       changed_when: false
       when: ansible_distribution_major_version != "7"
 
     - name: Get the routing rule for looking up the table 'custom'
       command: ip rule list table custom
       register: route_rule_table_custom
-      ignore_errors: yes
+      ignore_errors: true
       changed_when: false
       when: ansible_distribution_major_version != "7"
 
     - name: Get the IPv4 routing rule for the connection "{{ interface }}"
       command: nmcli -f ipv4.routing-rules c show "{{ interface }}"
       register: connection_route_rule
-      ignore_errors: yes
+      ignore_errors: true
       changed_when: false
 
     - name: Get the IPv6 routing rule for the connection "{{ interface }}"
       command: nmcli -f ipv6.routing-rules c show "{{ interface }}"
       register: connection_route_rule6
-      ignore_errors: yes
+      ignore_errors: true
       changed_when: false
 
     - name: Assert that the routing rule with table lookup 30200 matches the

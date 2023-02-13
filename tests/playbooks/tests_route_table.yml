@@ -30,9 +30,9 @@
             interface_name: "{{ interface }}"
             state: up
             type: ethernet
-            autoconnect: yes
+            autoconnect: true
             ip:
-              dhcp4: no
+              dhcp4: false
               address:
                 - 198.51.100.3/26
               route:
@@ -50,13 +50,13 @@
     - name: Get the routes from the route table 30200
       command: ip route show table 30200
       register: route_table_30200
-      ignore_errors: yes
+      ignore_errors: true
       changed_when: false
 
     - name: Get the routes from the route table 30400
       command: ip route show table 30400
       register: route_table_30400
-      ignore_errors: yes
+      ignore_errors: true
       changed_when: false
 
     - name: Assert that the route table 30200 contains the specified route
@@ -82,7 +82,7 @@
         path: /etc/iproute2/rt_tables.d/table.conf
         line: "200 custom"
         mode: "0644"
-        create: yes
+        create: true
 
     - name: Reconfigure connection profile and specify the named table in
         static routes
@@ -94,9 +94,9 @@
             interface_name: "{{ interface }}"
             state: up
             type: ethernet
-            autoconnect: yes
+            autoconnect: true
             ip:
-              dhcp4: no
+              dhcp4: false
               address:
                 - 198.51.100.3/26
               route:
@@ -114,7 +114,7 @@
     - name: Get the routes from the named route table 'custom'
       command: ip route show table custom
       register: route_table_custom
-      ignore_errors: yes
+      ignore_errors: true
       changed_when: false
 
     - name: Assert that the named route table 'custom' contains the
