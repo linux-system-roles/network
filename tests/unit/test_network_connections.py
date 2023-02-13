@@ -2651,7 +2651,7 @@ class TestValidator(Python26CompatTestCase):
                         "DEVICE": "555",
                     },
                     "keys": None,
-                    "route": "192.168.45.0/24 metric 545\n192.168.46.0/30\n",
+                    "route": "192.168.45.0/24 dev 555 metric 545\n192.168.46.0/30 dev 555\n",
                     "route6": None,
                     "rule": None,
                     "rule6": None,
@@ -2772,7 +2772,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "ifcfg": "",
                     "keys": None,
-                    "route": "192.168.40.0/24 metric 545\n192.168.46.0/30",
+                    "route": "192.168.40.0/24 dev e556 metric 545\n192.168.46.0/30",
                     "route6": "a:b:c:f::/64",
                     "rule": None,
                     "rule6": None,
@@ -2792,12 +2792,170 @@ class TestValidator(Python26CompatTestCase):
                         "DEVICE": "e556",
                     },
                     "keys": None,
-                    "route": "192.168.40.0/24 metric 545\n192.168.46.0/30\n"
+                    "route": "192.168.40.0/24 dev e556 metric 545\n"
+                    "192.168.46.0/30\n"
+                    "192.168.45.0/24 dev e556 metric 545\n"
+                    "192.168.46.0/30 dev e556\n",
+                    "route6": "a:b:c:f::/64\na:b:c:d::/64 dev e556\n",
+                    "rule": None,
+                    "rule6": None,
+                }
+            ],
+        )
+
+    def test_route_without_interface_name(self):
+        route_device_warning = (
+            "The connection e556 does not specify an interface name. Therefore, the "
+            "route to {0} will be configured without the output device and the kernel "
+            "will choose it automatically which might result in an unwanted device "
+            "being used. To avoid this, specify `interface_name` in the connection "
+            "appropriately."
+        )
+        self.maxDiff = None
+        self.do_connections_validate(
+            [
+                {
+                    "actions": ["present", "up"],
+                    "autoconnect": True,
+                    "check_iface_exists": True,
+                    "ethernet": ETHERNET_DEFAULTS,
+                    "ethtool": ETHTOOL_DEFAULTS,
+                    "force_state_change": None,
+                    "ignore_errors": None,
+                    "interface_name": None,
+                    "ip": {
+                        "gateway6": None,
+                        "gateway4": None,
+                        "route_metric4": None,
+                        "auto6": True,
+                        "ipv6_disabled": False,
+                        "dhcp4": True,
+                        "address": [],
+                        "auto_gateway": None,
+                        "route_append_only": True,
+                        "rule_append_only": False,
+                        "route": [
+                            {
+                                "family": socket.AF_INET,
+                                "network": "192.168.45.0",
+                                "prefix": 24,
+                                "gateway": None,
+                                "metric": 545,
+                                "table": None,
+                            },
+                            {
+                                "family": socket.AF_INET,
+                                "network": "192.168.46.0",
+                                "prefix": 30,
+                                "gateway": None,
+                                "metric": -1,
+                                "table": None,
+                            },
+                            {
+                                "family": socket.AF_INET6,
+                                "network": "a:b:c:d::",
+                                "prefix": 64,
+                                "gateway": None,
+                                "metric": -1,
+                                "table": None,
+                            },
+                        ],
+                        "routing_rule": [],
+                        "dns": [],
+                        "dns_options": [],
+                        "dns_priority": 0,
+                        "dns_search": ["aa", "bb"],
+                        "route_metric6": None,
+                        "dhcp4_send_hostname": None,
+                    },
+                    "mac": "12:23:34:45:56:60",
+                    "cloned_mac": "default",
+                    "match": {},
+                    "controller": None,
+                    "ieee802_1x": None,
+                    "wireless": None,
+                    "mtu": None,
+                    "name": "e556",
+                    "parent": None,
+                    "persistent_state": "present",
+                    "port_type": None,
+                    "state": "up",
+                    "type": "ethernet",
+                    "wait": None,
+                    "zone": "external",
+                }
+            ],
+            [
+                {
+                    "name": "e556",
+                    "state": "up",
+                    "type": "ethernet",
+                    "zone": "external",
+                    "mac": "12:23:34:45:56:60",
+                    "ip": {
+                        "dns_search": ["aa", "bb"],
+                        "route_append_only": True,
+                        "rule_append_only": False,
+                        "route": [
+                            {"network": "192.168.45.0", "metric": 545},
+                            {"network": "192.168.46.0", "prefix": 30},
+                            {"network": "a:b:c:d::"},
+                        ],
+                    },
+                }
+            ],
+            nm_route_list_current=[
+                [
+                    {"network": "192.168.40.0", "prefix": 24, "metric": 545},
+                    {"network": "192.168.46.0", "prefix": 30},
+                    {"network": "a:b:c:f::"},
+                ]
+            ],
+            nm_route_list_expected=[
+                [
+                    {"network": "192.168.40.0", "prefix": 24, "metric": 545},
+                    {"network": "192.168.46.0", "prefix": 30},
+                    {"network": "192.168.45.0", "prefix": 24, "metric": 545},
+                    {"network": "a:b:c:f::"},
+                    {"network": "a:b:c:d::"},
+                ]
+            ],
+            initscripts_content_current=[
+                {
+                    "ifcfg": "",
+                    "keys": None,
+                    "route": "192.168.40.0/24 metric 545\n192.168.46.0/30",
+                    "route6": "a:b:c:f::/64",
+                    "rule": None,
+                    "rule6": None,
+                }
+            ],
+            initscripts_dict_expected=[
+                {
+                    "ifcfg": {
+                        "BOOTPROTO": "dhcp",
+                        "DOMAIN": "aa bb",
+                        "HWADDR": "12:23:34:45:56:60",
+                        "IPV6INIT": "yes",
+                        "IPV6_AUTOCONF": "yes",
+                        "NM_CONTROLLED": "no",
+                        "ONBOOT": "yes",
+                        "TYPE": "Ethernet",
+                        "ZONE": "external",
+                    },
+                    "keys": None,
+                    "route": "192.168.40.0/24 metric 545\n"
+                    "192.168.46.0/30\n"
                     "192.168.45.0/24 metric 545\n",
                     "route6": "a:b:c:f::/64\na:b:c:d::/64\n",
                     "rule": None,
                     "rule6": None,
                 }
+            ],
+            initscripts_expected_warnings=[
+                route_device_warning.format("192.168.45.0/24"),
+                route_device_warning.format("192.168.46.0/30"),
+                route_device_warning.format("a:b:c:d::/64"),
             ],
         )
 

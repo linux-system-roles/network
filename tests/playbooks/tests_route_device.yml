@@ -1,0 +1,188 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Test output device of routes
+  hosts: all
+  vars:
+    type: veth
+    interface0: ethtest0
+    interface1: ethtest1
+
+  tasks:
+    - name: Set type and interface0
+      set_fact:
+        type: "{{ type }}"
+        interface: "{{ interface0 }}"
+    - name: Show interfaces
+      include_tasks: tasks/show_interfaces.yml
+    - name: Manage test interface
+      include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: present
+    - name: Assert device is present
+      include_tasks: tasks/assert_device_present.yml
+    - name: Set interface1
+      set_fact:
+        interface: "{{ interface1 }}"
+    - name: Show interfaces
+      include_tasks: tasks/show_interfaces.yml
+    - name: Manage test interface
+      include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: present
+    - name: Assert device is present
+      include_tasks: tasks/assert_device_present.yml
+    - name: Test the route or the warning log when configuring the route with
+        or without the interface name
+      block:
+        - name: Configure the IP addresses and the route with interface name
+            specified
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface0 }}"
+                interface_name: "{{ interface0 }}"
+                state: up
+                type: ethernet
+                autoconnect: false
+                ip:
+                  address:
+                    - 198.51.100.3/24
+                    - 2001:db8::2/32
+                  route:
+                    - network: 198.51.10.64
+                      prefix: 26
+                      gateway: 198.51.100.6
+                      metric: 4
+                    - network: 2001:db6::4
+                      prefix: 128
+                      gateway: 2001:db8::1
+                      metric: 2
+              - name: "{{ interface1 }}"
+                interface_name: "{{ interface1 }}"
+                state: up
+                type: ethernet
+                autoconnect: false
+                ip:
+                  address:
+                    - 198.51.100.6/24
+                    - 2001:db8::4/32
+                  route:
+                    - network: 198.51.12.128
+                      prefix: 26
+                      gateway: 198.51.100.1
+                      metric: 2
+        - name: Get the IPv4 routes from the route table main
+          command: ip -4 route
+          register: route_table_main_ipv4
+          changed_when: false
+
+        - name: Assert that the route table main contains the specified IPv4
+            routes
+          assert:
+            that:
+              # When running with nm provider, the route will be configured
+              # with `proto static`
+              # In RHEL-6.10 managed host, the attribute in the route is not
+              # equally spaced
+              - route_table_main_ipv4.stdout is search("198.51.10.64/26 via
+                198.51.100.6 dev ethtest0\s+(proto static )?metric 4")
+              - route_table_main_ipv4.stdout is search("198.51.12.128/26 via
+                198.51.100.1 dev ethtest1\s+(proto static )?metric 2")
+            msg: "the route table main does not contain the specified IPv4
+              route"
+
+        - name: Get the IPv6 routes from the route table main
+          command: ip -6 route
+          register: route_table_main_ipv6
+          changed_when: false
+
+        - name: Assert that the route table main contains the specified IPv6
+            routes
+          assert:
+            that:
+              - route_table_main_ipv6.stdout is search("2001:db6::4 via
+                2001:db8::1 dev ethtest0\s+(proto static )?metric 2")
+            msg: "the route table main does not contain the specified IPv6
+              route"
+        - name: Get the interface1 MAC address
+          command: cat /sys/class/net/{{ interface1 }}/address
+          register: interface1_mac
+          changed_when: false
+        - name: Configure the IP addresses and the route with only the MAC
+            address specified
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface1 }}"
+                mac: "{{ interface1_mac.stdout }}"
+                type: ethernet
+                autoconnect: false
+                ip:
+                  address:
+                    - 198.51.100.4/24
+                    - 2001:db8::6/32
+                  route:
+                    - network: 198.58.10.64
+                      prefix: 26
+                      gateway: 198.51.100.102
+                      metric: 4
+
+        - name: Assert that the warning about specifying the route without
+            the output device is logged for initscripts provider
+          assert:
+            that:
+              - __network_connections_result.stderr is search("\[003\]
+                <warn>  .0, state.None persistent_state.present,
+                '{{ interface1 }}'. The connection {{ interface1 }} does not
+                specify an interface name. Therefore, the route to
+                198.58.10.64/26 will be configured without the output device
+                and the kernel will choose it automatically which might result
+                in an unwanted device being used. To avoid this, specify
+                `interface_name` in the connection appropriately.")
+            msg: The warning about specifying the route without the output
+              device is not logged for initscripts provider
+          when: network_provider == "initscripts"
+
+        - name: Assert that no warning is logged for nm provider
+          assert:
+            that:
+              - __network_connections_result.stderr is not search("<warn>")
+            msg: The warning is logged for nm provider
+          when: network_provider == "nm"
+      always:
+        - name: Remove test configuration
+          block:
+            - name: Bring down test devices and profiles
+              include_role:
+                name: linux-system-roles.network
+              vars:
+                network_connections:
+                  - name: "{{ interface0 }}"
+                    persistent_state: absent
+                    state: down
+                  - name: "{{ interface1 }}"
+                    persistent_state: absent
+                    state: down
+            - name: Delete interface1
+              include_tasks: tasks/delete_interface.yml
+            - name: Assert interface1 is absent
+              include_tasks: tasks/assert_device_absent.yml
+            - name: Set interface0
+              set_fact:
+                interface: "{{ interface0 }}"
+            - name: Delete interface0
+              include_tasks: tasks/delete_interface.yml
+            - name: Assert interface0 is absent
+              include_tasks: tasks/assert_device_absent.yml
+            - name: Assert interface0 profile and interface1 profile are absent
+              include_tasks: tasks/assert_profile_absent.yml
+              vars:
+                profile: "{{ item }}"
+              loop:
+                - "{{ interface0 }}"
+                - "{{ interface1 }}"
+          tags:
+            - "tests::cleanup"
+...
