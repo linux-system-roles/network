@@ -34,7 +34,7 @@
       shell:
         nmcli c show {{ interface }} | grep 802-11-wireless-security.key-mgmt
       register: key_mgmt
-      ignore_errors: yes
+      ignore_errors: true
       changed_when: false
 
     - name: "Assert that OWE is configured correctly"

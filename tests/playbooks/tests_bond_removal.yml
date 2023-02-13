@@ -98,7 +98,7 @@
             connection
           command: nmcli c show --active {{ port1_profile }}
           register: active_port1_profile
-          ignore_errors: yes
+          ignore_errors: true
           changed_when: false
           when: network_provider == "nm"
 
@@ -106,7 +106,7 @@
             connection
           command: nmcli c show --active {{ port2_profile }}
           register: active_port2_profile
-          ignore_errors: yes
+          ignore_errors: true
           changed_when: false
           when: network_provider == "nm"
 
@@ -127,14 +127,14 @@
         - name: Get the port1 device state
           command: ip a s test1
           register: port1_state
-          ignore_errors: yes
+          ignore_errors: true
           changed_when: false
           when: network_provider == "initscripts"
 
         - name: Get the port2 device state
           command: ip a s test2
           register: port2_state
-          ignore_errors: yes
+          ignore_errors: true
           changed_when: false
           when: network_provider == "initscripts"
 
@@ -196,7 +196,7 @@
             active connection
           command: nmcli c show --active {{ controller_profile }}
           register: active_controller_profile
-          ignore_errors: yes
+          ignore_errors: true
           changed_when: false
           when: network_provider == "nm"
 
@@ -211,7 +211,7 @@
         - name: Get the controller device details
           command: ip -d a s nm-bond
           register: controller_state
-          ignore_errors: yes
+          ignore_errors: true
           changed_when: false
           when: network_provider == "initscripts"
 

@@ -17,8 +17,8 @@
         state: up
         type: bridge
         ip:
-          dhcp4: no
-          auto6: yes
+          dhcp4: false
+          auto6: true
         cloned_mac: "{{ cloned_mac }}"
   roles:
     - linux-system-roles.network
@@ -35,7 +35,7 @@
       command: >-
         nmcli -f 802-3-ethernet.cloned-mac-address con show {{ interface }}
       register: cloned_mac_address_nm
-      ignore_errors: yes
+      ignore_errors: true
       changed_when: false
       when:
         - network_provider == "nm"

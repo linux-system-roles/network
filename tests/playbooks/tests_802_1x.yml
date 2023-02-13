@@ -78,7 +78,7 @@
                   client_cert: /etc/pki/tls/client.pem
                   private_key_password_flags:
                     - not-required
-                  system_ca_certs: True
+                  system_ca_certs: true
                   domain_suffix_match: example.com
         - name: "TEST: I can ping the EAP server"
           command: ping -c1 203.0.113.1
