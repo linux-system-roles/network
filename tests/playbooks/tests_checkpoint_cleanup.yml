@@ -20,7 +20,7 @@
   tasks:
     - block:
         # Workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1832897
-        - name: install dbus-tools
+        - name: Install dbus-tools
           package:
             name: dbus-tools
             state: present
@@ -40,7 +40,7 @@
         - include_tasks: tasks/assert_device_present.yml
         - include_tasks: tasks/assert_profile_present.yml
         # Use internal module directly for speedup
-        - name: use network_connections
+        - name: Use network_connections
           network_connections:
             provider: nm
             connections:
@@ -52,14 +52,14 @@
                   auto6: false
           ignore_errors: true
           register: error_trigger
-        - name: assert that the module call did not fail
+        - name: Assert that the module call did not fail
           assert:
             fail_msg: The module call did not fail. Therefore the test
               condition was not triggered. This test needs to be adjusted or
               dropped.
             that: error_trigger.failed
         # yamllint disable-line rule:line-length
-        - name: get NM dbus objects
+        - name: Get NM dbus objects
           command: busctl --system tree --list org.freedesktop.NetworkManager
           register: nm_dbus_objects
         - name: Show nm_dbus_objects

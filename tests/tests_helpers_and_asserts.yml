@@ -5,13 +5,13 @@
   tasks:
     - include_tasks: tasks/el_repo_setup.yml
 
-    - name: test veth interface management
+    - name: Test veth interface management
       include_tasks: tasks/create_and_remove_interface.yml
       vars:
         type: veth
         interface: veth1298
 
-    - name: test veth interface management
+    - name: Test veth interface management
       include_tasks: tasks/create_and_remove_interface.yml
       vars:
         type: dummy

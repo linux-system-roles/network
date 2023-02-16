@@ -3,7 +3,7 @@
 - name: Test configuring bridges
   hosts: all
   tasks:
-    - name: define vars
+    - name: Define vars
       set_fact:
         interface: "LSR-TST-br31"
         cloned_mac: "12:23:34:45:56:70"

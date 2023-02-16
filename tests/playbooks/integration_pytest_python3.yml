@@ -32,13 +32,13 @@
   hosts: all
   tasks:
     - block:
-        - name: create tempdir for code to test
+        - name: Create tempdir for code to test
           tempfile:
             state: directory
             prefix: lsrtest_
           register: _rundir
 
-        - name: get tempfile for tar
+        - name: Get tempfile for tar
           tempfile:
             prefix: lsrtest_
             suffix: ".tar"
@@ -47,7 +47,7 @@
 
         - include_tasks: ../tasks/get_modules_and_utils_paths.yml
 
-        - name: get tests directory
+        - name: Get tests directory
           set_fact:
             tests_directory: "{{ lookup('first_found', params) }}"
           vars:
@@ -116,7 +116,7 @@
           debug:
             msg: path {{ _lsr_python_path }}
 
-        - name: "ls -alrtFR {{ _rundir.path }}"
+        - name: "List the files in {{ _rundir.path }}"
           command: ls -alrtFR {{ _rundir.path }}
 
         - block:
@@ -133,7 +133,7 @@
                 var: playbook_run.stdout_lines
 
         - block:
-            - name: install network-scripts when running pytest with initscripts
+            - name: Install network-scripts when running pytest with initscripts
               package:
                 name: network-scripts
                 state: present
@@ -149,13 +149,13 @@
             - debug:
                 var: playbook_run.stdout_lines
       always:
-        - name: remove local tar file
+        - name: Remove local tar file
           file:
             state: absent
             path: "{{ temptar.path }}"
           delegate_to: localhost
 
-        - name: remove tempdir
+        - name: Remove tempdir
           file:
             state: absent
             path: "{{ _rundir.path }}"

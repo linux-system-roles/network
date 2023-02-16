@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
 - include_tasks: get_profile_stat.yml
-- name: "assert that the profile is present - '{{ profile }}'"
+- name: "Assert that the profile is present - '{{ profile }}'"
   assert:
     that: lsr_net_profile_exists
     msg: "profile {{ profile }} does not exist"
 
-- name: "assert that the ansible managed comment is present in '{{ profile }}'"
+- name: "Assert that the ansible managed comment is present in '{{ profile }}'"
   assert:
     that: lsr_net_profile_ansible_managed
     msg: "profile {{ profile }} does not have the ansible managed comment"

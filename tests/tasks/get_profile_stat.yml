@@ -5,7 +5,7 @@
     lsr_net_profile_exists: false
     lsr_net_profile_ansible_managed: false
 
-- name: stat profile file
+- name: Stat profile file
   stat:
     get_attributes: false
     get_checksum: false

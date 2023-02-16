@@ -10,7 +10,7 @@
 
 
   tasks:
-    - name: "set type={{ type }} and interface={{ interface }}"  # noqa name
+    - name: "Set type={{ type }} and interface={{ interface }}"  # noqa name
       set_fact:
         type: "{{ type }}"
         interface: "{{ interface }}"

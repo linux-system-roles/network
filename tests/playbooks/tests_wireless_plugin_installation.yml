@@ -2,12 +2,12 @@
 ---
 - hosts: all
   tasks:
-    - name: remove the NetworkManager-wifi package
+    - name: Remove the NetworkManager-wifi package
       package:
         name: "NetworkManager-wifi"
         state: absent
 
-    - name: "get the rpm package facts"
+    - name: "Get the rpm package facts"
       package_facts:
         manager: "auto"
 
@@ -17,7 +17,7 @@
           - "'NetworkManager-wifi' not in ansible_facts.packages"
         msg: "NetworkManager-wifi is not removed before wirelss configuration"
 
-    - name: "wireless configuration"
+    - name: "Wireless configuration"
       include_role:
         name: linux-system-roles.network
       vars:
@@ -29,7 +29,7 @@
               key_mgmt: "wpa-psk"
               password: "p@55w0rD"
 
-    - name: "get the rpm package facts"
+    - name: "Get the rpm package facts"
       package_facts:
         manager: "auto"
 
