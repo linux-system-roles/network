@@ -19,16 +19,16 @@
         - python2-mock
 
 - hosts: all
-  name: execute python unit tests
+  name: Execute python unit tests
   tasks:
     - block:
-        - name: create tempdir for code to test
+        - name: Create tempdir for code to test
           tempfile:
             state: directory
             prefix: lsrtest_
           register: _rundir
 
-        - name: get tempfile for tar
+        - name: Get tempfile for tar
           tempfile:
             prefix: lsrtest_
             suffix: ".tar"
@@ -104,7 +104,7 @@
               _rundir.path
             }}"
 
-        - name: "ls -alrtFR {{ _rundir.path }}"
+        - name: "List the files in {{ _rundir.path }}"
           command: ls -alrtFR {{ _rundir.path }}
         - debug:
             msg: path {{ _lsr_python_path }}
@@ -149,13 +149,13 @@
           when: python3_result is succeeded
 
       always:
-        - name: remove local tar file
+        - name: Remove local tar file
           file:
             state: absent
             path: "{{ temptar.path }}"
           delegate_to: localhost
 
-        - name: remove tempdir
+        - name: Remove tempdir
           file:
             state: absent
             path: "{{ _rundir.path }}"

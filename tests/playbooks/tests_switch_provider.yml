@@ -5,7 +5,7 @@
 - hosts: all
   name: Switch initscripts provider to nm
   tasks:
-    - name: set fact to use initscripts network_provider
+    - name: Set fact to use initscripts network_provider
       set_fact:
         network_provider: initscripts
         interface: LST-TST-br34
@@ -29,7 +29,7 @@
         profile: "{{ interface }}"
     # The initscripts should not remove the interface for down/absent
     - include_tasks: tasks/assert_device_present.yml
-    - name: set fact to use nm network_provider
+    - name: Set fact to use nm network_provider
       set_fact:
         network_provider: nm
       tags:

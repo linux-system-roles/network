@@ -6,7 +6,7 @@
     interface: LSR-TST-br31
 
   tasks:
-    - name: "set interface={{ interface }}"
+    - name: "Set interface={{ interface }}"
       set_fact:
         interface: "{{ interface }}"
     - include_tasks: tasks/show_interfaces.yml
