@@ -317,13 +317,19 @@ class TestValidator(Python26CompatTestCase):
             content_current = kwargs.get("initscripts_content_current", None)
             if content_current:
                 content_current = content_current[idx]
-            c = IfcfgUtil.ifcfg_create(
-                connections, idx, content_current=content_current
+            warnings = []
+            config = IfcfgUtil.ifcfg_create(
+                connections,
+                idx,
+                content_current=content_current,
+                warn_fcn=warnings.append,
             )
             # pprint("con[%s] = \"%s\"" % (idx, connections[idx]['name']), c)
-            exp = kwargs.get("initscripts_dict_expected", None)
-            if exp is not None:
-                self.assertEqual(exp[idx], c)
+            expected_config = kwargs.get("initscripts_dict_expected", None)
+            if expected_config is not None:
+                self.assertEqual(expected_config[idx], config)
+            expected_warnings = kwargs.get("initscripts_expected_warnings", [])
+            self.assertEqual(expected_warnings, warnings)
 
     def do_connections_validate(
         self, expected_connections, input_connections, **kwargs
