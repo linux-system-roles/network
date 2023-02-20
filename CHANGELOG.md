@@ -1,6 +1,21 @@
 Changelog
 =========
 
+[1.11.2] - 2023-02-20
+--------------------
+
+### New Features
+
+- none
+
+### Bug Fixes
+
+- initscripts: Configure output device in routes
+
+### Other Changes
+
+- none
+
 [1.11.1] - 2023-01-24
 --------------------
 
