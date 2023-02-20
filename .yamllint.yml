@@ -52,4 +52,3 @@ rules:
       /tests/tests_bridge_cloned_mac_nm.yml
 
       '
-  truthy: disable
