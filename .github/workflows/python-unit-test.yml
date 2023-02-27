@@ -3,6 +3,11 @@
 name: Python Unit Tests
 on:  # yamllint disable-line rule:truthy
   pull_request:
+  merge_group:
+    branches:
+      - main
+    types:
+      - checks_requested
   push:
     branches:
       - main
