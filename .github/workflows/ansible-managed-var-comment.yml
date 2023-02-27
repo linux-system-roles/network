@@ -2,6 +2,11 @@
 name: Check for ansible_managed variable use in comments
 on:  # yamllint disable-line rule:truthy
   pull_request:
+  merge_group:
+    branches:
+      - main
+    types:
+      - checks_requested
   push:
     branches:
       - main

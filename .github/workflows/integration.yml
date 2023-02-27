@@ -3,6 +3,11 @@ name: integration
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  merge_group:
+    branches:
+      - main
+    types:
+      - checks_requested
   push:
     branches:
       - main

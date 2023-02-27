@@ -5,6 +5,11 @@ on:  # yamllint disable-line rule:truthy
     branches: ["main"]
   pull_request:
     branches: ["main"]
+  merge_group:
+    branches:
+      - main
+    types:
+      - checks_requested
   schedule:
     - cron: 39 10 * * 0
 jobs:
