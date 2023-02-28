@@ -46,7 +46,7 @@
 - name: Get NetworkManager version
   command:
     cmd: rpm -qa NetworkManager
-  register: __network_NM_NVR
+  register: __network_nm_nvr
   changed_when: false
 - block:
     - name: Import network role
@@ -83,20 +83,20 @@
       with_items:
         - ansible_failed_result
         - ansible_failed_task
-        - __network_NM_NVR.stdout
+        - __network_nm_nvr.stdout
         - __NM_capath_ignored_NVRs
       changed_when: false
 
     - name: Assert role behavior
       vars:
-        expected_failure: __network_NM_NVR.stdout in __NM_capath_ignored_NVRs
+        expected_failure: __network_nm_nvr.stdout in __NM_capath_ignored_NVRs
         failure: __network_connections_result.failed
       assert:
         that: (failure and expected_failure) or
           (not failure and not expected_failure)
         msg: "Role {{ failure and 'failed' or 'did not fail' }} but was expected
           {{ expected_failure and '' or 'not' }} to fail.
-          NM NVR: {{ __network_NM_NVR.stdout }}"
+          NM NVR: {{ __network_nm_nvr.stdout }}"
     - name: Assert role failure
       assert:
         that: "

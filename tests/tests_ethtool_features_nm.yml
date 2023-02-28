@@ -19,7 +19,7 @@
             state: present
         - name: Get NetworkManager version
           command: rpm -q --qf "%{version}" NetworkManager
-          register: NetworkManager_version
+          register: networkmanager_version
           when: true
       when:
         - ansible_distribution_major_version != '6'
@@ -34,4 +34,4 @@
   when:
     - ansible_distribution_major_version != '6'
 
-    - NetworkManager_version.stdout is version('1.20.0', '>=')
+    - networkmanager_version.stdout is version('1.20.0', '>=')
