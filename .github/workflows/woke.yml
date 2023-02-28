@@ -1,7 +1,12 @@
 # yamllint disable rule:line-length
 name: Check for non-inclusive language
 on:  # yamllint disable-line rule:truthy
-  - pull_request
+  pull_request:
+  merge_group:
+    branches:
+      - main
+    types:
+      - checks_requested
 jobs:
   woke:
     name: woke
