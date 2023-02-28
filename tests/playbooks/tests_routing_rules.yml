@@ -9,7 +9,7 @@
     interface: ethtest0
 
   tasks:
-    - name: "set type={{ type }} and interface={{ interface }}"
+    - name: "set type={{ type }} and interface={{ interface }}"  # noqa name
       set_fact:
         type: "{{ type }}"
         interface: "{{ interface }}"
@@ -199,8 +199,8 @@
           specified rule"
       when: ansible_distribution_major_version != "7"
 
-    - name: Assert that the IPv4 routing rule in the connection
-        "{{ interface }}" matches the specified rule
+    - name: Assert that the specified IPv4 routing rule was configured in the
+        connection "{{ interface }}"
       assert:
         that:
           - connection_route_rule.stdout is search("priority 30200 from
@@ -221,11 +221,11 @@
             0.0.0.0/0 oif oiftest table 30400")
           - connection_route_rule.stdout is search("priority 200 from
             198.51.100.56/26 table 200")
-        msg: "the IPv4 routing rule in the connection '{{ interface }}' does
-          not match the specified rule"
+        msg: "the specified IPv4 routing rule was not configured in the
+          connection '{{ interface }}'"
 
-    - name: Assert that the IPv6 routing rule in the connection
-        "{{ interface }}" matches the specified rule
+    - name: Assert that the specified IPv6 routing rule was configured in the
+        connection "{{ interface }}"
       assert:
         that:
           - connection_route_rule6.stdout is search("priority 30600 to
@@ -234,8 +234,8 @@
             ::/0 dport 128-256 table 30600") or
             connection_route_rule6.stdout is search("not priority 30601 from
             ::/0 dport 128-256 table 30600")
-        msg: "the IPv6 routing rule in the connection '{{ interface }}' does
-          not match the specified rule"
+        msg: "the specified IPv6 routing rule was not configured in the
+          connection '{{ interface }}'"
 
     - name: Remove the dedicated test file in `/etc/iproute2/rt_tables.d/`
       file:

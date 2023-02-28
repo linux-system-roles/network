@@ -11,7 +11,7 @@
 
 
   tasks:
-    - name: "set type={{ type }} and interface={{ interface0 }}"
+    - name: "set type={{ type }} and interface={{ interface0 }}"  # noqa name
       set_fact:
         type: "{{ type }}"
         interface: "{{ interface0 }}"
@@ -20,7 +20,7 @@
       vars:
         state: present
     - include_tasks: tasks/assert_device_present.yml
-    - name: "set type={{ type }} and interface={{ interface1 }}"
+    - name: "set type={{ type }} and interface={{ interface1 }}"  # noqa name
       set_fact:
         type: "{{ type }}"
         interface: "{{ interface1 }}"

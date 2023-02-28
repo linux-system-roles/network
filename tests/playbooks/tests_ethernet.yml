@@ -16,7 +16,7 @@
     interface: lsr27
 
   tasks:
-    - name: "set type={{ type }} and interface={{ interface }}"
+    - name: "set type={{ type }} and interface={{ interface }}"  # noqa name
       set_fact:
         type: "{{ type }}"
         interface: "{{ interface }}"
