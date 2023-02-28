@@ -18,7 +18,7 @@ GET_NM_VERSION = """
             state: present
         - name: Get NetworkManager version
           command: rpm -q --qf "%{version}" NetworkManager
-          register: NetworkManager_version
+          register: networkmanager_version
           when: true
       when:
         - ansible_distribution_major_version != '6'
@@ -27,7 +27,7 @@ GET_NM_VERSION = """
 """
 
 MINIMUM_NM_VERSION_CHECK = """
-    - NetworkManager_version.stdout is version({minimum_nm_version}, '>=')
+    - networkmanager_version.stdout is version({minimum_nm_version}, '>=')
 """
 
 EXTRA_RUN_CONDITION_PREFIX = "    - "

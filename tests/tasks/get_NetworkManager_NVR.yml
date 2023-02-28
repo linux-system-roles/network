@@ -4,15 +4,15 @@
     - name: Get NetworkManager RPM version
       command:
         cmd: rpm -qa --qf '%{name}-%{version}-%{release}\n' NetworkManager
-      register: __rpm_q_NetworkManager
+      register: __rpm_q_networkmanager
 
     - name: Store NetworkManager version
       set_fact:
-        NetworkManager_NVR: "{{ __rpm_q_NetworkManager.stdout }}"
+        networkmanager_nvr: "{{ __rpm_q_networkmanager.stdout }}"
 
     - name: Show NetworkManager version
       debug:
-        var: NetworkManager_NVR
+        var: networkmanager_nvr
   tags:
     - always
 ...
