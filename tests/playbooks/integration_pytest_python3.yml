@@ -85,7 +85,7 @@
           args:
             chdir: "{{ _rundir.path }}"
 
-        - name: "Create {{ _rundir.path }}/ansible"
+        - name: "Create subdirectory './ansible' under '{{ _rundir.path }}'"
           file:
             state: directory
             path: "{{ _rundir.path }}/ansible"

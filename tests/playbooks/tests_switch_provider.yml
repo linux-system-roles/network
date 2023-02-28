@@ -11,7 +11,8 @@
         interface: LST-TST-br34
       tags:
         - always
-    - name: "Create test bridge {{ interface }} via initscripts provider"
+    - name: "Through the initscripts provider, create test bridge
+        {{ interface }}"
       include_role:
         name: linux-system-roles.network
       vars:
@@ -33,7 +34,7 @@
         network_provider: nm
       tags:
         - always
-    - name: "Create test bridge {{ interface }} via nm provider"
+    - name: "Through the nm provider, create test bridge {{ interface }}"
       include_role:
         name: linux-system-roles.network
       vars:

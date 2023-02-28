@@ -94,16 +94,16 @@
                 persistent_state: absent
                 state: down
 
-        - name: Get the port1 profile "{{ port1_profile }}" from the active
-            connection
+        - name: From the active connection, get the port1 profile
+            "{{ port1_profile }}"
           command: nmcli c show --active {{ port1_profile }}
           register: active_port1_profile
           ignore_errors: true
           changed_when: false
           when: network_provider == "nm"
 
-        - name: Get the port2 profile "{{ port2_profile }}" from the active
-            connection
+        - name: From the active connection, get the port2 profile
+            "{{ port2_profile }}"
           command: nmcli c show --active {{ port2_profile }}
           register: active_port2_profile
           ignore_errors: true
@@ -192,8 +192,8 @@
                 persistent_state: absent
                 state: down
 
-        - name: Get the controller profile "{{ controller_profile }}" from the
-            active connection
+        - name: From the active connection, get the controller profile
+            "{{ controller_profile }}"
           command: nmcli c show --active {{ controller_profile }}
           register: active_controller_profile
           ignore_errors: true
