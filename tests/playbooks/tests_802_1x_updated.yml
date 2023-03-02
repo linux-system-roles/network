@@ -5,7 +5,7 @@
     - name: Update NetworkManager
       package:
         name: NetworkManager
-        state: latest
+        state: latest  # noqa package-latest
     - name: Restart NetworkManager
       service:
         name: NetworkManager

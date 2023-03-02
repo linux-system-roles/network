@@ -21,6 +21,8 @@ rules:
 
       /tests/tests_ethtool_ring_initscripts.yml
 
+      /tests/tests_route_device_initscripts.yml
+
       /tests/tests_team_plugin_installation_nm.yml
 
       /tests/tests_wireless_plugin_installation_nm.yml
