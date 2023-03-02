@@ -1,7 +1,15 @@
 ---
 profile: production
+extra_vars:
+  # In order to fix the ansible-lint 6.x parser-error, the file
+  # `tests/get_coverage.yml` has to be declared as the playbook and an extra
+  # variable `test_playbook` has to be defined. The value of the variable
+  # `test_playbook`is less important which only meets the purpose of passing
+  # the ansible-lint 6.x check
+  test_playbook: tests_default.yml
 kinds:
   - yaml: "**/meta/collection-requirements.yml"
+  - playbook: "**/tests/get_coverage.yml"
   - yaml: "**/tests/collection-requirements.yml"
   - playbook: "**/tests/tests_*.yml"
   - playbook: "**/tests/setup-snapshot.yml"
