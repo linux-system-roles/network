@@ -3,10 +3,10 @@
 - name: Install dependencies for integration tests
   hosts: all
   vars:
-    - rpmdependencies:
-        - git
-        - python3-pip
-        - rsync
+    rpmdependencies:
+      - git
+      - python3-pip
+      - rsync
 
   tasks:
     - name: Install rpm dependencies
