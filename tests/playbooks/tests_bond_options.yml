@@ -188,7 +188,7 @@
                   - name: "{{ controller_profile }}"
                     persistent_state: absent
                     state: down
-              ignore_errors: true
+              failed_when: false
             - command: ip link del {{ controller_device }}
-              ignore_errors: true
+              failed_when: false
             - import_tasks: tasks/remove_test_interfaces_with_dhcp.yml

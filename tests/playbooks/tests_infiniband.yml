@@ -76,6 +76,6 @@
                   - name: ib0-10
                     persistent_state: absent
                     state: down
-              ignore_errors: true
+              failed_when: false
             - command: ip link del ib0.000a
-              ignore_errors: true
+              failed_when: false

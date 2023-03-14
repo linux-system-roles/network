@@ -59,7 +59,7 @@
       always:
         - tags:
             - "tests::cleanup"
-          ignore_errors: true
+          ignore_errors: true  # noqa ignore-errors
           block:
             # Use internal module directly for speedup
             - network_connections:

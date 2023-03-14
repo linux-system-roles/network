@@ -10,7 +10,7 @@
         name: "{{ item }}"
         state: present
       # Ignore error because some package names might not be available
-      ignore_errors: true
+      ignore_errors: true  # noqa ignore-errors
       loop:
         - NetworkManager-libnm
         - python2-gobject-base
