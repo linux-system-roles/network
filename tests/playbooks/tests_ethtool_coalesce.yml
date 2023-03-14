@@ -155,7 +155,7 @@
                 network_connections:
                   - name: "{{ interface }}"
                     persistent_state: absent
-              ignore_errors: true
+              failed_when: false
             - include_tasks: tasks/manage_test_interface.yml
               vars:
                 state: absent

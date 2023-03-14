@@ -75,4 +75,4 @@
                   - name: pseudo-pci-test-only
                     persistent_state: absent
                     state: down
-              ignore_errors: true
+              failed_when: false

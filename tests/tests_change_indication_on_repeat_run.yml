@@ -65,7 +65,7 @@
                   - name: "{{ interface }}"
                     persistent_state: absent
                     state: down
-              ignore_errors: true
+              ignore_errors: true  # noqa ignore-errors
             - include_tasks: tasks/manage_test_interface.yml
               vars:
                 state: absent

@@ -30,7 +30,7 @@
       command: "{{ coverage }} combine"
       environment:
         COVERAGE_FILE: "{{ coverage_file }}"
-      ignore_errors: true
+      failed_when: false
       changed_when: false
 
     - name: remove old data

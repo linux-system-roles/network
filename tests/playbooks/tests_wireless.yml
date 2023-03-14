@@ -88,5 +88,5 @@
                   - name: "{{ interface }}"
                     persistent_state: absent
                     state: down
-              ignore_errors: true
+              failed_when: false
             - include_tasks: tasks/cleanup_mock_wifi.yml

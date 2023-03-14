@@ -156,4 +156,4 @@
                   - name: br-example
                     persistent_state: absent
                     state: down
-              ignore_errors: true
+              failed_when: false

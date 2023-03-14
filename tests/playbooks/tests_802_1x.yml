@@ -106,7 +106,7 @@
                   - name: br1
                     persistent_state: absent
                     state: down
-              ignore_errors: true
+              failed_when: false
             - include_tasks: tasks/cleanup_802_1x_server.yml
             - name: Remove test certificates
               file:
