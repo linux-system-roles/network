@@ -51,6 +51,7 @@
                 {{ module_utils_parent_and_dir.stdout_lines[1] }}
           # noqa command-instead-of-module
           delegate_to: localhost
+          changed_when: false
 
         - name: Copy testrepo.tar to the remote system
           copy:
@@ -79,6 +80,7 @@
             if [ -d {{ _rundir.path }}/module_utils ]; then
               mv {{ _rundir.path }}/module_utils {{ _rundir.path }}/ansible
             fi
+          changed_when: false
 
         - name: Fake out python module directories, primarily for python2
           shell: |
@@ -87,6 +89,7 @@
                 touch "$dir/__init__.py"
               fi
             done
+          changed_when: false
 
         - name: Copy unit test to remote system
           copy:
@@ -108,6 +111,7 @@
 
         - name: "List the files in {{ _rundir.path }}"
           command: ls -alrtFR {{ _rundir.path }}
+          changed_when: false
         - debug:
             msg: path {{ _lsr_python_path }}
 
@@ -116,6 +120,7 @@
           ignore_errors: true
           register: python2_available
           when: true
+          changed_when: false
 
         - name: Run python2 unit tests
           command: >
@@ -125,12 +130,14 @@
           when: >
             python2_available is succeeded and ansible_distribution != 'Fedora'
           register: python2_result
+          changed_when: false
 
         - name: Check if python3 is available
           command: python3 --version
           ignore_errors: true
           register: python3_available
           when: true
+          changed_when: false
 
         - name: Run python3 unit tests
           command: >
@@ -139,6 +146,7 @@
             PYTHONPATH: "{{ _lsr_python_path }}"
           when: python3_available is succeeded
           register: python3_result
+          changed_when: false
 
         - name: Show python2 unit test results
           debug:

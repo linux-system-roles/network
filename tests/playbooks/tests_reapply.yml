@@ -69,3 +69,4 @@
                     persistent_state: absent
                     state: down
             - command: ip link del "{{ interface }}"
+              changed_when: false

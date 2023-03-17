@@ -46,6 +46,7 @@
           register: no_coalesce_nm
           when:
             - network_provider == "nm"
+          changed_when: false
         - name: "ASSERT: The profile does not contain coalescing options"
           assert:
             that: no_coalesce_nm.stdout | length == 0
@@ -58,6 +59,7 @@
           ignore_errors: true
           when:
             - network_provider == "initscripts"
+          changed_when: false
         - name: "ASSERT: The profile does not contain coalescing options"
           assert:
             that: no_coalesce_initscripts.stdout | length == 0
@@ -87,6 +89,7 @@
           register: with_coalesce_nm
           when:
             - network_provider == "nm"
+          changed_when: false
         - name: Assert coalesce options set in profile
           assert:
             that: with_coalesce_nm.stdout == '128'
@@ -100,6 +103,7 @@
           ignore_errors: true
           when:
             - network_provider == "initscripts"
+          changed_when: false
         - name: Assert coalesce options set in profile
           assert:
             that: '"rx-frames 128" in with_coalesce_initscripts.stdout'
@@ -126,6 +130,7 @@
           when:
             - network_provider == "nm"
           register: clear_coalesce_nm
+          changed_when: false
         - name: "ASSERT: The profile does reset coalescing options"
           assert:
             that: clear_coalesce_nm.stdout | length == 0
@@ -138,6 +143,7 @@
           ignore_errors: true
           when:
             - network_provider == "initscripts"
+          changed_when: false
         - name: "ASSERT: The profile does reset coalescing options"
           assert:
             that: clear_coalesce_initscripts.stdout | length == 0

@@ -62,6 +62,7 @@
         - name: Get NM dbus objects
           command: busctl --system tree --list org.freedesktop.NetworkManager
           register: nm_dbus_objects
+          changed_when: false
         - name: Show nm_dbus_objects
           debug:
             var: nm_dbus_objects
@@ -87,3 +88,4 @@
                 dest: "/etc/sysconfig/network-scripts/ifcfg-{{ interface }}"
                 state: absent
             - command: ip link del "{{ interface }}"
+              changed_when: false

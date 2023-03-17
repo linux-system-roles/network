@@ -33,6 +33,7 @@
         - name: Get current device features
           command: "ethtool --show-features {{ interface }}"
           register: original_ethtool_features
+          changed_when: false
         - name: Import network role
           import_role:
             name: linux-system-roles.network
@@ -47,6 +48,7 @@
         - name: Get current device features
           command: "ethtool --show-features {{ interface }}"
           register: ethtool_features
+          changed_when: false
         - name: "ASSERT: The profile does not change the ethtool features"
           assert:
             that:
@@ -76,6 +78,7 @@
         - name: Get current device features
           command: "ethtool --show-features {{ interface }}"
           register: ethtool_features
+          changed_when: false
         - name: Show ethtool_features
           debug:
             var: ethtool_features.stdout_lines
@@ -114,6 +117,7 @@
         - name: Get current device features
           command: "ethtool --show-features {{ interface }}"
           register: ethtool_features
+          changed_when: false
         - name: Show ethtool_features
           debug:
             var: ethtool_features.stdout_lines
@@ -183,6 +187,7 @@
         - name: Get current device features
           command: "ethtool --show-features {{ interface }}"
           register: ethtool_features
+          changed_when: false
         # Resetting the ethtools only works with NetworkManager
         - name: "ASSERT: The profile does not change the ethtool features"
           assert:

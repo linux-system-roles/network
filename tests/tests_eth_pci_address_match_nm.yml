@@ -30,6 +30,8 @@
             networkmanager_version: "{{ networkmanager_info.results |
               selectattr('yumstate', 'match', '^installed$') |
               map(attribute='version') | list | first }}"
+          when: true
+          changed_when: false
 
 
 # The test requires or should run with NetworkManager, therefore it cannot run

@@ -19,6 +19,7 @@
       command: cp -vf /etc/resolv.conf /etc/resolv.conf.bak
       when:
         - network_provider == "initscripts"
+      changed_when: false
     - block:
         - name: TEST Add Bond with 2 ports
           debug:
@@ -123,8 +124,10 @@
               failed_when: false
             - command: ip link del {{ controller_device }}
               failed_when: false
+              changed_when: false
             - import_tasks: tasks/remove_test_interfaces_with_dhcp.yml
             - name: Restore the /etc/resolv.conf for initscript
               command: mv -vf /etc/resolv.conf.bak /etc/resolv.conf
               when:
                 - network_provider == "initscripts"
+              changed_when: false

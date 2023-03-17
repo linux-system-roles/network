@@ -67,18 +67,21 @@
                    /proc/net/bonding/{{ controller_device }}
           register: result
           until: "'110' in result.stdout"
+          changed_when: false
         - name: "** TEST check IPv4"
           command: ip -4 a s {{ controller_device }}
           register: result
           until: "'192.0.2' in result.stdout"
           retries: 20
           delay: 2
+          changed_when: false
         - name: "** TEST check IPv6"
           command: ip -6 a s {{ controller_device }}
           register: result
           until: "'2001' in result.stdout"
           retries: 20
           delay: 2
+          changed_when: false
       always:
         - tags:
             - "tests::cleanup"
@@ -100,4 +103,5 @@
               failed_when: false
             - command: ip link del {{ controller_device }}
               failed_when: false
+              changed_when: false
             - import_tasks: tasks/remove_test_interfaces_with_dhcp.yml
