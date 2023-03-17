@@ -29,6 +29,8 @@ GET_NM_VERSION = """
             networkmanager_version: "{{ networkmanager_info.results |
               selectattr('yumstate', 'match', '^installed$') |
               map(attribute='version') | list | first }}"
+          when: true
+          changed_when: false
 """
 
 MINIMUM_NM_VERSION_CHECK = """

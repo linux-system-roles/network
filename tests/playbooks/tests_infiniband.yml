@@ -53,6 +53,7 @@
           until: "'198.51.100.133/30' in result.stdout"
           retries: 20
           delay: 2
+          changed_when: false
 
         - name: "** TEST check IPv6"
           command: ip -6 a s ib0.000a
@@ -60,6 +61,7 @@
           until: "'2001:db8::2/32' in result.stdout"
           retries: 20
           delay: 2
+          changed_when: false
 
       always:
         - tags:
@@ -79,3 +81,4 @@
               failed_when: false
             - command: ip link del ib0.000a
               failed_when: false
+              changed_when: false

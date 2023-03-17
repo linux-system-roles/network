@@ -25,6 +25,7 @@
       command: cp -vf /etc/resolv.conf /etc/resolv.conf.bak
       when:
         - network_provider == "initscripts"
+      changed_when: false
     - block:
         - name: "TEST Add Bond with 2 ports"
           debug:
@@ -71,18 +72,21 @@
                    /proc/net/bonding/{{ controller_device }}
           register: result
           until: "'110' in result.stdout"
+          changed_when: false
         - name: "** TEST check IPv4"
           command: ip -4 a s {{ controller_device }}
           register: result
           until: "'192.0.2' in result.stdout"
           retries: 20
           delay: 2
+          changed_when: false
         - name: "** TEST check IPv6"
           command: ip -6 a s {{ controller_device }}
           register: result
           until: "'2001' in result.stdout"
           retries: 20
           delay: 2
+          changed_when: false
       always:
         - tags:
             - "tests::cleanup"
@@ -104,8 +108,10 @@
               failed_when: false
             - command: ip link del {{ controller_device }}
               failed_when: false
+              changed_when: false
             - import_tasks: tasks/remove_test_interfaces_with_dhcp.yml
             - name: "Restore the /etc/resolv.conf for initscript"
               command: mv -vf /etc/resolv.conf.bak /etc/resolv.conf
               when:
                 - network_provider == "initscripts"
+              changed_when: false

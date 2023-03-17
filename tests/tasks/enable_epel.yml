@@ -23,10 +23,12 @@
     - name: Enable EPEL 7
       command: yum-config-manager --enable epel
       when: ansible_distribution_major_version == '7'
+      changed_when: false
 
     - name: Enable EPEL 8
       command: dnf config-manager --set-enabled epel
       when: ansible_distribution_major_version == '8'
+      changed_when: false
 
 - name: Enable EPEL 6
   copy:

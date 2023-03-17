@@ -48,6 +48,7 @@
         grep "^# Ansible managed"
         /etc/sysconfig/network-scripts/ifcfg-{{ profile }}
       register: _result
+      changed_when: false
 
     - name: Verify the ansible_managed comment in ifcfg-{{ profile }}
       set_fact:

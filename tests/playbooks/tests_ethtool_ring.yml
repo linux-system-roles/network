@@ -46,6 +46,7 @@
           register: no_ring_nm
           when:
             - network_provider == "nm"
+          changed_when: false
         - name: "ASSERT: The profile does not contain ring options"
           assert:
             that: no_ring_nm.stdout | length == 0
@@ -58,6 +59,7 @@
           ignore_errors: true
           when:
             - network_provider == "initscripts"
+          changed_when: false
         - name: "ASSERT: The profile does not contain ring options"
           assert:
             that: no_ring_initscripts.stdout | length == 0
@@ -91,6 +93,7 @@
           register: with_ring_rx
           when:
             - network_provider == "nm"
+          changed_when: false
         - name: Assert ethtool.ring-rx option set in profile
           assert:
             that: with_ring_rx.stdout == '128'
@@ -101,6 +104,7 @@
           register: with_ring_rx_jumbo
           when:
             - network_provider == "nm"
+          changed_when: false
         - name: Assert ethtool.ring-rx-jumbo option set in profile
           assert:
             that: with_ring_rx_jumbo.stdout == '128'
@@ -111,6 +115,7 @@
           register: with_ring_rx_mini
           when:
             - network_provider == "nm"
+          changed_when: false
         - name: Assert ethtool.ring-rx-mini option set in profile
           assert:
             that: with_ring_rx_mini.stdout == '128'
@@ -121,6 +126,7 @@
           register: with_ring_tx
           when:
             - network_provider == "nm"
+          changed_when: false
         - name: Assert ethtool.ring-tx option set in profile
           assert:
             that: with_ring_tx.stdout == '128'
@@ -134,6 +140,7 @@
           ignore_errors: true
           when:
             - network_provider == "initscripts"
+          changed_when: false
         - name: Assert ethtool.ring option set in profile
           assert:
             that:
@@ -164,6 +171,7 @@
           register: clear_ring_nm
           when:
             - network_provider == "nm"
+          changed_when: false
         - name: "ASSERT: The profile does reset ring options"
           assert:
             that: clear_ring_nm.stdout | length == 0
@@ -176,6 +184,7 @@
           ignore_errors: true
           when:
             - network_provider == "initscripts"
+          changed_when: false
         - name: "ASSERT: The profile does reset ring options"
           assert:
             that: clear_ring_initscripts.stdout | length == 0

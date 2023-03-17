@@ -23,6 +23,7 @@
   when:
     - ansible_distribution_major_version == '8'
     - ansible_distribution == 'CentOS'
+  changed_when: false
 
 - name: Install hostapd in Fedora
   shell: |
@@ -30,6 +31,7 @@
     dnf -y install hostapd
   when:
     - ansible_distribution == 'Fedora'
+  changed_when: false
 
 - name: Install mac80211_hwsim kernel modules in Fedora
   shell: |
@@ -38,6 +40,7 @@
     dnf -y install kernel-modules*.rpm
   when:
     - ansible_distribution == 'Fedora'
+  changed_when: false
 
 - name: Create hostapd config
   copy:
