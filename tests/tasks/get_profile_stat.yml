@@ -39,6 +39,9 @@
   when: nm_profile_exists.rc == 0
 
 - name: Check ansible_managed comment for the initscripts case
+  when:
+    - profile_stat.stat.exists
+    - nm_profile_exists.rc != 0
   block:
     - name: Get the ansible_managed comment in ifcfg-{{ profile }}
       command: >-
@@ -51,6 +54,3 @@
         lsr_net_profile_ansible_managed: true
       when:
         - _result.stdout_lines | length == 1
-  when:
-    - profile_stat.stat.exists
-    - nm_profile_exists.rc != 0

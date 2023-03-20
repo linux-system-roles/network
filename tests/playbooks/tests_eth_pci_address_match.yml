@@ -64,7 +64,9 @@
               - "'pci-0001:00:00.0' not in clear_path.stdout"
             msg: "The PCI address is not removed"
       always:
-        - block:
+        - tags:
+            - "tests::cleanup"
+          block:
             - name: Import network role
               import_role:
                 name: linux-system-roles.network
@@ -74,5 +76,3 @@
                     persistent_state: absent
                     state: down
               ignore_errors: true
-          tags:
-            - "tests::cleanup"

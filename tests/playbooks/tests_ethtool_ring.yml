@@ -183,7 +183,9 @@
             - network_provider == "initscripts"
 
       always:
-        - block:
+        - tags:
+            - "tests::cleanup"
+          block:
             - name: Import network role
               import_role:
                 name: linux-system-roles.network
@@ -195,5 +197,3 @@
             - include_tasks: tasks/manage_test_interface.yml
               vars:
                 state: absent
-          tags:
-            - "tests::cleanup"

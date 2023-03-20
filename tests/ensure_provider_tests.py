@@ -11,7 +11,11 @@ import sys
 
 
 GET_NM_VERSION = """
-    - block:
+    - when:
+        - ansible_distribution_major_version != '6'
+      tags:
+        - always
+      block:
         - name: Install NetworkManager
           package:
             name: NetworkManager
@@ -20,10 +24,6 @@ GET_NM_VERSION = """
           command: rpm -q --qf "%{version}" NetworkManager
           register: networkmanager_version
           when: true
-      when:
-        - ansible_distribution_major_version != '6'
-      tags:
-        - always
 """
 
 MINIMUM_NM_VERSION_CHECK = """

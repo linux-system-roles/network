@@ -103,7 +103,9 @@
           when: network_provider == 'initscripts'
 
       always:
-        - block:
+        - tags:
+            - "tests::cleanup"
+          block:
             - name: Import network role
               import_role:
                 name: linux-system-roles.network
@@ -126,5 +128,3 @@
               command: mv -vf /etc/resolv.conf.bak /etc/resolv.conf
               when:
                 - network_provider == "initscripts"
-          tags:
-            - "tests::cleanup"

@@ -66,25 +66,27 @@
             - "{{ controller_profile }}"
             - "{{ port1_profile }}"
             - "{{ port2_profile }}"
-        - command: grep 'Polling Interval'
+        - name: "** TEST check polling interval"
+          command: grep 'Polling Interval'
                    /proc/net/bonding/{{ controller_device }}
-          name: "** TEST check polling interval"
           register: result
           until: "'110' in result.stdout"
-        - command: ip -4 a s {{ controller_device }}
-          name: "** TEST check IPv4"
+        - name: "** TEST check IPv4"
+          command: ip -4 a s {{ controller_device }}
           register: result
           until: "'192.0.2' in result.stdout"
           retries: 20
           delay: 2
-        - command: ip -6 a s {{ controller_device }}
-          name: "** TEST check IPv6"
+        - name: "** TEST check IPv6"
+          command: ip -6 a s {{ controller_device }}
           register: result
           until: "'2001' in result.stdout"
           retries: 20
           delay: 2
       always:
-        - block:
+        - tags:
+            - "tests::cleanup"
+          block:
             - name: Import network role
               import_role:
                 name: linux-system-roles.network
@@ -107,5 +109,3 @@
               command: mv -vf /etc/resolv.conf.bak /etc/resolv.conf
               when:
                 - network_provider == "initscripts"
-          tags:
-            - "tests::cleanup"

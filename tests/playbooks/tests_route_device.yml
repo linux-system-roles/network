@@ -153,6 +153,8 @@
           when: network_provider == "nm"
       always:
         - name: Remove test configuration
+          tags:
+            - "tests::cleanup"
           block:
             - name: Bring down test devices and profiles
               include_role:
@@ -183,6 +185,4 @@
               loop:
                 - "{{ interface0 }}"
                 - "{{ interface1 }}"
-          tags:
-            - "tests::cleanup"
 ...

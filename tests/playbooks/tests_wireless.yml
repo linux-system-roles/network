@@ -77,7 +77,9 @@
                   client_cert: /etc/pki/tls/client.pem
                   ca_cert: /etc/pki/tls/cacert.pem
       always:
-        - block:
+        - tags:
+            - "tests::cleanup"
+          block:
             - name: Import network role
               import_role:
                 name: linux-system-roles.network
@@ -88,5 +90,3 @@
                     state: down
               ignore_errors: true
             - include_tasks: tasks/cleanup_mock_wifi.yml
-          tags:
-            - "tests::cleanup"

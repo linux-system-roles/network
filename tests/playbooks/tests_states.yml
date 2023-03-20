@@ -14,7 +14,9 @@
         - always
 
 
-    - block:
+    - tags:
+        - tests::states:create
+      block:
         - include_tasks: tasks/run_test.yml
           vars:
             lsr_description: I can create a profile
@@ -32,10 +34,10 @@
                 when: "{{ network_provider == 'nm' }}"
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
-      tags:
-        - tests::states:create
 
-    - block:
+    - tags:
+        - tests::states:create_without_autoconnect
+      block:
         - include_tasks: tasks/run_test.yml
           vars:
             lsr_description: I can create a profile without autoconnect
@@ -50,10 +52,10 @@
               - tasks/assert_profile_present.yml
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
-      tags:
-        - tests::states:create_without_autoconnect
 
-    - block:
+    - tags:
+        - tests::states:activate
+      block:
         - include_tasks: tasks/run_test.yml
           vars:
             lsr_description: I can activate an existing profile
@@ -66,10 +68,10 @@
               - tasks/assert_profile_present.yml
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
-      tags:
-        - tests::states:activate
 
-    - block:
+    - tags:
+        - tests::states:remove_up
+      block:
         - include_tasks: tasks/run_test.yml
           vars:
             lsr_description: I can remove an existing profile without taking it
@@ -84,10 +86,10 @@
               - tasks/assert_profile_absent.yml
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
-      tags:
-        - tests::states:remove_up
 
-    - block:
+    - tags:
+        - tests::states:remove_down
+      block:
         - include_tasks: tasks/run_test.yml
           vars:
             lsr_description: I can take a profile down that is absent
@@ -104,10 +106,10 @@
                 when: "{{ network_provider == 'nm' }}"
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
-      tags:
-        - tests::states:remove_down
 
-    - block:
+    - tags:
+        - tests::states:remove_down_twice
+      block:
         - include_tasks: tasks/run_test.yml
           vars:
             lsr_description: I will not get an error when I try to
@@ -129,5 +131,3 @@
                 when: "{{ network_provider == 'nm' }}"
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
-      tags:
-        - tests::states:remove_down_twice
