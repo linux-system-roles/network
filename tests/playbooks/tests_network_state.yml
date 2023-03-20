@@ -199,8 +199,8 @@
         msg: the file `/etc/resolv.conf` contains the specified DNS
           configuration
 
-    - command: resolvectl
-      name: "** TEST check resolvectl"
+    - name: "** TEST check resolvectl"
+      command: resolvectl
       register: result
       until: "'example.com' in result.stdout"
       retries: 20

@@ -72,7 +72,10 @@
               '/org/freedesktop/NetworkManager/Checkpoint/' not in
               nm_dbus_objects.stdout_lines
       always:
-        - block:
+        - tags:
+            - "tests::cleanup"
+          ignore_errors: true
+          block:
             # Use internal module directly for speedup
             - network_connections:
                 provider: nm
@@ -84,6 +87,3 @@
                 dest: "/etc/sysconfig/network-scripts/ifcfg-{{ interface }}"
                 state: absent
             - command: ip link del "{{ interface }}"
-          ignore_errors: true
-          tags:
-            - "tests::cleanup"

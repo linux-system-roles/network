@@ -102,7 +102,9 @@
           when:
             network_provider == 'nm'
       always:
-        - block:
+        - tags:
+            - "tests::cleanup"
+          block:
             - import_role:
                 name: linux-system-roles.network
               vars:
@@ -114,5 +116,3 @@
             - include_tasks: tasks/manage_test_interface.yml
               vars:
                 state: absent
-          tags:
-            - "tests::cleanup"

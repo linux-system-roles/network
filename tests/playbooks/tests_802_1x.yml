@@ -93,7 +93,9 @@
 
         - include_tasks: tasks/test_802.1x_capath.yml
       always:
-        - block:
+        - tags:
+            - "tests::cleanup"
+          block:
             - import_role:
                 name: linux-system-roles.network
               vars:
@@ -124,5 +126,3 @@
                 - /etc/pki/ca-trust/source/anchors/cacert.pem
             - name: Update ca trust
               command: update-ca-trust
-          tags:
-            - "tests::cleanup"

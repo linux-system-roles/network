@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- block:
+- tags:
+    - always
+  block:
     - name: Get NetworkManager RPM version
       command:
         cmd: rpm -qa --qf '%{name}-%{version}-%{release}\n' NetworkManager
@@ -13,6 +15,4 @@
     - name: Show NetworkManager version
       debug:
         var: networkmanager_nvr
-  tags:
-    - always
 ...

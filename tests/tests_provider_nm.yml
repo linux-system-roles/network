@@ -12,7 +12,11 @@
       tags:
         - always
 
-    - block:
+    - when:
+        - ansible_distribution_major_version != '6'
+      tags:
+        - always
+      block:
         - name: Install NetworkManager
           package:
             name: NetworkManager
@@ -21,10 +25,6 @@
           command: rpm -q --qf "%{version}" NetworkManager
           register: networkmanager_version
           when: true
-      when:
-        - ansible_distribution_major_version != '6'
-      tags:
-        - always
 
 
 # The test requires or should run with NetworkManager, therefore it cannot run

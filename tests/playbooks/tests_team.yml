@@ -13,7 +13,9 @@
       tags:
         - always
 
-    - block:
+    - tags:
+        - tests::team:create
+      block:
         - include_tasks: tasks/run_test.yml
           vars:
             lsr_description: Create a team interface without any port attached
@@ -27,5 +29,3 @@
               - tasks/assert_device_present.yml
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
-      tags:
-        - tests::team:create

@@ -14,7 +14,9 @@
         - always
 
 
-    - block:
+    - tags:
+        - tests::provider:initscripts_to_nm
+      block:
         - include_tasks: tasks/run_test.yml
           vars:
             state: present
@@ -32,5 +34,3 @@
               - tasks/assert_profile_present.yml
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
-      tags:
-        - tests::provider:initscripts_to_nm

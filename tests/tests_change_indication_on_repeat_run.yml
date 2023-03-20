@@ -55,7 +55,9 @@
               assert:
                 that: not __network_connections_result is changed
       always:
-        - block:
+        - tags:
+            - "tests::cleanup"
+          block:
             - include_role:
                 name: linux-system-roles.network
               vars:
@@ -67,5 +69,3 @@
             - include_tasks: tasks/manage_test_interface.yml
               vars:
                 state: absent
-          tags:
-            - "tests::cleanup"

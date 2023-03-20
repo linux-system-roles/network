@@ -146,7 +146,9 @@
           when: ansible_distribution_major_version | int > 7
 
       always:
-        - block:
+        - tags:
+            - "tests::cleanup"
+          block:
             - import_role:
                 name: linux-system-roles.network
               vars:
@@ -155,5 +157,3 @@
                     persistent_state: absent
                     state: down
               ignore_errors: true
-          tags:
-            - "tests::cleanup"

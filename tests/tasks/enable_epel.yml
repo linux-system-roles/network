@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- block:
+- when:
+    - ansible_distribution in ['RedHat', 'CentOS']
+    - ansible_distribution_major_version in ['7', '8']
+  block:
     - name: Create EPEL {{ ansible_distribution_major_version }}
       command:
         cmd: >-
@@ -23,9 +26,6 @@
     - name: Enable EPEL 8
       command: dnf config-manager --set-enabled epel
       when: ansible_distribution_major_version == '8'
-  when:
-    - ansible_distribution in ['RedHat', 'CentOS']
-    - ansible_distribution_major_version in ['7', '8']
 
 - name: Enable EPEL 6
   copy:
