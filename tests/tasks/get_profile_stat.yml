@@ -4,6 +4,7 @@
   set_fact:
     lsr_net_profile_exists: false
     lsr_net_profile_ansible_managed: false
+    lsr_net_profile_fingerprint: false
 
 - name: Stat profile file
   stat:
@@ -28,6 +29,7 @@
   changed_when: false
 
 # lsr_net_profile_ansible_managed:
+# lsr_net_profile_fingerprint:
 # under NetworkManager's control, the comment is not added by design.
 # Thus, set it always to true.
 - name: >-
@@ -36,6 +38,7 @@
   set_fact:
     lsr_net_profile_exists: true
     lsr_net_profile_ansible_managed: true
+    lsr_net_profile_fingerprint: true
   when: nm_profile_exists.rc == 0
 
 - name: Check ansible_managed comment for the initscripts case
@@ -53,5 +56,18 @@
     - name: Verify the ansible_managed comment in ifcfg-{{ profile }}
       set_fact:
         lsr_net_profile_ansible_managed: true
+      when:
+        - _result.stdout_lines | length == 1
+
+    - name: Get the fingerprint comment in ifcfg-{{ profile }}
+      command: >-
+        grep "^# system_role:network"
+        /etc/sysconfig/network-scripts/ifcfg-{{ profile }}
+      register: _result
+      changed_when: false
+
+    - name: Verify the fingerprint comment in ifcfg-{{ profile }}
+      set_fact:
+        lsr_net_profile_fingerprint: true
       when:
         - _result.stdout_lines | length == 1
