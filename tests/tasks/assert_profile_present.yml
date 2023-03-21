@@ -10,3 +10,8 @@
   assert:
     that: lsr_net_profile_ansible_managed
     msg: "profile {{ profile }} does not have the ansible managed comment"
+
+- name: Assert that the fingerprint comment is present in {{ profile }}
+  assert:
+    that: lsr_net_profile_fingerprint
+    msg: "profile {{ profile }} does not have the fingerprint comment"
