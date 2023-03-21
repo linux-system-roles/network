@@ -20,14 +20,19 @@ GET_NM_VERSION = """
           package:
             name: NetworkManager
             state: present
+        - name: Get NetworkManager package info
+          yum:
+            list: NetworkManager
+          register: networkmanager_info
         - name: Get NetworkManager version
-          command: rpm -q --qf "%{version}" NetworkManager
-          register: networkmanager_version
-          when: true
+          set_fact:
+            networkmanager_version: "{{ networkmanager_info.results |
+              selectattr('yumstate', 'match', '^installed$') |
+              map(attribute='version') | list | first }}"
 """
 
 MINIMUM_NM_VERSION_CHECK = """
-    - networkmanager_version.stdout is version({minimum_nm_version}, '>=')
+    - networkmanager_version is version({minimum_nm_version}, '>=')
 """
 
 EXTRA_RUN_CONDITION_PREFIX = "    - "

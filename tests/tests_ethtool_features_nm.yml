@@ -21,10 +21,15 @@
           package:
             name: NetworkManager
             state: present
+        - name: Get NetworkManager package info
+          yum:
+            list: NetworkManager
+          register: networkmanager_info
         - name: Get NetworkManager version
-          command: rpm -q --qf "%{version}" NetworkManager
-          register: networkmanager_version
-          when: true
+          set_fact:
+            networkmanager_version: "{{ networkmanager_info.results |
+              selectattr('yumstate', 'match', '^installed$') |
+              map(attribute='version') | list | first }}"
 
 
 # The test requires or should run with NetworkManager, therefore it cannot run
@@ -34,4 +39,4 @@
   when:
     - ansible_distribution_major_version != '6'
 
-    - networkmanager_version.stdout is version('1.20.0', '>=')
+    - networkmanager_version is version('1.20.0', '>=')
