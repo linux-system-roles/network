@@ -46,6 +46,7 @@
 - name: Get NetworkManager version
   command:
     cmd: rpm -qa NetworkManager
+  # noqa command-instead-of-module
   register: __network_nm_nvr
   changed_when: false
 - block:

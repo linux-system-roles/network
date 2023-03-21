@@ -72,6 +72,7 @@
                 {{ modules_parent_and_dir.stdout_lines[1] }}
                 -C {{ module_utils_parent_and_dir.stdout_lines[0] }}
                 {{ module_utils_parent_and_dir.stdout_lines[1] }}
+          # noqa command-instead-of-module
           delegate_to: localhost
 
         - name: Copy testrepo.tar to the remote system
@@ -81,9 +82,10 @@
             mode: preserve
 
         - name: Untar testrepo.tar
-          command: tar xf {{ temptar.path | basename }}
-          args:
-            chdir: "{{ _rundir.path }}"
+          unarchive:
+            src: "{{ _rundir.path }}/{{ temptar.path | basename }}"
+            dest: "{{ _rundir.path }}"
+            remote_src: true
 
         - name: "Create subdirectory './ansible' under '{{ _rundir.path }}'"
           file:

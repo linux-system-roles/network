@@ -6,6 +6,7 @@
     - name: Get NetworkManager RPM version
       command:
         cmd: rpm -qa --qf '%{name}-%{version}-%{release}\n' NetworkManager
+      # noqa command-instead-of-module
       register: __rpm_q_networkmanager
 
     - name: Store NetworkManager version
