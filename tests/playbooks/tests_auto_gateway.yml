@@ -1,15 +1,19 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Play for testing auto_gateway setting
+  hosts: all
   vars:
     type: veth
     interface: veth0
   tasks:
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/manage_test_interface.yml
+    - name: Include the task 'show_interfaces.yml'
+      include_tasks: tasks/show_interfaces.yml
+    - name: Include the task 'manage_test_interface.yml'
+      include_tasks: tasks/manage_test_interface.yml
       vars:
         state: present
-    - include_tasks: tasks/assert_device_present.yml
+    - name: Include the task 'assert_device_present.yml'
+      include_tasks: tasks/assert_device_present.yml
     - name: >-
         TEST: I can configure an interface with auto_gateway enabled
       debug:
@@ -35,8 +39,10 @@
               # not take precedence over other routes or not ignore other
               # routes
               route_metric4: 65535
-    - include_tasks: tasks/assert_device_present.yml
-    - include_tasks: tasks/assert_profile_present.yml
+    - name: Include the task 'assert_device_present.yml'
+      include_tasks: tasks/assert_device_present.yml
+    - name: Include the task 'assert_profile_present.yml'
+      include_tasks: tasks/assert_profile_present.yml
       vars:
         profile: "{{ interface }}"
     - name: "Show ipv4 routes"
@@ -72,14 +78,16 @@
             persistent_state: absent
             state: down
       ignore_errors: true  # noqa ignore-errors
-    - include_tasks: tasks/manage_test_interface.yml
+    - name: Include the task 'manage_test_interface.yml'
+      include_tasks: tasks/manage_test_interface.yml
       vars:
         state: absent
     - name: >-
         TEST: I can configure an interface with auto_gateway disabled
       debug:
         msg: "##################################################"
-    - include_tasks: tasks/manage_test_interface.yml
+    - name: Include the task 'manage_test_interface.yml'
+      include_tasks: tasks/manage_test_interface.yml
       vars:
         state: present
     - name: Import network role
@@ -99,8 +107,10 @@
                 - "203.0.113.2/24"
               gateway6: "2001:db8::1"
               gateway4: "203.0.113.1"
-    - include_tasks: tasks/assert_device_present.yml
-    - include_tasks: tasks/assert_profile_present.yml
+    - name: Include the task 'assert_device_present.yml'
+      include_tasks: tasks/assert_device_present.yml
+    - name: Include the task 'assert_profile_present.yml'
+      include_tasks: tasks/assert_profile_present.yml
       vars:
         profile: "{{ interface }}"
     - name: "Show ipv4 routes"
@@ -136,6 +146,7 @@
             persistent_state: absent
             state: down
       ignore_errors: true  # noqa ignore-errors
-    - include_tasks: tasks/manage_test_interface.yml
+    - name: Include the task 'manage_test_interface.yml'
+      include_tasks: tasks/manage_test_interface.yml
       vars:
         state: absent

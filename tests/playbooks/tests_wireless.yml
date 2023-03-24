@@ -1,13 +1,15 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Play for testing wireless connection
+  hosts: all
   vars:
     interface: wlan0
   tasks:
     - name: "INIT: wireless tests"
       debug:
         msg: "##################################################"
-    - include_tasks: tasks/setup_mock_wifi.yml
+    - name: Include the task 'setup_mock_wifi.yml'
+      include_tasks: tasks/setup_mock_wifi.yml
     - name: Copy client certs
       copy:
         src: "{{ item }}"
@@ -17,7 +19,8 @@
         - client.key
         - client.pem
         - cacert.pem
-    - block:
+    - name: Test wireless connection with WPA-PSK
+      block:
         - name: "TEST: wireless connection with WPA-PSK"
           debug:
             msg: "##################################################"
@@ -77,7 +80,8 @@
                   client_cert: /etc/pki/tls/client.pem
                   ca_cert: /etc/pki/tls/cacert.pem
       always:
-        - tags:
+        - name: Clean up the test device and the connection profile
+          tags:
             - "tests::cleanup"
           block:
             - name: Import network role
@@ -89,4 +93,5 @@
                     persistent_state: absent
                     state: down
               failed_when: false
-            - include_tasks: tasks/cleanup_mock_wifi.yml
+            - name: Include the task 'cleanup_mock_wifi.yml'
+              include_tasks: tasks/cleanup_mock_wifi.yml

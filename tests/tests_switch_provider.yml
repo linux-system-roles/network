@@ -3,7 +3,8 @@
 - hosts: all
   name: Run playbook 'playbooks/tests_switch_provider.yml'
 
-- import_playbook: playbooks/tests_switch_provider.yml
+- name: Import the playbook 'playbooks/tests_switch_provider.yml'
+  import_playbook: playbooks/tests_switch_provider.yml
   when:
     # The test requires NetworkManager and initscripts, therefore it can only
     # run on RHEL/CentOS 7, RHEL/CentOS 8, or Fedora

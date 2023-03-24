@@ -5,14 +5,16 @@
 - hosts: all
   name: Run playbook 'playbooks/tests_ethtool_features.yml' with nm as provider
   tasks:
-    - include_tasks: tasks/el_repo_setup.yml
+    - name: Include the task 'el_repo_setup.yml'
+      include_tasks: tasks/el_repo_setup.yml
     - name: Set network provider to 'nm'
       set_fact:
         network_provider: nm
       tags:
         - always
 
-    - when:
+    - name: Install NetworkManager and get NetworkManager version
+      when:
         - ansible_distribution_major_version != '6'
       tags:
         - always
@@ -37,7 +39,8 @@
 # The test requires or should run with NetworkManager, therefore it cannot run
 # on RHEL/CentOS 6
 # NetworkManager 1.20.0 introduced ethtool settings support
-- import_playbook: playbooks/tests_ethtool_features.yml
+- name: Import the playbook 'playbooks/tests_ethtool_features.yml'
+  import_playbook: playbooks/tests_ethtool_features.yml
   when:
     - ansible_distribution_major_version != '6'
 

@@ -1,8 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
-
-- name: Test configuring ethernet devices
+- name: Play for testing ipv6 disabled
   hosts: all
   vars:
     type: veth
@@ -13,11 +11,14 @@
       set_fact:
         type: "{{ type }}"
         interface: "{{ interface }}"
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/manage_test_interface.yml
+    - name: Include the task 'show_interfaces.yml'
+      include_tasks: tasks/show_interfaces.yml
+    - name: Include the task 'manage_test_interface.yml'
+      include_tasks: tasks/manage_test_interface.yml
       vars:
         state: present
-    - include_tasks: tasks/assert_device_present.yml
+    - name: Include the task 'assert_device_present.yml'
+      include_tasks: tasks/assert_device_present.yml
 
     - name: Initialize the connection_failed flag
       set_fact:
@@ -70,21 +71,26 @@
         connection_failed: true
       when: __network_connections_result.failed
 
-- import_playbook: down_profile.yml
+- name: Import the playbook 'down_profile.yml'
+  import_playbook: down_profile.yml
   vars:
     profile: "{{ interface }}"
   when: not connection_failed
 
 # FIXME: assert profile/device down
-- import_playbook: remove_profile.yml
+- name: Import the playbook 'remove_profile.yml'
+  import_playbook: remove_profile.yml
   vars:
     profile: "{{ interface }}"
 - name: Delete the interface, then assert that device and profile are absent
   hosts: all
   tasks:
-    - include_tasks: tasks/delete_interface.yml
-    - include_tasks: tasks/assert_profile_absent.yml
+    - name: Include the task 'delete_interface.yml'
+      include_tasks: tasks/delete_interface.yml
+    - name: Include the task 'assert_profile_absent.yml'
+      include_tasks: tasks/assert_profile_absent.yml
       vars:
         profile: "{{ interface }}"
-    - include_tasks: tasks/assert_device_absent.yml
+    - name: Include the task 'assert_device_absent.yml'
+      include_tasks: tasks/assert_device_absent.yml
 ...

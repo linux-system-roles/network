@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Play for testing bond removal
+  hosts: all
   tags:
     - tests::expfail
   vars:
@@ -14,11 +15,14 @@
     - name: "INIT Prepare setup"
       debug:
         msg: "##################################################"
-    - import_tasks: tasks/create_test_interfaces_with_dhcp.yml
-    - import_tasks: tasks/assert_device_present.yml
+    - name: Import the task 'create_test_interfaces_with_dhcp.yml'
+      import_tasks: tasks/create_test_interfaces_with_dhcp.yml
+    - name: Import the task 'assert_device_present.yml'
+      import_tasks: tasks/assert_device_present.yml
       vars:
         interface: "{{ dhcp_interface1 }}"
-    - import_tasks: tasks/assert_device_present.yml
+    - name: Import the task 'assert_device_present.yml'
+      import_tasks: tasks/assert_device_present.yml
       vars:
         interface: "{{ dhcp_interface2 }}"
     - name: "Backup the /etc/resolv.conf for initscript"
@@ -26,7 +30,8 @@
       when:
         - network_provider == "initscripts"
       changed_when: false
-    - block:
+    - name: Test removing bond device
+      block:
         - name: "TEST Add Bond with 2 ports"
           debug:
             msg: "##################################################"
@@ -57,10 +62,12 @@
                 type: ethernet
                 interface_name: "{{ dhcp_interface2 }}"
                 controller: "{{ controller_profile }}"
-        - import_tasks: tasks/assert_device_present.yml
+        - name: Import the task 'assert_device_present.yml'
+          import_tasks: tasks/assert_device_present.yml
           vars:
             interface: "{{ controller_device }}"
-        - include_tasks: tasks/assert_profile_present.yml
+        - name: Include the task 'assert_profile_present.yml'
+          include_tasks: tasks/assert_profile_present.yml
           vars:
             profile: "{{ item }}"
           loop:
@@ -228,7 +235,8 @@
           when: network_provider == "initscripts"
 
       always:
-        - tags:
+        - name: Clean up the test device and the connection profile
+          tags:
             - "tests::cleanup"
           block:
             - name: Import network role
@@ -240,10 +248,12 @@
                     state: down
                     persistent_state: absent
               failed_when: false
-            - command: ip link del {{ controller_device }}
+            - name: Delete the device '{{ controller_device }}'
+              command: ip link del {{ controller_device }}
               failed_when: false
               changed_when: false
-            - import_tasks: tasks/remove_test_interfaces_with_dhcp.yml
+            - name: Import the task 'remove_test_interfaces_with_dhcp.yml'
+              import_tasks: tasks/remove_test_interfaces_with_dhcp.yml
             - name: "Restore the /etc/resolv.conf for initscript"
               command: mv -vf /etc/resolv.conf.bak /etc/resolv.conf
               when:

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- when:
+- name: Create EPEL yum repo and Enable EPEL
+  when:
     - ansible_distribution in ['RedHat', 'CentOS']
     - ansible_distribution_major_version in ['7', '8']
   block:

@@ -1,7 +1,9 @@
 ---
-- hosts: all
+- name: Play for testing DNS search setting
+  hosts: all
   tasks:
-    - block:
+    - name: Test DNS search setting
+      block:
         - name: Configure the static IPv4 address and not configure the IPv6
             address
           import_role:
@@ -146,10 +148,12 @@
           when: ansible_distribution_major_version | int > 7
 
       always:
-        - tags:
+        - name: Clean up the test device and the connection profile
+          tags:
             - "tests::cleanup"
           block:
-            - import_role:
+            - name: Deactivate the connection and remove the connection profile
+              import_role:
                 name: linux-system-roles.network
               vars:
                 network_connections:

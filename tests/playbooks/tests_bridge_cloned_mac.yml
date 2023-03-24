@@ -51,10 +51,12 @@
             cloned_mac_address_nm.stdout.find(cloned_mac) != -1
         msg: "cloned-mac-address is configured incorrectly"
 
-- import_playbook: down_profile+delete_interface.yml
+- name: Import the playbook 'down_profile+delete_interface.yml'
+  import_playbook: down_profile+delete_interface.yml
   vars:
     profile: "{{ interface }}"
 
-- import_playbook: remove_profile.yml
+- name: Import the playbook 'remove_profile.yml'
+  import_playbook: remove_profile.yml
   vars:
     profile: "{{ interface }}"

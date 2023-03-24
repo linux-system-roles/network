@@ -5,7 +5,8 @@
 - hosts: all
   name: Run playbook 'playbooks/tests_wireless_wpa3_sae.yml' with nm as provider
   tasks:
-    - include_tasks: tasks/el_repo_setup.yml
+    - name: Include the task 'el_repo_setup.yml'
+      include_tasks: tasks/el_repo_setup.yml
     - name: Set network provider to 'nm'
       set_fact:
         network_provider: nm
@@ -16,7 +17,8 @@
 # The test requires or should run with NetworkManager, therefore it cannot run
 # on RHEL/CentOS 6
 # SAE has not been supported by NetworkManager 1.18.8 on RHEL 7. Failed in setting up mock wifi on RHEL 8
-- import_playbook: playbooks/tests_wireless_wpa3_sae.yml
+- name: Import the playbook 'playbooks/tests_wireless_wpa3_sae.yml'
+  import_playbook: playbooks/tests_wireless_wpa3_sae.yml
   when:
     - ansible_distribution_major_version != '6'
     - ansible_distribution_major_version != '7' and ansible_distribution != 'RedHat'

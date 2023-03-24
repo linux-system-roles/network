@@ -7,12 +7,16 @@
     type: veth
   name: Test change indication on repeat run
   tasks:
-    - include_tasks: tasks/manage_test_interface.yml
+    - name: Include the task 'manage_test_interface.yml'
+      include_tasks: tasks/manage_test_interface.yml
       vars:
         state: present
-    - include_tasks: tasks/assert_device_present.yml
-    - block:
-        - vars:
+    - name: Include the task 'assert_device_present.yml'
+      include_tasks: tasks/assert_device_present.yml
+    - name: Test change indication on repeat run
+      block:
+        - name: Configure the static IPv4 address for ethernet device
+          vars:
             network_connections:
               - name: "{{ interface }}"
                 state: up
@@ -21,19 +25,22 @@
                   address:
                     - 192.0.2.2/24
           block:
-            - include_role:
+            - name: Include the network role
+              include_role:
                 name: linux-system-roles.network
               register: __network_connections_result
             - name: Assert change:true
               assert:
                 that: __network_connections_result is changed
-            - include_role:
+            - name: Include the network role
+              include_role:
                 name: linux-system-roles.network
               register: __network_connections_result
             - name: Assert change:false
               assert:
                 that: not __network_connections_result is changed
-        - vars:
+        - name: Configure the ethernet device without enabling the IPv4 and IPv6
+          vars:
             network_connections:
               - name: "{{ interface }}"
                 state: up
@@ -42,23 +49,27 @@
                   dhcp4: "no"
                   auto6: "no"
           block:
-            - include_role:
+            - name: Include the network role
+              include_role:
                 name: linux-system-roles.network
               register: __network_connections_result
             - name: Assert change:true
               assert:
                 that: __network_connections_result is changed
-            - include_role:
+            - name: Include the network role
+              include_role:
                 name: linux-system-roles.network
               register: __network_connections_result
             - name: Assert change:false
               assert:
                 that: not __network_connections_result is changed
       always:
-        - tags:
+        - name: Clean up the test device and the connection profile
+          tags:
             - "tests::cleanup"
           block:
-            - include_role:
+            - name: Include the network role
+              include_role:
                 name: linux-system-roles.network
               vars:
                 network_connections:
@@ -66,6 +77,7 @@
                     persistent_state: absent
                     state: down
               ignore_errors: true  # noqa ignore-errors
-            - include_tasks: tasks/manage_test_interface.yml
+            - name: Include the task 'manage_test_interface.yml'
+              include_tasks: tasks/manage_test_interface.yml
               vars:
                 state: absent

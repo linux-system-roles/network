@@ -1,14 +1,17 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Play for testing wireless connection
+  hosts: all
   vars:
     interface: wlan0
   tasks:
     - name: "INIT: wireless tests"
       debug:
         msg: "##################################################"
-    - include_tasks: tasks/setup_mock_wifi_wpa3_owe.yml
-    - block:
+    - name: Include the task 'setup_mock_wifi_wpa3_owe.yml'
+      include_tasks: tasks/setup_mock_wifi_wpa3_owe.yml
+    - name: Test wireless connection with OWE
+      block:
         - name: "TEST: wireless connection with OWE"
           debug:
             msg: "##################################################"

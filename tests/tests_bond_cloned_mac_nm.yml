@@ -5,7 +5,8 @@
 - hosts: all
   name: Run playbook 'playbooks/tests_bond_cloned_mac.yml' with nm as provider
   tasks:
-    - include_tasks: tasks/el_repo_setup.yml
+    - name: Include the task 'el_repo_setup.yml'
+      include_tasks: tasks/el_repo_setup.yml
     - name: Set network provider to 'nm'
       set_fact:
         network_provider: nm
@@ -15,6 +16,7 @@
 
 # The test requires or should run with NetworkManager, therefore it cannot run
 # on RHEL/CentOS 6
-- import_playbook: playbooks/tests_bond_cloned_mac.yml
+- name: Import the playbook 'playbooks/tests_bond_cloned_mac.yml'
+  import_playbook: playbooks/tests_bond_cloned_mac.yml
   when:
     - ansible_distribution_major_version != '6'

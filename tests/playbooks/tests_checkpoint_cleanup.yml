@@ -4,7 +4,8 @@
 # mark a device as unmanaged for NM and then tries to activiate it using NM.
 # This failed without removing the checkpoint.
 ---
-- hosts: all
+- name: Play for testing checkpoint cleanup
+  hosts: all
   vars:
     interface: cptstbr
     profile: "{{ interface }}"
@@ -13,12 +14,15 @@
     - name: Show test banner
       debug:
         msg: Inside states tests
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/assert_device_absent.yml
+    - name: Include the task 'show_interfaces.yml'
+      include_tasks: tasks/show_interfaces.yml
+    - name: Include the task 'assert_device_absent.yml'
+      include_tasks: tasks/assert_device_absent.yml
   roles:
     - linux-system-roles.network
   tasks:
-    - block:
+    - name: Test checkpoint cleanup
+      block:
         # Workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1832897
         - name: Install dbus-tools
           package:
@@ -37,8 +41,10 @@
                 ip:
                   dhcp4: false
                   auto6: false
-        - include_tasks: tasks/assert_device_present.yml
-        - include_tasks: tasks/assert_profile_present.yml
+        - name: Include the task 'assert_device_present.yml'
+          include_tasks: tasks/assert_device_present.yml
+        - name: Include the task 'assert_profile_present.yml'
+          include_tasks: tasks/assert_profile_present.yml
         # Use internal module directly for speedup
         - name: Use network_connections
           network_connections:
@@ -73,19 +79,23 @@
               '/org/freedesktop/NetworkManager/Checkpoint/' not in
               nm_dbus_objects.stdout_lines
       always:
-        - tags:
+        - name: Clean up the test device and the connection profile
+          tags:
             - "tests::cleanup"
           ignore_errors: true  # noqa ignore-errors
           block:
             # Use internal module directly for speedup
-            - network_connections:
+            - name: Deactivate the connection and remove the connection profile
+              network_connections:
                 provider: nm
                 connections:
                   - name: "{{ interface }}"
                     persistent_state: absent
                     state: down
-            - file:
+            - name: Remove the connection profile
+              file:
                 dest: "/etc/sysconfig/network-scripts/ifcfg-{{ interface }}"
                 state: absent
-            - command: ip link del "{{ interface }}"
+            - name: Delete the device '{{ interface }}'
+              command: ip link del "{{ interface }}"
               changed_when: false

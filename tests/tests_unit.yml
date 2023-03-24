@@ -3,7 +3,8 @@
 - hosts: all
   name: Setup for test running
   tasks:
-    - include_tasks: tasks/el_repo_setup.yml
+    - name: Include the task 'el_repo_setup.yml'
+      include_tasks: tasks/el_repo_setup.yml
 
     - name: Install dependencies
       package:
@@ -21,7 +22,8 @@
 - hosts: all
   name: Execute python unit tests
   tasks:
-    - block:
+    - name: Execute python unit tests
+      block:
         - name: Create tempdir for code to test
           tempfile:
             state: directory
@@ -35,7 +37,8 @@
           register: temptar
           delegate_to: localhost
 
-        - include_tasks: tasks/get_modules_and_utils_paths.yml
+        - name: Include the task 'get_modules_and_utils_paths.yml'
+          include_tasks: tasks/get_modules_and_utils_paths.yml
 
         # TODO: using tar and copying the file is a workaround for the
         # synchronize module that does not work in test-harness. Related issue:
@@ -112,7 +115,8 @@
         - name: "List the files in {{ _rundir.path }}"
           command: ls -alrtFR {{ _rundir.path }}
           changed_when: false
-        - debug:
+        - name: Debug the lsr Python path
+          debug:
             msg: path {{ _lsr_python_path }}
 
         - name: Check if python2 is available

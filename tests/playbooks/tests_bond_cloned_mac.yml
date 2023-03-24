@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Play for testing bond cloned MAC address
+  hosts: all
   tags:
     - tests::expfail
   vars:
@@ -14,13 +15,15 @@
     - name: INIT Prepare setup
       debug:
         msg: "##################################################"
-    - import_tasks: tasks/create_test_interfaces_with_dhcp.yml
+    - name: Import the task 'create_test_interfaces_with_dhcp.yml'
+      import_tasks: tasks/create_test_interfaces_with_dhcp.yml
     - name: Backup the /etc/resolv.conf for initscript
       command: cp -vf /etc/resolv.conf /etc/resolv.conf.bak
       when:
         - network_provider == "initscripts"
       changed_when: false
-    - block:
+    - name: Test bond cloned MAC address
+      block:
         - name: TEST Add Bond with 2 ports
           debug:
             msg: "##################################################"
@@ -104,7 +107,8 @@
           when: network_provider == 'initscripts'
 
       always:
-        - tags:
+        - name: Clean up the test devices and the connection profiles
+          tags:
             - "tests::cleanup"
           block:
             - name: Import network role
@@ -122,10 +126,12 @@
                     persistent_state: absent
                     state: down
               failed_when: false
-            - command: ip link del {{ controller_device }}
+            - name: Delete the device '{{ controller_device }}'
+              command: ip link del {{ controller_device }}
               failed_when: false
               changed_when: false
-            - import_tasks: tasks/remove_test_interfaces_with_dhcp.yml
+            - name: Import the task 'remove_test_interfaces_with_dhcp.yml'
+              import_tasks: tasks/remove_test_interfaces_with_dhcp.yml
             - name: Restore the /etc/resolv.conf for initscript
               command: mv -vf /etc/resolv.conf.bak /etc/resolv.conf
               when:

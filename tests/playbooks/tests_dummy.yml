@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Play for testing dummy connection
+  hosts: all
   vars:
     interface: dummy0
     profile: "{{ interface }}"
@@ -13,10 +14,12 @@
       tags:
         - always
 
-    - tags:
+    - name: Test the dummy connection
+      tags:
         - tests::dummy:create
       block:
-        - include_tasks: tasks/run_test.yml
+        - name: Include the task 'run_test.yml'
+          include_tasks: tasks/run_test.yml
           vars:
             lsr_description: Create a dummy interface
             lsr_setup:

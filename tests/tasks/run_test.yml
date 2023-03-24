@@ -18,7 +18,8 @@
         - lsr_fail_debug
         - lsr_cleanup
 
-    - include_tasks: tasks/show_interfaces.yml
+    - name: Include the task 'show_interfaces.yml'
+      include_tasks: tasks/show_interfaces.yml
 
     - name: Setup
       include_tasks: "{{ item }}"

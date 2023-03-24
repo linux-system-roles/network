@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Play for testing ethtool features settings
+  hosts: all
   vars:
     interface: testnic1
     type: veth
@@ -14,18 +15,22 @@
     - name: "INIT: Ethtool feeatures tests"
       debug:
         msg: "##################################################"
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/manage_test_interface.yml
+    - name: Include the task 'show_interfaces.yml'
+      include_tasks: tasks/show_interfaces.yml
+    - name: Include the task 'manage_test_interface.yml'
+      include_tasks: tasks/manage_test_interface.yml
       vars:
         state: present
-    - include_tasks: tasks/assert_device_present.yml
+    - name: Include the task 'assert_device_present.yml'
+      include_tasks: tasks/assert_device_present.yml
     - name: Install ethtool (test dependency)
       package:
         name: ethtool
         state: present
 
 
-    - block:
+    - name: Test ethtool features settings
+      block:
         - name: >-
             TEST: I can create a profile without changing the ethtool features.
           debug:
@@ -136,7 +141,8 @@
                 TEST: Change feature with both underscores and dashes.
               debug:
                 msg: "##################################################"
-            - network_connections:
+            - name: Configure ethtool features setting
+              network_connections:
                 provider: "{{ network_provider | mandatory }}"
                 connections:
                   - name: "{{ interface }}"
@@ -155,12 +161,15 @@
             - name: Show network_connections result
               debug:
                 var: __network_connections_result
-            - assert:
+            - name: Assert the duplicate key "tx_tcp_segmentation"
+                configuration error happened
+              assert:
                 that:
                   - '{{  "fatal error: configuration error:
                       connections[0].ethtool.features: duplicate key
                       ''tx_tcp_segmentation''" in
                       __network_connections_result.msg }}'
+
           always:
             - name: Check failure
               debug:
@@ -196,7 +205,8 @@
           when:
             network_provider == 'nm'
       always:
-        - tags:
+        - name: Clean up the test device and the connection profile
+          tags:
             - "tests::cleanup"
           block:
             - name: Import network role
@@ -208,6 +218,7 @@
                     persistent_state: absent
                     state: down
               failed_when: false
-            - include_tasks: tasks/manage_test_interface.yml
+            - name: Include the task 'manage_test_interface.yml'
+              include_tasks: tasks/manage_test_interface.yml
               vars:
                 state: absent

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Play for testing wireless connection
+  hosts: all
   vars:
     interface: wlan0
   tasks:

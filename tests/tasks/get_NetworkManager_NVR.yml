@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- tags:
+- name: Get NetworkManager version
+  tags:
     - always
   block:
     - name: Get NetworkManager RPM version
