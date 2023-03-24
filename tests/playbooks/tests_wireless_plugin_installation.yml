@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Play for testing wireless plugin installation
+  hosts: all
   tasks:
     - name: Remove the NetworkManager-wifi package
       package:

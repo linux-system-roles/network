@@ -11,7 +11,8 @@ import sys
 
 
 GET_NM_VERSION = """
-    - when:
+    - name: Install NetworkManager and get NetworkManager version
+      when:
         - ansible_distribution_major_version != '6'
       tags:
         - always
@@ -46,7 +47,8 @@ RUN_PLAYBOOK_WITH_NM = """# SPDX-License-Identifier: BSD-3-Clause
 - hosts: all
   name: Run playbook '{test_playbook}' with nm as provider
   tasks:
-    - include_tasks: tasks/el_repo_setup.yml
+    - name: Include the task 'el_repo_setup.yml'
+      include_tasks: tasks/el_repo_setup.yml
     - name: Set network provider to 'nm'
       set_fact:
         network_provider: nm
@@ -56,7 +58,8 @@ RUN_PLAYBOOK_WITH_NM = """# SPDX-License-Identifier: BSD-3-Clause
 
 # The test requires or should run with NetworkManager, therefore it cannot run
 # on RHEL/CentOS 6
-{comment}- import_playbook: {test_playbook}
+{comment}- name: Import the playbook '{test_playbook}'
+  import_playbook: {test_playbook}
   when:
     - ansible_distribution_major_version != '6'
 {minimum_nm_version_check}{extra_run_condition}"""
@@ -150,14 +153,16 @@ RUN_PLAYBOOK_WITH_INITSCRIPTS = """# SPDX-License-Identifier: BSD-3-Clause
 - hosts: all
   name: Run playbook '{test_playbook}' with initscripts as provider
   tasks:
-    - include_tasks: tasks/el_repo_setup.yml
+    - name: Include the task 'el_repo_setup.yml'
+      include_tasks: tasks/el_repo_setup.yml
     - name: Set network provider to 'initscripts'
       set_fact:
         network_provider: initscripts
       tags:
         - always
 
-- import_playbook: {test_playbook}
+- name: Import the playbook '{test_playbook}'
+  import_playbook: {test_playbook}
   when: (ansible_distribution in ['CentOS','RedHat'] and\n    \
 ansible_distribution_major_version | int < 9)
 """

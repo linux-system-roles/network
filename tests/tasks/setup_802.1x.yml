@@ -1,4 +1,5 @@
-- include_tasks: tasks/setup_802_1x_server.yml
+- name: Include the task 'setup_802_1x_server.yml'
+  include_tasks: tasks/setup_802_1x_server.yml
 - name: Copy client certs
   copy:
     src: "{{ item }}"

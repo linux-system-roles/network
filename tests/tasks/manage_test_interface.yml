@@ -10,7 +10,8 @@
     msg: "type needs to be dummy, tap or veth, not '{{ type }}'"
   when: type not in ["dummy", "tap", "veth"]
 
-- include_tasks: show_interfaces.yml
+- name: Include the task 'show_interfaces.yml'
+  include_tasks: show_interfaces.yml
 
 - name: Install iproute
   package:

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Play for testing team connection
+  hosts: all
   vars:
     interface: team0
     profile: "{{ interface }}"
@@ -13,10 +14,12 @@
       tags:
         - always
 
-    - tags:
+    - name: Test the team connection
+      tags:
         - tests::team:create
       block:
-        - include_tasks: tasks/run_test.yml
+        - name: Include the task 'run_test.yml'
+          include_tasks: tasks/run_test.yml
           vars:
             lsr_description: Create a team interface without any port attached
             lsr_setup:

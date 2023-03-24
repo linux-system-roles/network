@@ -1,12 +1,15 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Play for testing IPv6 config
+  hosts: all
   vars:
     type: veth
     interface: veth0
   tasks:
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/manage_test_interface.yml
+    - name: Include the task 'show_interfaces.yml'
+      include_tasks: tasks/show_interfaces.yml
+    - name: Include the task 'manage_test_interface.yml'
+      include_tasks: tasks/manage_test_interface.yml
       vars:
         state: present
     - name: Set up gateway ip on veth peer
@@ -19,7 +22,8 @@
         # netns not available on RHEL/CentOS 6
         - ansible_distribution_major_version != '6'
       changed_when: false
-    - block:
+    - name: Test IPv6 config
+      block:
         - name: >-
             TEST: I can configure an interface with static ipv6 config
           debug:
@@ -40,8 +44,10 @@
                     - "2001:db8::3/32"
                     - "2001:db8::4/32"
                   gateway6: "2001:db8::1"
-        - include_tasks: tasks/assert_device_present.yml
-        - include_tasks: tasks/assert_profile_present.yml
+        - name: Include the task 'assert_device_present.yml'
+          include_tasks: tasks/assert_device_present.yml
+        - name: Include the task 'assert_profile_present.yml'
+          include_tasks: tasks/assert_profile_present.yml
           vars:
             profile: "{{ interface }}"
         - name: Get ip address information
@@ -91,7 +97,8 @@
                 persistent_state: absent
                 state: down
           ignore_errors: true  # noqa ignore-errors
-        - include_tasks: tasks/manage_test_interface.yml
+        - name: Include the task 'manage_test_interface.yml'
+          include_tasks: tasks/manage_test_interface.yml
           vars:
             state: absent
         - name: Clean up namespace

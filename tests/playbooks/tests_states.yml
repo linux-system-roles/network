@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Play for testing states
+  hosts: all
   vars:
     interface: statebr
     profile: "{{ interface }}"
@@ -14,10 +15,12 @@
         - always
 
 
-    - tags:
+    - name: Test creating the bridge connection
+      tags:
         - tests::states:create
       block:
-        - include_tasks: tasks/run_test.yml
+        - name: Include the task 'run_test.yml'
+          include_tasks: tasks/run_test.yml
           vars:
             lsr_description: I can create a profile
             lsr_setup:
@@ -35,10 +38,12 @@
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
 
-    - tags:
+    - name: Test creating the bridge connection without autoconnect
+      tags:
         - tests::states:create_without_autoconnect
       block:
-        - include_tasks: tasks/run_test.yml
+        - name: Include the task 'run_test.yml'
+          include_tasks: tasks/run_test.yml
           vars:
             lsr_description: I can create a profile without autoconnect
             lsr_setup:
@@ -53,10 +58,12 @@
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
 
-    - tags:
+    - name: Test activating the bridge connection
+      tags:
         - tests::states:activate
       block:
-        - include_tasks: tasks/run_test.yml
+        - name: Include the task 'run_test.yml'
+          include_tasks: tasks/run_test.yml
           vars:
             lsr_description: I can activate an existing profile
             lsr_setup:
@@ -69,10 +76,12 @@
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
 
-    - tags:
+    - name: Test removing the bridge connection profile without taking it down
+      tags:
         - tests::states:remove_up
       block:
-        - include_tasks: tasks/run_test.yml
+        - name: Include the task 'run_test.yml'
+          include_tasks: tasks/run_test.yml
           vars:
             lsr_description: I can remove an existing profile without taking it
               down
@@ -87,10 +96,12 @@
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
 
-    - tags:
+    - name: Test removing the bridge connection profile and taking it down
+      tags:
         - tests::states:remove_down
       block:
-        - include_tasks: tasks/run_test.yml
+        - name: Include the task 'run_test.yml'
+          include_tasks: tasks/run_test.yml
           vars:
             lsr_description: I can take a profile down that is absent
             lsr_setup:
@@ -107,10 +118,13 @@
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
 
-    - tags:
+    - name: Test removing the bridge connection profile and taking it down
+        twice
+      tags:
         - tests::states:remove_down_twice
       block:
-        - include_tasks: tasks/run_test.yml
+        - name: Include the task 'run_test.yml'
+          include_tasks: tasks/run_test.yml
           vars:
             lsr_description: I will not get an error when I try to
               remove an absent profile

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Play for testing ethtool coalesce settings
+  hosts: all
   vars:
     interface: testnic1
     type: veth
@@ -14,17 +15,21 @@
     - name: "INIT: Ethtool coalesce tests"
       debug:
         msg: "##################################################"
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/manage_test_interface.yml
+    - name: Include the task 'show_interfaces.yml'
+      include_tasks: tasks/show_interfaces.yml
+    - name: Include the task 'manage_test_interface.yml'
+      include_tasks: tasks/manage_test_interface.yml
       vars:
         state: present
-    - include_tasks: tasks/assert_device_present.yml
+    - name: Include the task 'assert_device_present.yml'
+      include_tasks: tasks/assert_device_present.yml
     - name: Install ethtool (test dependency)
       package:
         name: ethtool
         state: present
 
-    - block:
+    - name: Test ethtool coalesce settings
+      block:
         - name: >-
             TEST: I can create a profile without any coalescing option.
           debug:
@@ -151,7 +156,8 @@
             - network_provider == "initscripts"
 
       always:
-        - tags:
+        - name: Clean up the test device and the connection profile
+          tags:
             - "tests::cleanup"
           block:
             - name: Import network role
@@ -162,6 +168,7 @@
                   - name: "{{ interface }}"
                     persistent_state: absent
               failed_when: false
-            - include_tasks: tasks/manage_test_interface.yml
+            - name: Include the task 'manage_test_interface.yml'
+              include_tasks: tasks/manage_test_interface.yml
               vars:
                 state: absent

@@ -62,7 +62,8 @@
         name: coverage
         extra_args: --user --upgrade
 
-- import_playbook: "{{ test_playbook }}"
+- name: Import the playbook '{{ test_playbook }}'
+  import_playbook: "{{ test_playbook }}"
   vars:
     ansible_python_interpreter:
       # yamllint disable-line rule:line-length

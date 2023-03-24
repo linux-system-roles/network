@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Play for testing infiniband device
+  hosts: all
   tags:
     - "tests::infiniband"
   tasks:
-    - block:
+    - name: Test infiniband device
+      block:
         - name: TEST Configuring infiniband devices
           debug:
             msg: "##################################################"
@@ -64,7 +66,8 @@
           changed_when: false
 
       always:
-        - tags:
+        - name: Clean up the test devices and the connection profiles
+          tags:
             - "tests::cleanup"
           block:
             - name: Import network role
@@ -79,6 +82,7 @@
                     persistent_state: absent
                     state: down
               failed_when: false
-            - command: ip link del ib0.000a
+            - name: Delete the device 'ib0.000a'
+              command: ip link del ib0.000a
               failed_when: false
               changed_when: false

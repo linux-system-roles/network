@@ -2,8 +2,11 @@
 ---
 # set network provider and gather facts
 - hosts: all
+  name: Run playbook 'playbooks/tests_checkpoint_cleanup.yml' with nm as
+    provider
   tasks:
-    - include_tasks: tasks/el_repo_setup.yml
+    - name: Include the task 'el_repo_setup.yml'
+      include_tasks: tasks/el_repo_setup.yml
 
     - name: Set network provider to 'nm'
       set_fact:
@@ -27,7 +30,8 @@
 # releases Therefore we include the playbook with the tests only if the hosts
 # would support it.
 # The test requires NetworkManager, therefore it cannot run on RHEL/CentOS 6
-- import_playbook: playbooks/tests_checkpoint_cleanup.yml
+- name: Import the playbook 'playbooks/tests_checkpoint_cleanup.yml'
+  import_playbook: playbooks/tests_checkpoint_cleanup.yml
   when:
     - ansible_distribution_major_version != '6'
     # The test depends on behavior that is only visible with newer NM

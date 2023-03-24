@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Play for testing configuring 802.1x authentication with latest
+    NetworkManager
+  hosts: all
   tasks:
     - name: Update NetworkManager
       package:
@@ -10,4 +12,5 @@
       service:
         name: NetworkManager
         state: restarted
-- import_playbook: tests_802_1x.yml
+- name: Import the playbook 'tests_802_1x.yml'
+  import_playbook: tests_802_1x.yml

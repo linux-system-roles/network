@@ -49,7 +49,8 @@
   # noqa command-instead-of-module
   register: __network_nm_nvr
   changed_when: false
-- block:
+- name: Test configuring 802.1x authentication
+  block:
     - name: Import network role
       import_role:
         name: linux-system-roles.network

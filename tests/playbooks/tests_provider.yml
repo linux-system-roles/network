@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Play for testing provider
+  hosts: all
   vars:
     interface: testnic1
     profile: "{{ interface }}"
@@ -14,10 +15,13 @@
         - always
 
 
-    - tags:
+    - name: Test managing a veth interface with NM provider after managing it
+        with initscripts provider
+      tags:
         - tests::provider:initscripts_to_nm
       block:
-        - include_tasks: tasks/run_test.yml
+        - name: Include the task 'run_test.yml'
+          include_tasks: tasks/run_test.yml
           vars:
             state: present
             lsr_description: I can manage a veth interface with NM after I

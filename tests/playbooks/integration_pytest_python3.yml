@@ -21,17 +21,20 @@
 
 # Import needed in order to install initscripts dependencies on the remote
 # system.
-- import_playbook: "../tests_default_initscripts.yml"
+- name: Import the playbook '../tests_default_initscripts.yml'
+  import_playbook: "../tests_default_initscripts.yml"
 
 # Import needed in order to install Network Manager dependencies on the remote
 # system.
-- import_playbook: "../tests_default_nm.yml"
+- name: Import the playbook '../tests_default_nm.yml'
+  import_playbook: "../tests_default_nm.yml"
 
 
 - name: Run Pytest tests
   hosts: all
   tasks:
-    - block:
+    - name: Run Pytest tests
+      block:
         - name: Create tempdir for code to test
           tempfile:
             state: directory
@@ -45,7 +48,8 @@
           register: temptar
           delegate_to: localhost
 
-        - include_tasks: ../tasks/get_modules_and_utils_paths.yml
+        - name: Include the task '../tasks/get_modules_and_utils_paths.yml'
+          include_tasks: ../tasks/get_modules_and_utils_paths.yml
 
         - name: Get tests directory
           set_fact:
@@ -125,7 +129,8 @@
           command: ls -alrtFR {{ _rundir.path }}
           changed_when: false
 
-        - block:
+        - name: Run pytest with nm provider
+          block:
             - name: Run pytest with nm
               command: >
                 pytest
@@ -136,10 +141,12 @@
                 PYTHONPATH: "{{ _lsr_python_path }}"
               changed_when: false
           always:
-            - debug:
+            - name: Debug stdout_lines of the running playbook with nm
+              debug:
                 var: playbook_run.stdout_lines
 
-        - block:
+        - name: Run pytest with initscripts provider
+          block:
             - name: Install network-scripts when running pytest with initscripts
               package:
                 name: network-scripts
@@ -154,7 +161,8 @@
                 PYTHONPATH: "{{ _lsr_python_path }}"
               changed_when: false
           always:
-            - debug:
+            - name: Debug stdout_lines of the running playbook with initscripts
+              debug:
                 var: playbook_run.stdout_lines
       always:
         - name: Remove local tar file

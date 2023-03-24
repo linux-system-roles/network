@@ -1,14 +1,17 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
 - hosts: all
+  name: Run playbook 'tests_default.yml' with nm as provider
   tasks:
-    - include_tasks: tasks/el_repo_setup.yml
+    - name: Include the task 'el_repo_setup.yml'
+      include_tasks: tasks/el_repo_setup.yml
     - name: Set network provider to 'nm'
       set_fact:
         network_provider: nm
 
 # The test should run with NetworkManager, therefore it cannot run on
 # RHEL/CentOS 6
-- import_playbook: tests_default.yml
+- name: Import the playbook 'tests_default.yml'
+  import_playbook: tests_default.yml
   when:
     - ansible_distribution_major_version != '6'

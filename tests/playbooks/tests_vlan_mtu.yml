@@ -1,16 +1,20 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Play for testing vlan mtu setting
+  hosts: all
   vars:
     type: veth
     interface: lsr101
     vlan_interface: lsr101.90
   tasks:
-    - include_tasks: tasks/show_interfaces.yml
-    - include_tasks: tasks/manage_test_interface.yml
+    - name: Include the task 'show_interfaces.yml'
+      include_tasks: tasks/show_interfaces.yml
+    - name: Include the task 'manage_test_interface.yml'
+      include_tasks: tasks/manage_test_interface.yml
       vars:
         state: present
-    - include_tasks: tasks/assert_device_present.yml
+    - name: Include the task 'assert_device_present.yml'
+      include_tasks: tasks/assert_device_present.yml
     - name: >-
         TEST: I can configure the MTU for a vlan interface without autoconnect.
       debug:
@@ -39,10 +43,12 @@
             ip:
               dhcp4: false
               auto6: false
-    - include_tasks: tasks/assert_device_present.yml
+    - name: Include the task 'assert_device_present.yml'
+      include_tasks: tasks/assert_device_present.yml
       vars:
         interface: "{{ vlan_interface }}"
-    - include_tasks: tasks/assert_profile_present.yml
+    - name: Include the task 'assert_profile_present.yml'
+      include_tasks: tasks/assert_profile_present.yml
       vars:
         profile: "{{ item }}"
       loop:
@@ -64,6 +70,7 @@
             persistent_state: absent
             state: down
       ignore_errors: true  # noqa ignore-errors
-    - include_tasks: tasks/manage_test_interface.yml
+    - name: Include the task 'manage_test_interface.yml'
+      include_tasks: tasks/manage_test_interface.yml
       vars:
         state: absent

@@ -1,14 +1,17 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
+- name: Play for testing configuring 802.1x authentication
+  hosts: all
   vars:
     interface: 802-1x-test
   tasks:
     - name: "INIT: 802.1x tests"
       debug:
         msg: "##################################################"
-    - include_tasks: tasks/setup_802.1x.yml
-    - block:
+    - name: Include the task 'setup_802.1x.yml'
+      include_tasks: tasks/setup_802.1x.yml
+    - name: Test configuring 802.1x authentication
+      block:
         - name: "TEST: 802.1x profile with private key password and ca cert"
           debug:
             msg: "##################################################"
@@ -94,12 +97,15 @@
                 persistent_state: absent
                 state: down
 
-        - include_tasks: tasks/test_802.1x_capath.yml
+        - name: Include the task 'test_802.1x_capath.yml'
+          include_tasks: tasks/test_802.1x_capath.yml
       always:
-        - tags:
+        - name: Clean up the test device and the connection profile
+          tags:
             - "tests::cleanup"
           block:
-            - import_role:
+            - name: Deactivate the connection and remove the connection profile
+              import_role:
                 name: linux-system-roles.network
               vars:
                 network_connections:
@@ -110,7 +116,8 @@
                     persistent_state: absent
                     state: down
               failed_when: false
-            - include_tasks: tasks/cleanup_802_1x_server.yml
+            - name: Include the task 'cleanup_802_1x_server.yml'
+              include_tasks: tasks/cleanup_802_1x_server.yml
             - name: Remove test certificates
               file:
                 state: absent

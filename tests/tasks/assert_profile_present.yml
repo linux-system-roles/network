@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- include_tasks: get_profile_stat.yml
+- name: Include the task 'get_profile_stat.yml'
+  include_tasks: get_profile_stat.yml
 - name: "Assert that the profile is present - '{{ profile }}'"
   assert:
     that: lsr_net_profile_exists
