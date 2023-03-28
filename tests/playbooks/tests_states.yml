@@ -31,7 +31,7 @@
               # Device should be present because of autoconnect: true by
               # default for NM (this might be considered a bug)
               - what: tasks/assert_device_present.yml
-                when: network_provider == 'nm'
+                condition: "{{ network_provider == 'nm' }}"
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
 
@@ -103,7 +103,7 @@
               - tasks/assert_profile_absent.yml
             lsr_assert_when:
               - what: tasks/assert_device_absent.yml
-                when: network_provider == 'nm'
+                condition: "{{ network_provider == 'nm' }}"
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
 
@@ -128,6 +128,6 @@
               - tasks/get_NetworkManager_NVR.yml
             lsr_assert_when:
               - what: tasks/assert_device_absent.yml
-                when: network_provider == 'nm'
+                condition: "{{ network_provider == 'nm' }}"
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
