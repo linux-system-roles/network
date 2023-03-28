@@ -40,7 +40,7 @@
 
     - name: Conditional asserts
       include_tasks: "{{ item['what'] }}"
-      when: item['when']
+      when: item['when'] | bool
       loop: "{{ lsr_assert_when | default([]) }}"
 
     - name: "Success in test '{{ lsr_description }}'"
