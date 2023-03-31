@@ -12,7 +12,7 @@
       copy:
         src: "{{ item }}"
         dest: "/etc/pki/tls/{{ item }}"
-        mode: 0644
+        mode: "0644"
       with_items:
         - client.key
         - client.pem

@@ -55,7 +55,7 @@
           copy:
             src: cacert.pem
             dest: /etc/pki/ca-trust/source/anchors/cacert.pem
-            mode: 0644
+            mode: "0644"
         - name: Update ca trust
           command: update-ca-trust
           changed_when: false
