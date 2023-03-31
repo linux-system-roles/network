@@ -6,7 +6,7 @@
   tasks:
     # Use set_fact to set variables to make them available in all plays
     # 'vars:' Would only set variables for the current play
-    - name: set facts
+    - name: Set facts
       set_fact:
         coverage_module: network_connections
         coverage: /root/.local/bin/coverage
@@ -14,50 +14,50 @@
 
     # This uses variables from the other set_fact task, therefore it needs to
     # be its own task
-    - name: set more facts
+    - name: Set more facts
       set_fact:
         coverage_file:
           # yamllint disable-line rule:line-length
           ansible-coverage-{{ coverage_module }}-{{ test_playbook | replace('.yml', '') }}
 
-    - name: debug info
+    - name: Debug info
       debug:
         msg:
           # yamllint disable-line rule:line-length
           Getting coverage for '{{ coverage_module }}' with '{{ test_playbook }}'
 
-    - name: combine data in case old data is left there
+    - name: Combine data in case old data is left there
       command: "{{ coverage }} combine"
       environment:
         COVERAGE_FILE: "{{ coverage_file }}"
       failed_when: false
       changed_when: false
 
-    - name: remove old data
+    - name: Remove old data
       file:
         state: absent
         path: "{{ coverage_file }}"
 
-    - name: find coverage files to delete
+    - name: Find coverage files to delete
       find:
         path: "{{ ansible_env.HOME }}"
         patterns: ".coverage.*"
         hidden: true
       register: files_to_delete
 
-    - name: remove old data
+    - name: Remove old data
       file:
         path: "{{ item.path }}"
         state: absent
       with_items: "{{ files_to_delete.files }}"
 
-    - name: copy coveragerc
+    - name: Copy coveragerc
       copy:
         content: "[run]\ndisable_warnings = no-data-collected\n"
         dest: .coveragerc
         mode: "0644"
 
-    - name: install latest pip
+    - name: Install latest pip
       pip:
         name: coverage
         extra_args: --user --upgrade
@@ -71,7 +71,7 @@
 - name: Gather coverage data
   hosts: all
   tasks:
-    - name: gather coverage data
+    - name: Gather coverage data
       shell: "{{ coverage }} combine .coverage.*"
       environment:
         COVERAGE_FILE: "{{ coverage_file }}"
