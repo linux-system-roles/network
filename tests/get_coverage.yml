@@ -18,7 +18,7 @@
       set_fact:
         coverage_file:
           # yamllint disable-line rule:line-length
-          ansible-coverage-{{ coverage_module }}-{{ test_playbook|replace('.yml', '') }}
+          ansible-coverage-{{ coverage_module }}-{{ test_playbook | replace('.yml', '') }}
 
     - name: debug info
       debug:
