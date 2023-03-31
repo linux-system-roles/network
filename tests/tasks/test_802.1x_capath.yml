@@ -23,12 +23,12 @@
   file:
     path: "/etc/pki/tls/my_ca_certs"
     state: directory
-    mode: 0755
+    mode: "0755"
 - name: Copy cacert to ca_path
   copy:
     src: "cacert.pem"
     dest: "/etc/pki/tls/my_ca_certs/cacert.pem"
-    mode: 0644
+    mode: "0644"
 - name: Install openssl (test dependency)
   package:
     name: openssl
