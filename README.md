@@ -63,6 +63,20 @@ Exceptions are mentioned below. However, the partial networking configuration ca
 achieved via specifying the network state configuration in the `network_state`
 variable.
 
+## Requirements
+
+See below
+
+### Collection requirements
+
+The role requires external collections only for management of `rpm-ostree`
+nodes. Please run the following command to install them if you need to manage
+`rpm-ostree` nodes:
+
+```bash
+ansible-galaxy collection install -vv -r meta/collection-requirements.yml
+```
+
 ## Variables
 
 The `network` role is configured via variables starting  with  `network_` as
@@ -1407,3 +1421,7 @@ it is not clear that rollback will result in a working configuration.
 
 *Want to contribute? Take a look at our [contributing
 guidelines](https://github.com/linux-system-roles/network/blob/main/contributing.md)!*
+
+## rpm-ostree
+
+See README-ostree.md

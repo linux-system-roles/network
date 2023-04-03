@@ -75,3 +75,4 @@ tests/network/get_total_coverage.sh shebang!skip
 tests/network/git-pre-commit.sh shebang!skip
 tests/network/git-post-commit.sh shebang!skip
 tests/network/merge_coverage.sh shebang!skip
+roles/network/.ostree/get_ostree_data.sh shebang!skip

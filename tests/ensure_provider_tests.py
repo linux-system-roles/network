@@ -21,17 +21,12 @@ GET_NM_VERSION = """
           package:
             name: NetworkManager
             state: present
-        - name: Get NetworkManager package info
-          yum:
-            list: NetworkManager
-          register: networkmanager_info
+        - name: Get package info
+          package_facts:
         - name: Get NetworkManager version
           set_fact:
-            networkmanager_version: "{{ networkmanager_info.results |
-              selectattr('yumstate', 'match', '^installed$') |
-              map(attribute='version') | list | first }}"
-          when: true
-          changed_when: false
+            networkmanager_version: "{{
+              ansible_facts.packages['NetworkManager'][0]['version'] }}"
 """
 
 MINIMUM_NM_VERSION_CHECK = """

@@ -155,6 +155,14 @@ podman exec -i "$CONTAINER_ID" \
         'cat /dev/zero | ssh-keygen -q -N "";
          cp -v /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys'
 
+for req in meta/collection-requirements.yml tests/collection-requirements.yml; do
+    podman exec -i "$CONTAINER_ID" \
+        /bin/bash -c  \
+            "if [ -f $TEST_SOURCE_DIR/$req ]; then \
+                 ansible-galaxy collection install -vv -r $TEST_SOURCE_DIR/$req; \
+             fi"
+done
+
 for test_file in $TEST_FILES; do
     podman exec -i "$CONTAINER_ID" \
         /bin/bash -c  \
