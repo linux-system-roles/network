@@ -3,6 +3,9 @@
 - hosts: all
   name: Run playbook 'playbooks/integration_pytest_python3.yml'
   tasks:
+    - name: Ensure correct package manager
+      ansible.posix.rhel_facts:
+      when: ansible_facts.pkg_mgr | d("") != "ansible.posix.rhel_rpm_ostree"
     - name: Include the task 'el_repo_setup.yml'
       include_tasks: tasks/el_repo_setup.yml
 

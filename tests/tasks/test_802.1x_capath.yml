@@ -73,6 +73,9 @@
               private_key_password_flags:
                 - not-required
               ca_path: /etc/pki/tls/my_ca_certs
+    - name: Ensure ping command is present
+      package:
+        name: iputils
     - name: "TEST: I can ping the EAP server"
       command: ping -c1 203.0.113.1
       changed_when: false

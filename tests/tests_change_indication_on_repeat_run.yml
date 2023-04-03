@@ -5,6 +5,9 @@
   vars:
     interface: testnic1
     type: veth
+    ansible_facts_modules:
+      - setup  # required to be first in the list
+      - ansible.posix.rhel_facts
   name: Test change indication on repeat run
   tasks:
     - name: Include the task 'manage_test_interface.yml'

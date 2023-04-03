@@ -5,6 +5,10 @@
 - hosts: all
   # yamllint disable rule:line-length
   name: Run playbook 'playbooks/tests_team.yml' with nm as provider
+  vars:
+    ansible_facts_modules:
+      - setup  # required to be first in the list
+      - ansible.posix.rhel_facts
   tasks:
     - name: Include the task 'el_repo_setup.yml'
       include_tasks: tasks/el_repo_setup.yml

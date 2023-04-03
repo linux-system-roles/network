@@ -21,17 +21,12 @@ GET_NM_VERSION = """
           package:
             name: NetworkManager
             state: present
-        - name: Get NetworkManager package info
-          yum:
-            list: NetworkManager
-          register: networkmanager_info
+        - name: Get package info
+          package_facts:
         - name: Get NetworkManager version
           set_fact:
-            networkmanager_version: "{{ networkmanager_info.results |
-              selectattr('yumstate', 'match', '^installed$') |
-              map(attribute='version') | list | first }}"
-          when: true
-          changed_when: false
+            networkmanager_version: "{{
+              ansible_facts.packages['NetworkManager'][0]['version'] }}"
 """
 
 MINIMUM_NM_VERSION_CHECK = """
@@ -47,6 +42,10 @@ RUN_PLAYBOOK_WITH_NM = """# SPDX-License-Identifier: BSD-3-Clause
 - hosts: all
   # yamllint disable rule:line-length
   name: Run playbook '{test_playbook}' with nm as provider
+  vars:
+    ansible_facts_modules:
+      - setup  # required to be first in the list
+      - ansible.posix.rhel_facts
   tasks:
     - name: Include the task 'el_repo_setup.yml'
       include_tasks: tasks/el_repo_setup.yml
@@ -86,7 +85,7 @@ ibution_major_version | int < 9",
     "playbooks/tests_provider.yml": {
         MINIMUM_VERSION: "'1.20.0'",
         "comment": "# NetworKmanager 1.20.0 added support for forgetting profiles",
-        EXTRA_RUN_CONDITION: "ansible_distribution != 'RedHat' or\n      ansible_distr\
+        EXTRA_RUN_CONDITION: "not ansible_distribution in ['RedHat', 'CentOS'] or\n      ansible_distr\
 ibution_major_version | int < 9",
     },
     "playbooks/tests_eth_pci_address_match.yml": {
@@ -155,6 +154,10 @@ RUN_PLAYBOOK_WITH_INITSCRIPTS = """# SPDX-License-Identifier: BSD-3-Clause
 - hosts: all
   # yamllint disable rule:line-length
   name: Run playbook '{test_playbook}' with initscripts as provider
+  vars:
+    ansible_facts_modules:
+      - setup  # required to be first in the list
+      - ansible.posix.rhel_facts
   tasks:
     - name: Include the task 'el_repo_setup.yml'
       include_tasks: tasks/el_repo_setup.yml

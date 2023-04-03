@@ -1,5 +1,14 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
+- name: Ensure use of rhel_facts for fact gathering
+  set_fact:
+    ansible_facts_modules: "{{ __fact_modules + [__rhel_facts] }}"
+  when: not __rhel_facts in __fact_modules
+  vars:
+    # setup is required to be first in the list if adding
+    __fact_modules: "{{ ansible_facts_modules | d(['setup']) }}"
+    __rhel_facts: ansible.posix.rhel_facts
+
 - name: Ensure ansible_facts used by role are present
   setup:
     gather_subset: "{{ __network_required_facts_subsets }}"
