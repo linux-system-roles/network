@@ -1,0 +1,10 @@
+dbus-tools
+ethtool
+git
+hostapd
+NetworkManager
+network-scripts
+openssl
+procps-ng
+python3-pip
+rsync

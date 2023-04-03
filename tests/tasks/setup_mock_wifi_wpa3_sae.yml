@@ -7,25 +7,33 @@
       - wpa_supplicant
     state: present
 
-# yamllint disable rule:line-length
-# Even though hostapd can be installed via EPEL 8, Simultaneous Authentication
-# of Equals (SAE) has not been enabled by default. To warrant the test support
-# on CentOS 8, we setup hostapd copr repo to enable SAE option.
-- name: Install hostapd and mac80211_hwsim kernel module in CentOS 8
-  shell: |
-    dnf -y copr enable liangwen12year/hostapd-owe
-    dnf -y install hostapd
-    release=$(uname -r)
-    tmp="${release/-//}"
-    tmp="${tmp/.x//x}"
-    dnf -y install https://koji.mbox.centos.org/pkgs/packages/kernel/$tmp/kernel-core-$release.rpm
-    dnf -y install https://koji.mbox.centos.org/pkgs/packages/kernel/$tmp/kernel-modules-$release.rpm
-    dnf -y install https://koji.mbox.centos.org/pkgs/packages/kernel/$tmp/kernel-modules-internal-$release.rpm
+- name: Configure CentOS 8 system for testing, if possible
   when:
     - ansible_distribution_major_version == '8'
     - ansible_distribution == 'CentOS'
-  changed_when: false
-# yamllint enable rule:line-length
+  block:
+    # It is currently too difficult to install the required kernel
+    # if using rpm ostree - so just skip this test
+    - name: Check if rpm ostree system - cannot test
+      meta: end_host
+      when: ansible_facts.pkg_mgr == "ansible.posix.rhel_rpm_ostree"
+
+    # yamllint disable rule:line-length
+    # Even though hostapd can be installed via EPEL 8, Simultaneous Authentication
+    # of Equals (SAE) has not been enabled by default. To warrant the test support
+    # on CentOS 8, we setup hostapd copr repo to enable SAE option.
+    - name: Install hostapd and mac80211_hwsim kernel module in CentOS 8
+      shell: |
+        dnf -y copr enable liangwen12year/hostapd-owe
+        dnf -y install hostapd
+        release=$(uname -r)
+        tmp="${release/-//}"
+        tmp="${tmp/.x//x}"
+        dnf -y install https://koji.mbox.centos.org/pkgs/packages/kernel/$tmp/kernel-core-$release.rpm
+        dnf -y install https://koji.mbox.centos.org/pkgs/packages/kernel/$tmp/kernel-modules-$release.rpm
+        dnf -y install https://koji.mbox.centos.org/pkgs/packages/kernel/$tmp/kernel-modules-internal-$release.rpm
+      changed_when: false
+      # yamllint enable rule:line-length
 
 - name: Install hostapd in Fedora
   package:

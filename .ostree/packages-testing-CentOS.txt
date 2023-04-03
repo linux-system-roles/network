@@ -1,0 +1,6 @@
+ethtool
+hostapd
+NetworkManager
+openssl
+procps-ng
+wpa_supplicant

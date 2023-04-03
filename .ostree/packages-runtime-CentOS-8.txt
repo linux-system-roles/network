@@ -1,0 +1,4 @@
+dhcp-client
+network-scripts
+nmstate
+python3-gobject-base

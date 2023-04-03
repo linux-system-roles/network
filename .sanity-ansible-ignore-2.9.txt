@@ -48,3 +48,4 @@ tests/network/unit/test_network_connections.py future-import-boilerplate!skip
 tests/network/unit/test_network_connections.py metaclass-boilerplate!skip
 tests/network/unit/test_nm_provider.py future-import-boilerplate!skip
 tests/network/unit/test_nm_provider.py metaclass-boilerplate!skip
+roles/network/.ostree/get_ostree_data.sh shebang!skip

@@ -3,6 +3,10 @@
 - name: Play for testing team plugin installation
   hosts: all
   tasks:
+    - name: Check if rpm ostree system - cannot test
+      meta: end_host
+      when: ansible_facts.pkg_mgr == "ansible.posix.rhel_rpm_ostree"
+
     - name: Remove the NetworkManager-team package
       package:
         name: "NetworkManager-team"

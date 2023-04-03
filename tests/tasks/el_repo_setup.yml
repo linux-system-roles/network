@@ -13,6 +13,24 @@
       - distribution_version
       - os_family
 
+- name: Ensure correct package manager for ostree systems
+  vars:
+    ostree_pkg_mgr: ansible.posix.rhel_rpm_ostree
+    ostree_booted_file: /run/ostree-booted
+  when: ansible_facts.pkg_mgr | d("") != ostree_pkg_mgr
+  block:
+    - name: Check if system is ostree
+      stat:
+        path: "{{ ostree_booted_file }}"
+      register: __ostree_booted_stat
+
+    - name: Set package manager to use for ostree
+      ansible.utils.update_fact:
+        updates:
+          - path: ansible_facts.pkg_mgr
+            value: "{{ ostree_pkg_mgr }}"
+      when: __ostree_booted_stat.stat.exists
+
 - name: Fix CentOS6 Base repo
   copy:
     dest: /etc/yum.repos.d/CentOS-Base.repo
@@ -40,3 +58,4 @@
     - ansible_distribution_major_version == '6'
 - name: Include the task 'enable_epel.yml'
   include_tasks: enable_epel.yml
+  when: ansible_facts["pkg_mgr"] != "ansible.posix.rhel_rpm_ostree"
