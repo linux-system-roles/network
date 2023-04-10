@@ -17,8 +17,6 @@ kinds:
   - playbook: "**/examples/*.yml"
 skip_list:
   - fqcn-builtins
-warn_list:
-  - load-failure
 exclude_paths:
   - tests/roles/
   - .github/
