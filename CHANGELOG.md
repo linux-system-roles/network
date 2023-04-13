@@ -1,6 +1,15 @@
 Changelog
 =========
 
+[1.11.3] - 2023-04-13
+--------------------
+
+### Other Changes
+
+- ansible-lint: Fix ansible-lint issues in tests
+- Add README-ansible.md to refer Ansible intro page on linux-system-roles.github.io
+- Fingerprint RHEL System Role managed config files
+
 [1.11.2] - 2023-02-20
 --------------------
 
