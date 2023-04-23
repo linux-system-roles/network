@@ -189,6 +189,8 @@ class TestValidator(Python26CompatTestCase):
                 "ipv6_disabled": False,
                 "dhcp4": True,
                 "address": [],
+                "ipv4_ignore_auto_dns": None,
+                "ipv6_ignore_auto_dns": None,
                 "auto_gateway": None,
                 "route_append_only": False,
                 "rule_append_only": False,
@@ -586,6 +588,8 @@ class TestValidator(Python26CompatTestCase):
                         "ipv6_disabled": False,
                         "dhcp4": True,
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -645,6 +649,8 @@ class TestValidator(Python26CompatTestCase):
                         "ipv6_disabled": False,
                         "dhcp4": True,
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -698,6 +704,8 @@ class TestValidator(Python26CompatTestCase):
                         "ipv6_disabled": False,
                         "dhcp4": True,
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -801,6 +809,8 @@ class TestValidator(Python26CompatTestCase):
                                 "address": "192.168.174.5",
                             }
                         ],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -870,6 +880,8 @@ class TestValidator(Python26CompatTestCase):
                                 "address": "192.168.174.5",
                             }
                         ],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -942,6 +954,8 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 32,
                             },
                         ],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -1040,6 +1054,8 @@ class TestValidator(Python26CompatTestCase):
                                 "address": "192.168.177.5",
                             },
                         ],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -1105,6 +1121,8 @@ class TestValidator(Python26CompatTestCase):
                                 "address": "a:b:c::6",
                             },
                         ],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -1193,6 +1211,8 @@ class TestValidator(Python26CompatTestCase):
                         "ipv6_disabled": False,
                         "dns": [],
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": True,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -1272,6 +1292,8 @@ class TestValidator(Python26CompatTestCase):
                         "ipv6_disabled": False,
                         "dns": [],
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": False,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -1371,6 +1393,8 @@ class TestValidator(Python26CompatTestCase):
                                 "address": "192.168.177.5",
                             },
                         ],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -1437,6 +1461,8 @@ class TestValidator(Python26CompatTestCase):
                                 "address": "a:b:c::6",
                             },
                         ],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -1522,6 +1548,8 @@ class TestValidator(Python26CompatTestCase):
                                 "address": "192.168.122.3",
                             }
                         ],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -1582,6 +1610,8 @@ class TestValidator(Python26CompatTestCase):
                                 "address": "192.168.244.1",
                             }
                         ],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -1642,6 +1672,8 @@ class TestValidator(Python26CompatTestCase):
                                 "address": "192.168.245.7",
                             }
                         ],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -1733,6 +1765,8 @@ class TestValidator(Python26CompatTestCase):
                     "interface_name": "bridge2",
                     "ip": {
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "auto6": False,
                         "dhcp4": False,
@@ -1778,6 +1812,8 @@ class TestValidator(Python26CompatTestCase):
                     "interface_name": "eth1",
                     "ip": {
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "auto6": True,
                         "dhcp4": True,
@@ -1886,6 +1922,8 @@ class TestValidator(Python26CompatTestCase):
                         "ipv6_disabled": False,
                         "dns": [],
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -1967,6 +2005,8 @@ class TestValidator(Python26CompatTestCase):
                         "ipv6_disabled": False,
                         "dns": [],
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -2019,6 +2059,8 @@ class TestValidator(Python26CompatTestCase):
                     "interface_name": None,
                     "ip": {
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -2077,6 +2119,8 @@ class TestValidator(Python26CompatTestCase):
                         "ipv6_disabled": False,
                         "dhcp4": True,
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -2151,6 +2195,8 @@ class TestValidator(Python26CompatTestCase):
                     "interface_name": "6643-controller",
                     "ip": {
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "auto6": True,
                         "ipv6_disabled": False,
@@ -2196,6 +2242,8 @@ class TestValidator(Python26CompatTestCase):
                     "interface_name": "6643",
                     "ip": {
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "auto6": True,
                         "dhcp4_send_hostname": None,
@@ -2257,6 +2305,8 @@ class TestValidator(Python26CompatTestCase):
                     "interface_name": None,
                     "ip": {
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "auto6": True,
                         "dhcp4": True,
@@ -2335,6 +2385,8 @@ class TestValidator(Python26CompatTestCase):
                     "interface_name": None,
                     "ip": {
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "auto6": True,
                         "dhcp4": True,
@@ -2419,6 +2471,8 @@ class TestValidator(Python26CompatTestCase):
                     "interface_name": "ib0",
                     "ip": {
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "auto6": True,
                         "dhcp4": True,
@@ -2463,6 +2517,8 @@ class TestValidator(Python26CompatTestCase):
                     "interface_name": None,
                     "ip": {
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "auto6": True,
                         "dhcp4": True,
@@ -2578,6 +2634,8 @@ class TestValidator(Python26CompatTestCase):
                         "ipv6_disabled": False,
                         "dhcp4": True,
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -2680,6 +2738,8 @@ class TestValidator(Python26CompatTestCase):
                         "ipv6_disabled": False,
                         "dhcp4": True,
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": True,
                         "rule_append_only": False,
@@ -2831,6 +2891,8 @@ class TestValidator(Python26CompatTestCase):
                         "ipv6_disabled": False,
                         "dhcp4": True,
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": True,
                         "rule_append_only": False,
@@ -2983,6 +3045,8 @@ class TestValidator(Python26CompatTestCase):
                         "ipv6_disabled": False,
                         "dhcp4": True,
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -3065,6 +3129,8 @@ class TestValidator(Python26CompatTestCase):
                         "ipv6_disabled": False,
                         "dhcp4": True,
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -3147,6 +3213,8 @@ class TestValidator(Python26CompatTestCase):
                         "ipv6_disabled": False,
                         "dhcp4": True,
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -3227,6 +3295,8 @@ class TestValidator(Python26CompatTestCase):
                         "ipv6_disabled": False,
                         "dhcp4": True,
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -3297,6 +3367,8 @@ class TestValidator(Python26CompatTestCase):
                         "ipv6_disabled": False,
                         "dhcp4": True,
                         "address": [],
+                        "ipv4_ignore_auto_dns": None,
+                        "ipv6_ignore_auto_dns": None,
                         "auto_gateway": None,
                         "route_append_only": False,
                         "rule_append_only": False,
@@ -4444,6 +4516,27 @@ class TestValidator(Python26CompatTestCase):
             self.assertTrue("port_type" in connection)
             # wokeignore:rule=slave
             self.assertTrue("slave_type" not in connection)
+
+    def test_validate_ignore_auto_dns(self):
+        """
+        Test and validate a connection profile with ipv4_ignore_auto_dns and
+        ipv6_ignore_auto_dns enabled.
+        """
+        validator = network_lsr.argument_validator.ArgValidator_ListConnections()
+        test_ignore_auto_dns = [
+            {
+                "name": "ignore_auto_dns",
+                "type": "ethernet",
+                "ip": {
+                    "auto6": True,
+                    "dhcp4": True,
+                    "ipv4_ignore_auto_dns": True,
+                    "ipv6_ignore_auto_dns": True,
+                },
+            }
+        ]
+
+        validator.validate(test_ignore_auto_dns)
 
 
 @my_test_skipIf(nmutil is None, "no support for NM (libnm via pygobject)")

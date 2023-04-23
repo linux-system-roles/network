@@ -76,6 +76,7 @@ ibution_major_version | int < 9",
         EXTRA_RUN_CONDITION: "ansible_distribution != 'RedHat' or\n      ansible_distr\
 ibution_major_version | int < 9",
     },
+    "playbooks/tests_ignore_auto_dns.yml": {},
     "playbooks/tests_bond_options.yml": {},
     "playbooks/tests_eth_dns_support.yml": {},
     "playbooks/tests_dummy.yml": {},  # wokeignore:rule=dummy

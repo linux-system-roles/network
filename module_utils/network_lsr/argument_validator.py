@@ -867,6 +867,8 @@ class ArgValidator_DictIP(ArgValidatorDict):
                     "route_metric4", val_min=-1, val_max=UINT32_MAX, default_value=None
                 ),
                 ArgValidatorBool("auto6", default_value=None),
+                ArgValidatorBool("ipv4_ignore_auto_dns", default_value=None),
+                ArgValidatorBool("ipv6_ignore_auto_dns", default_value=None),
                 ArgValidatorBool("ipv6_disabled", default_value=None),
                 ArgValidatorIP("gateway6", family=socket.AF_INET6),
                 ArgValidatorNum(
@@ -918,6 +920,8 @@ class ArgValidator_DictIP(ArgValidatorDict):
                 "gateway4": None,
                 "route_metric4": None,
                 "auto6": True,
+                "ipv4_ignore_auto_dns": None,
+                "ipv6_ignore_auto_dns": None,
                 "ipv6_disabled": False,
                 "gateway6": None,
                 "route_metric6": None,
@@ -2461,6 +2465,19 @@ class ArgValidator_ListConnections(ArgValidatorList):
                     "if you need to use initscripts.",
                 )
 
+        # initscripts does not support ip.ipv4_ignore_auto_dns or
+        # ip.ipv6_ignore_auto_dns, so raise errors when network
+        # provider is initscripts
+        if (
+            connection["ip"]["ipv4_ignore_auto_dns"] is not None
+            or connection["ip"]["ipv6_ignore_auto_dns"] is not None
+        ):
+            if mode == self.VALIDATE_ONE_MODE_INITSCRIPTS:
+                raise ValidationError.from_connection(
+                    idx,
+                    "ip.ipv4_ignore_auto_dns or ip.ipv6_ignore_auto_dns is not "
+                    "supported by initscripts.",
+                )
         # initscripts does not support ip.dns_options, so raise errors when network
         # provider is initscripts
         if connection["ip"]["dns_options"]:

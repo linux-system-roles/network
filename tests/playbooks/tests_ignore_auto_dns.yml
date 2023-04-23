@@ -1,0 +1,82 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Test ipv4_ignore_auto_dns and ipv6_ignore_auto_dns settings
+  hosts: all
+  vars:
+    type: veth
+    interface: ethtest0
+
+  tasks:
+    - name: Include the task 'show_interfaces.yml'
+      include_tasks: tasks/show_interfaces.yml
+    - name: Include the task 'manage_test_interface.yml'
+      include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: present
+    - name: Include the task 'assert_device_present.yml'
+      include_tasks: tasks/assert_device_present.yml
+
+    - name: Test configuring ipv4_ignore_auto_dns and ipv6_ignore_auto_dns
+        settings for an interface
+      block:
+        - name: Configure an interface with ipv4_ignore_auto_dns disabled and
+            ipv6_ignore_auto_dns enabled
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                interface_name: "{{ interface }}"
+                state: up
+                type: ethernet
+                autoconnect: false
+                ip:
+                  ipv4_ignore_auto_dns: false
+                  ipv6_ignore_auto_dns: true
+                  auto6: true
+                  address:
+                    - 198.51.100.3/24
+        - name: Get the nmcli ipv4.ignore-auto-dns setting
+          command: nmcli -f ipv4.ignore-auto-dns c show {{ interface }}
+          register: ipv4_ignore_auto_dns
+          changed_when: false
+
+        - name: Get the nmcli ipv6.ignore-auto-dns setting
+          command: nmcli -f ipv6.ignore-auto-dns c show {{ interface }}
+          register: ipv6_ignore_auto_dns
+          changed_when: false
+
+        - name: Assert that the setting ipv4.ignore-auto-dns is 'no'
+          assert:
+            that:
+              - "'no' in ipv4_ignore_auto_dns.stdout"
+            msg: "the setting ipv4.ignore-auto-dns is 'yes'"
+
+        - name: Assert that the setting ipv6.ignore-auto-dns is 'yes'
+          assert:
+            that:
+              - "'yes' in ipv6_ignore_auto_dns.stdout"
+            msg: "the setting ipv6.ignore-auto-dns is 'no'"
+
+      always:
+        - name: Remove test configuration
+          tags:
+            - "tests::cleanup"
+          block:
+            - name: Bring down test devices and profiles
+              include_role:
+                name: linux-system-roles.network
+              vars:
+                network_connections:
+                  - name: "{{ interface }}"
+                    persistent_state: absent
+                    state: down
+            - name: Delete interface - '{{ interface }}'
+              include_tasks: tasks/delete_interface.yml
+            - name: Include the task 'assert_device_absent.yml'
+              include_tasks: tasks/assert_device_absent.yml
+            - name: Include the task 'assert_profile_absent.yml'
+              include_tasks: tasks/assert_profile_absent.yml
+              vars:
+                profile: "{{ interface }}"
+...
