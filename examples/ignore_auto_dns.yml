@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Test ipv4_ignore_auto_dns and ipv6_ignore_auto_dns settings
+  hosts: all
+  tasks:
+    - name: Test configuring ipv4_ignore_auto_dns and ipv6_ignore_auto_dns
+        settings for an interface
+      block:
+        - name: Configure an interface with ipv4_ignore_auto_dns disabled and
+            ipv6_ignore_auto_dns enabled
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: eth0
+                state: up
+                type: ethernet
+                autoconnect: false
+                ip:
+                  ipv4_ignore_auto_dns: false
+                  ipv6_ignore_auto_dns: true
+                  auto6: true
+                  address:
+                    - 198.51.100.3/24

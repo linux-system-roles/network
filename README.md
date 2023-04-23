@@ -540,6 +540,17 @@ The IP configuration supports the following options:
 
     The default gateway for IPv4 (`gateway4`) or IPv6 (`gateway6`) packets.
 
+- `ipv4_ignore_auto_dns` and `ipv6_ignore_auto_dns`
+
+    If enabled, the automatically configured name servers and search domains (via
+    DHCPv4, DHCPv6, modem etc) for IPv4 or IPv6 are ignored, only the name servers and
+    search domains specified in `dns` and `dns_search` properties are used. The
+    settings are distinguished by the address families. The variables are not supported
+    by initscripts provider.
+
+    If the variables are not specified, the role will use the default behavior of nm
+    provider.
+
 - `route_metric4` and `route_metric6`
 
     For `NetworkManager`, `route_metric4` and `route_metric6` corresponds to the

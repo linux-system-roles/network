@@ -1173,6 +1173,13 @@ class NMUtil:
                     s_ip6.set_property(NM.SETTING_IP_CONFIG_NEVER_DEFAULT, True)
                     s_ip4.set_property(NM.SETTING_IP_CONFIG_NEVER_DEFAULT, True)
 
+            s_ip4.set_property(
+                NM.SETTING_IP_CONFIG_IGNORE_AUTO_DNS, bool(ip["ipv4_ignore_auto_dns"])
+            )
+            s_ip6.set_property(
+                NM.SETTING_IP_CONFIG_IGNORE_AUTO_DNS, bool(ip["ipv6_ignore_auto_dns"])
+            )
+
             for nameserver in ip["dns"]:
                 if nameserver["family"] == socket.AF_INET6:
                     s_ip6.add_dns(nameserver["address"])
