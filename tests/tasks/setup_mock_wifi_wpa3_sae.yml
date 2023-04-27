@@ -7,6 +7,7 @@
       - wpa_supplicant
     state: present
 
+# yamllint disable rule:line-length
 # Even though hostapd can be installed via EPEL 8, Simultaneous Authentication
 # of Equals (SAE) has not been enabled by default. To warrant the test support
 # on CentOS 8, we setup hostapd copr repo to enable SAE option.
@@ -24,6 +25,7 @@
     - ansible_distribution_major_version == '8'
     - ansible_distribution == 'CentOS'
   changed_when: false
+# yamllint enable rule:line-length
 
 - name: Install hostapd in Fedora
   package:
@@ -33,8 +35,9 @@
   when:
     - ansible_distribution == 'Fedora'
 
-# Since DNF package manager can not warrant installing the kernel module with the same
-# version as the kernel in target machine, install the kernel module from koji instead
+# Since DNF package manager can not warrant installing the kernel module with
+# the same version as the kernel in target machine, install the kernel module
+# from koji instead
 - name: Install mac80211_hwsim kernel module in Fedora
   shell: |
     dnf -y install koji

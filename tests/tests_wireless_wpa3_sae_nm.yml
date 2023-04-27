@@ -3,6 +3,7 @@
 ---
 # set network provider and gather facts
 - hosts: all
+  # yamllint disable rule:line-length
   name: Run playbook 'playbooks/tests_wireless_wpa3_sae.yml' with nm as provider
   tasks:
     - name: Include the task 'el_repo_setup.yml'
