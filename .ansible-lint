@@ -1,8 +1,8 @@
 ---
 profile: production
 extra_vars:
-  test_playbook: tests_default.yml
   network_provider: nm
+  test_playbook: tests_default.yml
 kinds:
   - yaml: "**/meta/collection-requirements.yml"
   - playbook: "**/tests/get_coverage.yml"
