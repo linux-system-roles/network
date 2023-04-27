@@ -64,9 +64,9 @@
           ignore_errors: true
           changed_when: false
           loop:
-            - { name: "{{ controller_profile }}", mac: "12:23:34:45:56:60"}
-            - { name: "{{ port1_profile }}", mac: "12:23:34:45:56:61"}
-            - { name: "{{ port2_profile }}", mac: "--"}
+            - {name: "{{ controller_profile }}", mac: "12:23:34:45:56:60"}
+            - {name: "{{ port1_profile }}", mac: "12:23:34:45:56:61"}
+            - {name: "{{ port2_profile }}", mac: "--"}
           when: network_provider == 'nm'
 
         - name: >

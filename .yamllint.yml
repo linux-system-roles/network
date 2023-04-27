@@ -5,12 +5,6 @@ ignore: |
   /.tox/
   tests/roles/
 rules:
-  braces:
-    level: error
-    max-spaces-inside: 1
-  brackets:
-    level: error
-    max-spaces-inside: 1
   document-start: disable
   line-length:
     ignore: '/tests/tasks/setup_mock_wifi_wpa3_owe.yml
