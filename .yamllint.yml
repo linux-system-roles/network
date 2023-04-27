@@ -5,7 +5,6 @@ ignore: |
   /.tox/
   tests/roles/
 rules:
-  document-start: disable
   line-length:
     ignore: '/tests/tasks/setup_mock_wifi_wpa3_owe.yml
 

@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
+---
 - name: Gather the minimum subset of ansible_facts required by the network
     role test
   setup:
