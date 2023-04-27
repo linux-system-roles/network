@@ -92,22 +92,22 @@
           register: result
           until: "'{{ item.value }}' in result.stdout"
           loop:
-            - { key: 'mode', value: '802.3ad'}
-            - { key: 'ad_actor_sys_prio', value: '65535'}
-            - { key: 'ad_actor_system', value: '00:00:5e:00:53:5d'}
-            - { key: 'ad_select', value: 'stable'}
-            - { key: 'ad_user_port_key', value: '1023'}
+            - {key: 'mode', value: '802.3ad'}
+            - {key: 'ad_actor_sys_prio', value: '65535'}
+            - {key: 'ad_actor_system', value: '00:00:5e:00:53:5d'}
+            - {key: 'ad_select', value: 'stable'}
+            - {key: 'ad_user_port_key', value: '1023'}
             # wokeignore:rule=slave
-            - { key: 'all_slaves_active', value: '1'}
-            - { key: 'downdelay', value: '0'}
-            - { key: 'lacp_rate', value: 'slow'}
-            - { key: 'lp_interval', value: '128'}
-            - { key: 'miimon', value: '110'}
-            - { key: 'num_grat_arp', value: '64'}
-            - { key: 'resend_igmp', value: '225'}
-            - { key: 'updelay', value: '0'}
-            - { key: 'use_carrier', value: '1'}
-            - { key: 'xmit_hash_policy', value: 'encap2+3'}
+            - {key: 'all_slaves_active', value: '1'}
+            - {key: 'downdelay', value: '0'}
+            - {key: 'lacp_rate', value: 'slow'}
+            - {key: 'lp_interval', value: '128'}
+            - {key: 'miimon', value: '110'}
+            - {key: 'num_grat_arp', value: '64'}
+            - {key: 'resend_igmp', value: '225'}
+            - {key: 'updelay', value: '0'}
+            - {key: 'use_carrier', value: '1'}
+            - {key: 'xmit_hash_policy', value: 'encap2+3'}
           changed_when: false
 
         - name: "** TEST check IPv4"
@@ -161,11 +161,11 @@
           register: result
           until: "'{{ item.value }}' in result.stdout"
           loop:
-            - { key: 'mode', value: 'active-backup'}
-            - { key: 'arp_interval', value: '60'}
-            - { key: 'arp_ip_target', value: '192.0.2.128'}
-            - { key: 'arp_validate', value: 'none'}
-            - { key: 'primary', value: '{{ dhcp_interface1 }}'}
+            - {key: 'mode', value: 'active-backup'}
+            - {key: 'arp_interval', value: '60'}
+            - {key: 'arp_ip_target', value: '192.0.2.128'}
+            - {key: 'arp_validate', value: 'none'}
+            - {key: 'primary', value: '{{ dhcp_interface1 }}'}
           changed_when: false
 
         - name: "** TEST check IPv4"
