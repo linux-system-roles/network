@@ -44,11 +44,11 @@
               - name: pseudo-pci-test-only
                 type: ethernet
                 # When clearing the `match.path` setting through the role, the
-                # `interface_name` has to be defined, otherwise the `interface_name`
-                # will be the  profile name. Since it is unclear if a specific
-                # interface exists for the test profile, by setting the
-                # `interface_name` to empty string, the role will accept any interface
-                # for the test profile.
+                # `interface_name` has to be defined, otherwise the
+                # `interface_name` will be the  profile name. Since it is
+                # unclear if a specific interface exists for the test profile,
+                # by setting the `interface_name` to empty string, the role will
+                # accept any interface for the test profile.
                 interface_name: ""
                 state: down
                 match:

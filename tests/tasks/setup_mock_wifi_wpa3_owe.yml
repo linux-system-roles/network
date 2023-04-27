@@ -7,6 +7,7 @@
       - wpa_supplicant
     state: present
 
+# yamllint disable rule:line-length
 # Even though hostapd can be installed via EPEL 8, Opportunistic Wireless Encryption
 # (OWE) has not been enabled by default. To warrant the test support on RHEL(dist-tag),
 # we setup hostapd copr repo to enable OWE option.
@@ -24,6 +25,7 @@
     - ansible_distribution_major_version == '8'
     - ansible_distribution == 'CentOS'
   changed_when: false
+# yamllint enable rule:line-length
 
 - name: Install hostapd in Fedora
   shell: |

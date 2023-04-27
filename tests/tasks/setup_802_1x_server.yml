@@ -2,7 +2,7 @@
 ---
 # This task can be removed once the RHEL-8.5 is not tested anymore
 - name: Install hostapd via CentOS Stream
-  command: dnf -y install http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/Packages/hostapd-2.10-1.el8.x86_64.rpm
+  command: dnf -y install http://mirror.centos.org/centos/8-stream/AppStream/x86_64/os/Packages/hostapd-2.10-1.el8.x86_64.rpm  # noqa yaml[line-length]
   when:
     - ansible_distribution_version | float < 8.6
     - ansible_distribution_major_version == '8'
