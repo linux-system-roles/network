@@ -1,3 +1,4 @@
+---
 - name: Play for setting up snapshots
   hosts: all
   tasks:
