@@ -1,6 +1,17 @@
 Changelog
 =========
 
+[1.11.4] - 2023-04-28
+--------------------
+
+### Other Changes
+
+- test: Fix the failure of running ANSIBLE_GATHERING=explicit on tests_switch_provider.yml
+- ci: Add commitlint GitHub action to ensure conventional commits with feedback
+- style: Use standard Ansible braces and brackets spacing
+- style: ansible-lint - fix missing YAML document start
+- style: ansible-lint - remove line-length files from .yamllint.yml
+
 [1.11.3] - 2023-04-13
 --------------------
 
