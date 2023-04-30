@@ -3,4 +3,3 @@
 extends: default
 ignore: |
   /.tox/
-  tests/roles/
