@@ -44,6 +44,7 @@
                 - example.com
                 - example.org
               dns_options:
+                - no-aaaa
                 - rotate
                 - timeout:1
 
@@ -104,8 +105,10 @@
     - name: "Assert that DNS options are configured correctly"
       assert:
         that:
+          - "'no-aaaa' in ipv4_dns.stdout"
           - "'rotate' in ipv4_dns.stdout"
           - "'timeout:1' in ipv4_dns.stdout"
+          - "'no-aaaa' in ipv6_dns.stdout"
           - "'rotate' in ipv6_dns.stdout"
           - "'timeout:1' in ipv6_dns.stdout"
         msg: "DNS options are configured incorrectly"
