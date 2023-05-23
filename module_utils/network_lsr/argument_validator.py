@@ -843,6 +843,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
         r"^ip6-bytestring$",
         r"^ip6-dotint$",
         r"^ndots:([1-9]\d*|0)$",
+        r"^no-aaaa$",
         r"^no-check-names$",
         r"^no-ip6-dotint$",
         r"^no-reload$",

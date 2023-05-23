@@ -4175,6 +4175,9 @@ class TestValidator(Python26CompatTestCase):
         true_testcase_12 = {
             "dns_options": ["use-vc"],
         }
+        true_testcase_13 = {
+            "dns_options": ["no-aaaa"],
+        }
 
         self.assertEqual(
             validator.validate(true_testcase_1)["dns_options"], ["attempts:3"]
@@ -4209,6 +4212,9 @@ class TestValidator(Python26CompatTestCase):
         )
         self.assertEqual(
             validator.validate(true_testcase_12)["dns_options"], ["use-vc"]
+        )
+        self.assertEqual(
+            validator.validate(true_testcase_13)["dns_options"], ["no-aaaa"]
         )
 
     def test_ipv4_dns_without_ipv4_config(self):

@@ -511,6 +511,7 @@ The IP configuration supports the following options:
     - `ip6-bytestring`
     - `ip6-dotint`
     - `ndots:n`
+    - `no-aaaa`
     - `no-check-names`
     - `no-ip6-dotint`
     - `no-reload`
