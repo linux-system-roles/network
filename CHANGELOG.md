@@ -1,6 +1,17 @@
 Changelog
 =========
 
+[1.12.0] - 2023-05-30
+--------------------
+
+### New Features
+
+- feat: Support ipv4_ignore_auto_dns and ipv6_ignore_auto_dns settings
+
+### Other Changes
+
+- docs: Consistent contributing.md for all roles - allow role specific contributing.md section
+
 [1.11.4] - 2023-04-28
 --------------------
 
