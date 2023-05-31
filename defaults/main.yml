@@ -6,6 +6,7 @@ network_allow_restart: false
 
 # Ansible distribution identifiers that the role treats like RHEL
 __network_rh_distros:
+  - AlmaLinux
   - CentOS
   - OracleLinux
   - RedHat
