@@ -87,4 +87,4 @@ jobs:
       - name: Run py26 tests
         uses: linux-system-roles/lsr-gh-action-py26@1.0.2
         env:
-          TOX_LSR: "git+https://github.com/linux-system-roles/tox-lsr@3.0.0"
+          TOX_LSR: "git+https://github.com/linux-system-roles/tox-lsr@2.13.2"
