@@ -1,4 +1,4 @@
-name: Commitlint
+name: PR Title Lint
 on:  # yamllint disable-line rule:truthy
   pull_request:
     types:
@@ -25,6 +25,7 @@ jobs:
         run: npm install @commitlint/config-conventional @commitlint/cli
 
       - name: Run commitlint on PR title
-        run: >-
-          echo '${{ github.event.pull_request.title }}' |
-          npx commitlint --verbose
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        # Echo from env variable to avoid bash errors with extra characters
+        run: echo "$PR_TITLE" | npx commitlint --verbose
