@@ -1,6 +1,21 @@
 Changelog
 =========
 
+[1.13.0] - 2023-07-10
+--------------------
+
+### New Features
+
+- feat: add AlmaLinux to RHEL compat distro list (#618)
+- feat: Support "no-aaaa" DNS option (#619)
+
+### Other Changes
+
+- ci: Use tox-lsr 2.13 for py26 (#620)
+- ci: Add pull request template and run commitlint on PR title only (#621)
+- ci: Rename commitlint to PR title Lint, echo PR titles from env var (#623)
+- ci: fix python 2.7 CI tests by manually installing python2.7 package (#624)
+
 [1.12.0] - 2023-05-30
 --------------------
 
