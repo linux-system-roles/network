@@ -2,9 +2,9 @@
 ---
 - name: Ensure ansible_facts used by role are present
   setup:
-    gather_subset: min
-  when: not ansible_facts.keys() | list |
-    intersect(__network_required_facts) == __network_required_facts
+    gather_subset: "{{ __network_required_facts_subsets }}"
+  when: __network_required_facts |
+    difference(ansible_facts.keys() | list) | length > 0
   no_log: true
 
 - name: Check which services are running
