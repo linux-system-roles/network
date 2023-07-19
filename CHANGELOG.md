@@ -1,6 +1,18 @@
 Changelog
 =========
 
+[1.13.1] - 2023-07-19
+--------------------
+
+### Bug Fixes
+
+- fix: facts being gathered unnecessarily (#628)
+
+### Other Changes
+
+- ci: ansible-lint - ignore var-naming[no-role-prefix] (#626)
+- ci: ansible-test ignores file for ansible-core 2.15 (#627)
+
 [1.13.0] - 2023-07-10
 --------------------
 
