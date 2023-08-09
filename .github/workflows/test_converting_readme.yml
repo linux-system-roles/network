@@ -1,0 +1,43 @@
+---
+# yamllint disable rule:line-length
+name: Test converting README.md to README.html
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+  merge_group:
+    branches:
+      - main
+    types:
+      - checks_requested
+  push:
+    branches:
+      - main
+permissions:
+  contents: read
+jobs:
+  test_converting_readme:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Update pip, git
+        run: |
+          set -euxo pipefail
+          sudo apt update
+          sudo apt install -y git
+
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Convert README.md to HTML and save to the version directory
+        uses: docker://pandoc/core:latest
+        with:
+          args: >-
+            --from gfm --to html5 --toc --shift-heading-level-by=-1
+            --template .pandoc_template.html5
+            --output README.html README.md
+
+      - name: Upload README.html as an artifact
+        uses: actions/upload-artifact@master
+        with:
+          name: README.html
+          path: README.html

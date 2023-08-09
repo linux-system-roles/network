@@ -38,6 +38,8 @@ jobs:
       - name: Convert role to collection format
         run: |
           set -euxo pipefail
+          # Remove to avoid running ansible-test on unrelated file
+          rm -f .pandoc_template.html5
           TOXENV=collection lsr_ci_runtox
           # copy the ignore files
           coll_dir=".tox/ansible_collections/$LSR_ROLE2COLL_NAMESPACE/$LSR_ROLE2COLL_NAME"

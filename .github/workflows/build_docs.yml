@@ -1,0 +1,101 @@
+---
+# yamllint disable rule:line-length
+name: Convert README.md to HTML and push to docs branch
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - main
+    paths:
+      - README.md
+  release:
+    types:
+      - published
+permissions:
+  contents: read
+jobs:
+  build_docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Update pip, git
+        run: |
+          set -euxo pipefail
+          sudo apt update
+          sudo apt install -y git
+
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Ensure the docs branch
+        run: |
+          set -euxo pipefail
+          branch=docs
+          existed_in_remote=$(git ls-remote --heads origin $branch)
+
+          if [ -z "${existed_in_remote}" ]; then
+            echo "Creating $branch branch"
+            git config --global user.name "${{ github.actor }}"
+            git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+            git checkout --orphan $branch
+            git reset --hard
+            git commit --allow-empty -m "Initializing $branch branch"
+            git push origin $branch
+            echo "Created $branch branch"
+          else
+            echo "Branch $branch already exists"
+          fi
+
+      - name: Checkout the docs branch
+        uses: actions/checkout@v3
+        with:
+          ref: docs
+
+      - name: Fetch README.md and .pandoc_template.html5 template from the workflow branch
+        uses: actions/checkout@v3
+        with:
+          sparse-checkout: |
+            README.md
+            .pandoc_template.html5
+          sparse-checkout-cone-mode: false
+          path: ref_branch
+      - name: Set RELEASE_VERSION based on whether run on release or on push
+        run: |
+          set -euxo pipefail
+          if [ ${{ github.event_name }} = release ]; then
+            echo "RELEASE_VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+          elif [ ${{ github.event_name }} = push ]; then
+            echo "RELEASE_VERSION=latest" >> $GITHUB_ENV
+          else
+            echo Unsupported event
+            exit 1
+          fi
+
+      - name: Ensure that version and docs directories exist
+        run: mkdir -p ${{ env.RELEASE_VERSION }} docs
+
+      - name: Convert README.md to HTML and save to the version directory
+        uses: docker://pandoc/core:latest
+        with:
+          args: >-
+            --from gfm --to html5 --toc --shift-heading-level-by=-1
+            --template ref_branch/.pandoc_template.html5
+            --output ${{ env.RELEASE_VERSION }}/README.html ref_branch/README.md
+
+      - name: Copy latest README.html to docs/index.html for GitHub pages
+        if: env.RELEASE_VERSION == 'latest'
+        run: cp ${{ env.RELEASE_VERSION }}/README.html docs/index.html
+
+      - name: Commit changes
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git add ${{ env.RELEASE_VERSION }}/README.html docs/index.html
+          git commit -m "Update README.html for ${{ env.RELEASE_VERSION }}"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: docs

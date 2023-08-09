@@ -1,13 +1,11 @@
-linux-system-roles/network
-==========================
+# linux-system-roles/network
 
 [![Coverage Status](https://coveralls.io/repos/github/linux-system-roles/network/badge.svg)](https://coveralls.io/github/linux-system-roles/network)
 ![CI Testing](https://github.com/linux-system-roles/network/workflows/tox/badge.svg)
 [![Code Style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/linux-system-roles/network.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/linux-system-roles/network/context:python)
 
-Overview
---------
+## Overview
 
 The `network` role enables users to configure network on the target machines.
 This role can be used to configure:
@@ -22,12 +20,11 @@ This role can be used to configure:
 - IP configuration
 - 802.1x authentication
 
-Introduction
-------------
+## Introduction
 
 The  `network` role supports two providers: `nm` and `initscripts`. `nm` is
 used by default in RHEL7 and `initscripts` in RHEL6. These providers can be
-configured per host via the [`network_provider`](#provider) variable. In
+configured per host via the [`network_provider`](#variables) variable. In
 absence of explicit configuration, it is autodetected based on the
 distribution. However, note that either `nm` or `initscripts` is not tied to a certain
 distribution. The `network` role works everywhere the required API is available.
@@ -63,8 +60,7 @@ Exceptions are mentioned below. However, the partial networking configuration ca
 achieved via specifying the network state configuration in the `network_state`
 variable.
 
-Variables
----------
+## Variables
 
 The `network` role is configured via variables starting  with  `network_` as
 the name prefix. List of variables:
@@ -88,8 +84,7 @@ the name prefix. List of variables:
   host, and the format and the syntax of the configuration should be consistent
   with the [nmstate state examples](https://nmstate.io/examples.html) (YAML).
 
-Examples of Variables
----------------------
+## Examples of Variables
 
 Setting the variables
 
@@ -115,8 +110,7 @@ network_state:
       #...
 ```
 
-Options
--------
+## network_connections Options
 
 The `network_connections` variable is a list of dictionaries that include the
 following options. List of options:
@@ -326,18 +320,19 @@ authentication, WPA3-Personal SAE (password) authentication and Enhanced Open (O
 `nm` (NetworkManager) is the only supported `network_provider` for this type.
 
 If WPA-EAP is used, ieee802_1x settings must be defined in the
-[ieee802_1x](#-`ieee802_1x`) option.
+[ieee802_1x](#ieee802_1x) option.
 
 The following options are supported:
 
 - `ssid`: the SSID of the wireless network (required)
 - `key_mgmt` (required)
 
-    Any key from following key list:
-    - `owe`
-    - `sae`
-    - `wpa-eap`
-    - `wpa-psk`
+  Any key from following key list:
+
+  - `owe`
+  - `sae`
+  - `wpa-eap`
+  - `wpa-psk`
 
 - `password`: password for the network (required if `wpa-psk` or `sae` is used)
 
@@ -433,7 +428,7 @@ In general these work like shell globs.
 - `[fo]` - matches any single `f` or `o` character - also supports ranges - `[0-9]`
   will match any single digit character
 
-#### `path`
+### `path`
 
 The `path` setting is a list of patterns to match against the `ID_PATH` udev property
 of devices. The `ID_PATH` udev property represents the persistent path of a device. It
@@ -456,193 +451,193 @@ Ports to the bridge, bond or team devices cannot specify a zone.
 The IP configuration supports the following options:
 
 - `address`
-
-    Manual addressing can be specified via a list of addresses under the `address` option.
+  Manual addressing can be specified via a list of addresses under the `address` option.
 
 - `auto_gateway`
 
-    If enabled, a default route will be configured using the default gateway. If disabled,
-    the default route will be removed.
+  If enabled, a default route will be configured using the default gateway. If disabled,
+  the default route will be removed.
 
-    If this variable is not specified, the role will use the default behavior of the
-    `network_provider` selected.
+  If this variable is not specified, the role will use the default behavior of the
+  `network_provider` selected.
 
-    Setting this option to `false` is equivalent to:
-    - `DEFROUTE = no` in initscripts, or
-    - `ipv4.never-default/ipv6.never-default yes` in nmcli
+  Setting this option to `false` is equivalent to:
+
+  - `DEFROUTE = no` in initscripts, or
+  - `ipv4.never-default/ipv6.never-default yes` in nmcli
 
 - `dhcp4`, `auto6`, and `ipv6_disabled`
 
-    Also, manual addressing can be specified by setting either `dhcp4` or `auto6`.
-    The `dhcp4` key is  for DHCPv4 and `auto6`  for  StateLess Address Auto Configuration
-    (SLAAC). Note that the `dhcp4` and `auto6` keys can be omitted and the default key
-    depends on the presence of manual addresses. `ipv6_disabled` can be set to disable
-    ipv6 for the connection.
+  Also, manual addressing can be specified by setting either `dhcp4` or `auto6`.
+  The `dhcp4` key is  for DHCPv4 and `auto6`  for  StateLess Address Auto Configuration
+  (SLAAC). Note that the `dhcp4` and `auto6` keys can be omitted and the default key
+  depends on the presence of manual addresses. `ipv6_disabled` can be set to disable
+  ipv6 for the connection.
 
 - `dhcp4_send_hostname`
 
-    If `dhcp4` is enabled, it can be configured whether the DHCPv4 request includes
-    the hostname via the `dhcp4_send_hostname` option. Note that `dhcp4_send_hostname`
-    is only supported by the `nm` provider and corresponds to
-    [`ipv4.dhcp-send-hostname`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv4.dhcp-send-hostname)
-    property.
+  If `dhcp4` is enabled, it can be configured whether the DHCPv4 request includes
+  the hostname via the `dhcp4_send_hostname` option. Note that `dhcp4_send_hostname`
+  is only supported by the `nm` provider and corresponds to
+  [`ipv4.dhcp-send-hostname`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv4.dhcp-send-hostname)
+  property.
 
 - `dns`
 
-    Manual DNS configuration can be specified via a list of addresses given in the
-    `dns` option.
+  Manual DNS configuration can be specified via a list of addresses given in the
+  `dns` option.
 
 - `dns_search`
 
-    Manual DNS configuration can be specified via a list of domains to search given in
-    the `dns_search` option.
+  Manual DNS configuration can be specified via a list of domains to search given in
+  the `dns_search` option.
 
 - `dns_options`
 
-    `dns_options` is only supported for the NetworkManager provider. Manual DNS
-    configuration via a list of DNS options can be given in the `dns_options`. The list
-    of supported DNS options for IPv4 nameservers is described in
-    [man 5 resolv.conf](https://man7.org/linux/man-pages/man5/resolv.conf.5.html).
-    Currently, the list of supported DNS options is:
-    - `attempts:n`
-    - `debug`
-    - `edns0`
-    - `inet6`
-    - `ip6-bytestring`
-    - `ip6-dotint`
-    - `ndots:n`
-    - `no-aaaa`
-    - `no-check-names`
-    - `no-ip6-dotint`
-    - `no-reload`
-    - `no-tld-query`
-    - `rotate`
-    - `single-request`
-    - `single-request-reopen`
-    - `timeout:n`
-    - `trust-ad`
-    - `use-vc`
+  `dns_options` is only supported for the NetworkManager provider. Manual DNS
+  configuration via a list of DNS options can be given in the `dns_options`. The list
+  of supported DNS options for IPv4 nameservers is described in
+  [man 5 resolv.conf](https://man7.org/linux/man-pages/man5/resolv.conf.5.html).
+  Currently, the list of supported DNS options is:
+  - `attempts:n`
+  - `debug`
+  - `edns0`
+  - `inet6`
+  - `ip6-bytestring`
+  - `ip6-dotint`
+  - `ndots:n`
+  - `no-aaaa`
+  - `no-check-names`
+  - `no-ip6-dotint`
+  - `no-reload`
+  - `no-tld-query`
+  - `rotate`
+  - `single-request`
+  - `single-request-reopen`
+  - `timeout:n`
+  - `trust-ad`
+  - `use-vc`
 
-    **Note:** The "trust-ad" setting is only honored if the profile contributes name
-    servers to resolv.conf, and if all contributing profiles have "trust-ad" enabled.
-    When using a caching DNS plugin (dnsmasq or systemd-resolved in NetworkManager.conf)
-    then "edns0" and "trust-ad" are automatically added.
+  **Note:** The "trust-ad" setting is only honored if the profile contributes name
+  servers to resolv.conf, and if all contributing profiles have "trust-ad" enabled.
+  When using a caching DNS plugin (dnsmasq or systemd-resolved in NetworkManager.conf)
+  then "edns0" and "trust-ad" are automatically added.
 
 - `dns_priority`
 
-    DNS servers priority. The relative priority for DNS servers specified by this
-    setting. The default value is 0, a lower numerical value has higher priority.
-    The valid value of `dns_priority` ranges from -2147483648 to 2147483647. Negative
-    values have the special effect of excluding other configurations with a greater
-    numerical priority value; so in presence of at least one negative priority, only
-    DNS servers from connections with the lowest priority value will be used.
+  DNS servers priority. The relative priority for DNS servers specified by this
+  setting. The default value is 0, a lower numerical value has higher priority.
+  The valid value of `dns_priority` ranges from -2147483648 to 2147483647. Negative
+  values have the special effect of excluding other configurations with a greater
+  numerical priority value; so in presence of at least one negative priority, only
+  DNS servers from connections with the lowest priority value will be used.
 
 - `gateway4` and `gateway6`
 
-    The default gateway for IPv4 (`gateway4`) or IPv6 (`gateway6`) packets.
+  The default gateway for IPv4 (`gateway4`) or IPv6 (`gateway6`) packets.
 
 - `ipv4_ignore_auto_dns` and `ipv6_ignore_auto_dns`
 
-    If enabled, the automatically configured name servers and search domains (via
-    DHCPv4, DHCPv6, modem etc) for IPv4 or IPv6 are ignored, only the name servers and
-    search domains specified in `dns` and `dns_search` properties are used. The
-    settings are distinguished by the address families. The variables are not supported
-    by initscripts provider.
+  If enabled, the automatically configured name servers and search domains (via
+  DHCPv4, DHCPv6, modem etc) for IPv4 or IPv6 are ignored, only the name servers and
+  search domains specified in `dns` and `dns_search` properties are used. The
+  settings are distinguished by the address families. The variables are not supported
+  by initscripts provider.
 
-    If the variables are not specified, the role will use the default behavior of nm
-    provider.
+  If the variables are not specified, the role will use the default behavior of nm
+  provider.
 
 - `route_metric4` and `route_metric6`
 
-    For `NetworkManager`, `route_metric4` and `route_metric6` corresponds to the
-    [`ipv4.route-metric`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv4.route-metric)
-    and
-    [`ipv6.route-metric`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv6.route-metric)
-    properties, respectively. If specified, it determines the route metric for DHCP
-    assigned routes and the default route, and thus the priority for multiple
-    interfaces. For `initscripts`, `route_metric4` sets the metric for the default
-    route and `route_metric6` is not supported.
+  For `NetworkManager`, `route_metric4` and `route_metric6` corresponds to the
+  [`ipv4.route-metric`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv4.route-metric)
+  and
+  [`ipv6.route-metric`](https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv6.route-metric)
+  properties, respectively. If specified, it determines the route metric for DHCP
+  assigned routes and the default route, and thus the priority for multiple
+  interfaces. For `initscripts`, `route_metric4` sets the metric for the default
+  route and `route_metric6` is not supported.
 
 - `route`
 
-    Static route configuration can be specified via a list of routes given in the
-    `route` option. The default value is an empty list. Each route is a dictionary with
-    the following entries: `network`, `prefix`, `gateway`, `metric` and `table`.
-    `network` and `prefix` specify the destination network. `table` supports both the
-    numeric table and named table. In order to specify the named table, the users have
-    to ensure the named table is properly defined in `/etc/iproute2/rt_tables` or
-    `/etc/iproute2/rt_tables.d/*.conf`.
-    Note that Classless inter-domain routing (CIDR) notation or network mask notation
-    are not supported yet.
+  Static route configuration can be specified via a list of routes given in the
+  `route` option. The default value is an empty list. Each route is a dictionary with
+  the following entries: `network`, `prefix`, `gateway`, `metric` and `table`.
+  `network` and `prefix` specify the destination network. `table` supports both the
+  numeric table and named table. In order to specify the named table, the users have
+  to ensure the named table is properly defined in `/etc/iproute2/rt_tables` or
+  `/etc/iproute2/rt_tables.d/*.conf`.
+  Note that Classless inter-domain routing (CIDR) notation or network mask notation
+  are not supported yet.
 
 - `routing_rule`
 
-    The policy routing rules can be specified via a list of rules given in the
-    `routing_rule` option, which allow routing the packets on other packet fields
-    except for destination address. The default value is a an empty list. Each rule is
-    a dictionary with the following entries:
-   - `priority` -
+  The policy routing rules can be specified via a list of rules given in the
+  `routing_rule` option, which allow routing the packets on other packet fields
+  except for destination address. The default value is a an empty list. Each rule is
+  a dictionary with the following entries:
+  - `priority` -
       The priority of the rule. A valid priority ranges from 0 to 4294967295. Higher
       number means lower priority.
-   - `action` -
+  - `action` -
       The action of the rule. The possible values are `to-table` (default),
       `blackhole`, `prohibit`, `unreachable`.
-   - `dport`-
+  - `dport`-
       The range of the destination port (e.g. `1000 - 2000`). A valid dport value for
       both start and end ranges from 0 to 65534. And the start cannot be greater than
       the end.
-   - `family` -
+  - `family` -
       The IP family of the rule. The possible values are `ipv4` and `ipv6`.
-   - `from` -
+  - `from` -
       The source address of the packet to match (e.g. `192.168.100.58/24`).
-   - `fwmark` -
+  - `fwmark` -
       The fwmark value of the packet to match.
-   - `fwmask` -
+  - `fwmask` -
       The fwmask value of the packet to match.
-   - `iif` -
+  - `iif` -
       Select the incoming interface name to match.
-   - `invert` -
+  - `invert` -
       Invert the selected match of the rule. The possible values are boolean values
       `true` and `false` (default). If the value is `true`, this is equivalent to match
       any packet that not satisfying selected match of the rule.
-   - `ipproto` -
+  - `ipproto` -
       Select the IP protocol value to match, the valid value ranges from 1 to 255.
-   - `oif` -
+  - `oif` -
       Select the outgoing interface name to match.
-   - `sport` -
+  - `sport` -
       The range of the source port (e.g. `1000 - 2000`). A valid sport value for both
       start and end ranges from 0 to 65534. And the start cannot be greater than the
       end.
-   - `suppress_prefixlength` -
+  - `suppress_prefixlength` -
       Reject routing decisions that have a prefix length of the specified or less.
-   - `table` -
+  - `table` -
       The route table to look up for the `to-table` action. `table` supports both the
       numeric table and named table. In order to specify the named table, the users
       have to ensure the named table is properly defined in `/etc/iproute2/rt_tables`
       or `/etc/iproute2/rt_tables.d/*.conf`.
-   - `to` -
+  - `to` -
       The destination address of the packet to match (e.g. `192.168.100.58/24`).
-   - `tos` -
+  - `tos` -
       Select the tos value to match.
-   - `uid` -
+  - `uid` -
       The range of the uid to match (e.g. `1000 - 2000`). A valid uid value for both
       start and end ranges from 0 to 4294967295. And the start cannot be greater than
       the end.
 
 - `route_append_only`
 
-    The `route_append_only` option allows only to add new routes to the
-    existing routes on the system.
+  The `route_append_only` option allows only to add new routes to the
+  existing routes on the system.
 
-    If the `route_append_only` boolean option is set to `true`, the specified routes are
-    appended to the existing routes. If `route_append_only` is set to `false` (default),
-    the current routes are replaced. Note that setting `route_append_only` to `true`
-    without setting `route` has the effect of preserving the current static routes.
+  If the `route_append_only` boolean option is set to `true`, the specified routes are
+  appended to the existing routes. If `route_append_only` is set to `false` (default),
+  the current routes are replaced. Note that setting `route_append_only` to `true`
+  without setting `route` has the effect of preserving the current static routes.
 
 - `rule_append_only`
 
-    The `rule_append_only` boolean option allows to preserve the current routing rules.
-    Note that specifying routing rules is not supported yet.
+  The `rule_append_only` boolean option allows to preserve the current routing rules.
+  Note that specifying routing rules is not supported yet.
 
 **Note:** When `route_append_only` or `rule_append_only` is not specified, the network
 role deletes the current routes or routing rules.
@@ -659,12 +654,12 @@ The ethtool configuration supports the following options:
 
 - `ring`
 
-    Changes the `rx`/`tx` `ring` parameters of the specified network device. The list
-    of supported `ring` parameters is:
-    - `rx` - Changes the number of ring entries for the Rx ring.
-    - `rx-jumbo` - Changes the number of ring entries for the Rx Jumbo ring.
-    - `rx-mini` - Changes the number of ring entries for the Rx Mini ring.
-    - `tx` - Changes the number of ring entries for the Tx ring.
+  Changes the `rx`/`tx` `ring` parameters of the specified network device. The list
+  of supported `ring` parameters is:
+  - `rx` - Changes the number of ring entries for the Rx ring.
+  - `rx-jumbo` - Changes the number of ring entries for the Rx Jumbo ring.
+  - `rx-mini` - Changes the number of ring entries for the Rx Mini ring.
+  - `tx` - Changes the number of ring entries for the Tx ring.
 
 ```yaml
   ethtool:
@@ -762,63 +757,63 @@ SSL certificates and keys must be deployed on the host prior to running the role
 
 - `eap`
 
-    The allowed EAP method to be used when authenticating to the network with 802.1x.
+  The allowed EAP method to be used when authenticating to the network with 802.1x.
 
-    Currently, `tls` is the default and the only accepted value.
+  Currently, `tls` is the default and the only accepted value.
 
 - `identity` (required)
 
-    Identity string for EAP authentication methods.
+  Identity string for EAP authentication methods.
 
 - `private_key` (required)
 
-    Absolute path to the client's PEM or PKCS#12 encoded private key used for 802.1x
-    authentication.
+  Absolute path to the client's PEM or PKCS#12 encoded private key used for 802.1x
+  authentication.
 
 - `private_key_password`
 
-    Password to the private key specified in `private_key`.
+  Password to the private key specified in `private_key`.
 
 - `private_key_password_flags`
 
-    List of flags to configure how the private key password is managed.
+  List of flags to configure how the private key password is managed.
 
-    Multiple flags may be specified.
+  Multiple flags may be specified.
 
-    Valid flags are:
-    - `none`
-    - `agent-owned`
-    - `not-saved`
-    - `not-required`
+  Valid flags are:
+  - `none`
+  - `agent-owned`
+  - `not-saved`
+  - `not-required`
 
-    See NetworkManager documentation on "Secret flag types" more details (`man 5
-    nm-settings`).
+  See NetworkManager documentation on "Secret flag types" more details (`man 5
+  nm-settings`).
 
 - `client_cert` (required)
 
-    Absolute path to the client's PEM encoded certificate used for 802.1x
-    authentication.
+  Absolute path to the client's PEM encoded certificate used for 802.1x
+  authentication.
 
 - `ca_cert`
 
-    Absolute path to the PEM encoded certificate authority used to verify the EAP
-    server.
+  Absolute path to the PEM encoded certificate authority used to verify the EAP
+  server.
 
 - `ca_path`
 
-    Absolute path to directory containing additional pem encoded ca certificates used to
-    verify the EAP server. Can be used instead of or in addition to ca_cert. Cannot be
-    used if system_ca_certs is enabled.
+  Absolute path to directory containing additional pem encoded ca certificates used to
+  verify the EAP server. Can be used instead of or in addition to ca_cert. Cannot be
+  used if system_ca_certs is enabled.
 
 - `system_ca_certs`
 
-    If set to `true`, NetworkManager will use the system's trusted ca
-    certificates to verify the EAP server.
+  If set to `true`, NetworkManager will use the system's trusted ca
+  certificates to verify the EAP server.
 
 - `domain_suffix_match`
 
-    If set, NetworkManager will ensure the domain name of the EAP server certificate
-    matches this string.
+  If set, NetworkManager will ensure the domain name of the EAP server certificate
+  matches this string.
 
 ### `bond`
 
@@ -830,144 +825,143 @@ following options:
 
 - `mode`
 
-    Bonding mode. The possible values are `balance-rr` (default), `active-backup`,
-    `balance-xor`, `broadcast`, `802.3ad`, `balance-tlb`, or `balance-alb`.
+  Bonding mode. The possible values are `balance-rr` (default), `active-backup`,
+  `balance-xor`, `broadcast`, `802.3ad`, `balance-tlb`, or `balance-alb`.
 
 - `ad_actor_sys_prio`
 
-    In `802.3ad` bonding mode, this specifies the system priority. The valid range is
-    1 - 65535.
+  In `802.3ad` bonding mode, this specifies the system priority. The valid range is
+  1 - 65535.
 
 - `ad_actor_system`
 
-    In `802.3ad` bonding mode, this specifies the system mac-address for the actor in
-    protocol packet exchanges (LACPDUs).
+  In `802.3ad` bonding mode, this specifies the system mac-address for the actor in
+  protocol packet exchanges (LACPDUs).
 
 - `ad_select`
 
-    This option specifies the 802.3ad aggregation selection logic to use.  The possible
-    values are: `stable`, `bandwidth`, `count`.
+  This option specifies the 802.3ad aggregation selection logic to use.  The possible
+  values are: `stable`, `bandwidth`, `count`.
 
 - `ad_user_port_key`
 
-    In `802.3ad` bonding mode, this defines the upper 10 bits of the port key. The
-    allowed range for the value is 0 - 1023.
+  In `802.3ad` bonding mode, this defines the upper 10 bits of the port key. The
+  allowed range for the value is 0 - 1023.
 
 - `all_ports_active`
 
-    `all_slaves_active` <!--- wokeignore:rule=slave ---> in kernel and NetworkManager.
-    The boolean value `false` drops the duplicate frames (received on inactive ports)
-    and the boolean value `true` delivers the duplicate frames.
+  `all_slaves_active` <!--- wokeignore:rule=slave ---> in kernel and NetworkManager.
+  The boolean value `false` drops the duplicate frames (received on inactive ports)
+  and the boolean value `true` delivers the duplicate frames.
 
 - `arp_all_targets`
 
-    This option specifies the quantity of arp_ip_targets that must be reachable in
-    order for the ARP monitor to consider a port as being up. The possible values are
-    `any` or `all`.
+  This option specifies the quantity of arp_ip_targets that must be reachable in
+  order for the ARP monitor to consider a port as being up. The possible values are
+  `any` or `all`.
 
 - `arp_interval`
 
-    This option specifies the ARP link monitoring frequency in milliseconds. A value of
-    0 disables ARP monitoring.
+  This option specifies the ARP link monitoring frequency in milliseconds. A value of
+  0 disables ARP monitoring.
 
 - `arp_validate`
 
-    In any mode that supports arp monitoring, this option specifies whether or not ARP
-    probes and replies should be validated. Or for link monitoring purposes, whether
-    non-ARP traffic should be filtered (disregarded). The possible values are: `none`,
-    `active`, `backup`, `all`, `filter`, `filter_active`, `filter_backup`.
+  In any mode that supports arp monitoring, this option specifies whether or not ARP
+  probes and replies should be validated. Or for link monitoring purposes, whether
+  non-ARP traffic should be filtered (disregarded). The possible values are: `none`,
+  `active`, `backup`, `all`, `filter`, `filter_active`, `filter_backup`.
 
 - `arp_ip_target`
 
-    When `arp_interval` is enabled, this option specifies the IP addresses to use as
-    ARP monitoring peers.
+  When `arp_interval` is enabled, this option specifies the IP addresses to use as
+  ARP monitoring peers.
 
 - `downdelay`
 
-    The time to wait (in milliseconds) before disabling a port after a link failure
-    has been detected.
+  The time to wait (in milliseconds) before disabling a port after a link failure
+  has been detected.
 
 - `fail_over_mac`
 
-    This option specifies the policy to select the MAC address for the bond interface
-    in active-backup mode. The possible values are: `none` (default), `active`,
-    `follow`.
+  This option specifies the policy to select the MAC address for the bond interface
+  in active-backup mode. The possible values are: `none` (default), `active`,
+  `follow`.
 
 - `lacp_rate`
 
-    In `802.3ad` bonding mode, this option defines the rate in which we requst link
-    partner to transmit LACPDU packets. The possible values are: `slow`, `fast`.
+  In `802.3ad` bonding mode, this option defines the rate in which we requst link
+  partner to transmit LACPDU packets. The possible values are: `slow`, `fast`.
 
 - `lp_interval`
 
-    This option specifies the number of seconds between instances where the bonding
-    driver sends learning packets to each ports peer switch.
+  This option specifies the number of seconds between instances where the bonding
+  driver sends learning packets to each ports peer switch.
 
 - `miimon`
 
-    Sets the MII link monitoring interval (in milliseconds).
+  Sets the MII link monitoring interval (in milliseconds).
 
 - `min_links`
 
-    This option specifies the minimum number of links that must be active before
-    asserting the carrier.
+  This option specifies the minimum number of links that must be active before
+  asserting the carrier.
 
 - `num_grat_arp`
 
-    This option specify the number of peer notifications (gratuitious ARPs) to be
-    issued after a failover event. The allowed range for the value is 0 - 255.
+  This option specify the number of peer notifications (gratuitious ARPs) to be
+  issued after a failover event. The allowed range for the value is 0 - 255.
 
 - `packets_per_port`
 
-    In `balance-rr` bonding mode, this option specifies the number of packets allowed
-    for a port in network transmission before moving to the next one. The allowed
-    range for the value is 0 - 65535.
+  In `balance-rr` bonding mode, this option specifies the number of packets allowed
+  for a port in network transmission before moving to the next one. The allowed
+  range for the value is 0 - 65535.
 
 - `peer_notif_delay`
 
-    This option specifies the delay (in milliseconds) between each peer notification
-    when they are issued after a failover event.
+  This option specifies the delay (in milliseconds) between each peer notification
+  when they are issued after a failover event.
 
 - `primary`
 
-    This option defines the primary device.
+  This option defines the primary device.
 
 - `primary_reselect`
 
-    This option specifies the reselection policy for the primary port. The possible
-    values are: `always`, `better`, `failure`.
+  This option specifies the reselection policy for the primary port. The possible
+  values are: `always`, `better`, `failure`.
 
 - `resend_igmp`
 
-    This option specifies the number of IGMP membership reports to be issued after a
-    failover event. The allowed range for the value is 0 - 255.
+  This option specifies the number of IGMP membership reports to be issued after a
+  failover event. The allowed range for the value is 0 - 255.
 
 - `tlb_dynamic_lb`
 
-    This option specifies if dynamic shuffling of flows is enabled in tlb mode. The
-    boolean value `true` enables the flow shuffling while the boolean value `false`
-    disables it.
+  This option specifies if dynamic shuffling of flows is enabled in tlb mode. The
+  boolean value `true` enables the flow shuffling while the boolean value `false`
+  disables it.
 
 - `updelay`
 
-    This option specifies the time (in milliseconds) to wait before enabling a port
-    after a link recovery has been detected.
+  This option specifies the time (in milliseconds) to wait before enabling a port
+  after a link recovery has been detected.
 
 - `use_carrier`
 
-    This options specifies whether or not miimon should use MII or ETHTOOL ioctls
-    versus netif_carrier_ok() to determine the link sattus. The boolean value `true`
-    enables the use of netif_carrier_ok() while the boolean value `false` uses MII or
-    ETHTOOL ioctls instead.
+  This options specifies whether or not miimon should use MII or ETHTOOL ioctls
+  versus netif_carrier_ok() to determine the link sattus. The boolean value `true`
+  enables the use of netif_carrier_ok() while the boolean value `false` uses MII or
+  ETHTOOL ioctls instead.
 
 - `xmit_hash_policy`
 
-    This option specifies the transmit hash policy to use for port selection, the
-    possible values are: `layer2`, `layer3+4`, `layer2+3`, `encap2+3`, `encap3+4`,
-    `vlan+srcmac`.
+  This option specifies the transmit hash policy to use for port selection, the
+  possible values are: `layer2`, `layer3+4`, `layer2+3`, `encap2+3`, `encap3+4`,
+  `vlan+srcmac`.
 
-Examples of Options
--------------------
+## Examples of Options
 
 Setting the same connection profile multiple times:
 
@@ -1235,8 +1229,7 @@ network_connections:
       key_mgmt: "owe"
 ```
 
-Examples of Applying the Network State Configuration
--------------------
+## Examples of Applying the Network State Configuration
 
 Configuring the IP addresses:
 
@@ -1322,8 +1315,7 @@ The `network` role rejects invalid configurations. It is recommended to test the
 with `--check` first. There is no protection against wrong (but valid) configuration.
 Double-check your configuration before applying it.
 
-Compatibility
--------------
+## Compatibility
 
 The `network` role supports the same configuration scheme for both providers (`nm`
 and `initscripts`). That means, you can use the same playbook with NetworkManager
@@ -1344,8 +1336,7 @@ Depending on NetworkManager's configuration, connections may be stored as ifcfg 
 as well, but it is not guaranteed that plain initscripts can handle these ifcfg files
 after disabling the NetworkManager service.
 
-Limitations
------------
+## Limitations
 
 As Ansible usually works via the network, for example via SSH, there are some
 limitations to be considered:

@@ -1,11 +1,34 @@
 ---
-name: markdownlint
-on: [push, pull_request]
+# yamllint disable rule:line-length
+name: Markdown Lint
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+  merge_group:
+    branches:
+      - main
+    types:
+      - checks_requested
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   markdownlint:
     runs-on: ubuntu-latest
     steps:
+      - name: Update pip, git
+        run: |
+          set -euxo pipefail
+          sudo apt update
+          sudo apt install -y git
+
       - name: Check out code
-        uses: actions/checkout@main
-      - name: Run mdl
-        uses: actionshub/markdownlint@main
+        uses: actions/checkout@v3
+
+      - name: Lint README.md
+        uses: docker://avtodev/markdown-lint:master
+        with:
+          args: README.md
+          config: .markdownlint.yaml
