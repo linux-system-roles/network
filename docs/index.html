@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<!--
+==============================================================================
+           "GitHub HTML5 Pandoc Template" v2.2 — by Tristano Ajmone
+==============================================================================
+Copyright © Tristano Ajmone, 2017-2020, MIT License (MIT). Project's home:
+
+- https://github.com/tajmone/pandoc-goodies
+
+The CSS in this template reuses source code taken from the following projects:
+
+- GitHub Markdown CSS: Copyright © Sindre Sorhus, MIT License (MIT):
+  https://github.com/sindresorhus/github-markdown-css
+
+- Primer CSS: Copyright © 2016-2017 GitHub Inc., MIT License (MIT):
+  http://primercss.io/
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The MIT License
+
+Copyright (c) Tristano Ajmone, 2017-2020 (github.com/tajmone/pandoc-goodies)
+Copyright (c) Sindre Sorhus <sindresorhus@gmail.com> (sindresorhus.com)
+Copyright (c) 2017 GitHub Inc.
+
+"GitHub Pandoc HTML5 Template" is Copyright (c) Tristano Ajmone, 2017-2020,
+released under the MIT License (MIT); it contains readaptations of substantial
+portions of the following third party softwares:
+
+(1) "GitHub Markdown CSS", Copyright (c) Sindre Sorhus, MIT License (MIT).
+(2) "Primer CSS", Copyright (c) 2016 GitHub Inc., MIT License (MIT).
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+==============================================================================-->
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>linux-system-roles/network</title>
+  <style type="text/css">
+@charset "UTF-8";.markdown-body{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%;color:#24292e;font-family:-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";font-size:16px;line-height:1.5;word-wrap:break-word;box-sizing:border-box;min-width:200px;margin:0 auto;padding:45px}.markdown-body a{color:#0366d6;background-color:transparent;text-decoration:none;-webkit-text-decoration-skip:objects}.markdown-body a:active,.markdown-body a:hover{outline-width:0}.markdown-body a:hover{text-decoration:underline}.markdown-body a:not([href]){color:inherit;text-decoration:none}.markdown-body strong{font-weight:600}.markdown-body h1,.markdown-body h2,.markdown-body h3,.markdown-body h4,.markdown-body h5,.markdown-body h6{margin-top:24px;margin-bottom:16px;font-weight:600;line-height:1.25}.markdown-body h1{font-size:2em;margin:.67em 0;padding-bottom:.3em;border-bottom:1px solid #eaecef}.markdown-body h2{padding-bottom:.3em;font-size:1.5em;border-bottom:1px solid #eaecef}.markdown-body h3{font-size:1.25em}.markdown-body h4{font-size:1em}.markdown-body h5{font-size:.875em}.markdown-body h6{font-size:.85em;color:#6a737d}.markdown-body img{border-style:none}.markdown-body svg:not(:root){overflow:hidden}.markdown-body hr{box-sizing:content-box;height:.25em;margin:24px 0;padding:0;overflow:hidden;background-color:#e1e4e8;border:0}.markdown-body hr::before{display:table;content:""}.markdown-body hr::after{display:table;clear:both;content:""}.markdown-body input{margin:0;overflow:visible;font:inherit;font-family:inherit;font-size:inherit;line-height:inherit}.markdown-body [type=checkbox]{box-sizing:border-box;padding:0}.markdown-body *{box-sizing:border-box}.markdown-body blockquote{margin:0}.markdown-body ol,.markdown-body ul{padding-left:2em}.markdown-body ol ol,.markdown-body ul ol{list-style-type:lower-roman}.markdown-body ol ol,.markdown-body ol ul,.markdown-body ul ol,.markdown-body ul ul{margin-top:0;margin-bottom:0}.markdown-body ol ol ol,.markdown-body ol ul ol,.markdown-body ul ol ol,.markdown-body ul ul ol{list-style-type:lower-alpha}.markdown-body li>p{margin-top:16px}.markdown-body li+li{margin-top:.25em}.markdown-body dd{margin-left:0}.markdown-body dl{padding:0}.markdown-body dl dt{padding:0;margin-top:16px;font-size:1em;font-style:italic;font-weight:600}.markdown-body dl dd{padding:0 16px;margin-bottom:16px}.markdown-body code{font-family:SFMono-Regular,Consolas,"Liberation Mono",Menlo,Courier,monospace}.markdown-body pre{font:12px SFMono-Regular,Consolas,"Liberation Mono",Menlo,Courier,monospace;word-wrap:normal}.markdown-body blockquote,.markdown-body dl,.markdown-body ol,.markdown-body p,.markdown-body pre,.markdown-body table,.markdown-body ul{margin-top:0;margin-bottom:16px}.markdown-body blockquote{padding:0 1em;color:#6a737d;border-left:.25em solid #dfe2e5}.markdown-body blockquote>:first-child{margin-top:0}.markdown-body blockquote>:last-child{margin-bottom:0}.markdown-body table{display:block;width:100%;overflow:auto;border-spacing:0;border-collapse:collapse}.markdown-body table th{font-weight:600}.markdown-body table td,.markdown-body table th{padding:6px 13px;border:1px solid #dfe2e5}.markdown-body table tr{background-color:#fff;border-top:1px solid #c6cbd1}.markdown-body table tr:nth-child(2n){background-color:#f6f8fa}.markdown-body img{max-width:100%;box-sizing:content-box;background-color:#fff}.markdown-body code{padding:.2em 0;margin:0;font-size:85%;background-color:rgba(27,31,35,.05);border-radius:3px}.markdown-body code::after,.markdown-body code::before{letter-spacing:-.2em;content:" "}.markdown-body pre>code{padding:0;margin:0;font-size:100%;word-break:normal;white-space:pre;background:0 0;border:0}.markdown-body .highlight{margin-bottom:16px}.markdown-body .highlight pre{margin-bottom:0;word-break:normal}.markdown-body .highlight pre,.markdown-body pre{padding:16px;overflow:auto;font-size:85%;line-height:1.45;background-color:#f6f8fa;border-radius:3px}.markdown-body pre code{display:inline;max-width:auto;padding:0;margin:0;overflow:visible;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}.markdown-body pre code::after,.markdown-body pre code::before{content:normal}.markdown-body .full-commit .btn-outline:not(:disabled):hover{color:#005cc5;border-color:#005cc5}.markdown-body kbd{box-shadow:inset 0 -1px 0 #959da5;display:inline-block;padding:3px 5px;font:11px/10px SFMono-Regular,Consolas,"Liberation Mono",Menlo,Courier,monospace;color:#444d56;vertical-align:middle;background-color:#fcfcfc;border:1px solid #c6cbd1;border-bottom-color:#959da5;border-radius:3px;box-shadow:inset 0 -1px 0 #959da5}.markdown-body :checked+.radio-label{position:relative;z-index:1;border-color:#0366d6}.markdown-body .task-list-item{list-style-type:none}.markdown-body .task-list-item+.task-list-item{margin-top:3px}.markdown-body .task-list-item input{margin:0 .2em .25em -1.6em;vertical-align:middle}.markdown-body::before{display:table;content:""}.markdown-body::after{display:table;clear:both;content:""}.markdown-body>:first-child{margin-top:0!important}.markdown-body>:last-child{margin-bottom:0!important}.Alert,.Error,.Note,.Success,.Warning{padding:11px;margin-bottom:24px;border-style:solid;border-width:1px;border-radius:4px}.Alert p,.Error p,.Note p,.Success p,.Warning p{margin-top:0}.Alert p:last-child,.Error p:last-child,.Note p:last-child,.Success p:last-child,.Warning p:last-child{margin-bottom:0}.Alert{color:#246;background-color:#e2eef9;border-color:#bac6d3}.Warning{color:#4c4a42;background-color:#fff9ea;border-color:#dfd8c2}.Error{color:#911;background-color:#fcdede;border-color:#d2b2b2}.Success{color:#22662c;background-color:#e2f9e5;border-color:#bad3be}.Note{color:#2f363d;background-color:#f6f8fa;border-color:#d5d8da}.Alert h1,.Alert h2,.Alert h3,.Alert h4,.Alert h5,.Alert h6{color:#246;margin-bottom:0}.Warning h1,.Warning h2,.Warning h3,.Warning h4,.Warning h5,.Warning h6{color:#4c4a42;margin-bottom:0}.Error h1,.Error h2,.Error h3,.Error h4,.Error h5,.Error h6{color:#911;margin-bottom:0}.Success h1,.Success h2,.Success h3,.Success h4,.Success h5,.Success h6{color:#22662c;margin-bottom:0}.Note h1,.Note h2,.Note h3,.Note h4,.Note h5,.Note h6{color:#2f363d;margin-bottom:0}.Alert h1:first-child,.Alert h2:first-child,.Alert h3:first-child,.Alert h4:first-child,.Alert h5:first-child,.Alert h6:first-child,.Error h1:first-child,.Error h2:first-child,.Error h3:first-child,.Error h4:first-child,.Error h5:first-child,.Error h6:first-child,.Note h1:first-child,.Note h2:first-child,.Note h3:first-child,.Note h4:first-child,.Note h5:first-child,.Note h6:first-child,.Success h1:first-child,.Success h2:first-child,.Success h3:first-child,.Success h4:first-child,.Success h5:first-child,.Success h6:first-child,.Warning h1:first-child,.Warning h2:first-child,.Warning h3:first-child,.Warning h4:first-child,.Warning h5:first-child,.Warning h6:first-child{margin-top:0}h1.title,p.subtitle{text-align:center}h1.title.followed-by-subtitle{margin-bottom:0}p.subtitle{font-size:1.5em;font-weight:600;line-height:1.25;margin-top:0;margin-bottom:16px;padding-bottom:.3em}div.line-block{white-space:pre-line}
+  </style>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<article class="markdown-body">
+<header>
+<h1 class="title">linux-system-roles/network</h1>
+</header>
+<hr>
+<nav id="TOC">
+<h1 class="toc-title">Contents</h1>
+<ul>
+<li><a href="#overview" id="toc-overview">Overview</a></li>
+<li><a href="#introduction" id="toc-introduction">Introduction</a></li>
+<li><a href="#variables" id="toc-variables">Variables</a></li>
+<li><a href="#examples-of-variables"
+id="toc-examples-of-variables">Examples of Variables</a></li>
+<li><a href="#network_connections-options"
+id="toc-network_connections-options">network_connections Options</a>
+<ul>
+<li><a href="#name-usually-required"
+id="toc-name-usually-required"><code>name</code> (usually
+required)</a></li>
+<li><a href="#state" id="toc-state"><code>state</code></a>
+<ul>
+<li><a href="#state-up"
+id="toc-state-up"><code>state: up</code></a></li>
+<li><a href="#state-down"
+id="toc-state-down"><code>state: down</code></a></li>
+</ul></li>
+<li><a href="#persistent_state"
+id="toc-persistent_state"><code>persistent_state</code></a>
+<ul>
+<li><a href="#persistent_state-present-default"
+id="toc-persistent_state-present-default"><code>persistent_state: present</code>
+(default)</a></li>
+<li><a href="#persistent_state-absent"
+id="toc-persistent_state-absent"><code>persistent_state: absent</code></a></li>
+</ul></li>
+<li><a href="#type" id="toc-type"><code>type</code></a>
+<ul>
+<li><a href="#type-ethernet"
+id="toc-type-ethernet"><code>type: ethernet</code></a></li>
+<li><a href="#type-bridge-type-bond-type-team"
+id="toc-type-bridge-type-bond-type-team"><code>type: bridge</code>,
+<code>type: bond</code>, <code>type: team</code></a></li>
+<li><a href="#type-vlan"
+id="toc-type-vlan"><code>type: vlan</code></a></li>
+<li><a href="#type-macvlan"
+id="toc-type-macvlan"><code>type: macvlan</code></a></li>
+<li><a href="#type-infiniband"
+id="toc-type-infiniband"><code>type: infiniband</code></a></li>
+<li><a href="#type-wireless"
+id="toc-type-wireless"><code>type: wireless</code></a></li>
+</ul></li>
+<li><a href="#autoconnect"
+id="toc-autoconnect"><code>autoconnect</code></a></li>
+<li><a href="#mac" id="toc-mac"><code>mac</code></a></li>
+<li><a href="#cloned_mac"
+id="toc-cloned_mac"><code>cloned_mac</code></a></li>
+<li><a href="#mtu" id="toc-mtu"><code>mtu</code></a></li>
+<li><a href="#interface_name"
+id="toc-interface_name"><code>interface_name</code></a></li>
+<li><a href="#match" id="toc-match"><code>match</code></a></li>
+<li><a href="#path" id="toc-path"><code>path</code></a></li>
+<li><a href="#zone" id="toc-zone"><code>zone</code></a></li>
+<li><a href="#ip" id="toc-ip"><code>ip</code></a></li>
+<li><a href="#ethtool" id="toc-ethtool"><code>ethtool</code></a></li>
+<li><a href="#ieee802_1x"
+id="toc-ieee802_1x"><code>ieee802_1x</code></a></li>
+<li><a href="#bond" id="toc-bond"><code>bond</code></a></li>
+</ul></li>
+<li><a href="#examples-of-options" id="toc-examples-of-options">Examples
+of Options</a></li>
+<li><a href="#examples-of-applying-the-network-state-configuration"
+id="toc-examples-of-applying-the-network-state-configuration">Examples
+of Applying the Network State Configuration</a>
+<ul>
+<li><a href="#invalid-and-wrong-configuration"
+id="toc-invalid-and-wrong-configuration">Invalid and Wrong
+Configuration</a></li>
+</ul></li>
+<li><a href="#compatibility"
+id="toc-compatibility">Compatibility</a></li>
+<li><a href="#limitations" id="toc-limitations">Limitations</a>
+<ul>
+<li><a href="#handling-potential-problems"
+id="toc-handling-potential-problems">Handling potential
+problems</a></li>
+</ul></li>
+</ul>
+</nav>
+<hr>
+<p><a href="https://coveralls.io/github/linux-system-roles/network"><img
+src="https://coveralls.io/repos/github/linux-system-roles/network/badge.svg"
+alt="Coverage Status" /></a> <img
+src="https://github.com/linux-system-roles/network/workflows/tox/badge.svg"
+alt="CI Testing" /> <a href="https://github.com/ambv/black"><img
+src="https://img.shields.io/badge/code%20style-black-000000.svg"
+alt="Code Style: black" /></a> <a
+href="https://lgtm.com/projects/g/linux-system-roles/network/context:python"><img
+src="https://img.shields.io/lgtm/grade/python/g/linux-system-roles/network.svg?logo=lgtm&amp;logoWidth=18"
+alt="Language grade: Python" /></a></p>
+<h1 id="overview">Overview</h1>
+<p>The <code>network</code> role enables users to configure network on
+the target machines. This role can be used to configure:</p>
+<ul>
+<li>Ethernet interfaces</li>
+<li>Bridge interfaces</li>
+<li>Bonded interfaces</li>
+<li>VLAN interfaces</li>
+<li>MacVLAN interfaces</li>
+<li>Infiniband interfaces</li>
+<li>Wireless (WiFi) interfaces</li>
+<li>IP configuration</li>
+<li>802.1x authentication</li>
+</ul>
+<h1 id="introduction">Introduction</h1>
+<p>The <code>network</code> role supports two providers: <code>nm</code>
+and <code>initscripts</code>. <code>nm</code> is used by default in
+RHEL7 and <code>initscripts</code> in RHEL6. These providers can be
+configured per host via the <a
+href="#variables"><code>network_provider</code></a> variable. In absence
+of explicit configuration, it is autodetected based on the distribution.
+However, note that either <code>nm</code> or <code>initscripts</code> is
+not tied to a certain distribution. The <code>network</code> role works
+everywhere the required API is available. This means that
+<code>nm</code> requires at least NetworkManager's API version 1.2
+available. For <code>initscripts</code>, the legacy network service is
+required as used in Fedora or RHEL.</p>
+<p>For each host a list of networking profiles can be configured via the
+<code>network_connections</code> variable.</p>
+<ul>
+<li><p>For <code>initscripts</code>, profiles correspond to ifcfg files
+in the <code>/etc/sysconfig/network-scripts/</code> directory.</p></li>
+<li><p>For <code>nm</code>, profiles correspond to connection profiles
+as handled by NetworkManager.</p></li>
+</ul>
+<p>For each host the network state configuration can also be applied to
+the interface directly via the <code>network_state</code> variable, and
+only the <code>nm</code> provider supports using the
+<code>network_state</code> variable.</p>
+<p>Note that the <code>network</code> role both operates on the
+connection profiles of the devices (via the
+<code>network_connections</code> variable) and on devices directly (via
+the <code>network_state</code> variable). When configuring the
+connection profiles through the role, it uses the profile name by
+default as the interface name. It is also possible to create generic
+profiles, by creating for example a profile with a certain IP
+configuration without activating the profile. To apply the configuration
+to the actual networking interface, use the <code>nmcli</code> commands
+on the target system.</p>
+<p><strong>Warning</strong>: The <code>network</code> role updates or
+creates all connection profiles on the target system as specified in the
+<code>network_connections</code> variable. Therefore, the
+<code>network</code> role removes options from the specified profiles if
+the options are only present on the system but not in the
+<code>network_connections</code> variable. Exceptions are mentioned
+below. However, the partial networking configuration can be achieved via
+specifying the network state configuration in the
+<code>network_state</code> variable.</p>
+<h1 id="variables">Variables</h1>
+<p>The <code>network</code> role is configured via variables starting
+with <code>network_</code> as the name prefix. List of variables:</p>
+<ul>
+<li><code>network_provider</code> - The <code>network_provider</code>
+variable allows to set a specific provider (<code>nm</code> or
+<code>initscripts</code>) . Setting it to
+<code>{{ network_provider_os_default }}</code>, the provider is set
+depending on the operating system. This is usually <code>nm</code>
+except for RHEL 6 or CentOS 6 systems. Changing the provider for an
+existing profile is not supported. To switch providers, it is
+recommended to first remove profiles with the old provider and then
+create new profiles with the new provider.</li>
+<li><code>network_connections</code> - The connection profiles are
+configured as <code>network_connections</code>, which is a list of
+dictionaries that include specific options.</li>
+<li><code>network_allow_restart</code> - Certain configurations require
+the role to restart network services. For example, if a wireless
+connection is configured and NetworkManager-wifi is not installed,
+NetworkManager must be restarted prior to the connection being
+configured. Setting this to <code>false</code> will prevent the role
+from restarting network service.</li>
+<li><code>network_state</code> - The network state settings can be
+configured in the managed host, and the format and the syntax of the
+configuration should be consistent with the <a
+href="https://nmstate.io/examples.html">nmstate state examples</a>
+(YAML).</li>
+</ul>
+<h1 id="examples-of-variables">Examples of Variables</h1>
+<p>Setting the variables</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_provider</span><span class="kw">:</span><span class="at"> nm</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">    #...</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">network_allow_restart</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_provider</span><span class="kw">:</span><span class="at"> nm</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">network_state</span><span class="kw">:</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">interfaces</span><span class="kw">:</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">    #...</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">routes</span><span class="kw">:</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">config</span><span class="kw">:</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">      #...</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">dns-resolver</span><span class="kw">:</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">config</span><span class="kw">:</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">      #...</span></span></code></pre></div>
+<h1 id="network_connections-options">network_connections Options</h1>
+<p>The <code>network_connections</code> variable is a list of
+dictionaries that include the following options. List of options:</p>
+<h2 id="name-usually-required"><code>name</code> (usually required)</h2>
+<p>The <code>name</code> option identifies the connection profile to be
+configured. It is not the name of the networking interface for which the
+profile applies, though we can associate the profile with an interface
+and give them the same name. Note that you can have multiple profiles
+for the same device, but only one profile can be active on the device
+each time. For NetworkManager, a connection can only be active at one
+device each time.</p>
+<ul>
+<li><p>For <code>NetworkManager</code>, the <code>name</code> option
+corresponds to the <a
+href="https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.connection.id"><code>connection.id</code></a>
+property option. Although NetworkManager supports multiple connections
+with the same <code>connection.id</code>, the <code>network</code> role
+cannot handle a duplicate <code>name</code>. Specifying a
+<code>name</code> multiple times refers to the same connection
+profile.</p></li>
+<li><p>For <code>initscripts</code>, the <code>name</code> option
+determines the ifcfg file name
+<code>/etc/sysconfig/network-scripts/ifcfg-$NAME</code>. Note that the
+<code>name</code> does not specify the <code>DEVICE</code> but a
+filename. As a consequence, <code>'/'</code> is not a valid character
+for the <code>name</code>.</p></li>
+</ul>
+<p>You can also use the same connection profile multiple times.
+Therefore, it is possible to create a profile and activate it
+separately.</p>
+<p><strong>Note:</strong> The network role will only change the profiles
+that are specified in the <code>network_connections</code> variable.
+Therefore, if only the ports of a profile are specified to be removed
+from the controller and the controller is not specified, then the
+controller profile will remain on the system. This can happen, if for
+example all ports are removed from a bond interface.</p>
+<p><strong>Note:</strong> To remove all profiles on a system that are
+not specified in the <code>network_connections</code> variable, add an
+entry without a name and <code>persistent_state: absent</code>. This
+will match and remove all remaining profiles:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span><span class="co">  # profiles to keep/configure on the system</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">[</span><span class="at">...</span><span class="kw">]</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">persistent_state</span><span class="kw">:</span><span class="at"> absent</span><span class="co">  # remove all other profiles</span></span></code></pre></div>
+<h2 id="state"><code>state</code></h2>
+<p>The <code>state</code> option identifies what is the runtime state of
+each connection profile. The <code>state</code> option (optional) can be
+set to the following values:</p>
+<ul>
+<li><code>up</code> - the connection profile is activated</li>
+<li><code>down</code> - the connection profile is deactivated</li>
+</ul>
+<h3 id="state-up"><code>state: up</code></h3>
+<ul>
+<li><p>For <code>NetworkManager</code>, this corresponds to
+<code>nmcli connection id {{name}} up</code>.</p></li>
+<li><p>For <code>initscripts</code>, this corresponds to
+<code>ifup {{name}}</code>.</p></li>
+</ul>
+<p>When the <code>state</code> option is set to <code>up</code>, you can
+also specify the <code>wait</code> option (optional):</p>
+<ul>
+<li><code>wait: 0</code> - initiates only the activation, but does not
+wait until the device is fully connected. The connection will be
+completed in the background, for example after a DHCP lease was
+received.</li>
+<li><code>wait: &lt;seconds&gt;</code> is a timeout that enables you to
+decide how long you give the device to activate. The default is using a
+suitable timeout. Note that the <code>wait</code> option is only
+supported by NetworkManager.</li>
+</ul>
+<p>Note that <code>state: up</code> always re-activates the profile and
+possibly changes the networking configuration, even if the profile was
+already active before. As a consequence, <code>state: up</code> always
+changes the system.</p>
+<h3 id="state-down"><code>state: down</code></h3>
+<ul>
+<li><p>For <code>NetworkManager</code>, it corresponds to
+<code>nmcli connection id {{name}} down</code>.</p></li>
+<li><p>For <code>initscripts</code>, it corresponds to call
+<code>ifdown {{name}}</code>.</p></li>
+</ul>
+<p>You can deactivate a connection profile, even if is currently not
+active. As a consequence, <code>state: down</code> always changes the
+system.</p>
+<p>Note that if the <code>state</code> option is unset, the connection
+profile's runtime state will not be changed.</p>
+<h2 id="persistent_state"><code>persistent_state</code></h2>
+<p>The <code>persistent_state</code> option identifies if a connection
+profile is persistent (saved on disk). The <code>persistent_state</code>
+option can be set to the following values:</p>
+<h3
+id="persistent_state-present-default"><code>persistent_state: present</code>
+(default)</h3>
+<p>Note that if <code>persistent_state</code> is <code>present</code>
+and the connection profile contains the <code>type</code> option, the
+profile will be created or updated. If the connection profile is
+incomplete (no <code>type</code> option), the behavior is undefined.
+Also, the <code>present</code> value does not directly result in a
+change in the network configuration. If the <code>state</code> option is
+not set to <code>up</code>, the profile is only created or modified, not
+activated.</p>
+<p>For NetworkManager, the new connection profile is created with the
+<code>autoconnect</code> option enabled by default. Therefore,
+NetworkManager can activate the new profile on a currently disconnected
+device. (<a
+href="https://bugzilla.redhat.com/show_bug.cgi?id=1401515">rh#1401515</a>).</p>
+<h3
+id="persistent_state-absent"><code>persistent_state: absent</code></h3>
+<p>The <code>absent</code> value ensures that the profile is not present
+on the target host. If a profile with the given <code>name</code>
+exists, it will be deleted. In this case:</p>
+<ul>
+<li><p><code>NetworkManager</code> deletes all connection profiles with
+the corresponding <code>connection.id</code>. Deleting a profile usually
+does not change the current networking configuration, unless the profile
+was currently activated on a device. Deleting the currently active
+connection profile disconnects the device. That makes the device
+eligible to autoconnect another connection (for more details, see <a
+href="https://bugzilla.redhat.com/show_bug.cgi?id=1401515">rh#1401515</a>).</p></li>
+<li><p><code>initscripts</code> deletes the ifcfg file in most cases
+with no impact on the runtime state of the system unless some component
+is watching the sysconfig directory.</p></li>
+</ul>
+<p><strong>Note</strong>: For profiles that only contain a
+<code>state</code> option, the <code>network</code> role only activates
+or deactivates the connection without changing its configuration.</p>
+<h2 id="type"><code>type</code></h2>
+<p>The <code>type</code> option can be set to the following values:</p>
+<ul>
+<li><code>ethernet</code></li>
+<li><code>bridge</code></li>
+<li><code>bond</code></li>
+<li><code>team</code></li>
+<li><code>vlan</code></li>
+<li><code>macvlan</code></li>
+<li><code>infiniband</code></li>
+<li><code>wireless</code></li>
+</ul>
+<h3 id="type-ethernet"><code>type: ethernet</code></h3>
+<p>If the type is <code>ethernet</code>, then there can be an extra
+<code>ethernet</code> dictionary with the following items (options):
+<code>autoneg</code>, <code>speed</code> and <code>duplex</code>, which
+correspond to the settings of the <code>ethtool</code> utility with the
+same name.</p>
+<ul>
+<li><code>autoneg</code>: <code>true</code> (default) or
+<code>false</code> [if auto-negotiation is enabled or disabled]</li>
+<li><code>speed</code>: speed in Mbit/s</li>
+<li><code>duplex</code>: <code>half</code> or <code>full</code></li>
+</ul>
+<p>Note that the <code>speed</code> and <code>duplex</code> link
+settings are required when autonegotiation is disabled
+(<code>autoneg: false</code>).</p>
+<h3 id="type-bridge-type-bond-type-team"><code>type: bridge</code>,
+<code>type: bond</code>, <code>type: team</code></h3>
+<p>The <code>bridge</code>, <code>bond</code>, <code>team</code> device
+types work similar. Note that <code>team</code> is not supported in
+RHEL6 kernels, and has been deprecated in RHEL 9.</p>
+<p>For ports, the <code>port_type</code> and <code>controller</code>
+properties must be set. Note that ports should not have <code>ip</code>
+settings.</p>
+<p>The <code>controller</code> refers to the <code>name</code> of a
+profile in the Ansible playbook. It is neither an interface-name nor a
+connection-id of NetworkManager.</p>
+<ul>
+<li><p>For NetworkManager, <code>controller</code> will be converted to
+the <code>connection.uuid</code> of the corresponding profile.</p></li>
+<li><p>For initscripts, the controller is looked up as the
+<code>DEVICE</code> from the corresponding ifcfg file.</p></li>
+</ul>
+<p>As <code>controller</code> refers to other profiles of the same or
+another play, the order of the <code>connections</code> list matters.
+Profiles that are referenced by other profiles need to be specified
+first. Also, <code>--check</code> ignores the value of the
+<code>controller</code> and assumes it will be present during a real
+run. That means, in presence of an invalid <code>controller</code>,
+<code>--check</code> may signal success but the actual play run
+fails.</p>
+<p>If only bringing down the <code>controller</code> profile , then the
+port profiles will be brought down automatically. If bringing down the
+connection on some or all ports, then the controller profile stay
+active.</p>
+<p>The <code>team</code> type uses <code>roundrobin</code> as the
+<code>runner</code> configuration. No further configuration is supported
+at the moment.</p>
+<h3 id="type-vlan"><code>type: vlan</code></h3>
+<p>Similar to <code>controller</code>, the <code>parent</code>
+references the connection profile in the ansible role.</p>
+<h3 id="type-macvlan"><code>type: macvlan</code></h3>
+<p>Similar to <code>controller</code> and <code>vlan</code>, the
+<code>parent</code> references the connection profile in the ansible
+role.</p>
+<h3 id="type-infiniband"><code>type: infiniband</code></h3>
+<p>For the infiniband connection, currently it is only supported for the
+nm provider, and the following options are supported:</p>
+<ul>
+<li><code>p_key</code>: The infiniband P_Key to use for the device. When
+it is not specified, then the connection is created on the physical
+infiniband fabrics. Otherwise, it is a 16-bit unsigned integer and the
+ipoib (IP over Infiniband) connection will be created, the high bit
+should be set if it is a "full membership" P_Key. The special
+<code>p_key</code> values 0x0000 and 0x8000 are invalid as kernel does
+not support them.</li>
+<li><code>transport_mode</code>: The ipoib (IP over Infiniband)
+connection operation mode. The possible modes are <code>datagram</code>
+(default) and <code>connected</code>.</li>
+</ul>
+<p><strong>Note:</strong> If the <code>p_key</code> is specified , then
+the <code>interface_name</code> must be unset.</p>
+<h3 id="type-wireless"><code>type: wireless</code></h3>
+<p>The <code>wireless</code> type supports WPA-PSK (password)
+authentication, WPA-EAP (802.1x) authentication, WPA3-Personal SAE
+(password) authentication and Enhanced Open (OWE).</p>
+<p><code>nm</code> (NetworkManager) is the only supported
+<code>network_provider</code> for this type.</p>
+<p>If WPA-EAP is used, ieee802_1x settings must be defined in the <a
+href="#ieee802_1x">ieee802_1x</a> option.</p>
+<p>The following options are supported:</p>
+<ul>
+<li><p><code>ssid</code>: the SSID of the wireless network
+(required)</p></li>
+<li><p><code>key_mgmt</code> (required)</p>
+<p>Any key from following key list:</p>
+<ul>
+<li><code>owe</code></li>
+<li><code>sae</code></li>
+<li><code>wpa-eap</code></li>
+<li><code>wpa-psk</code></li>
+</ul></li>
+<li><p><code>password</code>: password for the network (required if
+<code>wpa-psk</code> or <code>sae</code> is used)</p></li>
+</ul>
+<h2 id="autoconnect"><code>autoconnect</code></h2>
+<p>By default, profiles are created with autoconnect enabled.</p>
+<ul>
+<li><p>For <code>NetworkManager</code>, this corresponds to the
+<code>connection.autoconnect</code> property.</p></li>
+<li><p>For <code>initscripts</code>, this corresponds to the
+<code>ONBOOT</code> property.</p></li>
+</ul>
+<h2 id="mac"><code>mac</code></h2>
+<p>The <code>mac</code> address is optional and restricts the profile to
+be usable only on devices with the given MAC address. <code>mac</code>
+is only allowed for <code>type</code> <code>ethernet</code> or
+<code>infiniband</code> to match a non-virtual device with the profile.
+The value of the <code>mac</code> address needs to be specified in
+hexadecimal notation using colons (for example:
+<code>mac: "00:00:5e:00:53:5d"</code>). To avoid YAML parsing mac
+addresses as integers in sexagesimal (base 60) notation (see <a
+href="https://yaml.org/spec/1.1/#id858600">https://yaml.org/spec/1.1/#id858600</a>),
+it is recommended to always quote the value with double quotes and
+sometimes it is necessary.</p>
+<ul>
+<li><p>For <code>NetworkManager</code>, <code>mac</code> is the
+permanent MAC address, <code>ethernet.mac-address</code>.</p></li>
+<li><p>For <code>initscripts</code>, <code>mac</code> is the currently
+configured MAC address of the device (<code>HWADDR</code>).</p></li>
+</ul>
+<h2 id="cloned_mac"><code>cloned_mac</code></h2>
+<p>The <code>cloned_mac</code> address is optional and allow to specify
+the strategy to get the default mac or to set your own mac. The value of
+the <code>cloned_mac</code> address needs to be specified in hexadecimal
+notation like <code>mac</code> property. Besides explicitly specifying
+the value as a MAC address with hexadecimal notation, the following
+special values are also supported:</p>
+<ul>
+<li><code>default</code>: honor the default behavior in
+NetworkManager</li>
+<li><code>permanent</code>: use the permanent MAC address of the
+device</li>
+<li><code>preserve</code>: don't change the MAC address of the device
+upon activation</li>
+<li><code>random</code>: generate a randomized value upon each
+connect</li>
+<li><code>stable</code>: generate a stable, hashed MAC address</li>
+</ul>
+<h2 id="mtu"><code>mtu</code></h2>
+<p>The <code>mtu</code> option denotes the maximum transmission unit for
+the profile's device. The maximum value depends on the device. For
+virtual devices, the maximum value of the <code>mtu</code> option
+depends on the underlying device.</p>
+<h2 id="interface_name"><code>interface_name</code></h2>
+<p>For the <code>ethernet</code> and <code>infiniband</code> types, the
+<code>interface_name</code> option restricts the profile to the given
+interface by name. This argument is optional and by default the profile
+name is used unless a mac address is specified using the
+<code>mac</code> key. Specifying an empty string (<code>""</code>) means
+that the profile is not restricted to a network interface.</p>
+<p><strong>Note:</strong> With <a
+href="https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Networking_Guide/ch-Consistent_Network_Device_Naming.html">persistent
+interface naming</a>, the interface is predictable based on the hardware
+configuration. Otherwise, the <code>mac</code> address might be an
+option.</p>
+<p>For virtual interface types such as bridges, the
+<code>interface_name</code> is the name of the created interface. In
+case of a missing <code>interface_name</code>, the <code>name</code> of
+the profile name is used.</p>
+<p><strong>Note:</strong> The <code>name</code> (the profile name) and
+the <code>interface_name</code> (the device name) may be different or
+the profile may not be tied to an interface at all.</p>
+<h2 id="match"><code>match</code></h2>
+<p>Settings to specify devices or systems matching a profile. Currently,
+only the <code>path</code> setting is implemented.</p>
+<p>The settings support a list of patterns which support the following
+modifiers and wildcards:</p>
+<p><strong>Special modifiers for <code>match</code>
+settings:</strong></p>
+<ul>
+<li><p><code>|</code>, the element is an alternative, the match
+evaluates to be true if at least one of the alternatives matches
+(logical OR). By default, an element is an alternative. This means that
+an element <code>foo</code> behaves the same as
+<code>|foo</code></p></li>
+<li><p><code>&amp;</code>, the element is mandatory, the match evaluates
+to be true if all the element matches (logical AND)</p></li>
+<li><p><code>!</code>, an element can also be inverted with exclamation
+mark (<code>!</code>) between the pipe symbol (or the ampersand) and
+before the pattern. Note that <code>!foo</code> is a shortcut for the
+mandatory match <code>&amp;!foo</code></p></li>
+<li><p><code>\</code>, a backslash can be used at the beginning of the
+element (after the optional special characters) to escape the start of
+the pattern. For example, <code>&amp;\!a</code> is an mandatory match
+for literally <code>!a</code></p></li>
+</ul>
+<p><strong>Wildcard patterns for <code>match</code> Settings:</strong>
+In general these work like shell globs.</p>
+<ul>
+<li><code>*</code>, matches zero or more of any character</li>
+<li><code>?</code>, matches any single character</li>
+<li><code>[fo]</code> - matches any single <code>f</code> or
+<code>o</code> character - also supports ranges - <code>[0-9]</code>
+will match any single digit character</li>
+</ul>
+<h2 id="path"><code>path</code></h2>
+<p>The <code>path</code> setting is a list of patterns to match against
+the <code>ID_PATH</code> udev property of devices. The
+<code>ID_PATH</code> udev property represents the persistent path of a
+device. It consists of a subsystem string (pci, usb, platform, etc.) and
+a subsystem-specific identifier. The <code>ID_PATH</code> of a device
+can be obtained with the command
+<code>udevadm info /sys/class/net/$dev | grep ID_PATH=</code> or by
+looking at the <code>path</code> property exported by NetworkManager
+(<code>nmcli -f general.path device show $dev</code>). The
+<code>path</code> setting is optional and restricts the profile to be
+activated only on devices with a matching <code>ID_PATH</code>. The
+<code>path</code> setting is only supported for ethernet or infiniband
+profiles. It supports modifiers and wildcards as described for match
+settings.</p>
+<h2 id="zone"><code>zone</code></h2>
+<p>The <code>zone</code> option sets the firewalld zone for the
+interface.</p>
+<p>Ports to the bridge, bond or team devices cannot specify a zone.</p>
+<h2 id="ip"><code>ip</code></h2>
+<p>The IP configuration supports the following options:</p>
+<ul>
+<li><p><code>address</code> Manual addressing can be specified via a
+list of addresses under the <code>address</code> option.</p></li>
+<li><p><code>auto_gateway</code></p>
+<p>If enabled, a default route will be configured using the default
+gateway. If disabled, the default route will be removed.</p>
+<p>If this variable is not specified, the role will use the default
+behavior of the <code>network_provider</code> selected.</p>
+<p>Setting this option to <code>false</code> is equivalent to:</p>
+<ul>
+<li><code>DEFROUTE = no</code> in initscripts, or</li>
+<li><code>ipv4.never-default/ipv6.never-default yes</code> in nmcli</li>
+</ul></li>
+<li><p><code>dhcp4</code>, <code>auto6</code>, and
+<code>ipv6_disabled</code></p>
+<p>Also, manual addressing can be specified by setting either
+<code>dhcp4</code> or <code>auto6</code>. The <code>dhcp4</code> key is
+for DHCPv4 and <code>auto6</code> for StateLess Address Auto
+Configuration (SLAAC). Note that the <code>dhcp4</code> and
+<code>auto6</code> keys can be omitted and the default key depends on
+the presence of manual addresses. <code>ipv6_disabled</code> can be set
+to disable ipv6 for the connection.</p></li>
+<li><p><code>dhcp4_send_hostname</code></p>
+<p>If <code>dhcp4</code> is enabled, it can be configured whether the
+DHCPv4 request includes the hostname via the
+<code>dhcp4_send_hostname</code> option. Note that
+<code>dhcp4_send_hostname</code> is only supported by the
+<code>nm</code> provider and corresponds to <a
+href="https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv4.dhcp-send-hostname"><code>ipv4.dhcp-send-hostname</code></a>
+property.</p></li>
+<li><p><code>dns</code></p>
+<p>Manual DNS configuration can be specified via a list of addresses
+given in the <code>dns</code> option.</p></li>
+<li><p><code>dns_search</code></p>
+<p>Manual DNS configuration can be specified via a list of domains to
+search given in the <code>dns_search</code> option.</p></li>
+<li><p><code>dns_options</code></p>
+<p><code>dns_options</code> is only supported for the NetworkManager
+provider. Manual DNS configuration via a list of DNS options can be
+given in the <code>dns_options</code>. The list of supported DNS options
+for IPv4 nameservers is described in <a
+href="https://man7.org/linux/man-pages/man5/resolv.conf.5.html">man 5
+resolv.conf</a>. Currently, the list of supported DNS options is:</p>
+<ul>
+<li><code>attempts:n</code></li>
+<li><code>debug</code></li>
+<li><code>edns0</code></li>
+<li><code>inet6</code></li>
+<li><code>ip6-bytestring</code></li>
+<li><code>ip6-dotint</code></li>
+<li><code>ndots:n</code></li>
+<li><code>no-aaaa</code></li>
+<li><code>no-check-names</code></li>
+<li><code>no-ip6-dotint</code></li>
+<li><code>no-reload</code></li>
+<li><code>no-tld-query</code></li>
+<li><code>rotate</code></li>
+<li><code>single-request</code></li>
+<li><code>single-request-reopen</code></li>
+<li><code>timeout:n</code></li>
+<li><code>trust-ad</code></li>
+<li><code>use-vc</code></li>
+</ul>
+<p><strong>Note:</strong> The "trust-ad" setting is only honored if the
+profile contributes name servers to resolv.conf, and if all contributing
+profiles have "trust-ad" enabled. When using a caching DNS plugin
+(dnsmasq or systemd-resolved in NetworkManager.conf) then "edns0" and
+"trust-ad" are automatically added.</p></li>
+<li><p><code>dns_priority</code></p>
+<p>DNS servers priority. The relative priority for DNS servers specified
+by this setting. The default value is 0, a lower numerical value has
+higher priority. The valid value of <code>dns_priority</code> ranges
+from -2147483648 to 2147483647. Negative values have the special effect
+of excluding other configurations with a greater numerical priority
+value; so in presence of at least one negative priority, only DNS
+servers from connections with the lowest priority value will be
+used.</p></li>
+<li><p><code>gateway4</code> and <code>gateway6</code></p>
+<p>The default gateway for IPv4 (<code>gateway4</code>) or IPv6
+(<code>gateway6</code>) packets.</p></li>
+<li><p><code>ipv4_ignore_auto_dns</code> and
+<code>ipv6_ignore_auto_dns</code></p>
+<p>If enabled, the automatically configured name servers and search
+domains (via DHCPv4, DHCPv6, modem etc) for IPv4 or IPv6 are ignored,
+only the name servers and search domains specified in <code>dns</code>
+and <code>dns_search</code> properties are used. The settings are
+distinguished by the address families. The variables are not supported
+by initscripts provider.</p>
+<p>If the variables are not specified, the role will use the default
+behavior of nm provider.</p></li>
+<li><p><code>route_metric4</code> and <code>route_metric6</code></p>
+<p>For <code>NetworkManager</code>, <code>route_metric4</code> and
+<code>route_metric6</code> corresponds to the <a
+href="https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv4.route-metric"><code>ipv4.route-metric</code></a>
+and <a
+href="https://developer.gnome.org/NetworkManager/stable/nm-settings.html#nm-settings.property.ipv6.route-metric"><code>ipv6.route-metric</code></a>
+properties, respectively. If specified, it determines the route metric
+for DHCP assigned routes and the default route, and thus the priority
+for multiple interfaces. For <code>initscripts</code>,
+<code>route_metric4</code> sets the metric for the default route and
+<code>route_metric6</code> is not supported.</p></li>
+<li><p><code>route</code></p>
+<p>Static route configuration can be specified via a list of routes
+given in the <code>route</code> option. The default value is an empty
+list. Each route is a dictionary with the following entries:
+<code>network</code>, <code>prefix</code>, <code>gateway</code>,
+<code>metric</code> and <code>table</code>. <code>network</code> and
+<code>prefix</code> specify the destination network. <code>table</code>
+supports both the numeric table and named table. In order to specify the
+named table, the users have to ensure the named table is properly
+defined in <code>/etc/iproute2/rt_tables</code> or
+<code>/etc/iproute2/rt_tables.d/*.conf</code>. Note that Classless
+inter-domain routing (CIDR) notation or network mask notation are not
+supported yet.</p></li>
+<li><p><code>routing_rule</code></p>
+<p>The policy routing rules can be specified via a list of rules given
+in the <code>routing_rule</code> option, which allow routing the packets
+on other packet fields except for destination address. The default value
+is a an empty list. Each rule is a dictionary with the following
+entries:</p>
+<ul>
+<li><code>priority</code> - The priority of the rule. A valid priority
+ranges from 0 to 4294967295. Higher number means lower priority.</li>
+<li><code>action</code> - The action of the rule. The possible values
+are <code>to-table</code> (default), <code>blackhole</code>,
+<code>prohibit</code>, <code>unreachable</code>.</li>
+<li><code>dport</code>- The range of the destination port (e.g.
+<code>1000 - 2000</code>). A valid dport value for both start and end
+ranges from 0 to 65534. And the start cannot be greater than the
+end.</li>
+<li><code>family</code> - The IP family of the rule. The possible values
+are <code>ipv4</code> and <code>ipv6</code>.</li>
+<li><code>from</code> - The source address of the packet to match (e.g.
+<code>192.168.100.58/24</code>).</li>
+<li><code>fwmark</code> - The fwmark value of the packet to match.</li>
+<li><code>fwmask</code> - The fwmask value of the packet to match.</li>
+<li><code>iif</code> - Select the incoming interface name to match.</li>
+<li><code>invert</code> - Invert the selected match of the rule. The
+possible values are boolean values <code>true</code> and
+<code>false</code> (default). If the value is <code>true</code>, this is
+equivalent to match any packet that not satisfying selected match of the
+rule.</li>
+<li><code>ipproto</code> - Select the IP protocol value to match, the
+valid value ranges from 1 to 255.</li>
+<li><code>oif</code> - Select the outgoing interface name to match.</li>
+<li><code>sport</code> - The range of the source port (e.g.
+<code>1000 - 2000</code>). A valid sport value for both start and end
+ranges from 0 to 65534. And the start cannot be greater than the
+end.</li>
+<li><code>suppress_prefixlength</code> - Reject routing decisions that
+have a prefix length of the specified or less.</li>
+<li><code>table</code> - The route table to look up for the
+<code>to-table</code> action. <code>table</code> supports both the
+numeric table and named table. In order to specify the named table, the
+users have to ensure the named table is properly defined in
+<code>/etc/iproute2/rt_tables</code> or
+<code>/etc/iproute2/rt_tables.d/*.conf</code>.</li>
+<li><code>to</code> - The destination address of the packet to match
+(e.g. <code>192.168.100.58/24</code>).</li>
+<li><code>tos</code> - Select the tos value to match.</li>
+<li><code>uid</code> - The range of the uid to match (e.g.
+<code>1000 - 2000</code>). A valid uid value for both start and end
+ranges from 0 to 4294967295. And the start cannot be greater than the
+end.</li>
+</ul></li>
+<li><p><code>route_append_only</code></p>
+<p>The <code>route_append_only</code> option allows only to add new
+routes to the existing routes on the system.</p>
+<p>If the <code>route_append_only</code> boolean option is set to
+<code>true</code>, the specified routes are appended to the existing
+routes. If <code>route_append_only</code> is set to <code>false</code>
+(default), the current routes are replaced. Note that setting
+<code>route_append_only</code> to <code>true</code> without setting
+<code>route</code> has the effect of preserving the current static
+routes.</p></li>
+<li><p><code>rule_append_only</code></p>
+<p>The <code>rule_append_only</code> boolean option allows to preserve
+the current routing rules. Note that specifying routing rules is not
+supported yet.</p></li>
+</ul>
+<p><strong>Note:</strong> When <code>route_append_only</code> or
+<code>rule_append_only</code> is not specified, the network role deletes
+the current routes or routing rules.</p>
+<p><strong>Note:</strong> Ports to the bridge, bond or team devices
+cannot specify <code>ip</code> settings.</p>
+<h2 id="ethtool"><code>ethtool</code></h2>
+<p>The ethtool settings allow to enable or disable various features. The
+names correspond to the names used by the <code>ethtool</code> utility.
+Depending on the actual kernel and device, changing some options might
+not be supported.</p>
+<p>The ethtool configuration supports the following options:</p>
+<ul>
+<li><p><code>ring</code></p>
+<p>Changes the <code>rx</code>/<code>tx</code> <code>ring</code>
+parameters of the specified network device. The list of supported
+<code>ring</code> parameters is:</p>
+<ul>
+<li><code>rx</code> - Changes the number of ring entries for the Rx
+ring.</li>
+<li><code>rx-jumbo</code> - Changes the number of ring entries for the
+Rx Jumbo ring.</li>
+<li><code>rx-mini</code> - Changes the number of ring entries for the Rx
+Mini ring.</li>
+<li><code>tx</code> - Changes the number of ring entries for the Tx
+ring.</li>
+</ul></li>
+</ul>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">ethtool</span><span class="kw">:</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">features</span><span class="kw">:</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">esp_hw_offload</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">esp_tx_csum_hw_offload</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">fcoe_mtu</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">gro</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">gso</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">highdma</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">hw_tc_offload</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">l2_fwd_offload</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">loopback</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">lro</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ntuple</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_all</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_fcs</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_gro_hw</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_udp_tunnel_port_offload</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_vlan_filter</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_vlan_stag_filter</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_vlan_stag_hw_parse</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rxhash</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rxvlan</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">sg</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tls_hw_record</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tls_hw_tx_offload</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tso</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_checksum_fcoe_crc</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_checksum_ip_generic</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_checksum_ipv4</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_checksum_ipv6</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_checksum_sctp</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_esp_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_fcoe_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_gre_csum_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_gre_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_gso_partial</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_gso_robust</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_ipxip4_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_ipxip6_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_nocache_copy</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_scatter_gather</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_scatter_gather_fraglist</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_sctp_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_tcp_ecn_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_tcp_mangleid_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_tcp_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_tcp6_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_udp_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_udp_tnl_csum_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_udp_tnl_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_vlan_stag_hw_insert</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">txvlan</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">coalesce</span><span class="kw">:</span></span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">adaptive_rx</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">adaptive_tx</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">pkt_rate_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">pkt_rate_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">sample_interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">stats_block_usecs</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ring</span><span class="kw">:</span></span>
+<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_jumbo</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_mini</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span></code></pre></div>
+<h2 id="ieee802_1x"><code>ieee802_1x</code></h2>
+<p>Configures 802.1x authentication for an interface.</p>
+<p>Currently, NetworkManager is the only supported provider and EAP-TLS
+is the only supported EAP method.</p>
+<p>SSL certificates and keys must be deployed on the host prior to
+running the role.</p>
+<ul>
+<li><p><code>eap</code></p>
+<p>The allowed EAP method to be used when authenticating to the network
+with 802.1x.</p>
+<p>Currently, <code>tls</code> is the default and the only accepted
+value.</p></li>
+<li><p><code>identity</code> (required)</p>
+<p>Identity string for EAP authentication methods.</p></li>
+<li><p><code>private_key</code> (required)</p>
+<p>Absolute path to the client's PEM or PKCS#12 encoded private key used
+for 802.1x authentication.</p></li>
+<li><p><code>private_key_password</code></p>
+<p>Password to the private key specified in
+<code>private_key</code>.</p></li>
+<li><p><code>private_key_password_flags</code></p>
+<p>List of flags to configure how the private key password is
+managed.</p>
+<p>Multiple flags may be specified.</p>
+<p>Valid flags are:</p>
+<ul>
+<li><code>none</code></li>
+<li><code>agent-owned</code></li>
+<li><code>not-saved</code></li>
+<li><code>not-required</code></li>
+</ul>
+<p>See NetworkManager documentation on "Secret flag types" more details
+(<code>man 5 nm-settings</code>).</p></li>
+<li><p><code>client_cert</code> (required)</p>
+<p>Absolute path to the client's PEM encoded certificate used for 802.1x
+authentication.</p></li>
+<li><p><code>ca_cert</code></p>
+<p>Absolute path to the PEM encoded certificate authority used to verify
+the EAP server.</p></li>
+<li><p><code>ca_path</code></p>
+<p>Absolute path to directory containing additional pem encoded ca
+certificates used to verify the EAP server. Can be used instead of or in
+addition to ca_cert. Cannot be used if system_ca_certs is
+enabled.</p></li>
+<li><p><code>system_ca_certs</code></p>
+<p>If set to <code>true</code>, NetworkManager will use the system's
+trusted ca certificates to verify the EAP server.</p></li>
+<li><p><code>domain_suffix_match</code></p>
+<p>If set, NetworkManager will ensure the domain name of the EAP server
+certificate matches this string.</p></li>
+</ul>
+<h2 id="bond"><code>bond</code></h2>
+<p>The <code>bond</code> setting configures the options of bonded
+interfaces (type <code>bond</code>). See the <a
+href="https://www.kernel.org/doc/Documentation/networking/bonding.txt">kernel
+documentation for bonding</a> or your distribution <code>nmcli</code>
+documentation for valid values. It supports the following options:</p>
+<ul>
+<li><p><code>mode</code></p>
+<p>Bonding mode. The possible values are <code>balance-rr</code>
+(default), <code>active-backup</code>, <code>balance-xor</code>,
+<code>broadcast</code>, <code>802.3ad</code>, <code>balance-tlb</code>,
+or <code>balance-alb</code>.</p></li>
+<li><p><code>ad_actor_sys_prio</code></p>
+<p>In <code>802.3ad</code> bonding mode, this specifies the system
+priority. The valid range is 1 - 65535.</p></li>
+<li><p><code>ad_actor_system</code></p>
+<p>In <code>802.3ad</code> bonding mode, this specifies the system
+mac-address for the actor in protocol packet exchanges
+(LACPDUs).</p></li>
+<li><p><code>ad_select</code></p>
+<p>This option specifies the 802.3ad aggregation selection logic to use.
+The possible values are: <code>stable</code>, <code>bandwidth</code>,
+<code>count</code>.</p></li>
+<li><p><code>ad_user_port_key</code></p>
+<p>In <code>802.3ad</code> bonding mode, this defines the upper 10 bits
+of the port key. The allowed range for the value is 0 - 1023.</p></li>
+<li><p><code>all_ports_active</code></p>
+<p><code>all_slaves_active</code> &lt;!--- wokeignore:rule=slave ---&gt;
+in kernel and NetworkManager. The boolean value <code>false</code> drops
+the duplicate frames (received on inactive ports) and the boolean value
+<code>true</code> delivers the duplicate frames.</p></li>
+<li><p><code>arp_all_targets</code></p>
+<p>This option specifies the quantity of arp_ip_targets that must be
+reachable in order for the ARP monitor to consider a port as being up.
+The possible values are <code>any</code> or <code>all</code>.</p></li>
+<li><p><code>arp_interval</code></p>
+<p>This option specifies the ARP link monitoring frequency in
+milliseconds. A value of 0 disables ARP monitoring.</p></li>
+<li><p><code>arp_validate</code></p>
+<p>In any mode that supports arp monitoring, this option specifies
+whether or not ARP probes and replies should be validated. Or for link
+monitoring purposes, whether non-ARP traffic should be filtered
+(disregarded). The possible values are: <code>none</code>,
+<code>active</code>, <code>backup</code>, <code>all</code>,
+<code>filter</code>, <code>filter_active</code>,
+<code>filter_backup</code>.</p></li>
+<li><p><code>arp_ip_target</code></p>
+<p>When <code>arp_interval</code> is enabled, this option specifies the
+IP addresses to use as ARP monitoring peers.</p></li>
+<li><p><code>downdelay</code></p>
+<p>The time to wait (in milliseconds) before disabling a port after a
+link failure has been detected.</p></li>
+<li><p><code>fail_over_mac</code></p>
+<p>This option specifies the policy to select the MAC address for the
+bond interface in active-backup mode. The possible values are:
+<code>none</code> (default), <code>active</code>,
+<code>follow</code>.</p></li>
+<li><p><code>lacp_rate</code></p>
+<p>In <code>802.3ad</code> bonding mode, this option defines the rate in
+which we requst link partner to transmit LACPDU packets. The possible
+values are: <code>slow</code>, <code>fast</code>.</p></li>
+<li><p><code>lp_interval</code></p>
+<p>This option specifies the number of seconds between instances where
+the bonding driver sends learning packets to each ports peer
+switch.</p></li>
+<li><p><code>miimon</code></p>
+<p>Sets the MII link monitoring interval (in milliseconds).</p></li>
+<li><p><code>min_links</code></p>
+<p>This option specifies the minimum number of links that must be active
+before asserting the carrier.</p></li>
+<li><p><code>num_grat_arp</code></p>
+<p>This option specify the number of peer notifications (gratuitious
+ARPs) to be issued after a failover event. The allowed range for the
+value is 0 - 255.</p></li>
+<li><p><code>packets_per_port</code></p>
+<p>In <code>balance-rr</code> bonding mode, this option specifies the
+number of packets allowed for a port in network transmission before
+moving to the next one. The allowed range for the value is 0 -
+65535.</p></li>
+<li><p><code>peer_notif_delay</code></p>
+<p>This option specifies the delay (in milliseconds) between each peer
+notification when they are issued after a failover event.</p></li>
+<li><p><code>primary</code></p>
+<p>This option defines the primary device.</p></li>
+<li><p><code>primary_reselect</code></p>
+<p>This option specifies the reselection policy for the primary port.
+The possible values are: <code>always</code>, <code>better</code>,
+<code>failure</code>.</p></li>
+<li><p><code>resend_igmp</code></p>
+<p>This option specifies the number of IGMP membership reports to be
+issued after a failover event. The allowed range for the value is 0 -
+255.</p></li>
+<li><p><code>tlb_dynamic_lb</code></p>
+<p>This option specifies if dynamic shuffling of flows is enabled in tlb
+mode. The boolean value <code>true</code> enables the flow shuffling
+while the boolean value <code>false</code> disables it.</p></li>
+<li><p><code>updelay</code></p>
+<p>This option specifies the time (in milliseconds) to wait before
+enabling a port after a link recovery has been detected.</p></li>
+<li><p><code>use_carrier</code></p>
+<p>This options specifies whether or not miimon should use MII or
+ETHTOOL ioctls versus netif_carrier_ok() to determine the link sattus.
+The boolean value <code>true</code> enables the use of
+netif_carrier_ok() while the boolean value <code>false</code> uses MII
+or ETHTOOL ioctls instead.</p></li>
+<li><p><code>xmit_hash_policy</code></p>
+<p>This option specifies the transmit hash policy to use for port
+selection, the possible values are: <code>layer2</code>,
+<code>layer3+4</code>, <code>layer2+3</code>, <code>encap2+3</code>,
+<code>encap3+4</code>, <code>vlan+srcmac</code>.</p></li>
+</ul>
+<h1 id="examples-of-options">Examples of Options</h1>
+<p>Setting the same connection profile multiple times:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Wired0</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interface_name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dhcp4</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Wired0</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> up</span></span></code></pre></div>
+<p>Activating a preexisting connection profile:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> up</span></span></code></pre></div>
+<p>Deactivating a preexisting connection profile:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> down</span></span></code></pre></div>
+<p>Creating a persistent connection profile:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co">    #persistent_state: present  # default</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">autoconnect</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">mac</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;00:00:5e:00:53:5d&quot;</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dhcp4</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span></code></pre></div>
+<p>Specifying a connecting profile for an ethernet device with the
+<code>ID_PATH</code>:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co">    # For PCI devices, the path has the form &quot;pci-$domain:$bus:$device.$function&quot;</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co">    # The profile will only match the interface at the PCI address pci-0000:00:03.0</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">match</span><span class="kw">:</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">path</span><span class="kw">:</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> pci-0000:00:03.0</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 192.0.2.3/24</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">    # Specifying a connecting profile for an ethernet device only with the PCI address</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">    # pci-0000:00:01.0 or pci-0000:00:03.0</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">match</span><span class="kw">:</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">path</span><span class="kw">:</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> pci-0000:00:0[1-3].0</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="ot">&amp;!pci-0000:00:02.0</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 192.0.2.3/24</span></span></code></pre></div>
+<p>Deleting a connection profile named <code>eth0</code> (if it
+exists):</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">persistent_state</span><span class="kw">:</span><span class="at"> absent</span></span></code></pre></div>
+<p>Configuring the Ethernet link settings:</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ethernet</span><span class="kw">:</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">autoneg</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">speed</span><span class="kw">:</span><span class="at"> </span><span class="dv">1000</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">duplex</span><span class="kw">:</span><span class="at"> full</span></span></code></pre></div>
+<p>Creating a bridge connection:</p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> br0</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> bridge</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co">    #interface_name: br0  # defaults to the connection name</span></span></code></pre></div>
+<p>Configuring a bridge connection:</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> internal-br0</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interface_name</span><span class="kw">:</span><span class="at"> br0</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> bridge</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dhcp4</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">auto6</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span></code></pre></div>
+<p>Setting <code>controller</code> and <code>port_type</code>:</p>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> br0-bond0</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> bond</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interface_name</span><span class="kw">:</span><span class="at"> bond0</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">controller</span><span class="kw">:</span><span class="at"> internal-br0</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">port_type</span><span class="kw">:</span><span class="at"> bridge</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> br0-bond0-eth1</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interface_name</span><span class="kw">:</span><span class="at"> eth1</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">controller</span><span class="kw">:</span><span class="at"> br0-bond0</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">port_type</span><span class="kw">:</span><span class="at"> bond</span></span></code></pre></div>
+<p>Configuring VLANs:</p>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth1-profile</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">autoconnect</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interface_name</span><span class="kw">:</span><span class="at"> eth1</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dhcp4</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">auto6</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth1.6</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">autoconnect</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> vlan</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">parent</span><span class="kw">:</span><span class="at"> eth1-profile</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">vlan</span><span class="kw">:</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">id</span><span class="kw">:</span><span class="at"> </span><span class="dv">6</span></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 192.0.2.5/24</span></span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">auto6</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span></code></pre></div>
+<p>Configuring MACVLAN:</p>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0-profile</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interface_name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 192.168.0.1/24</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> veth0</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> macvlan</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">parent</span><span class="kw">:</span><span class="at"> eth0-profile</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">macvlan</span><span class="kw">:</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">mode</span><span class="kw">:</span><span class="at"> bridge</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">promiscuous</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tap</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 192.168.1.1/24</span></span></code></pre></div>
+<p>Configuring a wireless connection:</p>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> wlan0</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> wireless</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">wireless</span><span class="kw">:</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ssid</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;My WPA2-PSK Network&quot;</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">key_mgmt</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;wpa-psk&quot;</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co">      # recommend vault encrypting the wireless password</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co">      # see https://docs.ansible.com/ansible/latest/user_guide/vault.html</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">password</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;p@55w0rD&quot;</span></span></code></pre></div>
+<p>Setting the IP configuration:</p>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">route_metric4</span><span class="kw">:</span><span class="at"> </span><span class="dv">100</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dhcp4</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="co">      #dhcp4_send_hostname: false</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">gateway4</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.0.2.1</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dns</span><span class="kw">:</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fl">192.0.2.2</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fl">198.51.100.5</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dns_search</span><span class="kw">:</span></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> example.com</span></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> subdomain.example.com</span></span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dns_options</span><span class="kw">:</span></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> rotate</span></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> timeout:1</span></span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">route_metric6</span><span class="kw">:</span><span class="at"> </span><span class="dv">-1</span></span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">auto6</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">gateway6</span><span class="kw">:</span><span class="at"> 2001:db8::1</span></span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 192.0.2.3/24</span></span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 198.51.100.3/26</span></span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 2001:db8::80/7</span></span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">route</span><span class="kw">:</span></span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">network</span><span class="kw">:</span><span class="at"> </span><span class="fl">198.51.100.128</span></span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">prefix</span><span class="kw">:</span><span class="at"> </span><span class="dv">26</span></span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">gateway</span><span class="kw">:</span><span class="at"> </span><span class="fl">198.51.100.1</span></span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">metric</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
+<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">network</span><span class="kw">:</span><span class="at"> </span><span class="fl">198.51.100.64</span></span>
+<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">prefix</span><span class="kw">:</span><span class="at"> </span><span class="dv">26</span></span>
+<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">gateway</span><span class="kw">:</span><span class="at"> </span><span class="fl">198.51.100.6</span></span>
+<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">metric</span><span class="kw">:</span><span class="at"> </span><span class="dv">4</span></span>
+<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">route_append_only</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rule_append_only</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span></code></pre></div>
+<p>Configuring 802.1x:</p>
+<div class="sourceCode" id="cb20"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ieee802_1x</span><span class="kw">:</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">identity</span><span class="kw">:</span><span class="at"> myhost</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">eap</span><span class="kw">:</span><span class="at"> tls</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">private_key</span><span class="kw">:</span><span class="at"> /etc/pki/tls/client.key</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="co">      # recommend vault encrypting the private key password</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="co">      # see https://docs.ansible.com/ansible/latest/user_guide/vault.html</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">private_key_password</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;p@55w0rD&quot;</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">client_cert</span><span class="kw">:</span><span class="at"> /etc/pki/tls/client.pem</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ca_cert</span><span class="kw">:</span><span class="at"> /etc/pki/tls/cacert.pem</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">domain_suffix_match</span><span class="kw">:</span><span class="at"> example.com</span></span></code></pre></div>
+<p>Configuring Enhanced Open(OWE):</p>
+<div class="sourceCode" id="cb21"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> wlan0</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> wireless</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">wireless</span><span class="kw">:</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ssid</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;WIFI_SSID&quot;</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">key_mgmt</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;owe&quot;</span></span></code></pre></div>
+<h1 id="examples-of-applying-the-network-state-configuration">Examples
+of Applying the Network State Configuration</h1>
+<p>Configuring the IP addresses:</p>
+<div class="sourceCode" id="cb22"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_state</span><span class="kw">:</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">interfaces</span><span class="kw">:</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> ethtest0</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">state</span><span class="kw">:</span><span class="at"> up</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ipv4</span><span class="kw">:</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.168.122.250</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">prefix-length</span><span class="kw">:</span><span class="at"> </span><span class="dv">24</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dhcp</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ipv6</span><span class="kw">:</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> 2001:db8::1:1</span></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">prefix-length</span><span class="kw">:</span><span class="at"> </span><span class="dv">64</span></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">autoconf</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dhcp</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> ethtest1</span></span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">state</span><span class="kw">:</span><span class="at"> up</span></span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ipv4</span><span class="kw">:</span></span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.168.100.192</span></span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">prefix-length</span><span class="kw">:</span><span class="at"> </span><span class="dv">24</span></span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">auto-dns</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dhcp</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ipv6</span><span class="kw">:</span></span>
+<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> 2001:db8::2:1</span></span>
+<span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">prefix-length</span><span class="kw">:</span><span class="at"> </span><span class="dv">64</span></span>
+<span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">autoconf</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb22-35"><a href="#cb22-35" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dhcp</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span></code></pre></div>
+<p>Configuring the route:</p>
+<div class="sourceCode" id="cb23"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_state</span><span class="kw">:</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">interfaces</span><span class="kw">:</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth1</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">state</span><span class="kw">:</span><span class="at"> up</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ipv4</span><span class="kw">:</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.0.2.251</span></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">prefix-length</span><span class="kw">:</span><span class="at"> </span><span class="dv">24</span></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dhcp</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">routes</span><span class="kw">:</span></span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">config</span><span class="kw">:</span></span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">destination</span><span class="kw">:</span><span class="at"> 198.51.100.0/24</span></span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">metric</span><span class="kw">:</span><span class="at"> </span><span class="dv">150</span></span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">next-hop-address</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.0.2.251</span></span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">next-hop-interface</span><span class="kw">:</span><span class="at"> eth1</span></span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">table-id</span><span class="kw">:</span><span class="at"> </span><span class="dv">254</span></span></code></pre></div>
+<p>Configuring the DNS search and server:</p>
+<div class="sourceCode" id="cb24"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_state</span><span class="kw">:</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">dns-resolver</span><span class="kw">:</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">config</span><span class="kw">:</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">search</span><span class="kw">:</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> example.com</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> example.org</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">server</span><span class="kw">:</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 2001:4860:4860::8888</span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fl">8.8.8.8</span></span></code></pre></div>
+<h2 id="invalid-and-wrong-configuration">Invalid and Wrong
+Configuration</h2>
+<p>The <code>network</code> role rejects invalid configurations. It is
+recommended to test the role with <code>--check</code> first. There is
+no protection against wrong (but valid) configuration. Double-check your
+configuration before applying it.</p>
+<h1 id="compatibility">Compatibility</h1>
+<p>The <code>network</code> role supports the same configuration scheme
+for both providers (<code>nm</code> and <code>initscripts</code>). That
+means, you can use the same playbook with NetworkManager and
+initscripts. However, note that not every option is handled exactly the
+same by every provider. Do a test run first with
+<code>--check</code>.</p>
+<p>It is not supported to create a configuration for one provider, and
+expect another provider to handle them. For example, creating profiles
+with the <code>initscripts</code> provider, and later enabling
+NetworkManager is not guaranteed to work automatically. Possibly, you
+have to adjust the configuration so that it can be used by another
+provider.</p>
+<p>For example, configuring a RHEL6 host with initscripts and upgrading
+to RHEL7 while continuing to use initscripts in RHEL7 is an acceptable
+scenario. What is not guaranteed is to upgrade to RHEL7, disable
+initscripts and expect NetworkManager to take over the configuration
+automatically.</p>
+<p>Depending on NetworkManager's configuration, connections may be
+stored as ifcfg files as well, but it is not guaranteed that plain
+initscripts can handle these ifcfg files after disabling the
+NetworkManager service.</p>
+<h1 id="limitations">Limitations</h1>
+<p>As Ansible usually works via the network, for example via SSH, there
+are some limitations to be considered:</p>
+<p>The <code>network</code> role does not support bootstraping
+networking configuration. One option may be <a
+href="https://docs.ansible.com/ansible/latest/cli/ansible-pull.html">ansible-pull</a>.
+Another option maybe be to initially auto-configure the host during
+installation (ISO based, kickstart, etc.), so that the host is connected
+to a management LAN or VLAN. It strongly depends on your
+environment.</p>
+<p>For <code>initscripts</code> provider, deploying a profile merely
+means to create the ifcfg files. Nothing happens automatically until the
+play issues <code>ifup</code> or <code>ifdown</code> via the
+<code>up</code> or <code>down</code> <a href="#state">states</a> --
+unless there are other components that rely on the ifcfg files and react
+on changes.</p>
+<p>The <code>initscripts</code> provider requires the different profiles
+to be in the right order when they depend on each other. For example the
+bonding controller device needs to be specified before the port
+devices.</p>
+<p>When removing a profile for NetworkManager it also takes the
+connection down and possibly removes virtual interfaces. With the
+<code>initscripts</code> provider removing a profile does not change its
+current runtime state (this is a future feature for NetworkManager as
+well).</p>
+<p>For NetworkManager, modifying a connection with autoconnect enabled
+may result in the activation of a new profile on a previously
+disconnected interface. Also, deleting a NetworkManager connection that
+is currently active results in removing the interface. Therefore, the
+order of the steps should be followed, and carefully handling of <a
+href="#autoconnect">autoconnect</a> property may be necessary. This
+should be improved in NetworkManager RFE <a
+href="https://bugzilla.redhat.com/show_bug.cgi?id=1401515">rh#1401515</a>.</p>
+<p>It seems difficult to change networking of the target host in a way
+that breaks the current SSH connection of ansible. If you want to do
+that, ansible-pull might be a solution. Alternatively, a combination of
+<code>async</code>/<code>poll</code> with changing the
+<code>ansible_host</code> midway of the play.</p>
+<p><strong>TODO</strong> The current role does not yet support to easily
+split the play in a pre-configure step, and a second step to activate
+the new configuration.</p>
+<p>In general, to successfully run the play, determine which
+configuration is active in the first place, and then carefully configure
+a sequence of steps to change to the new configuration. The actual
+solution depends strongly on your environment.</p>
+<h2 id="handling-potential-problems">Handling potential problems</h2>
+<p>When something goes wrong while configuring networking remotely, you
+might need to get physical access to the machine to recover.</p>
+<p><strong>TODO</strong> NetworkManager supports a <a
+href="https://developer.gnome.org/NetworkManager/stable/gdbus-org.freedesktop.NetworkManager.html#gdbus-method-org-freedesktop-NetworkManager.CheckpointCreate">checkpoint/rollback</a>
+feature. At the beginning of the play we could create a checkpoint and
+if we lose connectivity due to an error, NetworkManager would
+automatically rollback after timeout. The limitations is that this would
+only work with NetworkManager, and it is not clear that rollback will
+result in a working configuration.</p>
+<p><em>Want to contribute? Take a look at our <a
+href="https://github.com/linux-system-roles/network/blob/main/contributing.md">contributing
+guidelines</a>!</em></p>
+</article>
+</body>
+</html>
