@@ -20,22 +20,28 @@ This role can be used to configure:
 ## Introduction
 
 The  `network` role supports two providers: `nm` and `initscripts`. `nm` is
-used by default in RHEL7 and `initscripts` in RHEL6. These providers can be
-configured per host via the [`network_provider`](#variables) variable. In
-absence of explicit configuration, it is autodetected based on the
-distribution. However, note that either `nm` or `initscripts` is not tied to a certain
-distribution. The `network` role works everywhere the required API is available.
-This means that `nm` requires at least NetworkManager's API version 1.2 available.
-For `initscripts`, the legacy network service is required as used in Fedora or RHEL.
+used by default since RHEL7 and `initscripts` in RHEL6. The `initscripts` provider
+requires `network-scripts` package which is deprecated in RHEL8 and dropped in
+RHEL9. These providers can be configured per host via the
+[`network_provider`](#variables) variable. In absence of explicit configuration, it is
+autodetected based on the distribution. However, note that either `nm` or `initscripts`
+is not tied to a certain distribution. The `network` role works everywhere the required
+API is available. This means that `nm` requires at least NetworkManager's API version 1.2
+available and certain settings supported by `nm` provider also requires higher
+NetworkManager's API version since which the settings are introduced.
+
+The `network` role supports two modules: `network_connections` and `network_state`.
 
 For each host a list of networking profiles can be configured via the
 `network_connections` variable.
 
 - For `initscripts`, profiles correspond to ifcfg files in the
-  `/etc/sysconfig/network-scripts/` directory.
+  `/etc/sysconfig/network-scripts/` directory and those ifcfg files
+  has the line `NM_CONTROLLED=no` written.
 
-- For `nm`, profiles correspond to connection profiles as handled by
-  NetworkManager.
+- For `nm`, profiles correspond to connection profiles are handled by
+  NetworkManager and only NetworkManager keyfile format profiles are
+  supported in `/etc/NetworkManager/system-connections/` since RHEL9.
 
 For each host the network state configuration can also be applied to the interface
 directly via the `network_state` variable, and only the `nm` provider supports using
@@ -239,6 +245,7 @@ The `type` option can be set to the following values:
 - `macvlan`
 - `infiniband`
 - `wireless`
+- `dummy`
 
 #### `type: ethernet`
 
@@ -259,7 +266,8 @@ The `bridge`, `bond`, `team` device types work similar. Note that `team` is not
 supported in RHEL6 kernels, and has been deprecated in RHEL 9.
 
 For ports, the `port_type` and `controller` properties must be set. Note that ports
-should not have `ip` settings.
+should not have `ip` settings, which means that the active ports will not have IP
+addresses assigned.
 
 The `controller` refers to the `name` of a profile in the Ansible
 playbook. It is neither an interface-name nor a connection-id of
@@ -332,6 +340,11 @@ The following options are supported:
   - `wpa-psk`
 
 - `password`: password for the network (required if `wpa-psk` or `sae` is used)
+
+#### `type: dummy`
+
+Dummy network interface, `nm` (NetworkManager) is the only supported `network_provider`
+for this type.
 
 ### `autoconnect`
 
@@ -634,7 +647,6 @@ The IP configuration supports the following options:
 - `rule_append_only`
 
   The `rule_append_only` boolean option allows to preserve the current routing rules.
-  Note that specifying routing rules is not supported yet.
 
 **Note:** When `route_append_only` or `rule_append_only` is not specified, the network
 role deletes the current routes or routing rules.
@@ -1332,6 +1344,9 @@ to take over the configuration automatically.
 Depending on NetworkManager's configuration, connections may be stored as ifcfg files
 as well, but it is not guaranteed that plain initscripts can handle these ifcfg files
 after disabling the NetworkManager service.
+
+The `network` role also supports configuring in certain Ansible distributions that the
+role treats like RHEL, such as AlmaLinux, CentOS, OracleLinux, Rocky.
 
 ## Limitations
 
