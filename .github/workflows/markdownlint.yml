@@ -27,8 +27,10 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Lint README.md
+      # CHANGELOG.md is generated automatically from PR titles and descriptions
+      # It might have issues but they are not critical
+      - name: Lint all markdown files except for CHANGELOG.md
         uses: docker://avtodev/markdown-lint:master
         with:
-          args: README.md
+          args: --ignore=CHANGELOG.md **/*.md
           config: .markdownlint.yaml

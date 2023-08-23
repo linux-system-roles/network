@@ -1,10 +1,10 @@
 # yamllint disable rule:line-length
-name: Check for non-inclusive language
+name: Woke
 on:  # yamllint disable-line rule:truthy
   - pull_request
 jobs:
   woke:
-    name: woke
+    name: Detect non-inclusive language
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

@@ -1,8 +1,6 @@
-Contributing to the network Linux System Role
-=============================================
+# Contributing to the network Linux System Role
 
-Where to start
---------------
+## Where to start
 
 The first place to go is [Contribute](https://linux-system-roles.github.io/contribute.html).
 This has all of the common information that all role developers need:
@@ -22,7 +20,7 @@ are likely to be suitable for new contributors!
 **Code** is managed on [Github](https://github.com/linux-system-roles/network), using
 [Pull Requests](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests).
 
-### Python Code
+## Python Code
 
 The Python code needs to be **compatible with the Python versions supported by
 the role platform**.
@@ -53,8 +51,7 @@ to use a non-system python on the managed node, so it is a good idea to ensure
 your code has broad python version compatibility, and do not assume your code
 will only ever be run with the default system python.
 
-Debugging network system role
------------------------------
+## Debugging network system role
 
 When using the `nm` provider, NetworkManager create a checkpoint and reverts the
 changes on failures. This makes it hard to debug the error. To disable this, set
