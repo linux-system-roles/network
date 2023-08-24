@@ -1,18 +1,18 @@
 # yamllint disable rule:line-length
-name: Check for non-inclusive language
+name: Woke
 on:  # yamllint disable-line rule:truthy
   - pull_request
 jobs:
   woke:
-    name: woke
+    name: Detect non-inclusive language
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: custom woke
+      - name: Run lsr-woke-action
         # Originally, uses: get-woke/woke-action@v0
-        uses: ./.github/actions/custom-woke-action
+        uses: linux-system-roles/lsr-woke-action@main
         with:
           woke-args: "-c https://raw.githubusercontent.com/linux-system-roles/tox-lsr/main/src/tox_lsr/config_files/woke.yml --count-only-error-for-failure"
           # Cause the check to fail on any broke rules

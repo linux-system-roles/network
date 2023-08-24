@@ -1,1 +1,0 @@
-I have a whitelist and a blacklist. What should I do about it?
