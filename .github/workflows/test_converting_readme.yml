@@ -28,7 +28,10 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Convert README.md to HTML and save to the version directory
+      - name: Remove badges from README.md prior to converting to HTML
+        run: sed -i '1,8 {/^\[\!.*actions\/workflows/d}' README.md
+
+      - name: Convert README.md to HTML
         uses: docker://pandoc/core:latest
         with:
           args: >-
