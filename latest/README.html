@@ -177,6 +177,8 @@ id="toc-type-macvlan"><code>type: macvlan</code></a></li>
 id="toc-type-infiniband"><code>type: infiniband</code></a></li>
 <li><a href="#type-wireless"
 id="toc-type-wireless"><code>type: wireless</code></a></li>
+<li><a href="#type-dummy"
+id="toc-type-dummy"><code>type: dummy</code></a></li>
 </ul></li>
 <li><a href="#autoconnect"
 id="toc-autoconnect"><code>autoconnect</code></a></li>
@@ -232,24 +234,33 @@ the target machines. This role can be used to configure:</p>
 </ul>
 <h1 id="introduction">Introduction</h1>
 <p>The <code>network</code> role supports two providers: <code>nm</code>
-and <code>initscripts</code>. <code>nm</code> is used by default in
-RHEL7 and <code>initscripts</code> in RHEL6. These providers can be
-configured per host via the <a
+and <code>initscripts</code>. <code>nm</code> is used by default since
+RHEL7 and <code>initscripts</code> in RHEL6. The
+<code>initscripts</code> provider requires <code>network-scripts</code>
+package which is deprecated in RHEL8 and dropped in RHEL9. These
+providers can be configured per host via the <a
 href="#variables"><code>network_provider</code></a> variable. In absence
 of explicit configuration, it is autodetected based on the distribution.
 However, note that either <code>nm</code> or <code>initscripts</code> is
 not tied to a certain distribution. The <code>network</code> role works
 everywhere the required API is available. This means that
 <code>nm</code> requires at least NetworkManager's API version 1.2
-available. For <code>initscripts</code>, the legacy network service is
-required as used in Fedora or RHEL.</p>
+available and certain settings supported by <code>nm</code> provider
+also requires higher NetworkManager's API version since which the
+settings are introduced.</p>
+<p>The <code>network</code> role supports two modules:
+<code>network_connections</code> and <code>network_state</code>.</p>
 <p>For each host a list of networking profiles can be configured via the
 <code>network_connections</code> variable.</p>
 <ul>
 <li><p>For <code>initscripts</code>, profiles correspond to ifcfg files
-in the <code>/etc/sysconfig/network-scripts/</code> directory.</p></li>
+in the <code>/etc/sysconfig/network-scripts/</code> directory and those
+ifcfg files has the line <code>NM_CONTROLLED=no</code> written.</p></li>
 <li><p>For <code>nm</code>, profiles correspond to connection profiles
-as handled by NetworkManager.</p></li>
+are handled by NetworkManager and only NetworkManager keyfile format
+profiles are supported in
+<code>/etc/NetworkManager/system-connections/</code> since
+RHEL9.</p></li>
 </ul>
 <p>For each host the network state configuration can also be applied to
 the interface directly via the <code>network_state</code> variable, and
@@ -462,6 +473,7 @@ or deactivates the connection without changing its configuration.</p>
 <li><code>macvlan</code></li>
 <li><code>infiniband</code></li>
 <li><code>wireless</code></li>
+<li><code>dummy</code></li>
 </ul>
 <h3 id="type-ethernet"><code>type: ethernet</code></h3>
 <p>If the type is <code>ethernet</code>, then there can be an extra
@@ -485,7 +497,8 @@ types work similar. Note that <code>team</code> is not supported in
 RHEL6 kernels, and has been deprecated in RHEL 9.</p>
 <p>For ports, the <code>port_type</code> and <code>controller</code>
 properties must be set. Note that ports should not have <code>ip</code>
-settings.</p>
+settings, which means that the active ports will not have IP addresses
+assigned.</p>
 <p>The <code>controller</code> refers to the <code>name</code> of a
 profile in the Ansible playbook. It is neither an interface-name nor a
 connection-id of NetworkManager.</p>
@@ -557,6 +570,9 @@ href="#ieee802_1x">ieee802_1x</a> option.</p>
 <li><p><code>password</code>: password for the network (required if
 <code>wpa-psk</code> or <code>sae</code> is used)</p></li>
 </ul>
+<h3 id="type-dummy"><code>type: dummy</code></h3>
+<p>Dummy network interface, <code>nm</code> (NetworkManager) is the only
+supported <code>network_provider</code> for this type.</p>
 <h2 id="autoconnect"><code>autoconnect</code></h2>
 <p>By default, profiles are created with autoconnect enabled.</p>
 <ul>
@@ -856,8 +872,7 @@ routes. If <code>route_append_only</code> is set to <code>false</code>
 routes.</p></li>
 <li><p><code>rule_append_only</code></p>
 <p>The <code>rule_append_only</code> boolean option allows to preserve
-the current routing rules. Note that specifying routing rules is not
-supported yet.</p></li>
+the current routing rules.</p></li>
 </ul>
 <p><strong>Note:</strong> When <code>route_append_only</code> or
 <code>rule_append_only</code> is not specified, the network role deletes
@@ -1449,6 +1464,9 @@ automatically.</p>
 stored as ifcfg files as well, but it is not guaranteed that plain
 initscripts can handle these ifcfg files after disabling the
 NetworkManager service.</p>
+<p>The <code>network</code> role also supports configuring in certain
+Ansible distributions that the role treats like RHEL, such as AlmaLinux,
+CentOS, OracleLinux, Rocky.</p>
 <h1 id="limitations">Limitations</h1>
 <p>As Ansible usually works via the network, for example via SSH, there
 are some limitations to be considered:</p>
