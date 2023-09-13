@@ -43,17 +43,8 @@
       nmcli d set testbr managed false
     fi
     ip link set testbr up
-    timer=0
-    # The while loop following is a workaround for the NM bug, which can be
-    # tracked in https://bugzilla.redhat.com/show_bug.cgi?id=2079642
-    while ! ip addr show testbr | grep -q 'inet [1-9]'
-    do
-        let "timer+=1"
-        if [ $timer -eq 30 ]; then break; fi
-        sleep 1
-        ip addr add 192.0.2.1/24 dev testbr
-        ip -6 addr add 2001:DB8::1/32 dev testbr
-    done
+    ip addr add 192.0.2.1/24 dev testbr
+    ip -6 addr add 2001:DB8::1/32 dev testbr
 
     if grep 'release 6' /etc/redhat-release; then
         # We need bridge-utils and radvd only in rhel6
