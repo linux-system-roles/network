@@ -2,6 +2,9 @@
 ---
 - name: Play for testing infiniband device
   hosts: all
+  vars:
+    interface: "{{ lookup('env', 'INFINIBAND_INTERFACE_NAME') |
+      default('ib0', true) }}"
   tags:
     - "tests::infiniband"
   tasks:
@@ -15,17 +18,17 @@
             name: linux-system-roles.network
           vars:
             network_connections:
-              - name: ib0
+              - name: "{{ interface }}"
                 type: infiniband
-                interface_name: ib0
+                interface_name: "{{ interface }}"
 
-              - name: ib0-10
+              - name: "{{ interface }}-10"
                 type: infiniband
                 autoconnect: true
                 infiniband:
                   p_key: 10
                   transport_mode: datagram
-                parent: ib0
+                parent: "{{ interface }}"
                 state: up
                 ip:
                   dhcp4: false
@@ -34,23 +37,23 @@
                     - 198.51.100.133/30
                     - 2001:db8::2/32
 
-        - name: Get the details for the virtual device ib0.000a
-          command: ip -d a s ib0.000a
+        - name: Get the details for the virtual device
+          command: ip -d a s {{ interface }}.000a
           register: virtual_device_setting
           ignore_errors: true
           changed_when: false
 
         - name: Assert that the settings in the virtual device
-            ib0.000a match the specified settings
+            match the specified settings
           assert:
             that:
               - virtual_device_setting.stdout is search("ipoib pkey 0x800a mode
                 datagram")
-            msg: the settings in the virtual device ib0.000a
+            msg: the settings in the virtual device
               match the specified settings
 
         - name: "** TEST check IPv4"
-          command: ip -4 a s ib0.000a
+          command: ip -4 a s {{ interface }}.000a
           register: result
           until: "'198.51.100.133/30' in result.stdout"
           retries: 20
@@ -58,7 +61,7 @@
           changed_when: false
 
         - name: "** TEST check IPv6"
-          command: ip -6 a s ib0.000a
+          command: ip -6 a s {{ interface }}.000a
           register: result
           until: "'2001:db8::2/32' in result.stdout"
           retries: 20
@@ -75,14 +78,14 @@
                 name: linux-system-roles.network
               vars:
                 network_connections:
-                  - name: ib0
+                  - name: "{{ interface }}"
                     persistent_state: absent
                     state: down
-                  - name: ib0-10
+                  - name: "{{ interface }}-10"
                     persistent_state: absent
                     state: down
               failed_when: false
-            - name: Delete the device 'ib0.000a'
-              command: ip link del ib0.000a
+            - name: Delete the virtual device
+              command: ip link del {{ interface }}.000a
               failed_when: false
               changed_when: false
