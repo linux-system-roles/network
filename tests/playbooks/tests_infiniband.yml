@@ -49,7 +49,7 @@
             that:
               - virtual_device_setting.stdout is search("ipoib pkey 0x800a mode
                 datagram")
-            msg: the settings in the virtual device
+            msg: the settings in the virtual device do not
               match the specified settings
 
         - name: "** TEST check IPv4"
