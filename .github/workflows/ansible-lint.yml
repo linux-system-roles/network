@@ -24,7 +24,7 @@ jobs:
           sudo apt install -y git
 
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Fix up role meta/main.yml namespace and name
         run: |

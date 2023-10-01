@@ -30,7 +30,7 @@ jobs:
           sudo apt install -y git
 
       - name: Checkout latest code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Create and push empty commit
