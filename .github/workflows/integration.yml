@@ -24,7 +24,7 @@ jobs:
           - os: "c9s"
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Run tests
         run: sudo .github/run_test.sh --os ${{ matrix.os }}
