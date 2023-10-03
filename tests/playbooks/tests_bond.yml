@@ -2,8 +2,6 @@
 ---
 - name: Play for testing bond connection
   hosts: all
-  tags:
-    - tests::expfail
   vars:
     controller_profile: bond0
     controller_device: nm-bond
