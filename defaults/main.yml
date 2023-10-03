@@ -86,6 +86,12 @@ __network_packages_default_initscripts_network_scripts: ["{%
 if ansible_distribution in __network_rh_distros and
     ansible_distribution_major_version is version('7', '<=')
 %}initscripts{% else %}network-scripts{% endif %}"]
+# Initscripts provider requires `/sbin/dhclient` to obtain DHCP address,
+# which is provided by the dhcp client package
+__network_packages_default_initscripts_dhcp_client: ["{%
+if ansible_distribution in __network_rh_distros and
+    ansible_distribution_major_version is version('7', '<=')
+%}dhclient{% else %}dhcp-client{% endif %}"]
 # convert _network_packages_default_initscripts_bridge to an empty list if it
 # contains only the empty string and add it to the default package list
 # |select() filters the list to include only values that evaluate to true
@@ -94,6 +100,7 @@ if ansible_distribution in __network_rh_distros and
 __network_packages_default_initscripts: "{{
 __network_packages_default_initscripts_bridge | select() | list()
 + __network_packages_default_initscripts_network_scripts | select() | list()
++ __network_packages_default_initscripts_dhcp_client | select() | list()
 }}"
 
 
