@@ -21,6 +21,12 @@
       retries: 6
       delay: 10
 
+    - name: Install yum-utils package
+      package:
+        state: present
+        name: yum-utils
+      when: ansible_distribution_major_version == '7'
+
     - name: Enable EPEL 7
       command: yum-config-manager --enable epel
       when: ansible_distribution_major_version == '7'
