@@ -7,7 +7,7 @@ on:  # yamllint disable-line rule:truthy
     - cron: 0 12 * * 6
 env:
   BRANCH_NAME: weekly-ci
-  COMMIT_MESSAGE: This PR is to trigger periodic CI testing
+  COMMIT_MESSAGE: "ci: This PR is to trigger periodic CI testing"
   BODY_MESSAGE: >-
     This PR is for the purpose of triggering periodic CI testing.
     We don't currently have a way to trigger CI without a PR,
@@ -41,6 +41,11 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout ${{ env.BRANCH_NAME }} || git checkout -b ${{ env.BRANCH_NAME }}
           git rebase main
+          if [ ! -d tests/callback_plugins ]; then
+            mkdir -p tests/callback_plugins
+          fi
+          curl -L -s -o tests/callback_plugins/dump_packages.py https://raw.githubusercontent.com/linux-system-roles/auto-maintenance/main/callback_plugins/dump_packages.py
+          git add tests/callback_plugins
           git commit --allow-empty -m "${{ env.COMMIT_MESSAGE }}"
           git push -f --set-upstream origin ${{ env.BRANCH_NAME }}
 
