@@ -41,8 +41,19 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_ok(self, result):
         fields = result._task_fields
         if fields["action"] == "package" and fields["args"].get("state") != "absent":
-            if isinstance(fields["args"]["name"], list):
-                packages = " ".join(fields["args"]["name"])
-            else:
-                packages = fields["args"]["name"]
-            self._display.display("lsrpackages: " + packages)
+            packages = set()
+            if "invocation" in result._result:
+                results = [result._result]
+            elif "results" in result._result and isinstance(
+                result._result["results"], list
+            ):
+                results = result._result["results"]
+            for item in results:
+                pkgs = item["invocation"]["module_args"]["name"]
+                if isinstance(pkgs, list):
+                    for ii in pkgs:
+                        packages.add(ii)
+                else:
+                    packages.add(pkgs)
+
+            self._display.display("lsrpackages: " + " ".join(sorted(list(packages))))
