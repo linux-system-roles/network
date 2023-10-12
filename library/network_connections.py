@@ -1243,7 +1243,9 @@ class NMUtil:
                         routing_rule["dport"][0],
                         routing_rule["dport"][1],
                     )
-                if routing_rule["from"]:
+                # In NM, when user specifies `from 0.0.0.0/0`` or `from ::/0` in a
+                # routing rule, NM treats it as if the `from` setting is not specified.
+                if routing_rule["from"] and routing_rule["from"]["prefix"]:
                     NM.IPRoutingRule.set_from(
                         nm_routing_rule,
                         routing_rule["from"]["address"],
@@ -1274,7 +1276,9 @@ class NMUtil:
                     )
                 if routing_rule["table"]:
                     NM.IPRoutingRule.set_table(nm_routing_rule, routing_rule["table"])
-                if routing_rule["to"]:
+                # In NM, when user specifies `to 0.0.0.0/0`` or `to ::/0` in a
+                # routing rule, NM treats it as if the `to` setting is not specified.
+                if routing_rule["to"] and routing_rule["to"]["prefix"]:
                     NM.IPRoutingRule.set_to(
                         nm_routing_rule,
                         routing_rule["to"]["address"],

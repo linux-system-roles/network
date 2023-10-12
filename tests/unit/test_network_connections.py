@@ -5050,6 +5050,14 @@ class TestValidatorRoutingRules(Python26CompatTestCase):
             self.validator.validate,
             self.test_connections,
         )
+        self.test_connections[0]["ip"]["routing_rule"][0]["from"] = "::/0"
+        self.test_connections[0]["ip"]["routing_rule"][0]["to"] = "::/0"
+        self.validator.validate(self.test_connections)
+
+        self.test_connections[0]["ip"]["routing_rule"][0]["family"] = "ipv4"
+        self.test_connections[0]["ip"]["routing_rule"][0]["from"] = "0.0.0.0/0"
+        self.test_connections[0]["ip"]["routing_rule"][0]["to"] = "0.0.0.0/0"
+        self.validator.validate(self.test_connections)
 
     def test_routing_rule_missing_table(self):
         """
