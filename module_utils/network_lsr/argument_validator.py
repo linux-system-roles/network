@@ -779,15 +779,27 @@ class ArgValidatorIPRoutingRule(ArgValidatorDict):
                     name,
                     "missing 'table' for the routing rule",
                 )
-
-        if result["from"] is not None:
+        # `from 0.0.0.0/0` means from all IPv4 addresses
+        # `from ::/0` means from all IPv6 addresses
+        # In NM, if `from` property is not specified in a routing rule, NM
+        # still appends `from 0.0.0.0/0` or `from ::/0` to the rule
+        if result["from"] is not None and result["from"]["address"] not in [
+            "0.0.0.0",
+            "::",
+        ]:
             if result["from"]["prefix"] == 0:
                 raise ValidationError(
                     name,
                     "the prefix length for 'from' cannot be zero",
                 )
 
-        if result["to"] is not None:
+        # NM also allows to specify `to 0.0.0.0/0` or `to ::/0` in a routing
+        # rule, but the connection profiles will only show the `from` setting
+        # for the rule
+        if result["to"] is not None and result["to"]["address"] not in [
+            "0.0.0.0",
+            "::",
+        ]:
             if result["to"]["prefix"] == 0:
                 raise ValidationError(
                     name,

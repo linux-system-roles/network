@@ -92,6 +92,10 @@
                   family: ipv4
                   oif: oiftest
                   table: 30400
+                - priority: 30403
+                  from: 0.0.0.0/0
+                  to: 0.0.0.0/0
+                  table: 30400
                 - priority: 30600
                   to: 2001:db8::4/32
                   table: 30600
@@ -99,6 +103,10 @@
                   family: ipv6
                   dport: 128 - 256
                   invert: true
+                  table: 30600
+                - priority: 30602
+                  from: ::/0
+                  to: ::/0
                   table: 30600
                 - priority: 200
                   from: 198.51.100.56/26
@@ -220,6 +228,8 @@
             0.0.0.0/0 iif iiftest table 30400")
           - connection_route_rule.stdout is search("priority 30402 from
             0.0.0.0/0 oif oiftest table 30400")
+          - connection_route_rule.stdout is search("priority 30403 from
+            0.0.0.0/0 table 30400")
           - connection_route_rule.stdout is search("priority 200 from
             198.51.100.56/26 table 200")
         msg: "the specified IPv4 routing rule was not configured in the
@@ -235,6 +245,8 @@
             ::/0 dport 128-256 table 30600") or
             connection_route_rule6.stdout is search("not priority 30601 from
             ::/0 dport 128-256 table 30600")
+          - connection_route_rule6.stdout is search("priority 30602 from
+            ::/0 table 30600")
         msg: "the specified IPv6 routing rule was not configured in the
           connection '{{ interface }}'"
 
