@@ -1,6 +1,21 @@
 Changelog
 =========
 
+[1.13.3] - 2023-10-23
+--------------------
+
+### Bug Fixes
+
+- fix: Add dhcp client package dependency for initscripts provider (#639)
+
+### Other Changes
+
+- test: Use variable to hold infiniband interface name [citest skip] (#636)
+- build(deps): bump actions/checkout from 3 to 4 (#637)
+- ci: ensure dependabot git commit message conforms to commitlint; ensure badges have consistent order (#644)
+- ci: use dump_packages.py callback to get packages used by role (#646)
+- ci: tox-lsr version 3.1.1 (#648)
+
 [1.13.2] - 2023-09-07
 --------------------
 
