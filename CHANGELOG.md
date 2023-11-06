@@ -1,6 +1,17 @@
 Changelog
 =========
 
+[1.14.0] - 2023-11-06
+--------------------
+
+### New Features
+
+- feat: support for ostree systems (#650)
+
+### Other Changes
+
+- docs(changelog): Fix wrong format in version 1.13.2 [citest skip] (#652)
+
 [1.13.3] - 2023-10-23
 --------------------
 
