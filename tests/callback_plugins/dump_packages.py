@@ -40,7 +40,10 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_ok(self, result):
         fields = result._task_fields
-        if fields["action"] == "package" and fields["args"].get("state") != "absent":
+        if (
+            fields["action"] in ["package", "dnf", "yum"]
+            and fields["args"].get("state") != "absent"
+        ):
             packages = set()
             if "invocation" in result._result:
                 results = [result._result]
