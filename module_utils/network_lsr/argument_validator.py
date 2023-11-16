@@ -22,7 +22,7 @@ class ArgUtil:
     def connection_find_by_name(name, connections, n_connections=None):
         if not name:
             raise ValueError("missing name argument")
-        c = None
+        conn = None
         for idx, connection in enumerate(connections):
             if n_connections is not None and idx >= n_connections:
                 break
@@ -30,34 +30,34 @@ class ArgUtil:
                 continue
 
             if connection["persistent_state"] == "absent":
-                c = None
+                conn = None
             elif connection["persistent_state"] == "present":
-                c = connection
-        return c
+                conn = connection
+        return conn
 
     @staticmethod
     def connection_find_controller(name, connections, n_connections=None):
-        c = ArgUtil.connection_find_by_name(name, connections, n_connections)
-        if not c:
+        connection = ArgUtil.connection_find_by_name(name, connections, n_connections)
+        if not connection:
             raise MyError("invalid controller/parent '%s'" % (name))
-        if c["interface_name"] is None:
+        if connection["interface_name"] is None:
             raise MyError(
                 "invalid controller/parent '%s' which needs an 'interface_name'"
                 % (name)
             )
-        if not Util.ifname_valid(c["interface_name"]):
+        if not Util.ifname_valid(connection["interface_name"]):
             raise MyError(
                 "invalid controller/parent '%s' with invalid 'interface_name' ('%s')"
-                % (name, c["interface_name"])
+                % (name, connection["interface_name"])
             )
-        return c["interface_name"]
+        return connection["interface_name"]
 
     @staticmethod
     def connection_find_controller_uuid(name, connections, n_connections=None):
-        c = ArgUtil.connection_find_by_name(name, connections, n_connections)
-        if not c:
+        connection = ArgUtil.connection_find_by_name(name, connections, n_connections)
+        if not connection:
             raise MyError("invalid controller/parent '%s'" % (name))
-        return c["nm.uuid"]
+        return connection["nm.uuid"]
 
     @staticmethod
     def connection_get_non_absent_names(connections):
@@ -954,7 +954,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
     def _validate_post(self, value, name, result):
 
         has_ipv6_addresses = any(
-            a for a in result["address"] if a["family"] == socket.AF_INET6
+            addr for addr in result["address"] if addr["family"] == socket.AF_INET6
         )
 
         if result["ipv6_disabled"] is True:
@@ -985,7 +985,7 @@ class ArgValidator_DictIP(ArgValidatorDict):
 
         if result["dhcp4"] is None:
             result["dhcp4"] = result["dhcp4_send_hostname"] is not None or not any(
-                a for a in result["address"] if a["family"] == socket.AF_INET
+                addr for addr in result["address"] if addr["family"] == socket.AF_INET
             )
 
         if result["auto6"] is None:
@@ -1655,7 +1655,7 @@ class ArgValidator_DictMacvlan(ArgValidatorDict):
 
 class ArgValidatorPath(ArgValidatorStr):
     """
-    Valides that the value is a valid posix absolute path
+    Validates that the value is a valid posix absolute path
     """
 
     def __init__(self, name, required=False, default_value=None):
@@ -1987,10 +1987,10 @@ class ArgValidator_DictConnection(ArgValidatorDict):
         # FIXME: Maybe just accept all values, even if they are not
         # needed/meaningful in the respective context
         valid_fields = set(valid_fields)
-        for k in result:
-            if k not in valid_fields:
+        for key in result:
+            if key not in valid_fields:
                 raise ValidationError(
-                    name + "." + k,
+                    name + "." + key,
                     "property is not allowed for state '%s' and persistent_state '%s'"
                     % (state, persistent_state),
                 )

@@ -162,7 +162,7 @@ class SysUtil:
             linkinfos = getattr(cls, "_link_infos", None)
         if linkinfos is None:
             try_count = 0
-            b = None
+            last_fetch_linkinfos = None
             while True:
                 try_count += 1
                 try:
@@ -170,11 +170,11 @@ class SysUtil:
                     # and interfaces can be renamed. Try to avoid that by
                     # fetching the info twice and repeat until we get the same
                     # result.
-                    if b is None:
-                        b = SysUtil._link_infos_fetch()
+                    if last_fetch_linkinfos is None:
+                        last_fetch_linkinfos = SysUtil._link_infos_fetch()
                     linkinfos = SysUtil._link_infos_fetch()
-                    if linkinfos != b:
-                        b = linkinfos
+                    if linkinfos != last_fetch_linkinfos:
+                        last_fetch_linkinfos = linkinfos
                         raise Exception(
                             "cannot read stable link-infos. They keep changing"
                         )
@@ -190,15 +190,15 @@ class SysUtil:
     def link_info_find(cls, refresh=False, mac=None, ifname=None):
         if mac is not None:
             mac = Util.mac_norm(mac)
-        for li in cls.link_infos(refresh).values():
+        for linkinfo in cls.link_infos(refresh).values():
             if mac is not None and mac not in [
-                li.get("perm-address", None),
-                li.get("address", None),
+                linkinfo.get("perm-address", None),
+                linkinfo.get("address", None),
             ]:
                 continue
-            if ifname is not None and ifname != li.get("ifname", None):
+            if ifname is not None and ifname != linkinfo.get("ifname", None):
                 continue
-            return li
+            return linkinfo
         return None
 
 
@@ -449,19 +449,19 @@ class IfcfgUtil:
             ifcfg["ETHTOOL_OPTS"] = ethtool_options
 
         if connection["controller"] is not None:
-            m = ArgUtil.connection_find_controller(
+            controller = ArgUtil.connection_find_controller(
                 connection["controller"], connections, idx
             )
             if connection["port_type"] == "bridge":
-                ifcfg["BRIDGE"] = m
+                ifcfg["BRIDGE"] = controller
             elif connection["port_type"] == "bond":
                 # wokeignore:rule=master
-                ifcfg["MASTER"] = m
+                ifcfg["MASTER"] = controller
                 # wokeignore:rule=slave
                 ifcfg["SLAVE"] = "yes"
             elif connection["port_type"] == "team":
                 # wokeignore:rule=master
-                ifcfg["TEAM_MASTER"] = m
+                ifcfg["TEAM_MASTER"] = controller
                 if "TYPE" in ifcfg:
                     del ifcfg["TYPE"]
                 if connection["type"] != "team":
@@ -476,8 +476,12 @@ class IfcfgUtil:
             if connection["zone"]:
                 ifcfg["ZONE"] = connection["zone"]
 
-            addrs4 = [a for a in ip["address"] if a["family"] == socket.AF_INET]
-            addrs6 = [a for a in ip["address"] if a["family"] == socket.AF_INET6]
+            addrs4 = [
+                addr for addr in ip["address"] if addr["family"] == socket.AF_INET
+            ]
+            addrs6 = [
+                addr for addr in ip["address"] if addr["family"] == socket.AF_INET6
+            ]
 
             if ip["dhcp4"]:
                 ifcfg["BOOTPROTO"] = "dhcp"
@@ -511,7 +515,10 @@ class IfcfgUtil:
                 )
                 if len(addrs6) > 1:
                     ifcfg["IPV6ADDR_SECONDARIES"] = " ".join(
-                        [a["address"] + "/" + str(a["prefix"]) for a in addrs6[1:]]
+                        [
+                            addr["address"] + "/" + str(addr["prefix"])
+                            for addr in addrs6[1:]
+                        ]
                     )
             if ip["gateway6"] is not None:
                 ifcfg["IPV6_DEFAULTGW"] = ip["gateway6"]
@@ -1210,18 +1217,18 @@ class NMUtil:
                 ):
                     s_ip6.add_route(r)
             for r in ip["route"]:
-                rr = NM.IPRoute.new(
+                new_route = NM.IPRoute.new(
                     r["family"], r["network"], r["prefix"], r["gateway"], r["metric"]
                 )
                 if r["table"]:
                     NM.IPRoute.set_attribute(
-                        rr, "table", Util.GLib().Variant.new_uint32(r["table"])
+                        new_route, "table", Util.GLib().Variant.new_uint32(r["table"])
                     )
 
                 if r["family"] == socket.AF_INET:
-                    s_ip4.add_route(rr)
+                    s_ip4.add_route(new_route)
                 else:
-                    s_ip6.add_route(rr)
+                    s_ip6.add_route(new_route)
             for routing_rule in ip["routing_rule"]:
                 nm_routing_rule = NM.IPRoutingRule.new(routing_rule["family"])
                 NM.IPRoutingRule.set_priority(nm_routing_rule, routing_rule["priority"])
