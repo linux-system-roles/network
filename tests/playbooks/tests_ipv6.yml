@@ -83,6 +83,8 @@
           package:
             name: iputils
             state: present
+            use: "{{ (__network_is_ostree | d(false)) |
+                     ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
         - name: Test gateway can be pinged
           command: ping6 -c1 2001:db8::1
           when:

@@ -7,6 +7,8 @@
       - NetworkManager
       - wpa_supplicant
     state: present
+    use: "{{ (__network_is_ostree | d(false)) |
+      ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
 
 - name: Ensure NetworkManager is running
   service:

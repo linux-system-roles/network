@@ -13,6 +13,8 @@
       package:
         state: present
         name: "{{ rpmdependencies }}"
+        use: "{{ (__network_is_ostree | d(false)) |
+          ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
 
     - name: Install Pytest
       command: "pip3 install pytest"
@@ -151,6 +153,8 @@
               package:
                 name: network-scripts
                 state: present
+                use: "{{ (__network_is_ostree | d(false)) |
+                  ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
             - name: Run pytest with initscripts
               command: >
                 pytest

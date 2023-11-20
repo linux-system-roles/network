@@ -21,6 +21,8 @@ GET_NM_VERSION = """
           package:
             name: NetworkManager
             state: present
+            use: "{{ (__network_is_ostree | d(false)) |
+                     ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
         - name: Get package info
           package_facts:
         - name: Get NetworkManager version

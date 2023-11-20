@@ -4,11 +4,15 @@
   package:
     name: dnsmasq
     state: present
+    use: "{{ (__network_is_ostree | d(false)) |
+      ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
 
 - name: Install pgrep, sysctl
   package:
     name: procps
     state: present
+    use: "{{ (__network_is_ostree | d(false)) |
+      ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
   when:
     - ansible_os_family == 'RedHat'
     - ansible_distribution_major_version is version('6', '<=')
@@ -17,6 +21,8 @@
   package:
     name: procps-ng
     state: present
+    use: "{{ (__network_is_ostree | d(false)) |
+      ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
   when:
     - ansible_os_family == 'RedHat'
     - ansible_distribution_major_version is version('7', '>=')

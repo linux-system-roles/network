@@ -27,6 +27,8 @@
       package:
         name: ethtool
         state: present
+        use: "{{ (__network_is_ostree | d(false)) |
+          ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
 
 
     - name: Test ethtool features settings

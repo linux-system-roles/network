@@ -28,6 +28,8 @@
           package:
             name: dbus-tools
             state: present
+            use: "{{ (__network_is_ostree | d(false)) |
+              ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
         # create test profile
         - name: Include network role
           include_role:
