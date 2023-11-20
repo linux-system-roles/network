@@ -33,6 +33,8 @@
   package:
     name: openssl
     state: present
+    use: "{{ (__network_is_ostree | d(false)) |
+      ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
 - name: Hash cacert
   command: openssl x509 -hash -noout
     -in /etc/pki/tls/my_ca_certs/cacert.pem
@@ -77,6 +79,8 @@
       package:
         name: iputils
         state: present
+        use: "{{ (__network_is_ostree | d(false)) |
+                 ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
     - name: "TEST: I can ping the EAP server"
       command: ping -c1 203.0.113.1
       changed_when: false

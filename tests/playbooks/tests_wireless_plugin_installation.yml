@@ -5,7 +5,7 @@
   tasks:
     - name: Check if rpm ostree system - cannot test
       meta: end_host
-      when: ansible_facts.pkg_mgr == "ansible.posix.rhel_rpm_ostree"
+      when: __network_is_ostree | d(false)
 
     - name: Remove the NetworkManager-wifi package
       package:

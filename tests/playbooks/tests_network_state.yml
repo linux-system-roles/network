@@ -145,6 +145,8 @@
       package:
         name: systemd-resolved
         state: present
+        use: "{{ (__network_is_ostree | d(false)) |
+          ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
       when:
         - ansible_distribution_major_version | int > 8
 

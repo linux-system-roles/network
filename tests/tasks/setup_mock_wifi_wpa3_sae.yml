@@ -6,6 +6,8 @@
       - NetworkManager
       - wpa_supplicant
     state: present
+    use: "{{ (__network_is_ostree | d(false)) |
+      ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
 
 - name: Configure CentOS 8 system for testing, if possible
   when:
@@ -16,7 +18,7 @@
     # if using rpm ostree - so just skip this test
     - name: Check if rpm ostree system - cannot test
       meta: end_host
-      when: ansible_facts.pkg_mgr == "ansible.posix.rhel_rpm_ostree"
+      when: __network_is_ostree | d(false)
 
     # yamllint disable rule:line-length
     # Even though hostapd can be installed via EPEL 8, Simultaneous Authentication

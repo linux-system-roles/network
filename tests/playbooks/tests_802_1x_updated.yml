@@ -8,6 +8,8 @@
       package:
         name: NetworkManager
         state: latest  # noqa package-latest
+        use: "{{ (__network_is_ostree | d(false)) |
+          ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
     - name: Restart NetworkManager
       service:
         name: NetworkManager

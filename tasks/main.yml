@@ -31,6 +31,8 @@
   package:
     name: "{{ network_packages }}"
     state: present
+    use: "{{ (__network_is_ostree | d(false)) |
+      ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
   when:
     - not network_packages is subset(ansible_facts.packages.keys())
   register: __network_package_install
@@ -41,6 +43,8 @@
       - NetworkManager
       - nmstate
     state: present
+    use: "{{ (__network_is_ostree | d(false)) |
+      ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
   when:
     - network_state is defined
     - ansible_distribution == 'Fedora' and
@@ -53,6 +57,8 @@
     name:
       - python3-libnmstate
     state: present
+    use: "{{ (__network_is_ostree | d(false)) |
+      ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
   when:
     - network_state is defined
     - ansible_distribution == 'Fedora' and
