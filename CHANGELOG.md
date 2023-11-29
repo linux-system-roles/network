@@ -1,6 +1,18 @@
 Changelog
 =========
 
+[1.14.1] - 2023-11-29
+--------------------
+
+### Bug Fixes
+
+- fix: Allow address 0.0.0.0/0 or ::/0 for 'from'/'to' in a routing rule (#649)
+
+### Other Changes
+
+- refactor: improve support for ostree systems (#655)
+- tests: Fix `tests_network_state_nm.yml` CI failure (#656)
+
 [1.14.0] - 2023-11-06
 --------------------
 
