@@ -275,7 +275,7 @@ class TestValidator(Python26CompatTestCase):
                     s6.clear_routes()
                     for r in kwargs["nm_route_list_current"][idx]:
                         r = parser.validate(r)
-                        rr = NM.IPRoute.new(
+                        new_route = NM.IPRoute.new(
                             r["family"],
                             r["network"],
                             r["prefix"],
@@ -284,12 +284,14 @@ class TestValidator(Python26CompatTestCase):
                         )
                         if r["table"]:
                             NM.IPRoute.set_attribute(
-                                rr, "table", Util.GLib().Variant.new_uint32(r["table"])
+                                new_route,
+                                "table",
+                                Util.GLib().Variant.new_uint32(r["table"]),
                             )
                         if r["family"] == socket.AF_INET:
-                            s4.add_route(rr)
+                            s4.add_route(new_route)
                         else:
-                            s6.add_route(rr)
+                            s6.add_route(new_route)
                     con_new = nmutil.connection_create(
                         connections, idx, connection_current=con_new
                     )

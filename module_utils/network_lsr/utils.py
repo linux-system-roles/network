@@ -233,7 +233,7 @@ class Util:
         if mac_str is None:
             return mac_str
         i = 0
-        b = []
+        byte_array = []
         for c in mac_str:
             if i == 2:
                 if c != ":":
@@ -249,17 +249,17 @@ class Util:
                         raise AssertionError("i != 1 - value is {0}".format(i))
                     n = n + int(c, 16)
                     i = 2
-                    b.append(n)
+                    byte_array.append(n)
             except Exception:
                 raise MyError("not a valid MAC address: '%s'" % (mac_str))
         if i == 1:
             raise MyError("not a valid MAC address: '%s'" % (mac_str))
         if force_len is not None:
-            if force_len != len(b):
+            if force_len != len(byte_array):
                 raise MyError(
                     "not a valid MAC address of length %s: '%s'" % (force_len, mac_str)
                 )
-        return b
+        return byte_array
 
     @staticmethod
     def mac_ntoa(mac):
