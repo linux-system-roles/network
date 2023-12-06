@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -euo pipefail
 
@@ -28,7 +28,7 @@ if [ "$pkgtype" = testing ]; then
 fi
 
 get_rolepath() {
-    local ostree_dir role rolesdir roles_parent_dir coll_path pth
+    local ostree_dir role rolesdir roles_parent_dir coll_path path
     ostree_dir="$1"
     role="$2"
     roles_parent_dir="$(dirname "$(dirname "$ostree_dir")")"
@@ -51,8 +51,8 @@ get_rolepath() {
         coll_path="${ANSIBLE_COLLECTIONS_PATHS:-}"
     fi
     if [ -n "${coll_path}" ]; then
-        for pth in ${coll_path//:/ }; do
-            for rolesdir in "$pth"/ansible_collections/*/*_system_roles/roles/"$role"/.ostree; do
+        for path in ${coll_path//:/ }; do
+            for rolesdir in "$path"/ansible_collections/*/*_system_roles/roles/"$role"/.ostree; do
                 if [ -d "$rolesdir" ]; then
                     echo "$rolesdir"
                     return 0

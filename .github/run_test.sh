@@ -1,6 +1,6 @@
-#!/bin/bash -x
+#!/usr/bin/env bash
 
-set -euo pipefail
+set -euxo pipefail
 
 TEST_SOURCE_DIR="/network-role"
 C8S_CONTAINER_IMAGE="quay.io/linux-system-roles/c8s-network-role"
