@@ -68,11 +68,5 @@ plugins/modules/network_state.py validate-modules:import-error
 plugins/modules/network_state.py validate-modules:missing-examples
 plugins/modules/network_state.py validate-modules:missing-gplv3-license
 plugins/modules/network_state.py validate-modules:module-invalid-version-added
-tests/network/covstats shebang!skip
 tests/network/ensure_provider_tests.py shebang!skip
-tests/network/get_coverage.sh shebang!skip
-tests/network/get_total_coverage.sh shebang!skip
-tests/network/git-pre-commit.sh shebang!skip
-tests/network/git-post-commit.sh shebang!skip
 tests/network/merge_coverage.sh shebang!skip
-roles/network/.ostree/get_ostree_data.sh shebang!skip
