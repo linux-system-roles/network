@@ -1,6 +1,15 @@
 Changelog
 =========
 
+[1.14.2] - 2023-12-08
+--------------------
+
+### Other Changes
+
+- refactor: Use meaningful variable (#654)
+- ci: bump actions/github-script from 6 to 7 (#658)
+- refactor: get_ostree_data.sh use env shebang - remove from .sanity* (#659)
+
 [1.14.1] - 2023-11-29
 --------------------
 
