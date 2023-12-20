@@ -1255,6 +1255,10 @@ class NMUtil:
                 new_route = NM.IPRoute.new(
                     r["family"], r["network"], r["prefix"], r["gateway"], r["metric"]
                 )
+                if r["type"]:
+                    NM.IPRoute.set_attribute(
+                        new_route, "type", Util.GLib().Variant("s", r["type"])
+                    )
                 if r["table"]:
                     NM.IPRoute.set_attribute(
                         new_route, "table", Util.GLib().Variant.new_uint32(r["table"])
@@ -2193,6 +2197,18 @@ class Cmd(object):
 ###############################################################################
 
 
+def version_to_tuple(version):
+    """
+    Translates the dot-separated version string to a tuple
+
+    :param version: The dot-separated version string
+    :return: the version tuple
+    """
+    version_list = version.split(".")
+    version_tuple = tuple(map(int, version_list))
+    return version_tuple
+
+
 class Cmd_nm(Cmd):
     def __init__(self, **kwargs):
         Cmd.__init__(self, **kwargs)
@@ -2222,7 +2238,21 @@ class Cmd_nm(Cmd):
         names = {}
         for idx, connection in enumerate(self.connections):
             self._check_ethtool_setting_support(idx, connection)
-
+            if connection.get("ip", {}):
+                for route in connection["ip"]["route"]:
+                    if route["type"]:
+                        # The special route type prohibit, blackhole and unreachable
+                        # are only supported in NM since version 1.36.0
+                        nm_client_version = self._nm_provider.get_client_version()
+                        if version_to_tuple(nm_client_version) < (1, 36, 0):
+                            self.log_fatal(
+                                idx,
+                                "route type {0} is only supported in NM since 1.36.0 "
+                                "but the NM client version is {1}".format(
+                                    route["type"],
+                                    nm_client_version,
+                                ),
+                            )
             name = connection["name"]
             if not name:
                 if not connection["persistent_state"] == "absent":

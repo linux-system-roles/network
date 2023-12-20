@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Manage route type routes
+  hosts: all
+  tasks:
+    - name: Configure connection profile and route type routes
+      import_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: eth0
+            interface_name: eth0
+            state: up
+            type: ethernet
+            autoconnect: true
+            ip:
+              dhcp4: false
+              address:
+                - 198.51.100.3/26
+                - 2001:db8::2/32
+              route:
+                - network: 198.51.100.64
+                  prefix: 26
+                  gateway: 198.51.100.6
+                  metric: 4
+                  table: 30200
+                - network: 198.53.100.18
+                  prefix: 32
+                  metric: 20
+                  type: blackhole
+                  table: 30200
+                - network: 198.53.100.12
+                  prefix: 32
+                  metric: 24
+                  type: unreachable
+                  table: 30200
+                - network: 198.53.100.10
+                  prefix: 32
+                  metric: 30
+                  type: prohibit
+                  table: 30200
+                - network: 2001:db8::4
+                  prefix: 128
+                  metric: 2
+                  type: blackhole
+                  table: 30600
+                - network: 2001:db8::6
+                  prefix: 128
+                  metric: 4
+                  type: prohibit
+                  table: 30600
