@@ -1,0 +1,194 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Play for testing route types
+  hosts: all
+  vars:
+    type: veth
+    interface: ethtest0
+  tasks:
+    - name: "Set type={{ type }} and interface={{ interface }}"  # noqa name
+      set_fact:
+        type: "{{ type }}"
+        interface: "{{ interface }}"
+    - name: Include the task 'show_interfaces.yml'
+      include_tasks: tasks/show_interfaces.yml
+    - name: Include the task 'manage_test_interface.yml'
+      include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: present
+    - name: Include the task 'assert_device_present.yml'
+      include_tasks: tasks/assert_device_present.yml
+
+    - name: Configure connection profile and specify the route types in
+        static routes
+      import_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: "{{ interface }}"
+            interface_name: "{{ interface }}"
+            state: up
+            type: ethernet
+            autoconnect: true
+            ip:
+              dhcp4: false
+              address:
+                - 198.51.100.3/26
+                - 2001:db8::2/32
+              route:
+                - network: 198.51.100.64
+                  prefix: 26
+                  gateway: 198.51.100.6
+                  metric: 4
+                  table: 30200
+                - network: 198.53.100.18
+                  prefix: 32
+                  metric: 20
+                  type: blackhole
+                  table: 30200
+                - network: 198.53.100.10
+                  prefix: 32
+                  metric: 30
+                  type: prohibit
+                  table: 30200
+                - network: 198.53.100.12
+                  prefix: 32
+                  metric: 24
+                  type: unreachable
+                  table: 30200
+                - network: 2001:db8::4
+                  prefix: 128
+                  metric: 2
+                  type: blackhole
+                  table: 30600
+                - network: 2001:db8::6
+                  prefix: 128
+                  metric: 4
+                  type: prohibit
+                  table: 30600
+
+    - name: Get the routes from the route table 30200
+      command: ip route show table 30200
+      register: route_table_30200
+      changed_when: false
+
+    - name: Get the routes from the route table 30600
+      command: ip -6 route show table 30600
+      register: route_table_30600
+      changed_when: false
+
+    - name: Assert that the route table 30200 contains the specified route
+      assert:
+        that:
+          - route_table_30200.stdout is search("198.51.100.64/26 via
+            198.51.100.6 dev ethtest0 proto static metric 4")
+          - route_table_30200.stdout is search("blackhole 198.53.100.18
+            proto static scope link metric 20")
+          - route_table_30200.stdout is search("prohibit 198.53.100.10
+            proto static scope link metric 30")
+          - route_table_30200.stdout is search("unreachable 198.53.100.12
+            proto static scope link metric 24")
+        msg: "the route table 30200 does not exist or does not contain the
+          specified route"
+
+    - name: Assert that the route table 30600 contains the specified route
+      assert:
+        that:
+          - route_table_30600.stdout is search("blackhole 2001:db8::4
+            dev lo proto static metric 2 pref medium")
+          - route_table_30600.stdout is search("prohibit 2001:db8::6
+            dev lo proto static metric 4 pref medium")
+        msg: "the route table 30600 does not exist or does not contain the
+          specified route"
+
+    - name: Removing some routes
+      import_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: "{{ interface }}"
+            interface_name: "{{ interface }}"
+            state: up
+            type: ethernet
+            autoconnect: true
+            ip:
+              dhcp4: false
+              address:
+                - 198.51.100.3/26
+                - 2001:db8::2/32
+              route:
+                - network: 198.51.100.64
+                  prefix: 26
+                  gateway: 198.51.100.6
+                  metric: 4
+                  table: 30200
+                - network: 2001:db8::4
+                  prefix: 128
+                  metric: 2
+                  type: blackhole
+                  table: 30600
+                - network: 2001:db8::6
+                  prefix: 128
+                  metric: 4
+                  type: prohibit
+                  table: 30600
+
+    - name: Get the routes from the route table 30200 after removing routes
+      command: ip route show table 30200
+      register: table_30200
+      changed_when: false
+
+    - name: Get the routes from the route table 30600 after removing routes
+      command: ip -6 route show table 30600
+      register: table_30600
+      changed_when: false
+
+    - name: Assert that the route table 30200 contains the specified unicast
+        route
+      assert:
+        that:
+          - route_table_30200.stdout is search("198.51.100.64/26 via
+            198.51.100.6 dev ethtest0 proto static metric 4")
+        msg: "the route table 30200 does not exist or does not contain the
+          specified unicast route"
+
+    - name: Assert that the route table 30200 does not contain the type routes
+      assert:
+        that:
+          - table_30200.stdout is not search("blackhole 198.53.100.18
+            proto static scope link metric 20")
+          - table_30200.stdout is not search("prohibit 198.53.100.10
+            proto static scope link metric 30")
+          - table_30200.stdout is not search("unreachable 198.53.100.12
+            proto static scope link metric 24")
+        msg: "the route table 30200 contains the type routes"
+
+    - name: Assert that the route table 30600 still contains the type routes
+      assert:
+        that:
+          - table_30600.stdout is search("blackhole 2001:db8::4
+            dev lo proto static metric 2 pref medium")
+          - table_30600.stdout is search("prohibit 2001:db8::6
+            dev lo proto static metric 4 pref medium")
+        msg: "the route table 30600 does not exist or does not contain the
+          type routes"
+
+- name: Import the playbook 'down_profile+delete_interface.yml'
+  import_playbook: down_profile+delete_interface.yml
+  vars:
+    profile: "{{ interface }}"
+# FIXME: assert profile/device down
+- name: Import the playbook 'remove_profile.yml'
+  import_playbook: remove_profile.yml
+  vars:
+    profile: "{{ interface }}"
+- name: Assert device and profile are absent
+  hosts: all
+  tasks:
+    - name: Include the task 'assert_profile_absent.yml'
+      include_tasks: tasks/assert_profile_absent.yml
+      vars:
+        profile: "{{ interface }}"
+    - name: Include the task 'assert_device_absent.yml'
+      include_tasks: tasks/assert_device_absent.yml
+...

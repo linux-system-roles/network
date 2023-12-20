@@ -237,6 +237,7 @@ class TestValidator(Python26CompatTestCase):
                 "prefix": int(r.get_prefix()),
                 "gateway": r.get_next_hop(),
                 "metric": int(r.get_metric()),
+                "type": r.get_attribute("type"),
                 "table": r.get_attribute("table"),
             }
             for r in route_list_new
@@ -282,6 +283,12 @@ class TestValidator(Python26CompatTestCase):
                             r["gateway"],
                             r["metric"],
                         )
+                        if r["type"]:
+                            NM.IPRoute.set_attribute(
+                                new_route,
+                                "type",
+                                Util.GLib().Variant("s", r["type"]),
+                            )
                         if r["table"]:
                             NM.IPRoute.set_attribute(
                                 new_route,
@@ -1135,6 +1142,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 24,
                                 "gateway": None,
                                 "metric": -1,
+                                "type": None,
                                 "table": None,
                             }
                         ],
@@ -1475,6 +1483,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 24,
                                 "gateway": None,
                                 "metric": -1,
+                                "type": None,
                                 "table": None,
                             }
                         ],
@@ -1624,6 +1633,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 24,
                                 "gateway": None,
                                 "metric": -1,
+                                "type": None,
                                 "table": None,
                             }
                         ],
@@ -1686,6 +1696,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 24,
                                 "gateway": None,
                                 "metric": -1,
+                                "type": None,
                                 "table": None,
                             }
                         ],
@@ -2648,6 +2659,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 24,
                                 "gateway": None,
                                 "metric": 545,
+                                "type": None,
                                 "table": None,
                             },
                             {
@@ -2656,6 +2668,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 30,
                                 "gateway": None,
                                 "metric": -1,
+                                "type": None,
                                 "table": None,
                             },
                         ],
@@ -2752,6 +2765,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 24,
                                 "gateway": None,
                                 "metric": 545,
+                                "type": None,
                                 "table": None,
                             },
                             {
@@ -2760,6 +2774,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 30,
                                 "gateway": None,
                                 "metric": -1,
+                                "type": None,
                                 "table": None,
                             },
                             {
@@ -2768,6 +2783,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 64,
                                 "gateway": None,
                                 "metric": -1,
+                                "type": None,
                                 "table": None,
                             },
                         ],
@@ -2905,6 +2921,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 24,
                                 "gateway": None,
                                 "metric": 545,
+                                "type": None,
                                 "table": None,
                             },
                             {
@@ -2913,6 +2930,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 30,
                                 "gateway": None,
                                 "metric": -1,
+                                "type": None,
                                 "table": None,
                             },
                             {
@@ -2921,6 +2939,7 @@ class TestValidator(Python26CompatTestCase):
                                 "prefix": 64,
                                 "gateway": None,
                                 "metric": -1,
+                                "type": None,
                                 "table": None,
                             },
                         ],
@@ -4964,6 +4983,22 @@ class TestValidatorRouteTable(Python26CompatTestCase):
             self.validator.validate_route_tables,
             self.test_connections[0],
             self.connection_index,
+        )
+
+    def test_type_route_with_gateway(self):
+        """
+        Test that the route type route can not have a gateway
+        """
+
+        self.test_connections[0]["ip"]["route"][0]["type"] = "blackhole"
+        self.assertRaisesRegex(
+            ValidationError,
+            "a {0} route can not have a gateway '{1}'".format(
+                self.test_connections[0]["ip"]["route"][0]["type"],
+                self.test_connections[0]["ip"]["route"][0]["gateway"],
+            ),
+            self.validator.validate,
+            self.test_connections,
         )
 
 

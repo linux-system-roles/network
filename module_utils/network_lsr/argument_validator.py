@@ -674,6 +674,11 @@ class ArgValidatorIPRoute(ArgValidatorDict):
                 ArgValidatorNum(
                     "metric", default_value=-1, val_min=-1, val_max=UINT32_MAX
                 ),
+                ArgValidatorStr(
+                    "type",
+                    default_value=None,
+                    enum_values=["blackhole", "prohibit", "unreachable"],
+                ),
                 ArgValidatorRouteTable("table"),
             ],
             default_value=None,
@@ -688,12 +693,19 @@ class ArgValidatorIPRoute(ArgValidatorDict):
         result["family"] = family
 
         gateway = result["gateway"]
+        route_type = result["type"]
         if gateway is not None:
             if family != gateway["family"]:
                 raise ValidationError(
                     name,
                     "conflicting address family between network and gateway '%s'"
                     % (gateway["address"]),
+                )
+            if route_type is not None:
+                raise ValidationError(
+                    name,
+                    "a %s route can not have a gateway '%s'"
+                    % (route_type, gateway["address"]),
                 )
             result["gateway"] = gateway["address"]
 
@@ -2607,6 +2619,14 @@ class ArgValidator_ListConnections(ArgValidatorList):
                         "NetworkManger until NM 1.30",
                     )
 
+        if connection["ip"]["route"]:
+            if mode == self.VALIDATE_ONE_MODE_INITSCRIPTS:
+                for route in connection["ip"]["route"]:
+                    if route["type"] is not None:
+                        raise ValidationError.from_connection(
+                            idx,
+                            "type is not supported by initscripts",
+                        )
         if connection["ip"]["routing_rule"]:
             if mode == self.VALIDATE_ONE_MODE_INITSCRIPTS:
                 raise ValidationError.from_connection(

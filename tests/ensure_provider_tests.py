@@ -95,6 +95,11 @@ ibution_major_version | int < 9",
     },
     "playbooks/tests_reapply.yml": {},
     "playbooks/tests_route_table.yml": {},
+    "playbooks/tests_route_type.yml": {
+        MINIMUM_VERSION: "'1.36.0'",
+        "comment": "# NetworkManager 1.36.0 added support for special route types: \
+blackhole, prohibit and unreachable",
+    },
     "playbooks/tests_routing_rules.yml": {},
     # team interface is not supported on Fedora
     "playbooks/tests_team.yml": {
