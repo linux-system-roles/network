@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
-  name: Run playbook 'playbooks/integration_pytest_python3.yml'
+- name: Run playbook 'playbooks/integration_pytest_python3.yml'
+  hosts: all
   tasks:
     - name: Include the task 'el_repo_setup.yml'
       include_tasks: tasks/el_repo_setup.yml
