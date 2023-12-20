@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- hosts: all
-  name: Setup for test running
+- name: Setup for test running
+  hosts: all
   tasks:
     - name: Include the task 'el_repo_setup.yml'
       include_tasks: tasks/el_repo_setup.yml
@@ -21,8 +21,8 @@
         - python-gobject-base
         - python2-mock
 
-- hosts: all
-  name: Execute python unit tests
+- name: Execute python unit tests
+  hosts: all
   tasks:
     - name: Execute python unit tests
       block:

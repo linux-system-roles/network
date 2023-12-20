@@ -10,32 +10,38 @@ import logging
 # pylint: disable=import-error, no-name-in-module
 from ansible.module_utils.network_lsr.nm import error  # noqa:E501
 
-import gi
-
 try:
-    gi.require_version("NM", "1.0")
+    import gi
+except ImportError:
+    NETWORK_HAS_GI = False
+else:
+    NETWORK_HAS_GI = True
 
-    # It is required to state the NM version before importing it
-    # But this break the flake8 rule: https://www.flake8rules.com/rules/E402.html
-    # Use NOQA: E402 to suppress it.
-    from gi.repository import NM  # NOQA: E402
-    from gi.repository import GLib  # NOQA: E402
-    from gi.repository import Gio  # NOQA: E402
+if NETWORK_HAS_GI:
+    try:
+        gi.require_version("NM", "1.0")
 
-    # pylint: enable=import-error, no-name-in-module
+        # It is required to state the NM version before importing it
+        # But this break the flake8 rule: https://www.flake8rules.com/rules/E402.html
+        # Use NOQA: E402 to suppress it.
+        from gi.repository import NM  # NOQA: E402
+        from gi.repository import GLib  # NOQA: E402
+        from gi.repository import Gio  # NOQA: E402
 
-    NM
-    GLib
-    Gio
-except ValueError:
-    # This is to workaround a bug in ansible 2.9 which causes
-    # this code to be executed on the control node, where NM
-    # is not guaranteed to exist. On the other hand, it is
-    # ensured on the managed nodes as NM package is installed
-    # in the network role. Therefore, this exception handling
-    # does not affect the network installation and configuration
-    # on the managed nodes.
-    pass
+        # pylint: enable=import-error, no-name-in-module
+
+        NM
+        GLib
+        Gio
+    except ValueError:
+        # This is to workaround a bug in ansible 2.9 which causes
+        # this code to be executed on the control node, where NM
+        # is not guaranteed to exist. On the other hand, it is
+        # ensured on the managed nodes as NM package is installed
+        # in the network role. Therefore, this exception handling
+        # does not affect the network installation and configuration
+        # on the managed nodes.
+        pass
 
 
 def get_client():

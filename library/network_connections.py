@@ -12,7 +12,7 @@ module: network_connections
 author: Thomas Haller (@thom311)
 short_description: module for network role to manage connection profiles
 requirements: [pygobject, dbus, NetworkManager]
-version_added: "2.0"
+version_added: "2.13.0"
 description:
   - "WARNING: Do not use this module directly! It is only for role internal use."
   - |
@@ -22,9 +22,44 @@ description:
     role and currently it is not expected to use this module outside the role.
     Thus, consult README.md for examples for the role.  The requirements are
     only for the NetworkManager (nm) provider.
-options: {}
+options:
+    __debug_flags:
+        description: Flags to use for debugging
+        required: false
+        type: str
+        default: ''
+    force_state_change:
+        description: Force a state change
+        required: false
+        type: bool
+        default: False
+    ignore_errors:
+        description: Ignore errors
+        required: false
+        type: bool
+        default: False
+    __header:
+        description: Header to use in generated files
+        required: true
+        type: str
+    provider:
+        description: Network provider to use - initscripts or nm
+        required: true
+        type: str
+    connections:
+        description: Network configuration options
+        required: false
+        default: []
+        type: list
+        elements: dict
 """
 
+EXAMPLES = """
+network_connections:
+  connections:
+    - name: eth0
+      state: up
+"""
 
 import errno
 import functools
@@ -1454,7 +1489,6 @@ class NMUtil:
         )
 
     def connection_activate(self, connection, timeout=15, wait_time=None):
-
         already_retried = False
 
         while True:
@@ -1681,9 +1715,14 @@ class RunEnvironmentAnsible(RunEnvironment):
     ARGS = {
         "ignore_errors": {"required": False, "default": False, "type": "bool"},
         "force_state_change": {"required": False, "default": False, "type": "bool"},
-        "provider": {"required": True, "default": None, "type": "str"},
-        "connections": {"required": False, "default": None, "type": "list"},
-        "__header": {"required": True, "default": None, "type": "str"},
+        "provider": {"required": True, "type": "str"},
+        "connections": {
+            "required": False,
+            "default": [],
+            "type": "list",
+            "elements": "dict",
+        },
+        "__header": {"required": True, "type": "str"},
         "__debug_flags": {"required": False, "default": "", "type": "str"},
     }
 
