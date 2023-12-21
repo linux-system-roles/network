@@ -9,10 +9,8 @@
     use: "{{ (__network_is_ostree | d(false)) |
       ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
 
-- name: Check if can test on CentOS 8 and setup if possible
-  when:
-    - ansible_distribution_major_version == '8'
-    - ansible_distribution == 'CentOS'
+- name: Check if can test on CentOS and setup if possible
+  when: ansible_distribution == 'CentOS'
   block:
     # It is currently too difficult to install the required kernel
     # if using rpm ostree - so just skip this test
@@ -21,19 +19,19 @@
       when: __network_is_ostree | d(false)
 
     # yamllint disable rule:line-length
-    # Even though hostapd can be installed via EPEL 8, Opportunistic Wireless Encryption
+    # Even though hostapd can be installed via EPEL, Opportunistic Wireless Encryption
     # (OWE) has not been enabled by default. To warrant the test support on RHEL(dist-tag),
     # we setup hostapd copr repo to enable OWE option.
-    - name: Install hostapd and mac80211_hwsim kernel module in CentOS 8
+    - name: Install hostapd and mac80211_hwsim kernel module in CentOS
       shell: |
         dnf -y copr enable liangwen12year/hostapd-owe
         dnf -y install hostapd
         release=$(uname -r)
         tmp="${release/-//}"
         tmp="${tmp/.x//x}"
-        dnf -y install https://koji.mbox.centos.org/pkgs/packages/kernel/$tmp/kernel-core-$release.rpm
-        dnf -y install https://koji.mbox.centos.org/pkgs/packages/kernel/$tmp/kernel-modules-$release.rpm
-        dnf -y install https://koji.mbox.centos.org/pkgs/packages/kernel/$tmp/kernel-modules-internal-$release.rpm
+        dnf -y install https://kojihub.stream.centos.org/kojifiles/packages/kernel/$tmp/kernel-core-$release.rpm
+        dnf -y install https://kojihub.stream.centos.org/kojifiles/packages/kernel/$tmp/kernel-modules-$release.rpm
+        dnf -y install https://kojihub.stream.centos.org/kojifiles/packages/kernel/$tmp/kernel-modules-internal-$release.rpm
       changed_when: false
       # yamllint enable rule:line-length
 
