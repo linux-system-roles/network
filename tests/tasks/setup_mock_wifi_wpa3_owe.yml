@@ -48,7 +48,7 @@
 - name: Install mac80211_hwsim kernel modules in Fedora
   shell: |
     dnf -y install koji
-    koji download-build --arch=$(uname -p) kernel-modules-internal-$(uname -r)
+    koji download-build --arch=$(uname -m) kernel-modules-internal-$(uname -r)
     dnf -y install kernel-modules*.rpm
   when:
     - ansible_distribution == 'Fedora'
