@@ -50,7 +50,7 @@ jobs:
 
       - name: Set up Python 3
         if: ${{ matrix.pyver_os.ver != '2.7' }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.pyver_os.ver }}
 
