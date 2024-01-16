@@ -1,6 +1,23 @@
 Changelog
 =========
 
+[1.15.0] - 2024-01-16
+--------------------
+
+### New Features
+
+- feat: Support blackhole, prohibit and unreachable route types  (#662)
+
+### Other Changes
+
+- ci: Use supported ansible-lint action; run ansible-lint against the collection (#661)
+- test: Skip running tests where initscripts is not supported (#663)
+- tests: Fix installing kernel module in Fedora (#664)
+- test: Fix wifi test failures (#665)
+- ci: Bump github/codeql-action from 2 to 3 (#666)
+- ci: Bump actions/setup-python from 4 to 5 (#667)
+- ci: Use new ansible-lint action, which requires collection format and 2.16 (#668)
+
 [1.14.2] - 2023-12-08
 --------------------
 
