@@ -814,15 +814,21 @@ for multiple interfaces. For <code>initscripts</code>,
 <p>Static route configuration can be specified via a list of routes
 given in the <code>route</code> option. The default value is an empty
 list. Each route is a dictionary with the following entries:
-<code>network</code>, <code>prefix</code>, <code>gateway</code>,
-<code>metric</code> and <code>table</code>. <code>network</code> and
-<code>prefix</code> specify the destination network. <code>table</code>
-supports both the numeric table and named table. In order to specify the
-named table, the users have to ensure the named table is properly
-defined in <code>/etc/iproute2/rt_tables</code> or
-<code>/etc/iproute2/rt_tables.d/*.conf</code>. Note that Classless
-inter-domain routing (CIDR) notation or network mask notation are not
-supported yet.</p></li>
+<code>gateway</code>, <code>metric</code>, <code>network</code>,
+<code>prefix</code>, <code>table</code> and <code>type</code>.
+<code>network</code> and <code>prefix</code> specify the destination
+network. <code>table</code> supports both the numeric table and named
+table. In order to specify the named table, the users have to ensure the
+named table is properly defined in <code>/etc/iproute2/rt_tables</code>
+or <code>/etc/iproute2/rt_tables.d/*.conf</code>. The optional
+<code>type</code> key supports the values <code>blackhole</code>,
+<code>prohibit</code>, and <code>unreachable</code>. See <a
+href="https://man7.org/linux/man-pages/man8/ip-route.8.html#DESCRIPTION">man
+8 ip-route</a> for their definition. Routes with these types do not
+support a gateway. If the type is not specified, the route is considered
+as a unicast route. Note that the classless inter-domain routing(CIDR)
+notation or the network mask notation are not supported for the
+<code>network</code> key.</p></li>
 <li><p><code>routing_rule</code></p>
 <p>The policy routing rules can be specified via a list of rules given
 in the <code>routing_rule</code> option, which allow routing the packets
