@@ -33,15 +33,30 @@
                   ssid: "hostapd-owe"
                   key_mgmt: "owe"
 
-    - name: "Verify connection profile"
-      shell:
-        nmcli c show {{ interface }} | grep 802-11-wireless-security.key-mgmt
-      register: key_mgmt
-      ignore_errors: true
-      changed_when: false
+        - name: "Verify connection profile"
+          shell: nmcli c show {{ interface }} | grep 802-11-wireless-security.key-mgmt
+          register: key_mgmt
+          ignore_errors: true
+          changed_when: false
 
-    - name: "Assert that OWE is configured correctly"
-      assert:
-        that:
-          - "'owe' in key_mgmt.stdout"
-        msg: "OWE is configured incorrectly"
+        - name: "Assert that OWE is configured correctly"
+          assert:
+            that:
+              - "'owe' in key_mgmt.stdout"
+            msg: "OWE is configured incorrectly"
+      always:
+        - name: Clean up the test device and the connection profile
+          tags:
+            - "tests::cleanup"
+          block:
+            - name: Import network role
+              import_role:
+                name: linux-system-roles.network
+              vars:
+                network_connections:
+                  - name: "{{ interface }}"
+                    persistent_state: absent
+                    state: down
+              failed_when: false
+            - name: Include the task 'cleanup_mock_wifi.yml'
+              include_tasks: tasks/cleanup_mock_wifi.yml
