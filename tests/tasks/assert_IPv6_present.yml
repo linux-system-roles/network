@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: "** TEST check IPv6"
+  command: ip -6 a s {{ controller_device }}
+  register: result
+  until: "'{{ address }}' in result.stdout"
+  retries: 20
+  delay: 2
+  changed_when: false
