@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Include the task 'assert_profile_present.yml'
+  include_tasks: tasks/assert_profile_present.yml
+  vars:
+    profile: "{{ item }}"
+  loop:
+    - "{{ controller_profile }}"
+    - "{{ port1_profile }}"
+    - "{{ port2_profile }}"

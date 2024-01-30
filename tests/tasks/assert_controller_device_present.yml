@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Import the task 'assert_device_present.yml'
+  import_tasks: tasks/assert_device_present.yml
+  vars:
+    interface: "{{ controller_device }}"
