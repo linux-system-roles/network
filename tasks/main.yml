@@ -36,6 +36,9 @@
   when:
     - not network_packages is subset(ansible_facts.packages.keys())
   register: __network_package_install
+  until: __network_package_install is success
+  retries: 6
+  delay: 10
 
 - name: Install NetworkManager and nmstate when using network_state variable
   package:
