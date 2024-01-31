@@ -8,6 +8,10 @@
     state: present
     use: "{{ (__network_is_ostree | d(false)) |
       ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
+  register: __install_status
+  until: __install_status is success
+  retries: 6
+  delay: 10
 
 - name: Configure CentOS system for testing, if possible
   when: ansible_distribution == 'CentOS'
@@ -42,6 +46,10 @@
     state: present
   when:
     - ansible_distribution == 'Fedora'
+  register: __install_status
+  until: __install_status is success
+  retries: 6
+  delay: 10
 
 # Since DNF package manager can not warrant installing the kernel module with
 # the same version as the kernel in target machine, install the kernel module

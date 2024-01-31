@@ -6,6 +6,14 @@
     state: present
     use: "{{ (__network_is_ostree | d(false)) |
       ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
+  register: __install_status
+  # sometimes the rpm download returns a 403 - I think it is when too
+  # many parallel jobs attempt the download from the same controller in
+  # too short a period of time, so the epel server throttles additional
+  # downloads - use a retry here to mitigate
+  until: __install_status is success
+  retries: 6
+  delay: 10
 
 - name: Install pgrep, sysctl
   package:

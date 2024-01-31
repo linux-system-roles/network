@@ -23,6 +23,11 @@
       import_tasks: tasks/assert_device_present.yml
       vars:
         interface: "{{ dhcp_interface2 }}"
+    - name: "Backup the /etc/resolv.conf for initscript"
+      command: cp -vf /etc/resolv.conf /etc/resolv.conf.bak
+      when:
+        - network_provider == "initscripts"
+      changed_when: false
     - name: Test bond device using deprecated 'master' argument
       block:
         - name: "TEST Add Bond with 2 ports using deprecated 'master' argument"
@@ -113,3 +118,8 @@
               changed_when: false
             - name: Import the task 'remove_test_interfaces_with_dhcp.yml'
               import_tasks: tasks/remove_test_interfaces_with_dhcp.yml
+            - name: "Restore the /etc/resolv.conf for initscript"
+              command: mv -vf /etc/resolv.conf.bak /etc/resolv.conf
+              when:
+                - network_provider == "initscripts"
+              changed_when: false
