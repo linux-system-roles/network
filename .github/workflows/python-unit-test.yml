@@ -83,7 +83,7 @@ jobs:
           TOXENV="$toxenvs" lsr_ci_runtox
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
 
   python-26:
     runs-on: ubuntu-latest
