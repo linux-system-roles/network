@@ -60,3 +60,5 @@
               failed_when: false
             - name: Include the task 'cleanup_mock_wifi.yml'
               include_tasks: tasks/cleanup_mock_wifi.yml
+            - name: Verify network state restored to default
+              include_tasks: tasks/check_network_dns.yml

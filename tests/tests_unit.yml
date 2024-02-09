@@ -176,6 +176,9 @@
             state: absent
             path: "{{ _rundir.path }}"
 
+        - name: Verify network state restored to default
+          include_tasks: tasks/check_network_dns.yml
+
     - name: Ensure that at least one python unit test ran
       fail:
         msg: Tests did not run with python2 or python3

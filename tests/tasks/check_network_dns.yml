@@ -1,0 +1,39 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+# This is typically used after cleanup, to verify that cleanup
+# worked and left networking in the default state - sort of like
+# a post-condition, or pre-condition for subsequent tests
+- name: Check routes and DNS
+  shell: |
+    set -euo pipefail
+    echo IP
+    ip a
+    echo IP ROUTE
+    ip route
+    echo IP -6 ROUTE
+    ip -6 route
+    echo RESOLV
+    if [ -f /etc/resolv.conf ]; then
+      cat /etc/resolv.conf
+    else
+      echo NO /etc/resolv.conf
+      ls -alrtF /etc/resolv.* || :
+    fi
+  changed_when: false
+
+- name: Verify DNS and network connectivity
+  shell: |
+    set -euo pipefail
+    echo CHECK DNS AND CONNECTIVITY
+    for host in mirrors.fedoraproject.org mirrors.centos.org; do
+      if ! getent hosts "$host"; then
+        echo FAILED to lookup host "$host"
+        exit 1
+      fi
+      if ! curl -o /dev/null https://"$host"; then
+        echo FAILED to contact host "$host"
+        exit 1
+      fi
+    done
+  when: ansible_facts["distribution"] == "CentOS"
+  changed_when: false

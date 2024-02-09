@@ -43,3 +43,6 @@
         that:
           - "'NetworkManager-wifi' in ansible_facts.packages"
         msg: "NetworkManager-wifi is not installed after wireless configured"
+
+    - name: Verify network state restored to default
+      include_tasks: tasks/check_network_dns.yml

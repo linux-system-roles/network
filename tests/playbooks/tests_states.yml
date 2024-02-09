@@ -145,3 +145,4 @@
                 condition: "{{ network_provider == 'nm' }}"
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
+              - tasks/check_network_dns.yml

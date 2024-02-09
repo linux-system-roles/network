@@ -89,3 +89,5 @@
               command: ip link del {{ interface }}.000a
               failed_when: false
               changed_when: false
+            - name: Verify network state restored to default
+              include_tasks: tasks/check_network_dns.yml

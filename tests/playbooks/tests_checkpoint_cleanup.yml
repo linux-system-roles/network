@@ -101,3 +101,5 @@
             - name: Delete the device '{{ interface }}'
               command: ip link del "{{ interface }}"
               changed_when: false
+            - name: Verify network state restored to default
+              include_tasks: tasks/check_network_dns.yml
