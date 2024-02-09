@@ -60,3 +60,9 @@
   import_playbook: remove_profile.yml
   vars:
     profile: "{{ interface }}"
+
+- name: Verify that cleanup restored state to default
+  hosts: all
+  tasks:
+    - name: Verify network state restored to default
+      include_tasks: tasks/check_network_dns.yml

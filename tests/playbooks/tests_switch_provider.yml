@@ -61,3 +61,5 @@
       include_tasks: tasks/delete_interface.yml
     - name: Include the task 'assert_device_absent.yml'
       include_tasks: tasks/assert_device_absent.yml
+    - name: Verify network state restored to default
+      include_tasks: tasks/check_network_dns.yml

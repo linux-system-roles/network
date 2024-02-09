@@ -112,3 +112,5 @@
           when:
             - ansible_distribution_major_version != '6'
           changed_when: false
+        - name: Verify network state restored to default
+          include_tasks: tasks/check_network_dns.yml

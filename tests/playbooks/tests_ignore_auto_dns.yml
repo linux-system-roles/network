@@ -79,4 +79,6 @@
               include_tasks: tasks/assert_profile_absent.yml
               vars:
                 profile: "{{ interface }}"
+            - name: Verify network state restored to default
+              include_tasks: tasks/check_network_dns.yml
 ...

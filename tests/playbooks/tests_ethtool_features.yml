@@ -224,3 +224,5 @@
               include_tasks: tasks/manage_test_interface.yml
               vars:
                 state: absent
+            - name: Verify network state restored to default
+              include_tasks: tasks/check_network_dns.yml

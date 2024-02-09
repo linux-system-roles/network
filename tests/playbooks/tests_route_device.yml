@@ -185,4 +185,6 @@
               loop:
                 - "{{ interface0 }}"
                 - "{{ interface1 }}"
+            - name: Verify network state restored to default
+              include_tasks: tasks/check_network_dns.yml
 ...

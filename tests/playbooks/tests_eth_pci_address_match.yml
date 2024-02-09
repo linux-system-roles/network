@@ -79,3 +79,5 @@
                     persistent_state: absent
                     state: down
               failed_when: false
+            - name: Verify network state restored to default
+              include_tasks: tasks/check_network_dns.yml

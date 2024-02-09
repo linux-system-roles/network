@@ -89,3 +89,4 @@
             lsr_cleanup:
               - tasks/cleanup_bond_profile+device.yml
               - tasks/remove_test_interfaces_with_dhcp.yml
+              - tasks/check_network_dns.yml

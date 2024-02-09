@@ -42,4 +42,7 @@
         that:
           - "'NetworkManager-team' in ansible_facts.packages"
         msg: "NetworkManager-team is not installed after team configuration"
+
+    - name: Verify network state restored to default
+      include_tasks: tasks/check_network_dns.yml
 ...

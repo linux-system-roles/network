@@ -38,3 +38,4 @@
               - tasks/assert_profile_present.yml
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
+              - tasks/check_network_dns.yml
