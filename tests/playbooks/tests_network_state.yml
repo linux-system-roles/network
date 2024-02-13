@@ -173,6 +173,14 @@
         msg: the file `/run/NetworkManager/no-stub-resolv.conf` does not
           contain the specified DNS configuration
 
+    - name: Purge the DNS
+      import_role:
+        name: linux-system-roles.network
+      vars:
+        network_state:
+          dns-resolver:
+            config: {}
+
     - name: Include the task 'delete_interface.yml'
       include_tasks: tasks/delete_interface.yml
     - name: Include the task 'assert_device_absent.yml'
