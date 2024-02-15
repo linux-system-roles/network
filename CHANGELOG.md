@@ -1,6 +1,16 @@
 Changelog
 =========
 
+[1.15.1] - 2024-02-14
+--------------------
+
+### Other Changes
+
+- test: Clean up mock wifi at the end of each wireless test (#670)
+- test: Rewrite tests_bond_options.yml in new testing format (#671)
+- ci: Bump codecov/codecov-action from 3 to 4 (#672)
+- ci: fix python unit test - copy pytest config to tests/unit (#673)
+
 [1.15.0] - 2024-01-16
 --------------------
 
