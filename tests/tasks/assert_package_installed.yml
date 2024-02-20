@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: "Get the rpm package facts"
+  package_facts:
+    manager: "auto"
+
+- name: "Assert installed package '{{ package }}'"
+  assert:
+    that:
+      - package in ansible_facts.packages
+    msg: "'{{ package }}' is not installed"
