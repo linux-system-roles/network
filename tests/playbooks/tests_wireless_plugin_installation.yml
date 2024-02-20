@@ -26,6 +26,7 @@
       include_role:
         name: linux-system-roles.network
       vars:
+        network_allow_restart: true
         network_connections:
           - name: wlan0
             type: wireless
