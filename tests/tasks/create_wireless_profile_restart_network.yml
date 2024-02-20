@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Create wireless connection with rescue
+  block:
+    - name: Import network role
+      import_role:
+        name: linux-system-roles.network
+      vars:
+        network_allow_restart: '{{ wifi_restart_network }}'
+        network_connections:
+          - name: "{{ interface }}"
+            type: wireless
+            wireless:
+              ssid: "My WPA2-PSK Network"
+              key_mgmt: "wpa-psk"
+              password: "p@55w0rD"
+
+  rescue:
+    - name: Show rescue result
+      debug:
+        var: __network_service_restart_requested

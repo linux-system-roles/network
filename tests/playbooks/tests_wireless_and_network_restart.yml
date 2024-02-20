@@ -1,0 +1,80 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Play for testing wifi and network restart
+  hosts: all
+  vars:
+    interface: wlan0
+    profile: "{{ interface }}"
+    package: NetworkManager-wifi
+    wifi_restart_network: false
+    network_connections_result_error:
+      NetworkManager needs to be restarted to be able to proceed
+      because wireless and team interfaces are defined. This might
+      disturb the connectivity of the managed system. Please set
+      `network_allow_restart` to `true` if you are prepared for this.
+      Notice that the necessary action is to install NetworkManager-wifi or
+      NetworkManager-team plugin and to restart NetworkManager.
+    lsr_fail_debug:
+      - __network_connections_result
+  tasks:
+    - name: Show playbook name
+      debug:
+        msg: "this is: playbooks/tests_wireless_and_network_restart.yml"
+      tags:
+        - always
+
+    - name: Cannot test ostree systems because the package can not be removed
+        or installed - 'NetworkManager-wifi'
+      meta: end_host
+      when: __network_is_ostree | d(false)
+
+    - name: Test the wifi connection without NetworkManager restarted
+      tags:
+        - tests::wifi:create
+      block:
+        - name: Include the task 'run_test.yml'
+          include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description:
+              Given a system with '{{ package }}' package removed,
+              when creating a wifi connection without NetworkManager restarted,
+              then the role should fail with the error specified in
+              `network_connections_result_error`.
+            lsr_setup:
+              - tasks/delete_interface.yml
+              - tasks/assert_device_absent.yml
+              - tasks/remove_package.yml
+            lsr_test:
+              - tasks/create_wireless_profile_restart_network.yml
+            lsr_assert:
+              - tasks/assert_network_connections_failed.yml
+            lsr_cleanup:
+              - tasks/check_network_dns.yml
+
+    - name: "Reset testing variables"
+      set_fact:
+        wifi_restart_network: true
+
+    - name: Test the wifi connection with NetworkManager restarted
+      tags:
+        - tests::wifi:restart
+      block:
+        - name: Include the task 'run_test.yml'
+          include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description:
+              Given a system with '{{ package }}' package removed,
+              when creating a wifi connection with NetworkManager restarted,
+              then the wifi device and profile are present and
+              the '{{ package }}' package is installed in the system.
+            lsr_setup:
+              - tasks/delete_interface.yml
+              - tasks/assert_device_absent.yml
+              - tasks/remove_package.yml
+            lsr_test:
+              - tasks/create_wireless_profile_restart_network.yml
+            lsr_assert:
+              - tasks/assert_package_installed.yml
+            lsr_cleanup:
+              - tasks/cleanup_profile+device.yml
+              - tasks/check_network_dns.yml

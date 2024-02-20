@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Assert that configuring network connections failed
+  assert:
+    that:
+      - __network_service_restart_requested is failed
+      - __network_service_restart_requested is search(
+        network_connections_result_error)
+    msg: Configuring network connections is not failed with the error
+      "{{ network_connections_result_error }}"
