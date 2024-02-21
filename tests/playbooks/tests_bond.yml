@@ -10,26 +10,26 @@
     port2_profile: bond0.1
     dhcp_interface2: test2
   tasks:
-    - name: "INIT Prepare setup"
-      debug:
-        msg: "##################################################"
-    - name: Import the task 'create_test_interfaces_with_dhcp.yml'
-      import_tasks: tasks/create_test_interfaces_with_dhcp.yml
-    - name: Import the task 'assert_device_present.yml'
-      import_tasks: tasks/assert_device_present.yml
-      vars:
-        interface: "{{ dhcp_interface1 }}"
-    - name: Import the task 'assert_device_present.yml'
-      import_tasks: tasks/assert_device_present.yml
-      vars:
-        interface: "{{ dhcp_interface2 }}"
-    - name: "Backup the /etc/resolv.conf for initscript"
-      command: cp -vf /etc/resolv.conf /etc/resolv.conf.bak
-      when:
-        - network_provider == "initscripts"
-      changed_when: false
     - name: Test bond device
       block:
+        - name: "INIT Prepare setup"
+          debug:
+            msg: "##################################################"
+        - name: Import the task 'create_test_interfaces_with_dhcp.yml'
+          import_tasks: tasks/create_test_interfaces_with_dhcp.yml
+        - name: Import the task 'assert_device_present.yml'
+          import_tasks: tasks/assert_device_present.yml
+          vars:
+            interface: "{{ dhcp_interface1 }}"
+        - name: Import the task 'assert_device_present.yml'
+          import_tasks: tasks/assert_device_present.yml
+          vars:
+            interface: "{{ dhcp_interface2 }}"
+        - name: "Backup the /etc/resolv.conf for initscript"
+          command: cp -vf /etc/resolv.conf /etc/resolv.conf.bak
+          when:
+            - network_provider == "initscripts"
+          changed_when: false
         - name: "TEST Add Bond with 2 ports"
           debug:
             msg: "##################################################"

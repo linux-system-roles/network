@@ -2,6 +2,8 @@
 ---
 - name: Remove test interfaces
   shell: |
+    set -uxo pipefail
+    exec 1>&2
     ip netns delete ns1
     ip link delete veth1-br
     ip link delete veth2-br
