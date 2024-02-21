@@ -37,7 +37,8 @@
 
 - name: Create test interfaces
   shell: |
-    set -euo pipefail
+    set -euxo pipefail
+    exec 1>&2
     ip link add {{ dhcp_interface1 }} type veth peer name {{ dhcp_interface1 }}p
     ip link add {{ dhcp_interface2 }} type veth peer name {{ dhcp_interface2 }}p
     if [ -n "$(pgrep NetworkManager)" ];then
@@ -63,10 +64,23 @@
     while ! ip addr show testbr | grep -q 'inet [1-9]'
     do
         let "timer+=1"
-        if [ $timer -eq 30 ]; then break; fi
+        if [ $timer -eq 30 ]; then
+          echo ERROR - could not add testbr
+          ip addr
+          exit 1
+        fi
         sleep 1
-        ip addr add 192.0.2.1/24 dev testbr
-        ip -6 addr add 2001:DB8::1/32 dev testbr
+        rc=0
+        ip addr add 192.0.2.1/24 dev testbr || rc="$?"
+        if [ "$rc" != 0 ]; then
+          echo NOTICE - could not add testbr - error code "$rc"
+          continue
+        fi
+        ip -6 addr add 2001:DB8::1/32 dev testbr || rc="$?"
+        if [ "$rc" != 0 ]; then
+          echo NOTICE - could not add testbr - error code "$rc"
+          continue
+        fi
     done
 
     if grep 'release 6' /etc/redhat-release; then
