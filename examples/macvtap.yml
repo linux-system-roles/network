@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Manage network MAC VTAP
+  hosts: network-test  
+  vars:
+    network_connections:
+      - name: eth0
+        type: ethernet
+        state: up
+        interface_name: eth0
+        ip:
+          address:
+            - 192.168.0.1/24
+
+      # Create a virtual ethernet card bound to eth0
+      - name: veth0
+        type: macvlan
+        state: up
+        parent: eth0
+        macvlan:
+          mode: bridge
+          promiscuous: true
+          tap: true
+        ip:
+          address:
+            - 192.168.1.1/24
+
+  roles:
+    - linux-system-roles.network
