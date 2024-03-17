@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Cannot test ostree systems because the package cannot be removed
+    or installed - '{{ package }}'
+  meta: end_host
+  when: __network_is_ostree | d(false)
