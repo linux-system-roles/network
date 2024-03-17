@@ -23,10 +23,10 @@
       tags:
         - always
 
-    - name: Cannot test ostree systems because the package can not be removed
-        or installed - 'NetworkManager-wifi'
-      meta: end_host
-      when: __network_is_ostree | d(false)
+    - name: Check if test can run on ostree systems
+      include_tasks: tasks/ostree_systems_check.yml
+      vars:
+        package: NetworkManager-wifi
 
     - name: Test the wifi connection without NetworkManager restarted
       tags:
