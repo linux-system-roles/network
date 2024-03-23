@@ -312,7 +312,14 @@ configuration is supported at the moment.
 #### `type: vlan`
 
 Similar to `controller`, the `parent` references the connection profile in the ansible
-role.
+role. The vlan ID can be specified by using nested vlan setting, the valid vlan ID
+value ranges from 0 to 4094. Here is how to specify the vlan ID:
+
+```yaml
+type: vlan
+vlan:
+  id: 6
+```
 
 #### `type: macvlan`
 
