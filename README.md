@@ -313,6 +313,11 @@ configuration is supported at the moment.
 
 Similar to `controller`, the `parent` references the connection profile in the ansible
 role.
+Here is how to specify the VLAN ID
+
+```yaml
+type: vlan
+vlan_id: 123
 
 #### `type: macvlan`
 
@@ -348,7 +353,6 @@ The following options are supported:
 
 - `ssid`: the SSID of the wireless network (required)
 - `key_mgmt` (required)
-
   Any key from following key list:
 
   - `owe`
