@@ -101,16 +101,14 @@ ibution_major_version | int < 9",
 blackhole, prohibit and unreachable",
     },
     "playbooks/tests_routing_rules.yml": {},
-    # team interface is not supported on Fedora
-    "playbooks/tests_team.yml": {
-        EXTRA_RUN_CONDITION: "ansible_distribution != 'Fedora'",
-    },
+    "playbooks/tests_team.yml": {},
     "playbooks/tests_team_plugin_installation.yml": {},
     # mac80211_hwsim (used for tests_wireless) only seems to be available
     # and working on RHEL/CentOS 7
     "playbooks/tests_wireless.yml": {
         EXTRA_RUN_CONDITION: "ansible_distribution_major_version == '7'",
     },
+    "playbooks/tests_wireless_and_network_restart.yml": {},
     "playbooks/tests_wireless_plugin_installation.yml": {},
     "playbooks/tests_wireless_wpa3_owe.yml": {
         "comment": "# OWE has not been supported by NetworkManager 1.18.8 on \

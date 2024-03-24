@@ -26,6 +26,7 @@
       include_role:
         name: linux-system-roles.network
       vars:
+        network_allow_restart: true
         network_connections:
           # Specify the team profile
           - name: team0

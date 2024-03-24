@@ -24,6 +24,53 @@
   when:
     - network_state is defined
     - ansible_distribution_major_version | int < 8
+
+- name: Check if updates for network packages are available through the DNF
+    package manager due to wireless or team interfaces
+  dnf:
+    update_cache: true
+    name: "{{ network_packages }}"
+    state: latest  # noqa package-latest
+  register: dnf_package_update_info
+  check_mode: true
+  when:
+    - ansible_distribution == 'Fedora' or
+      ansible_distribution_major_version | int > 7
+    - __network_wireless_connections_defined
+      or __network_team_connections_defined
+    - not __network_is_ostree
+
+- name: Check if updates for network packages are available through the YUM
+    package manager due to wireless or team interfaces
+  yum:
+    update_cache: true
+    name: "{{ network_packages }}"  # noqa package-latest
+    state: latest
+  register: yum_package_update_info
+  check_mode: true
+  when:
+    - ansible_distribution_major_version | int < 8
+    - __network_wireless_connections_defined
+      or __network_team_connections_defined
+    - not __network_is_ostree
+
+- name: Ask user's consent to restart NetworkManager due to wireless or team
+    interfaces
+  fail:
+    msg: NetworkManager needs to be restarted to be able to proceed
+      because wireless and team interfaces are defined. This might
+      disturb the connectivity of the managed system. Please set
+      `network_allow_restart` to `true` if you are prepared for this.
+      Notice that the necessary action is to install NetworkManager-wifi or
+      NetworkManager-team plugin and to restart NetworkManager.
+  register: __network_service_restart_requested
+  when:
+    - __network_wireless_connections_defined
+       or __network_team_connections_defined
+    - network_provider == "nm"
+    - not network_allow_restart
+    - dnf_package_update_info is changed or yum_package_update_info is changed
+
 # Depending on the plugins, checking installed packages might be slow
 # for example subscription manager might slow this down
 # Therefore install packages only when rpm does not find them
@@ -70,7 +117,8 @@
       ansible_distribution_major_version | int > 8
 
 # If network packages changed and wireless or team connections are specified,
-# NetworkManager must be restarted
+# NetworkManager must be restarted, and the user needs to explicitly consent
+# to restart NetworkManager by setting `network_allow_restart` to `true`
 - name: Restart NetworkManager due to wireless or team interfaces
   service:
     name: NetworkManager

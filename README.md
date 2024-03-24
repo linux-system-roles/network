@@ -92,11 +92,14 @@ the name prefix. List of variables:
 - `network_connections` - The connection profiles are configured as
   `network_connections`, which is a list of dictionaries that include specific
   options.
-- `network_allow_restart` - Certain configurations require the role to restart
-  network services. For example, if a wireless connection is configured and
-  NetworkManager-wifi is not installed, NetworkManager must be restarted prior
-  to the connection being configured. Setting this to `false` will prevent the
-  role from restarting network service.
+- `network_allow_restart` - It defaults to `false`. To load NetworkManager plugins
+  after installation, NetworkManager requires to be restarted. For example, if a
+  wireless connection is configured and NetworkManager-wifi is not installed,
+  NetworkManager must be restarted prior to the connection being configured. The
+  restart can result in connectivity loss and therefore the role does not allow it
+  without explicit consent. The user can consent to it by setting
+  `network_allow_restart` to `true`. Setting `network_allow_restart` to `false` will
+  prevent the role from restarting NetworkManager.
 - `network_state` - The network state settings can be configured in the managed
   host, and the format and the syntax of the configuration should be consistent
   with the [nmstate state examples](https://nmstate.io/examples.html) (YAML).
