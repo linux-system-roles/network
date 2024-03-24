@@ -1352,6 +1352,13 @@ The `network` role rejects invalid configurations. It is recommended to test the
 with `--check` first. There is no protection against wrong (but valid) configuration.
 Double-check your configuration before applying it.
 
+### network_connections Internal Module
+
+The `network_connections` internal module is intended for internal use or integration
+testing and is not intended for direct external access or use. When this internal
+module is utilized in integration tests, the tasks specified in `tasks/main.yaml`
+are skipped, thereby speeding up the test execution.
+
 ## Compatibility
 
 The `network` role supports the same configuration scheme for both providers (`nm`
