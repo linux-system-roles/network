@@ -316,6 +316,18 @@ role.
 Similar to `controller` and `vlan`, the `parent` references the connection profile in
 the ansible role.
 
+#### Network_connections Module
+
+The `network_connections.py module` is intended for internal usage by the role and It is not meant to be directly accessed or utilised by external roles or playbooks.Contains the internal Ansible module, which is the main script. It controls the communication between the role and Ansible, imports the YAML configuration and applies the changes to the provider (i.e. NetworkManager, initscripts).
+
+### Purpose of  Network_connections Module
+The primary purpose of the `network_connections module` is to provide internal utility functions and classes for managing network connections and related tasks within the context of the role.
+
+### Restrictions and Guidelines
+#Internal Use Only :
+The `network_connections module` should only be called and used internally within the tasks and handlers of this role. It is not intended for external or standalone usage.No Direct Invocation Users and developers should refrain from directly invoking the network_connections module outside of its designated role. Attempting to use this module in a standalone manner or across different roles can lead to unexpected behaviour and may compromise the integrity of the role's networking functionalities.
+
+
 #### `type: infiniband`
 
 For the infiniband connection, currently it is only supported for the nm provider, and
@@ -359,6 +371,12 @@ The following options are supported:
 
 Dummy network interface, `nm` (NetworkManager) is the only supported `network_provider`
 for this type.
+
+
+
+
+
+
 
 ### `autoconnect`
 
@@ -1341,6 +1359,7 @@ network_state:
 The `network` role rejects invalid configurations. It is recommended to test the role
 with `--check` first. There is no protection against wrong (but valid) configuration.
 Double-check your configuration before applying it.
+
 
 ## Compatibility
 
