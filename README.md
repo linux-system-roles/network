@@ -1399,6 +1399,39 @@ may be
 Another option maybe be to initially auto-configure the host during installation (ISO
 based, kickstart, etc.), so that the host is connected to a management LAN or VLAN. It
 strongly depends on your environment.
+#### Installation and Usage Guide
+
+### Run the following command:
+`ansible-galaxy install linux-system-role.network`
+
+## Running from Git
+
+git clone https://github.com/linux-system-roles/network.git
+ 
+## Change into the cloned directory:
+
+cd network
+Use Ansible to run the desired playbooks or roles from the cloned repository.
+
+## Invoking Examples with ansible-playbook
+
+The Network role includes example playbooks to help you get started. To invoke these examples using ansible-playbook, follow these steps:
+
+#Navigate to the examples directory within the Network role:
+
+cd network/examples
+
+#Run any of the example playbooks using ansible-playbook. For example:
+ansible-playbook match_path_support.yml
+
+
+# Ansible Installation: Ensure you have Ansible installed on your system before using this role.
+
+ 
+
+
+ 
+
 
 For `initscripts` provider, deploying a profile merely means to create the ifcfg
 files. Nothing happens automatically until the play issues `ifup` or `ifdown`
