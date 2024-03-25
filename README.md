@@ -316,9 +316,12 @@ role.
 Here is a way to specify the VLAN ID
 
 ```yaml
-type: vlan
-vlan_id: 123
 
+type: vlan
+vlan:
+ id: 6
+
+```
 #### `type: macvlan`
 
 Similar to `controller` and `vlan`, the `parent` references the connection profile in
