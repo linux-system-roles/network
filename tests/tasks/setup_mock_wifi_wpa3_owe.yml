@@ -18,7 +18,11 @@
   block:
     # It is currently too difficult to install the required kernel
     # if using rpm ostree - so just skip this test
-    - name: Check if rpm ostree system - cannot test
+    - name: >-
+        This is an rpm-ostree system. This test cannot be run on such a system.
+        The test wants to install the hostapd package from copr, and install
+        the mac80211_hwsim kernel module. These operations are currently not
+        supported on rpm-ostree systems.
       meta: end_host
       when: __network_is_ostree | d(false)
 

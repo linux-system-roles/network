@@ -3,9 +3,10 @@
 - name: Play for testing wireless plugin installation
   hosts: all
   tasks:
-    - name: Check if rpm ostree system - cannot test
-      meta: end_host
-      when: __network_is_ostree | d(false)
+    - name: Check if test can run on ostree systems
+      include_tasks: tasks/ostree_systems_check.yml
+      vars:
+        package: NetworkManager-wifi
 
     - name: Remove the NetworkManager-wifi package
       package:

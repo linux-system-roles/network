@@ -21,4 +21,3 @@
   import_playbook: playbooks/tests_team.yml
   when:
     - ansible_distribution_major_version != '6'
-    - ansible_distribution != 'Fedora'
