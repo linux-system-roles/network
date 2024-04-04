@@ -315,12 +315,17 @@ create new profiles with the new provider.</li>
 <li><code>network_connections</code> - The connection profiles are
 configured as <code>network_connections</code>, which is a list of
 dictionaries that include specific options.</li>
-<li><code>network_allow_restart</code> - Certain configurations require
-the role to restart network services. For example, if a wireless
+<li><code>network_allow_restart</code> - It defaults to
+<code>false</code>. To load NetworkManager plugins after installation,
+NetworkManager requires to be restarted. For example, if a wireless
 connection is configured and NetworkManager-wifi is not installed,
 NetworkManager must be restarted prior to the connection being
-configured. Setting this to <code>false</code> will prevent the role
-from restarting network service.</li>
+configured. The restart can result in connectivity loss and therefore
+the role does not allow it without explicit consent. The user can
+consent to it by setting <code>network_allow_restart</code> to
+<code>true</code>. Setting <code>network_allow_restart</code> to
+<code>false</code> will prevent the role from restarting
+NetworkManager.</li>
 <li><code>network_state</code> - The network state settings can be
 configured in the managed host, and the format and the syntax of the
 configuration should be consistent with the <a

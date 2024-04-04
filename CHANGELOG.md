@@ -1,6 +1,22 @@
 Changelog
 =========
 
+[1.15.2] - 2024-04-04
+--------------------
+
+### Bug Fixes
+
+- fix: Allow network to restart when wireless or team connection is specified (#675)
+
+### Other Changes
+
+- test: improve bond test failure debugging (#676)
+- ci: Bump ansible/ansible-lint from 6 to 24 (#677)
+- docs: Add MAC VTAP example (#679)
+- tests: Team interface is indeed supported on Fedora (#680)
+- test: improve name text for skipped ostree tests (#684)
+- ci: Bump mathieudutour/github-tag-action from 6.1 to 6.2 (#687)
+
 [1.15.1] - 2024-02-14
 --------------------
 
