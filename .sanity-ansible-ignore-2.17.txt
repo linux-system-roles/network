@@ -1,0 +1,3 @@
+plugins/modules/network_connections.py validate-modules:missing-gplv3-license
+plugins/modules/network_state.py validate-modules:missing-gplv3-license
+tests/network/ensure_provider_tests.py shebang!skip
