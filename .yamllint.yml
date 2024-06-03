@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: MIT
 ---
-extends: default
 ignore: |
   /.tox/
   tests/roles/
