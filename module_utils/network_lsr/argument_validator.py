@@ -477,7 +477,7 @@ class ArgValidatorDict(ArgValidator):
             items = list(value.items())
         except AttributeError:
             raise ValidationError(name, "invalid content is not a dictionary")
-        for (setting, value) in items:
+        for setting, value in items:
             try:
                 validator = self.nested[setting]
             except KeyError:
@@ -493,7 +493,7 @@ class ArgValidatorDict(ArgValidator):
             except ValidationError as e:
                 raise ValidationError(e.name, e.error_message)
             result[setting] = validated_value
-        for (setting, validator) in self.nested.items():
+        for setting, validator in self.nested.items():
             if setting in seen_keys:
                 continue
             if validator.required:
@@ -543,7 +543,7 @@ class ArgValidatorList(ArgValidator):
             value = [s for s in value.split(" ") if s]
 
         result = []
-        for (idx, v) in enumerate(value):
+        for idx, v in enumerate(value):
             if (v is None or v == "") and self.remove_none_or_empty:
                 continue
             try:
