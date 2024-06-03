@@ -30,7 +30,7 @@ jobs:
       - name: Install tox, tox-lsr
         run: |
           set -euxo pipefail
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.3.0"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.4.0"
 
       - name: Run ansible-plugin-scan
         run: |
