@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
 - name: Manage network MAC VTAP
-  hosts: network-test  
+  hosts: network-test
   vars:
     network_connections:
       - name: eth0
