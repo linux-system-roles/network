@@ -5270,7 +5270,6 @@ class TestValidatorDictBond(Python26CompatTestCase):
         ]
 
     def test_invalid_bond_option_ad(self):
-
         """
         Test the ad bond option restrictions
         """

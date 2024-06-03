@@ -2524,11 +2524,11 @@ class Cmd_nm(Cmd):
             % (
                 con.get_id(),
                 con.get_uuid(),
-                "not-active"
-                if not is_active
-                else "is-modified"
-                if is_modified
-                else "force-state-change",
+                (
+                    "not-active"
+                    if not is_active
+                    else "is-modified" if is_modified else "force-state-change"
+                ),
             ),
         )
         self.connections_data_set_changed(idx)
@@ -2784,11 +2784,11 @@ class Cmd_initscripts(Cmd):
                 "up connection %s (%s)"
                 % (
                     name,
-                    "not-active"
-                    if is_active is not True
-                    else "is-modified"
-                    if is_modified
-                    else "force-state-change",
+                    (
+                        "not-active"
+                        if is_active is not True
+                        else "is-modified" if is_modified else "force-state-change"
+                    ),
                 ),
             )
             cmd = "ifup"
