@@ -211,6 +211,9 @@ of Applying the Network State Configuration</a>
 <li><a href="#invalid-and-wrong-configuration"
 id="toc-invalid-and-wrong-configuration">Invalid and Wrong
 Configuration</a></li>
+<li><a href="#network_connections-internal-module"
+id="toc-network_connections-internal-module">network_connections
+Internal Module</a></li>
 </ul></li>
 <li><a href="#compatibility"
 id="toc-compatibility">Compatibility</a></li>
@@ -1473,6 +1476,13 @@ Configuration</h2>
 recommended to test the role with <code>--check</code> first. There is
 no protection against wrong (but valid) configuration. Double-check your
 configuration before applying it.</p>
+<h2 id="network_connections-internal-module">network_connections
+Internal Module</h2>
+<p>The <code>network_connections</code> internal module is intended for
+internal use or integration testing and is not intended for direct
+external access or use. When this internal module is utilized in
+integration tests, the tasks specified in <code>tasks/main.yaml</code>
+are skipped, thereby speeding up the test execution.</p>
 <h1 id="compatibility">Compatibility</h1>
 <p>The <code>network</code> role supports the same configuration scheme
 for both providers (<code>nm</code> and <code>initscripts</code>). That
