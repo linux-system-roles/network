@@ -92,6 +92,17 @@
           retries: 20
           delay: 2
           changed_when: false
+      rescue:
+        - name: Gather failure information
+          shell: |
+            exec 1>&2
+            set -xo pipefail
+            ip -d -s link show
+            ip -d -s a s
+            journalctl -ex
+            ps -ef | grep dnsmasq || :
+          changed_when: false
+          failed_when: true
       always:
         - name: Clean up the test devices and the connection profiles
           tags:
