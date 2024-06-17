@@ -12,17 +12,17 @@ concurrency:
 jobs:
   tests:
     name: Testing Farm tests
-    # strategy:
-    #   fail-fast: false
-    #   matrix:
-    #     os_test: [ "Fedora-39", "Fedora-40", "CentOS-7", "CentOS-8", "CentOS-9" ]
+    strategy:
+      fail-fast: false
+      matrix:
+        os_test: [ "Fedora-39", "Fedora-40", "CentOS-7", "CentOS-8", "CentOS-9" ]
     runs-on: ubuntu-latest
     # Let's schedule tests only on user request. NOT automatically.
     # Only repository owner or member can schedule tests
-    # if: |
-    #   github.event.issue.pull_request
-    #   && contains(github.event.comment.body, '[citest]')
-    #   && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+    if: |
+      github.event.issue.pull_request
+      && (contains(github.event.comment.body, '[test]') || contains(github.event.comment.body, '[test-all]'))
+      && contains(fromJson('["OWNER", "MEMBER"]'), github.event.comment.author_association)
     steps:
       - name: Schedule test on Testing Farm
         uses: sclorg/testing-farm-as-github-action@v2
@@ -30,7 +30,7 @@ jobs:
           git_url: https://github.com/spetrosi/tft-tests
           git_ref: add-tmt-tests
           tmt_path: plans/${{ github.event.repository.name }}
-          compose: Fedora-40
+          compose: ${{ matrix.os_test }}
           api_key: ${{ secrets.TF_API_KEY_PUB }}
-          pull_request_status_name: Fedora-40
+          pull_request_status_name: ${{ matrix.os_test }}
           variables: "ANSIBLE_VER=2.16;REPO_NAME=${{ github.event.repository.name }};PR_NUM=${{ github.event.number }}"
