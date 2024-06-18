@@ -8,14 +8,59 @@ on:
 concurrency:
   group: my-concurrency-group
   cancel-in-progress: true
-
 jobs:
+  prep_test_playbooks:
+    runs-on: ubuntu-latest
+  steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+      with:
+        ref: "refs/pull/${{ github.event.issue.number }}/head"
+        fetch-depth: 0
+
+    - name: Get test playbooks
+      id: test_playbooks
+      shell: bash
+      run: |
+        declare -a test_playbooks
+        pushd tests || exit
+        test_playbooks=(tests_*.yml)
+        pos=$(( ${#test_playbooks[*]} - 1 ))
+        last=${test_playbooks[$pos]}
+        test_playbooks_yaml_list="["
+        for TBP in "${test_playbooks[@]}"; do
+          if [[ $TBP == "$last" ]]; then
+            test_playbooks_yaml_list="$test_playbooks_yaml_list \"$TBP\" ]"
+            break
+          else
+            test_playbooks_yaml_list="$test_playbooks_yaml_list \"$TBP\","
+          fi
+        done
+        echo "test_playbooks=$test_playbooks_yaml_list"
+        echo "test_playbooks=$test_playbooks_yaml_list" >> "$GITHUB_OUTPUT"
+        popd || exit
   tests:
+    needs: prep_test_playbooks
     name: Testing Farm tests
     strategy:
       fail-fast: false
       matrix:
-        os_test: [ "Fedora-39", "Fedora-40", "CentOS-7", "CentOS-8", "CentOS-9" ]
+        os_test: [ "Fedora-39", "Fedora-40", "CentOS-7", "CentOS-Stream-8", "CentOS-Stream-9" ]
+        ansible_version: 2.16
+        test_playbook: ${{ fromJSON(needs.prep_test_playbooks.outputs.test_playbooks) }}
+        include:
+         - os_test: "Fedora-39"
+           ansible_version: 2.16
+         - os_test: "Fedora-40"
+           ansible_version: 2.16
+         - os_test: "CentOS-7"
+           ansible_version: 2.9
+         - os_test: "CentOS-Stream-8"
+           ansible_version: 2.9
+         - os_test: "CentOS-Stream-8"
+           ansible_version: 2.16
+         - os_test: "CentOS-Stream-9"
+           ansible_version: 2.16
     runs-on: ubuntu-latest
     # Let's schedule tests only on user request. NOT automatically.
     # Only repository owner or member can schedule tests
@@ -29,8 +74,8 @@ jobs:
         with:
           git_url: https://github.com/spetrosi/tft-tests
           git_ref: add-tmt-tests
-          tmt_path: plans/${{ github.event.repository.name }}
+          tmt_path: plans/general
           compose: ${{ matrix.os_test }}
           api_key: ${{ secrets.TF_API_KEY_PUB }}
-          pull_request_status_name: ${{ matrix.os_test }}
-          variables: "ANSIBLE_VER=2.16;REPO_NAME=${{ github.event.repository.name }};PR_NUM=${{ github.event.number }}"
+          pull_request_status_name: ${{ matrix.os_test }}-ansible${{ matrix.ansible_version }}
+          variables: "ANSIBLE_VER=${{ matrix.ansible_version }};REPO_NAME=${{ github.event.repository.name }};PR_NUM=${{ github.event.issue.number }};SYSTEM_ROLES_ONLY_TESTS=${{ matrix.test_playbook }}"
