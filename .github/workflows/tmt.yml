@@ -3,7 +3,6 @@ on:
   issue_comment:
     types:
       - created
-
 # The concurrency key is used to prevent multiple workflows from running at the same time
 concurrency:
   group: my-concurrency-group
@@ -47,7 +46,6 @@ jobs:
       fail-fast: false
       matrix:
         os_test: [ "Fedora-39", "Fedora-40", "CentOS-7", "CentOS-Stream-8", "CentOS-Stream-9" ]
-        ansible_version: 2.16
         test_playbook: ${{ fromJSON(needs.prep-test-playbooks.outputs.test_playbooks) }}
         include:
          - os_test: "Fedora-39"
