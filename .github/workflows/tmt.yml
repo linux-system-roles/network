@@ -8,8 +8,9 @@ on:
 concurrency:
   group: my-concurrency-group
   cancel-in-progress: true
+
 jobs:
-  prep_test_playbooks:
+  prep-test-playbooks:
     runs-on: ubuntu-latest
   steps:
     - name: Checkout repo
@@ -40,14 +41,14 @@ jobs:
         echo "test_playbooks=$test_playbooks_yaml_list" >> "$GITHUB_OUTPUT"
         popd || exit
   tests:
-    needs: prep_test_playbooks
+    needs: prep-test-playbooks
     name: Testing Farm tests
     strategy:
       fail-fast: false
       matrix:
         os_test: [ "Fedora-39", "Fedora-40", "CentOS-7", "CentOS-Stream-8", "CentOS-Stream-9" ]
         ansible_version: 2.16
-        test_playbook: ${{ fromJSON(needs.prep_test_playbooks.outputs.test_playbooks) }}
+        test_playbook: ${{ fromJSON(needs.prep-test-playbooks.outputs.test_playbooks) }}
         include:
          - os_test: "Fedora-39"
            ansible_version: 2.16
