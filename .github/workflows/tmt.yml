@@ -3,6 +3,7 @@ on:
   issue_comment:
     types:
       - created
+
 # The concurrency key is used to prevent multiple workflows from running at the same time
 concurrency:
   group: my-concurrency-group
@@ -27,10 +28,12 @@ jobs:
           test_playbooks=(tests_*.yml)
           pos=$(( ${#test_playbooks[*]} - 1 ))
           last=${test_playbooks[$pos]}
-          test_playbooks_yaml_list="["
+          first=${test_playbooks[0]}
           for TBP in "${test_playbooks[@]}"; do
-            if [[ $TBP == "$last" ]]; then
-              test_playbooks_yaml_list="$test_playbooks_yaml_list \"$TBP\" ]"
+            if [[ $TBP == "$first" ]]; then
+              test_playbooks_yaml_list="[\"$TBP\","
+            elif [[ $TBP == "$last" ]]; then
+              test_playbooks_yaml_list="$test_playbooks_yaml_list \"$TBP\"]"
               break
             else
               test_playbooks_yaml_list="$test_playbooks_yaml_list \"$TBP\","
