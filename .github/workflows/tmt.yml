@@ -28,10 +28,12 @@ jobs:
           test_playbooks=(tests_*.yml)
           pos=$(( ${#test_playbooks[*]} - 1 ))
           last=${test_playbooks[$pos]}
-          test_playbooks_yaml_list="["
+          first=${test_playbooks[0]}
           for TBP in "${test_playbooks[@]}"; do
-            if [[ $TBP == "$last" ]]; then
-              test_playbooks_yaml_list="$test_playbooks_yaml_list \"$TBP\" ]"
+            if [[ $TBP == "$first" ]]; then
+              test_playbooks_yaml_list="[\"$TBP\","
+            elif [[ $TBP == "$last" ]]; then
+              test_playbooks_yaml_list="$test_playbooks_yaml_list \"$TBP\"]"
               break
             else
               test_playbooks_yaml_list="$test_playbooks_yaml_list \"$TBP\","
@@ -47,7 +49,6 @@ jobs:
       fail-fast: false
       matrix:
         os_test: [ "Fedora-39", "Fedora-40", "CentOS-7", "CentOS-Stream-8", "CentOS-Stream-9" ]
-        ansible_version: 2.16
         test_playbook: ${{ fromJSON(needs.prep-test-playbooks.outputs.test_playbooks) }}
         include:
          - os_test: "Fedora-39"
