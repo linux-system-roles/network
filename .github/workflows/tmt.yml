@@ -3,6 +3,7 @@ on:
   issue_comment:
     types:
       - created
+
 # The concurrency key is used to prevent multiple workflows from running at the same time
 concurrency:
   group: my-concurrency-group
