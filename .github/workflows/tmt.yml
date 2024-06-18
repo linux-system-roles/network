@@ -12,6 +12,8 @@ concurrency:
 jobs:
   prep-test-playbooks:
     runs-on: ubuntu-latest
+    outputs:
+      test_playbooks: ${{ steps.test_playbooks.outputs.test_playbooks }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -26,8 +28,29 @@ jobs:
           declare -a test_playbooks
           pushd tests || exit
           test_playbooks=(tests_*.yml)
-          pos=$(( ${#test_playbooks[*]} - 1 ))
-          last=${test_playbooks[$pos]}
+          len=$(( ${#test_playbooks[*]} ))
+          # GH matrix expansion limit as per https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
+          gh_expansion_limit=256
+          # Our current matrix has 5 OSes, of which CS8 has 2 runs, for ansible-core and ansible-engine, which makes up to 6
+          current_lsr_matrix_len=6
+          # Maximim length of the array that we can submit to GH
+          max_len=$((gh_expansion_limit/current_lsr_matrix_len))
+          # The formula that I got for calculating the most efficient way of splitting a long array to fin the limit
+          max_len_index=$((2 * max_len - len))
+          # Group first $max_len_index elements of the test_playbooks array into elements by two so that array length = 42
+          if (( "$len" > "$max_len" )); then
+            declare -a test_playbooks_sliced
+            for (( i==0; i < "$max_len_index"; i++ )); do
+              # Get two first elements from test_playbooks to test_playbooks_sliced
+              string=$(IFS=$'\n'; echo "${test_playbooks[@]:0:2}")
+              test_playbooks_sliced+=("$string")
+              # Remove two first elements from test_playbooks
+              test_playbooks=("${test_playbooks[@]:2}")
+            done
+            test_playbooks=("${test_playbooks_sliced[@]}" "${test_playbooks[@]}" )
+            len=$(( ${#test_playbooks[*]} ))
+          fi
+          last=${test_playbooks[$len - 1]}
           first=${test_playbooks[0]}
           for TBP in "${test_playbooks[@]}"; do
             if [[ $TBP == "$first" ]]; then
@@ -39,8 +62,9 @@ jobs:
               test_playbooks_yaml_list="$test_playbooks_yaml_list \"$TBP\","
             fi
           done
-          echo "test_playbooks=$test_playbooks_yaml_list"
           echo "test_playbooks=$test_playbooks_yaml_list" >> "$GITHUB_OUTPUT"
+          echo "test_playbooks=$test_playbooks_yaml_list"
+          echo "Array length: $(( ${#test_playbooks[*]} ))"
           popd || exit
   tests:
     needs: prep-test-playbooks
@@ -71,8 +95,7 @@ jobs:
       && (contains(github.event.comment.body, '[test]') || contains(github.event.comment.body, '[test-all]'))
       && contains(fromJson('["OWNER", "MEMBER"]'), github.event.comment.author_association)
     steps:
-      - name: Schedule test on Testing Farm
-        uses: sclorg/testing-farm-as-github-action@v2
+      - uses: sclorg/testing-farm-as-github-action@v2
         with:
           git_url: https://github.com/spetrosi/tft-tests
           git_ref: add-tmt-tests
