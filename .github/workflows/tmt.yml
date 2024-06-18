@@ -12,34 +12,34 @@ concurrency:
 jobs:
   prep-test-playbooks:
     runs-on: ubuntu-latest
-  steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4
-      with:
-        ref: "refs/pull/${{ github.event.issue.number }}/head"
-        fetch-depth: 0
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: "refs/pull/${{ github.event.issue.number }}/head"
+          fetch-depth: 0
 
-    - name: Get test playbooks
-      id: test_playbooks
-      shell: bash
-      run: |
-        declare -a test_playbooks
-        pushd tests || exit
-        test_playbooks=(tests_*.yml)
-        pos=$(( ${#test_playbooks[*]} - 1 ))
-        last=${test_playbooks[$pos]}
-        test_playbooks_yaml_list="["
-        for TBP in "${test_playbooks[@]}"; do
-          if [[ $TBP == "$last" ]]; then
-            test_playbooks_yaml_list="$test_playbooks_yaml_list \"$TBP\" ]"
-            break
-          else
-            test_playbooks_yaml_list="$test_playbooks_yaml_list \"$TBP\","
-          fi
-        done
-        echo "test_playbooks=$test_playbooks_yaml_list"
-        echo "test_playbooks=$test_playbooks_yaml_list" >> "$GITHUB_OUTPUT"
-        popd || exit
+      - name: Get test playbooks
+        id: test_playbooks
+        shell: bash
+        run: |
+          declare -a test_playbooks
+          pushd tests || exit
+          test_playbooks=(tests_*.yml)
+          pos=$(( ${#test_playbooks[*]} - 1 ))
+          last=${test_playbooks[$pos]}
+          test_playbooks_yaml_list="["
+          for TBP in "${test_playbooks[@]}"; do
+            if [[ $TBP == "$last" ]]; then
+              test_playbooks_yaml_list="$test_playbooks_yaml_list \"$TBP\" ]"
+              break
+            else
+              test_playbooks_yaml_list="$test_playbooks_yaml_list \"$TBP\","
+            fi
+          done
+          echo "test_playbooks=$test_playbooks_yaml_list"
+          echo "test_playbooks=$test_playbooks_yaml_list" >> "$GITHUB_OUTPUT"
+          popd || exit
   tests:
     needs: prep-test-playbooks
     name: Testing Farm tests
