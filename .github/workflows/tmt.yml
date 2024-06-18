@@ -3,7 +3,6 @@ on:
   issue_comment:
     types:
       - created
-
 # The concurrency key is used to prevent multiple workflows from running at the same time
 concurrency:
   group: my-concurrency-group
@@ -68,7 +67,7 @@ jobs:
           popd || exit
   tests:
     needs: prep-test-playbooks
-    name: Testing Farm tests
+    name: ${{ matrix.os_test }}/ansible-${{ matrix.ansible_version }}
     strategy:
       fail-fast: false
       matrix:
@@ -102,5 +101,5 @@ jobs:
           tmt_path: plans/general
           compose: ${{ matrix.os_test }}
           api_key: ${{ secrets.TF_API_KEY_PUB }}
-          pull_request_status_name: ${{ matrix.os_test }}-ansible${{ matrix.ansible_version }}
+          pull_request_status_name: ${{ matrix.os_test }}/ansible-${{ matrix.ansible_version }}
           variables: "ANSIBLE_VER=${{ matrix.ansible_version }};REPO_NAME=${{ github.event.repository.name }};PR_NUM=${{ github.event.issue.number }};SYSTEM_ROLES_ONLY_TESTS=${{ matrix.test_playbook }}"
