@@ -10,70 +10,70 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  prep-test-playbooks:
-    runs-on: ubuntu-latest
-    outputs:
-      test_playbooks: ${{ steps.test_playbooks.outputs.test_playbooks }}
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          ref: "refs/pull/${{ github.event.issue.number }}/head"
-          fetch-depth: 0
+  # prep-test-playbooks:
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     test_playbooks: ${{ steps.test_playbooks.outputs.test_playbooks }}
+  #   steps:
+  #     - name: Checkout repo
+  #       uses: actions/checkout@v4
+  #       with:
+  #         ref: "refs/pull/${{ github.event.issue.number }}/head"
+  #         fetch-depth: 0
 
-      - name: Get test playbooks
-        id: test_playbooks
-        shell: bash
-        run: |
-          declare -a test_playbooks
-          pushd tests || exit
-          test_playbooks=(tests_*.yml)
-          len=$(( ${#test_playbooks[*]} ))
-          # GH matrix expansion limit as per https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
-          gh_expansion_limit=256
-          # Our current matrix has 5 OSes, of which CS8 has 2 runs, for ansible-core and ansible-engine, which makes up to 6
-          current_lsr_matrix_len=6
-          # Maximim length of the array that we can submit to GH
-          max_len=$((gh_expansion_limit/current_lsr_matrix_len))
-          # The formula that I got for calculating the most efficient way of splitting a long array to fin the limit
-          max_len_index=$((2 * max_len - len))
-          # Group first $max_len_index elements of the test_playbooks array into elements by two so that array length = 42
-          if (( "$len" > "$max_len" )); then
-            declare -a test_playbooks_sliced
-            for (( i==0; i < "$max_len_index"; i++ )); do
-              # Get two first elements from test_playbooks to test_playbooks_sliced
-              string=$(IFS=$'\n'; echo "${test_playbooks[@]:0:2}")
-              test_playbooks_sliced+=("$string")
-              # Remove two first elements from test_playbooks
-              test_playbooks=("${test_playbooks[@]:2}")
-            done
-            test_playbooks=("${test_playbooks_sliced[@]}" "${test_playbooks[@]}" )
-            len=$(( ${#test_playbooks[*]} ))
-          fi
-          last=${test_playbooks[$len - 1]}
-          first=${test_playbooks[0]}
-          for TBP in "${test_playbooks[@]}"; do
-            if [[ $TBP == "$first" ]]; then
-              test_playbooks_yaml_list="[\"$TBP\","
-            elif [[ $TBP == "$last" ]]; then
-              test_playbooks_yaml_list="$test_playbooks_yaml_list \"$TBP\"]"
-              break
-            else
-              test_playbooks_yaml_list="$test_playbooks_yaml_list \"$TBP\","
-            fi
-          done
-          echo "test_playbooks=$test_playbooks_yaml_list" >> "$GITHUB_OUTPUT"
-          echo "test_playbooks=$test_playbooks_yaml_list"
-          echo "Array length: $(( ${#test_playbooks[*]} ))"
-          popd || exit
+  #     - name: Get test playbooks
+  #       id: test_playbooks
+  #       shell: bash
+  #       run: |
+  #         declare -a test_playbooks
+  #         pushd tests || exit
+  #         test_playbooks=(tests_*.yml)
+  #         len=$(( ${#test_playbooks[*]} ))
+  #         # GH matrix expansion limit as per https://docs.github.com/en/actions/using-jobs/using-a-matrix-for-your-jobs
+  #         gh_expansion_limit=256
+  #         # Our current matrix has 5 OSes, of which CS8 has 2 runs, for ansible-core and ansible-engine, which makes up to 6
+  #         current_lsr_matrix_len=6
+  #         # Maximim length of the array that we can submit to GH
+  #         max_len=$((gh_expansion_limit/current_lsr_matrix_len))
+  #         # The formula that I got for calculating the most efficient way of splitting a long array to fin the limit
+  #         max_len_index=$((2 * max_len - len))
+  #         # Group first $max_len_index elements of the test_playbooks array into elements by two so that array length = 42
+  #         if (( "$len" > "$max_len" )); then
+  #           declare -a test_playbooks_sliced
+  #           for (( i==0; i < "$max_len_index"; i++ )); do
+  #             # Get two first elements from test_playbooks to test_playbooks_sliced
+  #             string=$(IFS=$'\n'; echo "${test_playbooks[@]:0:2}")
+  #             test_playbooks_sliced+=("$string")
+  #             # Remove two first elements from test_playbooks
+  #             test_playbooks=("${test_playbooks[@]:2}")
+  #           done
+  #           test_playbooks=("${test_playbooks_sliced[@]}" "${test_playbooks[@]}" )
+  #           len=$(( ${#test_playbooks[*]} ))
+  #         fi
+  #         last=${test_playbooks[$len - 1]}
+  #         first=${test_playbooks[0]}
+  #         for TBP in "${test_playbooks[@]}"; do
+  #           if [[ $TBP == "$first" ]]; then
+  #             test_playbooks_yaml_list="[\"$TBP\","
+  #           elif [[ $TBP == "$last" ]]; then
+  #             test_playbooks_yaml_list="$test_playbooks_yaml_list \"$TBP\"]"
+  #             break
+  #           else
+  #             test_playbooks_yaml_list="$test_playbooks_yaml_list \"$TBP\","
+  #           fi
+  #         done
+  #         echo "test_playbooks=$test_playbooks_yaml_list" >> "$GITHUB_OUTPUT"
+  #         echo "test_playbooks=$test_playbooks_yaml_list"
+  #         echo "Array length: $(( ${#test_playbooks[*]} ))"
+  #         popd || exit
   tests:
-    needs: prep-test-playbooks
+    # needs: prep-test-playbooks
     name: ${{ matrix.os_test }}/ansible-${{ matrix.ansible_version }}
     strategy:
       fail-fast: false
       matrix:
         os_test: [ "Fedora-39", "Fedora-40", "CentOS-7", "CentOS-Stream-8", "CentOS-Stream-9" ]
-        test_playbook: ${{ fromJSON(needs.prep-test-playbooks.outputs.test_playbooks) }}
+        # test_playbook: ${{ fromJSON(needs.prep-test-playbooks.outputs.test_playbooks) }}
         include:
          - os_test: "Fedora-39"
            ansible_version: "2.16"
@@ -99,7 +99,7 @@ jobs:
         with:
           git_url: https://github.com/spetrosi/tft-tests
           git_ref: add-tmt-tests
-          tmt_path: plans/general
+          tmt_path: plans/general/general.fmf
           compose: ${{ matrix.os_test }}
           api_key: ${{ secrets.TF_API_KEY_PUB }}
           pull_request_status_name: ${{ matrix.os_test }}/ansible-${{ matrix.ansible_version }}
