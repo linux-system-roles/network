@@ -3,7 +3,6 @@ on:
   issue_comment:
     types:
       - created
-
 # The concurrency key is used to prevent multiple workflows from running at the same time
 concurrency:
   group: my-concurrency-group
@@ -99,7 +98,7 @@ jobs:
         with:
           git_url: https://github.com/spetrosi/tft-tests
           git_ref: add-tmt-tests
-          tmt_path: plans/general/general.fmf
+          tmt_path: plans/general.fmf
           compose: ${{ matrix.os_test }}
           api_key: ${{ secrets.TF_API_KEY_PUB }}
           pull_request_status_name: ${{ matrix.os_test }}/ansible-${{ matrix.ansible_version }}
