@@ -99,7 +99,7 @@ jobs:
         with:
           git_url: https://github.com/spetrosi/tft-tests
           git_ref: add-tmt-tests
-          pipeline_settings: "pipeline-type=tmt-multihost"
+          pipeline_settings: tmt-multihost
           variables: "ANSIBLE_VER=${{ matrix.ansible_version }};REPO_NAME=${{ github.event.repository.name }};PR_NUM=${{ github.event.issue.number }}"
           pull_request_status_name: ${{ matrix.os_test }}/ansible-${{ matrix.ansible_version }}
           compose: ${{ matrix.os_test }}
