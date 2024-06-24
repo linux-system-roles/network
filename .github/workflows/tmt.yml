@@ -94,7 +94,6 @@ jobs:
       github.event.issue.pull_request
       && (contains(github.event.comment.body, '[test]') || contains(github.event.comment.body, '[test-all]'))
       && contains(fromJson('["OWNER", "MEMBER"]'), github.event.comment.author_association)
-
     steps:
       - uses: sclorg/testing-farm-as-github-action@v2
         with:
