@@ -72,14 +72,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os_test: [ "Fedora-39", "Fedora-40", "CentOS-7", "CentOS-Stream-8", "CentOS-Stream-9" ]
+        # "CentOS-7-latest" for RH ranch, "CentOS-7" for public
+        os_test: [ "Fedora-39", "Fedora-40", "CentOS-7-latest", "CentOS-Stream-8", "CentOS-Stream-9" ]
         # test_playbook: ${{ fromJSON(needs.prep-test-playbooks.outputs.test_playbooks) }}
         include:
          - os_test: "Fedora-39"
            ansible_version: "2.16"
          - os_test: "Fedora-40"
            ansible_version: "2.16"
-         - os_test: "CentOS-7"
+         - os_test: "CentOS-7-latest"
            ansible_version: "2.9"
          - os_test: "CentOS-Stream-8"
            ansible_version: "2.9"
@@ -94,13 +95,17 @@ jobs:
       github.event.issue.pull_request
       && (contains(github.event.comment.body, '[test]') || contains(github.event.comment.body, '[test-all]'))
       && contains(fromJson('["OWNER", "MEMBER"]'), github.event.comment.author_association)
-
     steps:
       - uses: sclorg/testing-farm-as-github-action@v2
         with:
           git_url: https://github.com/spetrosi/tft-tests
           git_ref: add-tmt-tests
-          pipeline_settings: "{\"pipeline-type\":\"pipeline-type\"}"
+          pipeline_settings: |
+            {
+              "pipeline": {
+                  "type": "tmt-multihost"
+              }
+            }
           variables: "ANSIBLE_VER=${{ matrix.ansible_version }};REPO_NAME=${{ github.event.repository.name }};PR_NUM=${{ github.event.issue.number }}"
           pull_request_status_name: ${{ matrix.os_test }}/ansible-${{ matrix.ansible_version }}
           compose: ${{ matrix.os_test }}
