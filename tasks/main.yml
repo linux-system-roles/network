@@ -25,6 +25,21 @@
     - network_state is defined
     - ansible_distribution_major_version | int < 8
 
+- name: Abort applying teaming configuration if the system version
+    of the managed host is EL10 or later
+  fail:
+    msg: >-
+      Teaming is not supported in
+      {{ ansible_distribution }}-{{ ansible_distribution_major_version }} -
+      use bonding instead
+  when:
+    - ansible_distribution_major_version | int > 9
+    - ansible_distribution in __network_rh_distros
+    - network_connections | selectattr("type", "match", "^team$") | list |
+      length > 0 or
+      network_state | selectattr("type", "match", "^team$") | list |
+      length > 0
+
 - name: Check if updates for network packages are available through the DNF
     package manager due to wireless or team interfaces
   dnf:

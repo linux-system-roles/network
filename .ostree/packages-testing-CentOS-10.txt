@@ -1,0 +1,4 @@
+ethtool
+NetworkManager
+procps-ng
+systemd-resolved

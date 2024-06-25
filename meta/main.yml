@@ -6,14 +6,6 @@ galaxy_info:
   company: Red Hat, Inc.
   license: BSD-3-Clause
   min_ansible_version: "2.9"
-  galaxy_tags:
-    - centos
-    - fedora
-    - network
-    - networking
-    - redhat
-    - rhel
-    - system
   platforms:
     - name: Fedora
       versions:
@@ -24,3 +16,16 @@ galaxy_info:
         - "7"
         - "8"
         - "9"
+  galaxy_tags:
+    - centos
+    - el6
+    - el7
+    - el8
+    - el9
+    - el10
+    - fedora
+    - network
+    - networking
+    - redhat
+    - rhel
+    - system
