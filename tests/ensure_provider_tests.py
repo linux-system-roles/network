@@ -101,8 +101,15 @@ ibution_major_version | int < 9",
 blackhole, prohibit and unreachable",
     },
     "playbooks/tests_routing_rules.yml": {},
-    "playbooks/tests_team.yml": {},
-    "playbooks/tests_team_plugin_installation.yml": {},
+    # teaming support dropped in EL10
+    "playbooks/tests_team.yml": {
+        EXTRA_RUN_CONDITION: "ansible_distribution not in ['RedHat', 'CentOS'] or\n      ansible_distr\
+ibution_major_version | int < 10",
+    },
+    "playbooks/tests_team_plugin_installation.yml": {
+        EXTRA_RUN_CONDITION: "ansible_distribution not in ['RedHat', 'CentOS'] or\n      ansible_distr\
+ibution_major_version | int < 10",
+    },
     # mac80211_hwsim (used for tests_wireless) only seems to be available
     # and working on RHEL/CentOS 7
     "playbooks/tests_wireless.yml": {
