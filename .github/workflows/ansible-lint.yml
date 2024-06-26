@@ -46,4 +46,4 @@ jobs:
       - name: Run ansible-lint
         uses: ansible/ansible-lint@v24
         with:
-          working_directory: .tox/ansible_collections/${{ env.LSR_ROLE2COLL_NAMESPACE }}/${{ env.LSR_ROLE2COLL_NAME }}
+          working_directory: ${{ github.workspace }}/.tox/ansible_collections/${{ env.LSR_ROLE2COLL_NAMESPACE }}/${{ env.LSR_ROLE2COLL_NAME }}

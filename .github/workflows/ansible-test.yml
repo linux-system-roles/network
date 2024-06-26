@@ -44,4 +44,4 @@ jobs:
         uses: ansible-community/ansible-test-gh-action@release/v1
         with:
           testing-type: sanity  # wokeignore:rule=sanity
-          collection-src-directory: .tox/ansible_collections/${{ env.LSR_ROLE2COLL_NAMESPACE }}/${{ env.LSR_ROLE2COLL_NAME }}
+          collection-src-directory: ${{ github.workspace }}/.tox/ansible_collections/${{ env.LSR_ROLE2COLL_NAMESPACE }}/${{ env.LSR_ROLE2COLL_NAME }}
