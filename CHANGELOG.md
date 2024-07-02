@@ -1,6 +1,20 @@
 Changelog
 =========
 
+[1.15.4] - 2024-07-02
+--------------------
+
+### Bug Fixes
+
+- fix: add support for EL10 (#700)
+
+### Other Changes
+
+- docs: Add documentation for specifying VLAN ID (#685)
+- docs: network_connections module is only meant for internal usage (#686)
+- test: debug deprecated bond test failures (#696)
+- ci: ansible-lint action now requires absolute directory (#699)
+
 [1.15.3] - 2024-06-11
 --------------------
 
