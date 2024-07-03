@@ -13,7 +13,7 @@
   fail:
     msg: Only the `nm` provider supports using the `network_state` variable
   when:
-    - network_state is defined
+    - network_state != {}
     - network_provider == "initscripts"
 
 - name: Abort applying the network state configuration if the system version
@@ -22,7 +22,7 @@
     msg: The `network_state` variable uses nmstate backend which is only
       supported since RHEL-8
   when:
-    - network_state is defined
+    - network_state != {}
     - ansible_distribution_major_version | int < 8
 
 - name: Abort applying teaming configuration if the system version
@@ -35,10 +35,10 @@
   when:
     - ansible_distribution_major_version | int > 9
     - ansible_distribution in __network_rh_distros
-    - network_connections | selectattr("type", "match", "^team$") | list |
-      length > 0 or
-      network_state | selectattr("type", "match", "^team$") | list |
-      length > 0
+    - network_connections | selectattr("type", "defined") |
+      selectattr("type", "match", "^team$") | list | length > 0 or
+      network_state.get("interfaces", []) | selectattr("type", "defined") |
+      selectattr("type", "match", "^team$") | list | length > 0
 
 - name: Check if updates for network packages are available through the DNF
     package manager due to wireless or team interfaces
@@ -111,7 +111,7 @@
     use: "{{ (__network_is_ostree | d(false)) |
       ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
   when:
-    - network_state is defined
+    - network_state != {}
     - ansible_distribution == 'Fedora' and
       ansible_distribution_major_version | int > 27 or
       ansible_distribution != 'Fedora' and
@@ -125,7 +125,7 @@
     use: "{{ (__network_is_ostree | d(false)) |
       ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
   when:
-    - network_state is defined
+    - network_state != {}
     - ansible_distribution == 'Fedora' and
       ansible_distribution_major_version | int > 34 or
       ansible_distribution != 'Fedora' and
@@ -154,7 +154,7 @@
     state: started
     enabled: true
   when:
-    - network_provider == "nm" or network_state is defined
+    - network_provider == "nm" or network_state != {}
   no_log: true
 
 # If any 802.1x connections are used, the wpa_supplicant
@@ -199,9 +199,9 @@
 
 - name: Configure networking state
   network_state:
-    desired_state: "{{ network_state | default([]) }}"
+    desired_state: "{{ network_state }}"
   register: __network_state_result
-  when: network_state is defined
+  when: network_state != {}
 
 - name: Show stderr messages for the network_connections
   debug:
@@ -216,7 +216,7 @@
   debug:
     var: __network_state_result
     verbosity: 1
-  when: network_state is defined
+  when: network_state != {}
 
 - name: Re-test connectivity
   ping:
