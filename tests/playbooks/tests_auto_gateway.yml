@@ -51,20 +51,18 @@
       changed_when: false
     - name: "Assert default ipv4 route is present"
       assert:
-        that:
-          - >-
-            "default via 203.0.113.1 dev {{ interface }}"
-            in ipv4_routes.stdout
+        that: __test_str in ipv4_routes.stdout
+      vars:
+        __test_str: default via 203.0.113.1 dev {{ interface }}
     - name: "Get ipv6 routes"
       command: "ip -6 route"
       register: ipv6_route
       changed_when: false
     - name: "Assert default ipv6 route is present"
       assert:
-        that:
-          - >-
-            "default via 2001:db8::1 dev {{ interface }}"
-            in ipv6_route.stdout
+        that: __test_str in ipv6_route.stdout
+      vars:
+        __test_str: default via 2001:db8::1 dev {{ interface }}
       when: network_provider == "nm"
     - name: "TEARDOWN: remove profiles."
       debug:
@@ -119,20 +117,18 @@
       changed_when: false
     - name: "Assert default ipv4 route is absent"
       assert:
-        that:
-          - >-
-            "default via 203.0.113.1 dev {{ interface }}"
-            not in ipv4_routes.stdout
+        that: __test_str not in ipv4_routes.stdout
+      vars:
+        __test_str: default via 203.0.113.1 dev {{ interface }}
     - name: "Get ipv6 routes"
       command: "ip -6 route"
       register: ipv6_route
       changed_when: false
     - name: "Assert default ipv6 route is absent"
       assert:
-        that:
-          - >-
-            "default via 2001:db8::1 dev {{ interface }}"
-            not in ipv6_route.stdout
+        that: __test_str not in ipv6_route.stdout
+      vars:
+        __test_str: default via 2001:db8::1 dev {{ interface }}
       when: network_provider == "nm"
     - name: "TEARDOWN: remove profiles."
       debug:

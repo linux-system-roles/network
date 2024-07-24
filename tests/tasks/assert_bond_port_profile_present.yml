@@ -3,8 +3,10 @@
 - name: Include the task 'assert_profile_present.yml'
   include_tasks: tasks/assert_profile_present.yml
   vars:
-    profile: "{{ item }}"
+    profile: "{{ bond_port_profile }}"
   loop:
     - "{{ controller_profile }}"
     - "{{ port1_profile }}"
     - "{{ port2_profile }}"
+  loop_control:
+    loop_var: bond_port_profile
