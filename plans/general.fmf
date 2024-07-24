@@ -1,0 +1,62 @@
+summary: A general test for a system role
+provision:
+  - name: control_node
+    role: control_node
+    # TF uses `how: artemis`, tmt try uses `how: virtual`. No need to define `how`
+    # `connection: system` is for `how: virtual` to make VMs get a real IP to configure ssh easily
+    # This setting is ignored on artemis so we can keep it
+    connection: system
+  - name: managed_node1
+    role: managed_node
+    connection: system
+environment:
+    ANSIBLE_VER: 2.17
+    REPO_NAME: network
+    PYTHON_VERSION: 3.12
+    SYSTEM_ROLES_ONLY_TESTS: ""
+    PR_NUM: ""
+prepare:
+  - name: Use vault.centos.org repos (CS 7, 8 EOL workaround)
+    script: |
+      if grep -q -e 'CentOS Stream release 8' -e 'CentOS Linux release 7.9' /etc/redhat-release; then
+        sed -i '/^mirror/d;s/#\(baseurl=http:\/\/\)mirror/\1vault/' /etc/yum.repos.d/*.repo
+      fi
+
+  - name: Enable epel to install beakerlib on all platforms except CS10 and Fedora, there it's not available and not needed
+    script: |
+      if ! grep -q -e 'CentOS Stream release 10' -e 'Fedora release' /etc/redhat-release; then
+        yum install epel-release -y
+      fi
+    where: control_node
+
+  - name: Additional steps to enable EPEL on EL 7
+    script: |
+      if grep -q 'CentOS Linux release 7.9' /etc/redhat-release; then
+        yum install yum-utils -y
+        yum-config-manager --enable epel epel-debuginfo epel-source
+      fi
+    where: control_node
+
+  - name: Install python on managed node when running CS8 with ansible!=2.9
+    script: |
+      if [ "$ANSIBLE_VER" != "2.9" ] && grep -q 'CentOS Stream release 8' /etc/redhat-release; then
+        dnf install -y python"$PYTHON_VERSION"
+      fi
+    where: managed_node
+
+  - name: Distribute SSH keys when provisioned with how=virtual
+    script: |
+      if [ -f ${TMT_TREE%/*}/provision/control_node/id_ecdsa.pub ]; then
+        cat ${TMT_TREE%/*}/provision/control_node/id_ecdsa.pub >> ~/.ssh/authorized_keys
+      fi
+    where: managed_node
+
+discover:
+  - name: Run test playbooks from control_node
+    how: fmf
+    url: https://github.com/linux-system-roles/tft-tests
+    ref: main
+    where: control_node
+    filter: tag:test_playbooks
+execute:
+    how: tmt
