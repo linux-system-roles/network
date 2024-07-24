@@ -75,10 +75,9 @@
             var: ipv6_route.stdout
         - name: Assert default ipv6 route is set
           assert:
-            that:
-              - >-
-                "default via 2001:db8::1 dev {{ interface }}"
-                in ipv6_route.stdout
+            that: __test_str in ipv6_route.stdout
+          vars:
+            __test_str: default via 2001:db8::1 dev {{ interface }}
         - name: Ensure ping6 command is present
           package:
             name: iputils

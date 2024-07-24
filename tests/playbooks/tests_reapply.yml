@@ -61,7 +61,7 @@
         - name: Assert that reapply is found in log output
           assert:
             fail_msg: Reapply not found in log output
-            that: "{{ 'connection reapplied' in test_module_run.stderr }}"
+            that: "'connection reapplied' in test_module_run.stderr"
       always:
         - name: Clean up the test device and the connection profile
           tags:
