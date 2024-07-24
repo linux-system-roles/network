@@ -20,7 +20,8 @@ jobs:
     if: |
       github.event.issue.pull_request
       && (contains(github.event.comment.body, '[citest]') || contains(github.event.comment.body, '[citest-all]'))
-      && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association) || contains('systemroller', github.event.comment.user.login))
+      && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR", "CONTRIBUTOR"]'), github.event.comment.author_association)
+      || contains('systemroller', github.event.comment.user.login))
     runs-on: ubuntu-latest
     outputs:
       supported_platforms: ${{ steps.supported_platforms.outputs.supported_platforms }}
@@ -51,7 +52,9 @@ jobs:
       - name: Get memory
         id: memory
         run: |
-          memory=$(grep -rPo '    m: \K(.*)' tests/provision.fmf)
+          if [ -d tests/provision.fmf ]; then
+            memory=$(grep -rPo '    m: \K(.*)' tests/provision.fmf)
+          fi
           if [ -n "$memory" ]; then
             echo "memory=$memory" >> $GITHUB_OUTPUT
           else
@@ -119,8 +122,9 @@ jobs:
         with:
           sha: ${{ needs.prepare_vars.outputs.head_sha }}
           status: pending
-          context: ${{ matrix.platform }}/ansible-${{ matrix.ansible_version }}
+          context: ${{ matrix.platform }}|ansible-${{ matrix.ansible_version }}
           description: Test started
+          targetUrl: ""
 
       - name: Set commit status as success with a description that platform is skipped
         if: "!contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)"
@@ -128,7 +132,7 @@ jobs:
         with:
           sha: ${{ needs.prepare_vars.outputs.head_sha }}
           status: success
-          context: ${{ matrix.platform }}/ansible-${{ matrix.ansible_version }}
+          context: ${{ matrix.platform }}|ansible-${{ matrix.ansible_version }}
           description: The role does not support this platform. Skipping.
           targetUrl: ""
 
@@ -168,5 +172,6 @@ jobs:
         with:
           sha: ${{ needs.prepare_vars.outputs.head_sha }}
           status: ${{ job.status }}
+          context: ${{ matrix.platform }}|ansible-${{ matrix.ansible_version }}
+          description: Test finished
           targetUrl: ${{ env.ARTIFACTS_URL }}
-          context: ${{ matrix.platform }}/ansible-${{ matrix.ansible_version }}
