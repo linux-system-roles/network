@@ -21,15 +21,10 @@ You can run tests locally with the `tmt try` cli.
 
 ### Running Tests Locally
 
-For now, this functionality requires you to push changes to a PR because the plan only runs from the main branch, or from the PR branch.
-So this is WIP.
+To run tests locally, in the role repository, enter `tmt try -p plans/general <platform>`.
 
-To run tests locally, in the role repository, enter `tmt run plans --name plans/general <platform>`.
-Where `<platform>` is the name of the platform you want to run tests against.
+This command identifies the plans/general plan and provisions two local VMs, one used as an Ansible control node, and second used as a managed node.
 
-For example, `tmt run plans --name plans/general Fedora-40`.
+tmt try is in development and does not identify tests from URL automatically, so after provisioning the machines, you must type `t`, `p`, `t` from the interactive prompt to identify tests, run preparation steps, and run the tests.
 
-This command identifies the plans/general plan and provisions two machines, one used as an Ansible control node, and second used as a managed node.
-
-You can also use `tmt try` to get to an interreactive prompt and be able to ssh into test machines.
-You must run `tmt try -p plans/general Fedora-40`, and the in the promt type `p` to prepare the machines, then `t` to run the tests.
+You can modify environment variables in  `plans/general.fmf` to, e.g. run only specified test playbooks by overwriting `SYSTEM_ROLES_ONLY_TESTS`.

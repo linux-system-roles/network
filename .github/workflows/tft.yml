@@ -20,8 +20,6 @@ jobs:
     if: |
       github.event.issue.pull_request
       && (contains(github.event.comment.body, '[citest]') || contains(github.event.comment.body, '[citest-all]'))
-      && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR", "CONTRIBUTOR"]'), github.event.comment.author_association)
-      || contains('systemroller', github.event.comment.user.login))
     runs-on: ubuntu-latest
     outputs:
       supported_platforms: ${{ steps.supported_platforms.outputs.supported_platforms }}
@@ -151,7 +149,8 @@ jobs:
             GITHUB_ORG=linux-system-roles;\
             PR_NUM=${{ github.event.issue.number }};\
             ARTIFACTS_DIR=${{ env.ARTIFACTS_DIR }};\
-            ARTIFACTS_URL=${{ env.ARTIFACTS_URL }}"
+            ARTIFACTS_URL=${{ env.ARTIFACTS_URL }};\
+            TEST_LOCAL_CHANGES=false"
           # Note that LINUXSYSTEMROLES_SSH_KEY must be single-line, TF doesn't read multi-line variables fine.
           secrets: "LINUXSYSTEMROLES_USER=${{ secrets.LINUXSYSTEMROLES_USER }};\
             LINUXSYSTEMROLES_DOMAIN=${{ secrets.LINUXSYSTEMROLES_DOMAIN }};\
