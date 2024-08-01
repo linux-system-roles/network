@@ -1,6 +1,17 @@
 Changelog
 =========
 
+[1.15.6] - 2024-08-01
+--------------------
+
+### Other Changes
+
+- test: fix some Ansible warnings not caught by lint (#704)
+- ci: Add tft plan and workflow (#705)
+- test: team plugin test does not clean up properly (#706)
+- ci: Update fmf plan to add a separate job to prepare managed nodes (#708)
+- ci: bump sclorg/testing-farm-as-github-action from 2 to 3 (#710)
+
 [1.15.5] - 2024-07-15
 --------------------
 
