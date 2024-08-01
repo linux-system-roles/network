@@ -135,7 +135,7 @@ jobs:
           targetUrl: ""
 
       - name: Run test in testing farm
-        uses: sclorg/testing-farm-as-github-action@v2
+        uses: sclorg/testing-farm-as-github-action@v3
         if: contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)
         env:
           ARTIFACTS_DIR: ${{ env.ARTIFACT_TARGET_DIR }}/${{ env.ARTIFACTS_DIR_NAME }}
