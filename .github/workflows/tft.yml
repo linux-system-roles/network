@@ -1,3 +1,4 @@
+---
 name: Run integration tests in Testing Farm
 on:
   issue_comment:
@@ -7,26 +8,32 @@ permissions:
   contents: read
   # This is required for the ability to create/update the Pull request status
   statuses: write
-# The concurrency key is used to prevent multiple workflows from running at the same time
-concurrency:
-  # group name contains reponame-pr_num to allow simualteneous runs in different PRs
-  group: testing-farm-${{ github.event.repository.name }}-${{ github.event.issue.number }}
-  cancel-in-progress: true
 jobs:
   prepare_vars:
     name: Get info from role and PR to determine if and how to test
+    # The concurrency key is used to prevent multiple workflows from running at the same time
+    concurrency:
+      # group name contains reponame-pr_num to allow simualteneous runs in different PRs
+      group: testing-farm-${{ github.event.repository.name }}-${{ github.event.issue.number }}
+      cancel-in-progress: true
     # Let's schedule tests only on user request. NOT automatically.
     # Only repository owner or member can schedule tests
     if: |
       github.event.issue.pull_request
-      && (contains(github.event.comment.body, '[citest]') || contains(github.event.comment.body, '[citest-all]'))
+      && contains(github.event.comment.body, '[citest]')
+      && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR", "CONTRIBUTOR"]'), github.event.comment.author_association)
+      || contains('systemroller', github.event.comment.user.login))
     runs-on: ubuntu-latest
     outputs:
       supported_platforms: ${{ steps.supported_platforms.outputs.supported_platforms }}
       head_sha: ${{ steps.head_sha.outputs.head_sha }}
-      datetime: ${{ steps.datetime.outputs.datetime }}
       memory: ${{ steps.memory.outputs.memory }}
     steps:
+      - name: Dump github context
+        run:   echo "$GITHUB_CONTEXT"
+        shell: bash
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
 
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -40,12 +47,6 @@ jobs:
           REPO: ${{ github.repository }}
           PR_NO: ${{ github.event.issue.number }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get cuurent datetime
-        id: datetime
-        run: |
-          printf -v datetime '%(%Y%m%d-%H%M%S)T' -1
-          echo "datetime=$datetime" >> $GITHUB_OUTPUT
 
       - name: Get memory
         id: memory
@@ -114,6 +115,19 @@ jobs:
         ${{ needs.prepare_vars.outputs.datetime }}/artifacts"
       ARTIFACT_TARGET_DIR: /srv/pub/alt/linuxsystemroles/logs
     steps:
+      - name: Set variables with DATETIME and artifact location
+        id: set_vars
+        run: |
+          printf -v DATETIME '%(%Y%m%d-%H%M%S)T' -1
+          ARTIFACTS_DIR_NAME="tf_${{ github.event.repository.name }}-${{ github.event.issue.number }}_\
+          ${{ matrix.platform }}-${{ matrix.ansible_version }}_$DATETIME/artifacts"
+          ARTIFACTS_TARGET_DIR=/srv/pub/alt/linuxsystemroles/logs
+          ARTIFACTS_DIR=$ARTIFACTS_TARGET_DIR/$ARTIFACTS_DIR_NAME
+          ARTIFACTS_URL=https://dl.fedoraproject.org/pub/alt/linuxsystemroles/logs$ARTIFACTS_DIR_NAME
+          echo "DATETIME=$DATETIME" >> $GITHUB_OUTPUT
+          echo "ARTIFACTS_DIR=$ARTIFACTS_DIR" >> $GITHUB_OUTPUT
+          echo "ARTIFACTS_URL=$ARTIFACTS_URL" >> $GITHUB_OUTPUT
+
       - name: Set commit status as pending
         if: contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)
         uses: myrotvorets/set-commit-status-action@master
@@ -137,19 +151,17 @@ jobs:
       - name: Run test in testing farm
         uses: sclorg/testing-farm-as-github-action@v3
         if: contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)
-        env:
-          ARTIFACTS_DIR: ${{ env.ARTIFACT_TARGET_DIR }}/${{ env.ARTIFACTS_DIR_NAME }}
-          ARTIFACTS_URL: https://dl.fedoraproject.org/pub/alt/linuxsystemroles/logs/${{ env.ARTIFACTS_DIR_NAME }}
         with:
-          git_url: ${{ github.server_url }}/${{ github.repository }}
-          git_ref: ${{ needs.prepare_vars.outputs.head_sha }}
+          git_url: https://github.com/linux-system-roles/tft-tests
+          git_ref: main
           pipeline_settings: '{ "type": "tmt-multihost" }'
           variables: "ANSIBLE_VER=${{ matrix.ansible_version }};\
             REPO_NAME=${{ github.event.repository.name }};\
+            GITHUB_ORG=${{ github.repository_owner }};\
             GITHUB_ORG=linux-system-roles;\
             PR_NUM=${{ github.event.issue.number }};\
-            ARTIFACTS_DIR=${{ env.ARTIFACTS_DIR }};\
-            ARTIFACTS_URL=${{ env.ARTIFACTS_URL }};\
+            ARTIFACTS_DIR=${{ steps.set_vars.outputs.ARTIFACTS_DIR }};\
+            ARTIFACTS_URL=${{ steps.set_vars.outputs.ARTIFACTS_URL }};\
             TEST_LOCAL_CHANGES=false"
           # Note that LINUXSYSTEMROLES_SSH_KEY must be single-line, TF doesn't read multi-line variables fine.
           secrets: "LINUXSYSTEMROLES_USER=${{ secrets.LINUXSYSTEMROLES_USER }};\
@@ -167,11 +179,9 @@ jobs:
       - name: Set final commit status
         uses: myrotvorets/set-commit-status-action@master
         if: always() && contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)
-        env:
-          ARTIFACTS_URL: https://dl.fedoraproject.org/pub/alt/linuxsystemroles/logs/${{ env.ARTIFACTS_DIR_NAME }}
         with:
           sha: ${{ needs.prepare_vars.outputs.head_sha }}
           status: ${{ job.status }}
           context: ${{ matrix.platform }}|ansible-${{ matrix.ansible_version }}
           description: Test finished
-          targetUrl: ${{ env.ARTIFACTS_URL }}
+          targetUrl: ${{ steps.set_vars.outputs.ARTIFACTS_URL }}

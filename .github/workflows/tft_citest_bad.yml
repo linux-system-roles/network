@@ -1,0 +1,43 @@
+---
+name: Re-run failed testing farm tests
+on:
+  issue_comment:
+    types:
+      - created
+permissions:
+  contents: read
+jobs:
+  citest_bad_rerun:
+    if: |
+      github.event.issue.pull_request
+      && github.event.comment.body == '[citest_bad]'
+      && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR", "CONTRIBUTOR"]'), github.event.comment.author_association)
+    permissions:
+      actions: write # for re-running failed jobs: https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#re-run-a-job-from-a-workflow-run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait 10s until tft.yml workflow is created and skipped because new comment don't match [citest]
+        run: sleep 10s
+
+      - name: Re-run failed jobs for this PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_TITLE: ${{ github.event.issue.title }}
+        run: |
+          PENDING_RUN=$(gh api "repos/$REPO/actions/workflows/tft.yml/runs?event=issue_comment" \
+            | jq -r "[.workflow_runs[] | select( .display_title == \"$PR_TITLE\") | \
+            select(.status == \"pending\" or .status == \"queued\" or .status == \"in_progress\") | .id][0]")
+          # if pending run don't exist, take the last run with failure state
+          if [ "$PENDING_RUN" != "null" ]; then
+            echo "The workflow $PENDING_RUN is still running, wait for it to finish to re-run"
+            exit 1
+          fi
+          RUN_ID=$(gh api "repos/$REPO/actions/workflows/tft.yml/runs?event=issue_comment" \
+            | jq -r "[.workflow_runs[] | select( .display_title == \"$PR_TITLE\" ) | select( .conclusion == \"failure\" ) | .id][0]")
+          if [ "$RUN_ID" = "null" ]; then
+            echo "Failed workflow not found, exitting"
+            exit 1
+          fi
+          echo "Re-running workflow $RUN_ID"
+          gh api --method POST repos/$REPO/actions/runs/$RUN_ID/rerun-failed-jobs
