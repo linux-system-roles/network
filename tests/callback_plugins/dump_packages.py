@@ -58,5 +58,7 @@ class CallbackModule(CallbackBase):
                         packages.add(ii)
                 else:
                     packages.add(pkgs)
-
+            # tell python black that this line is ok
+            # fmt: off
             self._display.display("lsrpackages: " + " ".join(sorted(list(packages))))
+            # fmt: on
