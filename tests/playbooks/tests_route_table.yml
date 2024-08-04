@@ -47,6 +47,12 @@
                   gateway: 198.51.100.6
                   metric: 4
                   table: 30200
+                - network: 192.0.2.64
+                  prefix: 26
+                  gateway: 198.51.100.8
+                  metric: 50
+                  table: 30200
+                  src: 198.51.100.3
 
     - name: Get the routes from the route table 30200
       command: ip route show table 30200
@@ -65,6 +71,9 @@
         that:
           - route_table_30200.stdout is search("198.51.100.64/26 via
             198.51.100.6 dev ethtest0 proto static metric 4")
+          - route_table_30200.stdout is search("192.0.2.64/26 via
+            198.51.100.8 dev ethtest0 proto static src 198.51.100.3
+            metric 50")
         msg: "the route table 30200 does not exist or does not contain the
           specified route"
 
@@ -111,6 +120,12 @@
                   gateway: 198.51.100.6
                   metric: 4
                   table: custom
+                - network: 192.0.2.64
+                  prefix: 26
+                  gateway: 198.51.100.8
+                  metric: 50
+                  table: custom
+                  src: 198.51.100.3
 
     - name: Get the routes from the named route table 'custom'
       command: ip route show table custom
@@ -126,6 +141,9 @@
             198.51.100.1 dev ethtest0 proto static metric 2")
           - route_table_custom.stdout is search("198.51.100.64/26 via
             198.51.100.6 dev ethtest0 proto static metric 4")
+          - route_table_custom.stdout is search("192.0.2.64/26 via
+            198.51.100.8 dev ethtest0 proto static src 198.51.100.3
+            metric 50")
         msg: "the named route table 'custom' does not exist or does not contain
           the specified route"
 
