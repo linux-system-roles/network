@@ -596,10 +596,11 @@ The IP configuration supports the following options:
 
   Static route configuration can be specified via a list of routes given in the
   `route` option. The default value is an empty list. Each route is a dictionary with
-  the following entries: `gateway`, `metric`, `network`, `prefix`, `table` and `type`.
-  `network` and `prefix` specify the destination network. `table` supports both the
-  numeric table and named table. In order to specify the named table, the users have to
-  ensure the named table is properly defined in `/etc/iproute2/rt_tables` or
+  the following entries: `gateway`, `metric`, `network`, `prefix`, `src`, `table` and
+  `type`. `network` and `prefix` specify the destination network. `src` specifies the
+  source IP address for a route. `table` supports both the numeric table and named
+  table. In order to specify the named table, the users have to ensure the named table
+  is properly defined in `/etc/iproute2/rt_tables` or
   `/etc/iproute2/rt_tables.d/*.conf`. The optional `type` key supports the values
   `blackhole`, `prohibit`, and `unreachable`.
   See [man 8 ip-route](https://man7.org/linux/man-pages/man8/ip-route.8.html#DESCRIPTION)

@@ -680,6 +680,9 @@ class ArgValidatorIPRoute(ArgValidatorDict):
                     enum_values=["blackhole", "prohibit", "unreachable"],
                 ),
                 ArgValidatorRouteTable("table"),
+                ArgValidatorIP(
+                    "src", family=family, default_value=None, plain_address=False
+                ),
             ],
             default_value=None,
         )
@@ -715,6 +718,16 @@ class ArgValidatorIPRoute(ArgValidatorDict):
             result["prefix"] = prefix
         elif not Util.addr_family_valid_prefix(family, prefix):
             raise ValidationError(name, "invalid prefix %s in '%s'" % (prefix, value))
+
+        src = result["src"]
+        if src is not None:
+            if family != src["family"]:
+                raise ValidationError(
+                    name,
+                    "conflicting address family between network and src "
+                    "address {0}".format(src["address"]),
+                )
+            result["src"] = src["address"]
 
         return result
 
@@ -2627,6 +2640,12 @@ class ArgValidator_ListConnections(ArgValidatorList):
                             idx,
                             "type is not supported by initscripts",
                         )
+                    if route["src"] is not None:
+                        raise ValidationError.from_connection(
+                            idx,
+                            "configuring the route source is not supported by initscripts",
+                        )
+
         if connection["ip"]["routing_rule"]:
             if mode == self.VALIDATE_ONE_MODE_INITSCRIPTS:
                 raise ValidationError.from_connection(

@@ -239,6 +239,7 @@ class TestValidator(Python26CompatTestCase):
                 "metric": int(r.get_metric()),
                 "type": r.get_attribute("type"),
                 "table": r.get_attribute("table"),
+                "src": r.get_attribute("src"),
             }
             for r in route_list_new
         ]
@@ -294,6 +295,12 @@ class TestValidator(Python26CompatTestCase):
                                 new_route,
                                 "table",
                                 Util.GLib().Variant.new_uint32(r["table"]),
+                            )
+                        if r["src"]:
+                            NM.IPRoute.set_attribute(
+                                new_route,
+                                "src",
+                                Util.GLib().Variant.new_uint32(r["src"]),
                             )
                         if r["family"] == socket.AF_INET:
                             s4.add_route(new_route)
@@ -1144,6 +1151,7 @@ class TestValidator(Python26CompatTestCase):
                                 "metric": -1,
                                 "type": None,
                                 "table": None,
+                                "src": None,
                             }
                         ],
                         "routing_rule": [],
@@ -1485,6 +1493,7 @@ class TestValidator(Python26CompatTestCase):
                                 "metric": -1,
                                 "type": None,
                                 "table": None,
+                                "src": None,
                             }
                         ],
                         "routing_rule": [],
@@ -1635,6 +1644,7 @@ class TestValidator(Python26CompatTestCase):
                                 "metric": -1,
                                 "type": None,
                                 "table": None,
+                                "src": None,
                             }
                         ],
                         "routing_rule": [],
@@ -1698,6 +1708,7 @@ class TestValidator(Python26CompatTestCase):
                                 "metric": -1,
                                 "type": None,
                                 "table": None,
+                                "src": None,
                             }
                         ],
                         "routing_rule": [],
@@ -2661,6 +2672,7 @@ class TestValidator(Python26CompatTestCase):
                                 "metric": 545,
                                 "type": None,
                                 "table": None,
+                                "src": None,
                             },
                             {
                                 "family": socket.AF_INET,
@@ -2670,6 +2682,7 @@ class TestValidator(Python26CompatTestCase):
                                 "metric": -1,
                                 "type": None,
                                 "table": None,
+                                "src": None,
                             },
                         ],
                         "routing_rule": [],
@@ -2767,6 +2780,7 @@ class TestValidator(Python26CompatTestCase):
                                 "metric": 545,
                                 "type": None,
                                 "table": None,
+                                "src": None,
                             },
                             {
                                 "family": socket.AF_INET,
@@ -2776,6 +2790,7 @@ class TestValidator(Python26CompatTestCase):
                                 "metric": -1,
                                 "type": None,
                                 "table": None,
+                                "src": None,
                             },
                             {
                                 "family": socket.AF_INET6,
@@ -2785,6 +2800,7 @@ class TestValidator(Python26CompatTestCase):
                                 "metric": -1,
                                 "type": None,
                                 "table": None,
+                                "src": None,
                             },
                         ],
                         "routing_rule": [],
@@ -2923,6 +2939,7 @@ class TestValidator(Python26CompatTestCase):
                                 "metric": 545,
                                 "type": None,
                                 "table": None,
+                                "src": None,
                             },
                             {
                                 "family": socket.AF_INET,
@@ -2932,6 +2949,7 @@ class TestValidator(Python26CompatTestCase):
                                 "metric": -1,
                                 "type": None,
                                 "table": None,
+                                "src": None,
                             },
                             {
                                 "family": socket.AF_INET6,
@@ -2941,6 +2959,7 @@ class TestValidator(Python26CompatTestCase):
                                 "metric": -1,
                                 "type": None,
                                 "table": None,
+                                "src": None,
                             },
                         ],
                         "routing_rule": [],
@@ -5000,6 +5019,25 @@ class TestValidatorRouteTable(Python26CompatTestCase):
             self.validator.validate,
             self.test_connections,
         )
+
+    def test_route_with_source_address(self):
+        """
+        Test setting the route with src address specified
+        """
+        self.test_connections[0]["ip"]["route"][0]["src"] = "2001:db8::2"
+        self.assertRaisesRegex(
+            ValidationError,
+            "conflicting address family between network and src "
+            "address {0}".format(
+                self.test_connections[0]["ip"]["route"][0]["src"],
+            ),
+            self.validator.validate,
+            self.test_connections,
+        )
+
+        self.test_connections[0]["ip"]["route"][0]["src"] = "198.51.100.3"
+        result = self.validator.validate(self.test_connections)
+        self.assertEqual(result[0]["ip"]["route"][0]["src"], "198.51.100.3")
 
 
 class TestValidatorRoutingRules(Python26CompatTestCase):

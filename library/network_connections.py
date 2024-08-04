@@ -1263,6 +1263,10 @@ class NMUtil:
                     NM.IPRoute.set_attribute(
                         new_route, "table", Util.GLib().Variant.new_uint32(r["table"])
                     )
+                if r["src"]:
+                    NM.IPRoute.set_attribute(
+                        new_route, "src", Util.GLib().Variant.new_string(r["src"])
+                    )
 
                 if r["family"] == socket.AF_INET:
                     s_ip4.add_route(new_route)
