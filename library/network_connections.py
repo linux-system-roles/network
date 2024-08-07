@@ -977,6 +977,10 @@ class NMUtil:
                     connection["parent"], connections, idx
                 ),
             )
+        elif connection["type"] == "vrf":
+            s_con.set_property(NM.SETTING_CONNECTION_TYPE, NM.SETTING_VRF_SETTING_NAME)
+            s_vrf = self.connection_ensure_setting(con, NM.SettingVrf)
+            s_vrf.set_property(NM.SETTING_VRF_TABLE, connection["vrf"]["table"])
         elif connection["type"] == "macvlan":
             s_con.set_property(
                 NM.SETTING_CONNECTION_TYPE, NM.SETTING_MACVLAN_SETTING_NAME
