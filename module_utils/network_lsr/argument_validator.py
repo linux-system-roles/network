@@ -1647,6 +1647,19 @@ class ArgValidator_DictVlan(ArgValidatorDict):
         return {"id": None}
 
 
+class ArgValidator_DictVrf(ArgValidatorDict):
+    def __init__(self):
+        ArgValidatorDict.__init__(
+            self,
+            name="vrf",
+            nested=[ArgValidatorNum("table", val_min=0, val_max=2147483647, required=True)],
+            default_value=ArgValidator.MISSING,
+        )
+
+    def get_default_vrf(self):
+        return {"table": None}
+
+
 class ArgValidator_DictMacvlan(ArgValidatorDict):
 
     VALID_MODES = ["vepa", "bridge", "private", "passthru", "source"]
@@ -1834,12 +1847,13 @@ class ArgValidator_DictConnection(ArgValidatorDict):
         "team",
         "bond",
         "vlan",
+        "vrf",
         "macvlan",
         "wireless",
         # wokeignore:rule=dummy
         "dummy",
     ]
-    VALID_PORT_TYPES = ["bridge", "bond", "team"]
+    VALID_PORT_TYPES = ["bridge", "bond", "team", 'vrf']
 
     def __init__(self):
         ArgValidatorDict.__init__(
@@ -1904,6 +1918,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                 ArgValidator_DictBond(),
                 ArgValidator_DictInfiniband(),
                 ArgValidator_DictVlan(),
+                ArgValidator_DictVrf(),
                 ArgValidator_DictMacvlan(),
                 ArgValidator_Dict802_1X(),
                 ArgValidator_DictWireless(),
