@@ -1,6 +1,18 @@
 Changelog
 =========
 
+[1.16.0] - 2024-08-09
+--------------------
+
+### New Features
+
+- feat: Add the support for the optional route source parameter in nm provider (#714)
+
+### Other Changes
+
+- ci: Add workflow for ci_test bad, use remote fmf plan (#712)
+- ci: Fix missing slash in ARTIFACTS_URL (#713)
+
 [1.15.6] - 2024-08-01
 --------------------
 
