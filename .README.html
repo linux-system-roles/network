@@ -829,12 +829,14 @@ for multiple interfaces. For <code>initscripts</code>,
 given in the <code>route</code> option. The default value is an empty
 list. Each route is a dictionary with the following entries:
 <code>gateway</code>, <code>metric</code>, <code>network</code>,
-<code>prefix</code>, <code>table</code> and <code>type</code>.
-<code>network</code> and <code>prefix</code> specify the destination
-network. <code>table</code> supports both the numeric table and named
-table. In order to specify the named table, the users have to ensure the
-named table is properly defined in <code>/etc/iproute2/rt_tables</code>
-or <code>/etc/iproute2/rt_tables.d/*.conf</code>. The optional
+<code>prefix</code>, <code>src</code>, <code>table</code> and
+<code>type</code>. <code>network</code> and <code>prefix</code> specify
+the destination network. <code>src</code> specifies the source IP
+address for a route. <code>table</code> supports both the numeric table
+and named table. In order to specify the named table, the users have to
+ensure the named table is properly defined in
+<code>/etc/iproute2/rt_tables</code> or
+<code>/etc/iproute2/rt_tables.d/*.conf</code>. The optional
 <code>type</code> key supports the values <code>blackhole</code>,
 <code>prohibit</code>, and <code>unreachable</code>. See <a
 href="https://man7.org/linux/man-pages/man8/ip-route.8.html#DESCRIPTION">man
