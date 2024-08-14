@@ -6,10 +6,17 @@
     - ansible_distribution_major_version in ['7', '8']
   block:
     - name: Create EPEL {{ ansible_distribution_major_version }}
+      vars:
+        __epel_7:
+          "https://dl.fedoraproject.org/pub/archive/epel/7/x86_64/\
+          Packages/e/epel-release-7-14.noarch.rpm"
+        __epel: https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{
+            ansible_distribution_major_version }}.noarch.rpm
+        __epel_url: "{{
+          __epel_7 if ansible_distribution_major_version == '7'
+          else __epel }}"
       command:
-        cmd: >-
-          rpm -iv https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{
-          ansible_distribution_major_version }}.noarch.rpm
+        cmd: rpm -iv {{ __epel_url }}
         # noqa command-instead-of-module
         creates: /etc/yum.repos.d/epel.repo
       register: __epel_status
