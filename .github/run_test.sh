@@ -20,6 +20,7 @@ EXCLUDE_TESTS_C7='
 -e tests/tests_bond_removal_initscripts.yml
 -e tests/tests_infiniband_nm.yml
 -e tests/tests_team_nm.yml
+-e tests/tests_team_plugin_installation_nm.yml
 -e tests/tests_unit.yml
 -e tests/tests_wireless_nm.yml
 '
@@ -37,6 +38,7 @@ EXCLUDE_TESTS_C8S='
 -e tests/tests_infiniband_nm.yml
 -e tests/tests_integration_pytest.yml
 -e tests/tests_team_nm.yml
+-e tests/tests_team_plugin_installation_nm.yml
 -e tests/tests_unit.yml
 -e tests/tests_wireless_wpa3_owe_nm.yml
 -e tests/tests_wireless_wpa3_sae_nm.yml
@@ -52,6 +54,7 @@ EXCLUDE_TESTS_C9S='
 -e tests/tests_provider_nm.yml
 -e tests/tests_regression_nm.yml
 -e tests/tests_team_nm.yml
+-e tests/tests_team_plugin_installation_nm.yml
 -e tests/tests_unit.yml
 -e tests/tests_wireless_wpa3_owe_nm.yml
 -e tests/tests_wireless_wpa3_sae_nm.yml
@@ -107,6 +110,8 @@ EOF
     ;;
 esac
 
+echo "::group::Start test container"
+
 # shellcheck disable=SC2086
 CONTAINER_ID=$(podman run -d $PODMAN_OPTS \
     -v "$PROJECT_PATH":$TEST_SOURCE_DIR $CONTAINER_IMAGE)
@@ -116,6 +121,8 @@ if [ -z "$CONTAINER_ID" ];then
     exit 1
 fi
 
+echo ::endgroup::
+
 function clean_up {
     podman rm -f "$CONTAINER_ID" || true
 }
@@ -123,6 +130,8 @@ function clean_up {
 if [ -z "${DEBUG:-}" ];then
     trap clean_up ERR EXIT
 fi
+
+echo "::group::Set up container for testing"
 
 # Ensure we are testing the latest packages and ignore upgrade failure
 sudo podman exec -i "$CONTAINER_ID" /bin/bash -c  'dnf upgrade -y' || true
@@ -163,16 +172,22 @@ for req in meta/collection-requirements.yml tests/collection-requirements.yml; d
              fi"
 done
 
+echo ::endgroup::
+
 for test_file in $TEST_FILES; do
+    echo "::group::Test $test_file"
     podman exec -i "$CONTAINER_ID" \
         /bin/bash -c  \
             "cd $TEST_SOURCE_DIR;
              env ANSIBLE_HOST_KEY_CHECKING=False \
                  ansible-playbook -i localhost, \
                  $test_file"
+    echo ::endgroup::
 done
 
 if [ -n "${DEBUG:-}" ];then
+    echo "::group::Cleanup"
     podman exec -it "$CONTAINER_ID" bash
     clean_up
+    echo ::endgroup::
 fi

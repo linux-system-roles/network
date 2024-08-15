@@ -1,6 +1,7 @@
 FROM quay.io/centos/centos:centos7
 
-RUN yum -y install epel-release && \
+RUN yum -y install https://dl.fedoraproject.org/pub/archive/epel/7/x86_64/Packages/e/epel-release-7-14.noarch.rpm && \
+    sed -i '/^mirror/d;s/#\?\(baseurl=http:\/\/\)mirror/\1vault/' /etc/yum.repos.d/*.repo && \
     yum -y upgrade && \
     yum -y install NetworkManager NetworkManager-wifi \
     procps-ng iproute ansible openssh-server openssh-clients \
