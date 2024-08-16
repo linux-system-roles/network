@@ -1,6 +1,15 @@
 Changelog
 =========
 
+[1.16.1] - 2024-08-16
+--------------------
+
+### Other Changes
+
+- tests: Use EPEL-7 from archive (#719)
+- test: skip integration pytest on fedora 39 and later (#720)
+- ci: fix and improve integration container testing (#721)
+
 [1.16.0] - 2024-08-09
 --------------------
 
