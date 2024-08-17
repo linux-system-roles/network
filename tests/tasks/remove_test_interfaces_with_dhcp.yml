@@ -32,4 +32,11 @@
         service radvd stop
         iptables -D INPUT -i testbr -p udp --dport 67:68 --sport 67:68 -j ACCEPT
     fi
+    if systemctl is-enabled firewalld; then
+        for service in dhcp dhcpv6 dhcpv6-client; do
+            if firewall-cmd --query-service="$service"; then
+                firewall-cmd --remove-service "$service"
+            fi
+        done
+    fi
   changed_when: false
