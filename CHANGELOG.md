@@ -1,6 +1,13 @@
 Changelog
 =========
 
+[1.16.2] - 2024-08-19
+--------------------
+
+### Other Changes
+
+- test: allow dhcp service if firewall is active (#724)
+
 [1.16.1] - 2024-08-16
 --------------------
 
