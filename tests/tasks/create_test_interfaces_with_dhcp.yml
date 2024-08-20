@@ -120,7 +120,7 @@
         ip link set {{ dhcp_interface1 }}p master testbr
         ip link set {{ dhcp_interface2 }}p master testbr
         # Run joint DHCP4/DHCP6 server with RA enabled in veth namespace
-        if systemctl is-enabled firewalld; then
+        if systemctl is-active firewalld; then
             for service in dhcp dhcpv6 dhcpv6-client; do
                 if ! firewall-cmd --query-service="$service"; then
                     firewall-cmd --add-service "$service"
