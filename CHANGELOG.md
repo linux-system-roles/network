@@ -1,6 +1,13 @@
 Changelog
 =========
 
+[1.16.3] - 2024-08-20
+--------------------
+
+### Other Changes
+
+- test: use is-active instead of is-enabled to check for firewalld (#726)
+
 [1.16.2] - 2024-08-19
 --------------------
 
