@@ -1,0 +1,235 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Manage network using network_state
+  hosts: network-test
+  tasks:
+    - name: Configure eth1 to use the IP address 192.168.1.10/24
+      vars:
+        network_state:
+          interfaces:
+            - name: eth1
+              type: ethernet
+              state: up
+              ipv4:
+                enabled: true
+                dhcp: false
+                address:
+                  - ip: 192.168.1.10
+                    prefix-length: 24
+      ansible.builtin.include_role:
+        name: linux-system-roles.network
+
+    - name: Delete the ethernet device eth1
+      vars:
+        network_state:
+          interfaces:
+            - name: eth1
+              type: ethernet
+              state: absent
+      ansible.builtin.include_role:
+        name: linux-system-roles.network
+
+    - name: Bring up the ethernet device eth1
+      vars:
+        network_state:
+          interfaces:
+            - name: eth1
+              type: ethernet
+              state: up
+      ansible.builtin.include_role:
+        name: linux-system-roles.network
+
+    - name: Configure the ethernet device dhcpcli with IPv6 disabled
+      vars:
+        network_state:
+          interfaces:
+            - name: dhcpcli
+              type: ethernet
+              state: up
+              ipv6:
+                enabled: false
+      ansible.builtin.include_role:
+        name: linux-system-roles.network
+
+    - name: Configure the ethernet interface eth1 with the IPv6 address
+        2001:db8:2::1/64
+      vars:
+        network_state:
+          interfaces:
+            - name: eth1
+              type: ethernet
+              state: up
+              ipv6:
+                dhcp: false
+                address:
+                  - ip: 2001:db8:2::1
+                    prefix-length: 64
+      ansible.builtin.include_role:
+        name: linux-system-roles.network
+
+    - name: Set the mtu of eth4 to 1500
+      vars:
+        network_state:
+          interfaces:
+            - name: eth4
+              type: ethernet
+              state: up
+              mtu: 1500
+      ansible.builtin.include_role:
+        name: linux-system-roles.network
+
+
+    - name: Configure the eth1 ethernet device with static IPv4 address
+        192.0.2.251/24 and static IPv6 address 2001:db8:1::1/64
+      vars:
+        network_state:
+          interfaces:
+            - name: eth1
+              type: ethernet
+              state: up
+              ipv4:
+                enabled: true
+                dhcp: false
+                address:
+                  - ip: 192.0.2.251
+                    prefix-length: 24
+              ipv6:
+                enabled: true
+                dhcp: false
+                autoconf: false
+                address:
+                  - ip: 2001:db8:1::1
+                    prefix-length: 64
+      ansible.builtin.include_role:
+        name: linux-system-roles.network
+
+
+    - name: Configure bond interface bond99 with two ports eth1 and eth2, set
+        bonding mode balance-rr
+      vars:
+        network_state:
+          interfaces:
+            - name: bond99
+              type: bond
+              state: up
+              link-aggregation:
+                mode: balance-rr
+                port:
+                  - eth1
+                  - eth2
+      ansible.builtin.include_role:
+        name: linux-system-roles.network
+
+    - name: Set the ports config for bond99, set the port eth1 priority to -1
+        and queue id to 1, set the port eth2 priority to 9 and queue id to 0
+      vars:
+        network_state:
+          interfaces:
+            - name: bond99
+              type: bond
+              state: up
+              link-aggregation:
+                ports-config:
+                  - name: eth1
+                    priority: -1
+                    queue-id: 1
+                  - name: eth2
+                    priority: 9
+                    queue-id: 0
+      ansible.builtin.include_role:
+        name: linux-system-roles.network
+
+
+    - name: Set the bonding mode balance-rr and miimon value to 200 for bond99
+      vars:
+        network_state:
+          interfaces:
+            - name: bond99
+              type: bond
+              state: up
+              link-aggregation:
+                mode: balance-rr
+                options:
+                  miimon: 200
+      ansible.builtin.include_role:
+        name: linux-system-roles.network
+
+    - name: Set the bonding mode to balance-tlb for bond device bond99
+      vars:
+        network_state:
+          interfaces:
+            - name: bond99
+              type: bond
+              state: up
+              link-aggregation:
+                mode: balance-tlb
+      ansible.builtin.include_role:
+        name: linux-system-roles.network
+
+    - name: Configure the ethernet device eth1 with dhcp4 configured
+      vars:
+        network_state:
+          interfaces:
+            - name: eth1
+              type: ethernet
+              state: up
+              ipv4:
+                enabled: true
+                dhcp: true
+      ansible.builtin.include_role:
+        name: linux-system-roles.network
+
+
+    - name: Set the default route to fe80::1 on eth1
+      vars:
+        network_state:
+          routes:
+            config:
+            - destination: ::/0
+              next-hop-interface: eth1
+              next-hop-address: fe80::1
+      ansible.builtin.include_role:
+        name: linux-system-roles.network
+
+    - name: Configure the ethernet device eth1 with dhcp4 configured
+      vars:
+        network_state:
+          interfaces:
+            - name: eth1
+              type: ethernet
+              state: up
+              ipv4:
+                enabled: true
+                dhcp: true
+      ansible.builtin.include_role:
+        name: linux-system-roles.network
+
+    - name: Configure the vrf interface test-vrf0 with vrf port eth1 and vrf route table 101
+      vars:
+        network_state:
+          interfaces:
+            - name: test-vrf0
+              type: vrf
+              state: up
+              vrf:
+                port:
+                  - eth1
+                route-table-id: 101
+      ansible.builtin.include_role:
+        name: linux-system-roles.network
+
+    - name: Assign 10.255.255.1/22 to enp1s0
+      vars:
+        network_state:
+          interfaces:
+            - name: enp1s0
+              type: ethernet
+              state: up
+              ipv4:
+                enabled: true
+                dhcp: false
+                address:
+                  - ip: 10.255.255.1
+                    prefix-length: 22
+      ansible.builtin.include_role:
+        name: linux-system-roles.network
