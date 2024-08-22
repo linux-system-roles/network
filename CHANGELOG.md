@@ -1,6 +1,13 @@
 Changelog
 =========
 
+[1.16.4] - 2024-08-22
+--------------------
+
+### Other Changes
+
+- docs: Add examples using network_state variable (#728)
+
 [1.16.3] - 2024-08-20
 --------------------
 
