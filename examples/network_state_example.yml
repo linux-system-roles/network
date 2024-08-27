@@ -19,16 +19,6 @@
       ansible.builtin.include_role:
         name: linux-system-roles.network
 
-    - name: Delete the ethernet device eth1
-      vars:
-        network_state:
-          interfaces:
-            - name: eth1
-              type: ethernet
-              state: absent
-      ansible.builtin.include_role:
-        name: linux-system-roles.network
-
     - name: Bring up the ethernet device eth1
       vars:
         network_state:
