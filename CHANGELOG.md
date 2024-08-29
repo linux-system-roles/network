@@ -1,6 +1,13 @@
 Changelog
 =========
 
+[1.16.5] - 2024-08-29
+--------------------
+
+### Other Changes
+
+- docs: Remove invalid network state example (#731)
+
 [1.16.4] - 2024-08-22
 --------------------
 
