@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
+# The following examples are generated from Nmstate integration tests
 ---
 - name: Manage network using network_state
   hosts: network-test
