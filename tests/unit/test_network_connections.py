@@ -177,6 +177,7 @@ class TestValidator(Python26CompatTestCase):
         # default values when "type" is specified and state is not
         self.default_connection_settings = {
             "autoconnect": True,
+            "autoconnect_retries": -1,
             "check_iface_exists": True,
             "ethernet": ETHERNET_DEFAULTS,
             "ethtool": ETHTOOL_DEFAULTS,
@@ -591,6 +592,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -651,6 +653,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -706,6 +709,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": False,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -798,6 +802,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -870,6 +875,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -939,6 +945,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -1047,6 +1054,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -1105,6 +1113,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -1209,6 +1218,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -1290,6 +1300,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -1389,6 +1400,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -1447,6 +1459,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -1551,6 +1564,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -1604,6 +1618,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethtool": ETHTOOL_DEFAULTS,
                     "force_state_change": None,
@@ -1668,6 +1683,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethtool": ETHTOOL_DEFAULTS,
                     "force_state_change": None,
@@ -1781,6 +1797,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -1828,6 +1845,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -1898,6 +1916,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "bond": {
                         "mode": "balance-rr",
                         "ad_actor_sys_prio": None,
@@ -1981,6 +2000,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "bond": {
                         "mode": "active-backup",
                         "ad_actor_sys_prio": None,
@@ -2076,6 +2096,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -2129,6 +2150,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": {"autoneg": False, "duplex": "half", "speed": 400},
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -2211,6 +2233,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -2258,6 +2281,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -2321,6 +2345,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethtool": ETHTOOL_DEFAULTS,
                     "force_state_change": None,
@@ -2401,6 +2426,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethtool": ETHTOOL_DEFAULTS,
                     "force_state_change": None,
@@ -2488,6 +2514,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethtool": ETHTOOL_DEFAULTS,
                     "ignore_errors": None,
@@ -2533,6 +2560,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethtool": ETHTOOL_DEFAULTS,
                     "force_state_change": None,
@@ -2644,6 +2672,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -2752,6 +2781,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -2911,6 +2941,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -3071,6 +3102,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -3155,6 +3187,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -3239,6 +3272,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethernet": ETHERNET_DEFAULTS,
                     "ethtool": ETHTOOL_DEFAULTS,
@@ -3322,6 +3356,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethtool": ETHTOOL_DEFAULTS,
                     "force_state_change": None,
@@ -3394,6 +3429,7 @@ class TestValidator(Python26CompatTestCase):
                 {
                     "actions": ["present", "up"],
                     "autoconnect": True,
+                    "autoconnect_retries": -1,
                     "check_iface_exists": True,
                     "ethtool": ETHTOOL_DEFAULTS,
                     "force_state_change": None,

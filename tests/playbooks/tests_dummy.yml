@@ -3,6 +3,7 @@
 - name: Play for testing dummy connection
   hosts: all
   vars:
+    autocon_retries: 2
     interface: dummy0
     profile: "{{ interface }}"
     lsr_fail_debug:
@@ -30,6 +31,7 @@
             lsr_assert:
               - tasks/assert_profile_present.yml
               - tasks/assert_device_present.yml
+              - tasks/assert_autoconnect_retries.yml
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
               - tasks/check_network_dns.yml

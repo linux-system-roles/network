@@ -11,6 +11,7 @@
         state: up
         type: ethernet
         autoconnect: true
+        autoconnect_retries: 2
         mac: "{{ network_mac1 }}"
         mtu: 1450
 
