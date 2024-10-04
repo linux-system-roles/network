@@ -378,6 +378,15 @@ By default, profiles are created with autoconnect enabled.
 
 - For `initscripts`, this corresponds to the `ONBOOT` property.
 
+### `autoconnect_retries`
+
+The number of times a connection should be tried when autoactivating before giving up.
+Zero means forever, -1 means the global default in NetworkManager (4 times if not
+overridden). Setting this to 1 means to try activation only once before blocking
+autoconnect. Note that after a timeout, NetworkManager will try to autoconnect again.
+
+- For `NetworkManager`, this corresponds to the `connection.autoconnect-retries` property.
+
 ### `mac`
 
 The `mac` address is optional and restricts the profile to be usable only on

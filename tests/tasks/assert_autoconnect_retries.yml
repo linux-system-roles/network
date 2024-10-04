@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Get autoconnect retries
+  command: >
+    nmcli -f connection.autoconnect-retries connection show {{ profile }}
+  register: autoconnect_retries
+  ignore_errors: true
+  changed_when: false
+- name: "Assert that autoconnect-retries is configured as specified"
+  assert:
+    that:
+      - autoconnect_retries.stdout.split(":")[1] | trim
+        == autocon_retries | string
+    msg: "autoconnect-retries is configured as
+      {{ autoconnect_retries.stdout.split(':')[1] | trim }}
+      but specified as {{ autocon_retries }}"

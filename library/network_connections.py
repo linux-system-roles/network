@@ -907,6 +907,9 @@ class NMUtil:
         s_con.set_property(NM.SETTING_CONNECTION_UUID, connection["nm.uuid"])
         s_con.set_property(NM.SETTING_CONNECTION_AUTOCONNECT, connection["autoconnect"])
         s_con.set_property(
+            NM.SETTING_CONNECTION_AUTOCONNECT_RETRIES, connection["autoconnect_retries"]
+        )
+        s_con.set_property(
             NM.SETTING_CONNECTION_INTERFACE_NAME, connection["interface_name"]
         )
 

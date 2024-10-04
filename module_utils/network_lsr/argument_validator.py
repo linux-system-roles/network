@@ -1866,6 +1866,12 @@ class ArgValidator_DictConnection(ArgValidatorDict):
                     "type", enum_values=ArgValidator_DictConnection.VALID_TYPES
                 ),
                 ArgValidatorBool("autoconnect", default_value=True),
+                ArgValidatorNum(
+                    "autoconnect_retries",
+                    val_min=0,
+                    val_max=UINT32_MAX,
+                    default_value=-1,
+                ),
                 ArgValidatorStr(
                     "port_type",
                     enum_values=ArgValidator_DictConnection.VALID_PORT_TYPES,

@@ -6,6 +6,7 @@
   vars:
     network_connections:
       - name: "{{ interface }}"
+        autoconnect_retries: "{{ autocon_retries }}"
         state: up
         type: dummy
         ip:
