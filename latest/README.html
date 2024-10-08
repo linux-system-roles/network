@@ -187,6 +187,8 @@ id="toc-type-dummy"><code>type: dummy</code></a></li>
 </ul></li>
 <li><a href="#autoconnect"
 id="toc-autoconnect"><code>autoconnect</code></a></li>
+<li><a href="#autoconnect_retries"
+id="toc-autoconnect_retries"><code>autoconnect_retries</code></a></li>
 <li><a href="#mac" id="toc-mac"><code>mac</code></a></li>
 <li><a href="#cloned_mac"
 id="toc-cloned_mac"><code>cloned_mac</code></a></li>
@@ -608,6 +610,16 @@ supported <code>network_provider</code> for this type.</p>
 <code>connection.autoconnect</code> property.</p></li>
 <li><p>For <code>initscripts</code>, this corresponds to the
 <code>ONBOOT</code> property.</p></li>
+</ul>
+<h2 id="autoconnect_retries"><code>autoconnect_retries</code></h2>
+<p>The number of times a connection should be tried when autoactivating
+before giving up. Zero means forever, -1 means the global default in
+NetworkManager (4 times if not overridden). Setting this to 1 means to
+try activation only once before blocking autoconnect. Note that after a
+timeout, NetworkManager will try to autoconnect again.</p>
+<ul>
+<li>For <code>NetworkManager</code>, this corresponds to the
+<code>connection.autoconnect-retries</code> property.</li>
 </ul>
 <h2 id="mac"><code>mac</code></h2>
 <p>The <code>mac</code> address is optional and restricts the profile to
