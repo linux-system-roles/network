@@ -1205,6 +1205,22 @@ class NMUtil:
                 )
             if ip["gateway6"] is not None:
                 s_ip6.set_property(NM.SETTING_IP_CONFIG_GATEWAY, ip["gateway6"])
+
+            # Mapping of wait_ip values to the may-fail settings for IPv4 and IPv6
+            may_fail_mapping = {
+                "any": (True, True),
+                "ipv4": (False, True),
+                "ipv6": (True, False),
+                "ipv4+ipv6": (False, False),
+            }
+
+            may_fail_ipv4, may_fail_ipv6 = may_fail_mapping.get(
+                ip["wait_ip"], (True, True)
+            )
+
+            s_ip4.set_property(NM.SETTING_IP_CONFIG_MAY_FAIL, may_fail_ipv4)
+            s_ip6.set_property(NM.SETTING_IP_CONFIG_MAY_FAIL, may_fail_ipv6)
+
             if ip["route_metric6"] is not None and ip["route_metric6"] >= 0:
                 s_ip6.set_property(
                     NM.SETTING_IP_CONFIG_ROUTE_METRIC, ip["route_metric6"]

@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Configuring wait_ip on ethernet connection
+  hosts: all
+  vars:
+    network_connections:
+      - name: eth0
+        state: up
+        type: ethernet
+        interface_name: eth0
+        ip:
+          address:
+            - 192.0.2.42/30
+            - 2001:db8::23/64
+          wait_ip: any
+
+  roles:
+    - linux-system-roles.network
