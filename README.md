@@ -591,6 +591,16 @@ The IP configuration supports the following options:
 
   The default gateway for IPv4 (`gateway4`) or IPv6 (`gateway6`) packets.
 
+- `wait_ip`
+
+  The property controls whether the system should wait for a specific IP stack to be
+  configured before considering the connection activated. It can be set to "any",
+  "ipv4","ipv6," or "ipv4+ipv6". When set to "any," the system considers the connection
+  activated when any IP stack is configured. "ipv4" ensures the system waits for IPv4
+  configuration, while "ipv6" ensures the system waits for IPv6 configuration. The
+  "ipv4+ipv6" option requires both IPv4 and IPv6 to be configured before the connection
+  is considered activated.
+
 - `ipv4_ignore_auto_dns` and `ipv6_ignore_auto_dns`
 
   If enabled, the automatically configured name servers and search domains (via

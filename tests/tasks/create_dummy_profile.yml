@@ -12,6 +12,8 @@
         ip:
           address:
             - "192.0.2.42/30"
+            - "2001:db8::23/64"
+          wait_ip: "{{ wait_ip }}"
 - name: Show result
   debug:
     var: __network_connections_result

@@ -5,6 +5,7 @@
   vars:
     autocon_retries: 2
     interface: dummy0
+    wait_ip: ipv4+ipv6
     profile: "{{ interface }}"
     lsr_fail_debug:
       - __network_connections_result
@@ -32,6 +33,7 @@
               - tasks/assert_profile_present.yml
               - tasks/assert_device_present.yml
               - tasks/assert_autoconnect_retries.yml
+              - tasks/assert_may_fail.yml
             lsr_cleanup:
               - tasks/cleanup_profile+device.yml
               - tasks/check_network_dns.yml

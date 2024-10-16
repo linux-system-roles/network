@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Get ipv4.may-fail
+  command: >
+    nmcli -f ipv4.may-fail connection show {{ profile }}
+  register: may_fail4
+  ignore_errors: true
+  changed_when: false
+- name: Get ipv6.may-fail
+  command: >
+    nmcli -f ipv6.may-fail connection show {{ profile }}
+  register: may_fail6
+  ignore_errors: true
+  changed_when: false
+- name: "Assert that ipv4.may-fail is configured as specified"
+  assert:
+    that:
+      - may_fail4.stdout.split(":")[1] | trim
+        == "no"
+    msg: "ipv4.may-fail is configured as
+      {{ may_fail4.stdout.split(':')[1] | trim }}
+      but wait_ip is specified as {{ wait_ip }}"
+- name: "Assert that ipv6.may-fail is configured as specified"
+  assert:
+    that:
+      - may_fail6.stdout.split(":")[1] | trim
+        == "no"
+    msg: "ipv6.may-fail is configured as
+      {{ may_fail6.stdout.split(':')[1] | trim }}
+      but wait_ip is specified as {{ wait_ip }}"
