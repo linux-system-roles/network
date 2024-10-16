@@ -12,6 +12,9 @@
         ip:
           address:
             - "192.0.2.42/30"
+            - "2001:db8::23/64"
+          may_fail4: "{{ may_fail4 }}"
+          may_fail6: "{{ may_fail6 }}"
 - name: Show result
   debug:
     var: __network_connections_result
