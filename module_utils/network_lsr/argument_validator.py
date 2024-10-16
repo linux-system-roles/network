@@ -1853,7 +1853,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
         # wokeignore:rule=dummy
         "dummy",
     ]
-    VALID_PORT_TYPES = ["bridge", "bond", "team", 'vrf']
+    VALID_PORT_TYPES = ["bridge", "bond", "team", "vrf"]
 
     def __init__(self):
         ArgValidatorDict.__init__(
