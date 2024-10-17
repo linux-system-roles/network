@@ -32,6 +32,18 @@ NetworkManager's API version since which the settings are introduced.
 
 The `network` role supports two modules: `network_connections` and `network_state`.
 
+Since the backend of `network_state` is Nmstate, the `network_state` modules represents
+the future direction for the network role, aiming to provide a more streamlined and
+reliable way of managing network. As a result, the focus is on promoting the use of
+`network_state` over the `network_connections` variable to ensure better consistency
+and functionality moving forward. Additionally, most of the features currently
+supported in NetworkManager are also available with `network_state`. For more
+information and examples on how to configure the network using Nmstate schema in
+`network_state` variable, please refer to the official documentation at
+[nmstate.io](https://nmstate.io). For detailed syntax and explanations of each
+parameter, visit
+[nmstate's API documentation](https://docs.rs/nmstate/latest/nmstate/index.html).
+
 For each host a list of networking profiles can be configured via the
 `network_connections` variable.
 
