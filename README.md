@@ -32,6 +32,18 @@ NetworkManager's API version since which the settings are introduced.
 
 The `network` role supports two modules: `network_connections` and `network_state`.
 
+Since the backend of `network_state` is Nmstate, the `network_state` modules represents
+the future direction for the network role, aiming to provide a more streamlined and
+reliable way of managing network. As a result, the focus is on promoting the use of
+`network_state` over the `network_connections` variable to ensure better consistency
+and functionality moving forward. Additionally, most of the features currently
+supported in NetworkManager are also available with `network_state`. For more
+information and examples on how to configure the network using Nmstate schema in
+`network_state` variable, please refer to the official documentation at
+[nmstate.io](https://nmstate.io). For detailed syntax and explanations of each
+parameter, visit
+[nmstate's API documentation](https://docs.rs/nmstate/latest/nmstate/index.html).
+
 For each host a list of networking profiles can be configured via the
 `network_connections` variable.
 
@@ -1316,6 +1328,50 @@ network_state:
             prefix-length: 64
         autoconf: false
         dhcp: false
+```
+
+Configuring the Linux bridge with custom multicast, stp options, along with a port
+with specific stp settings:
+
+```yaml
+network_state:
+  interfaces:
+    - name: br0
+      type: linux-bridge
+      state: up
+      bridge:
+        options:
+          gc-timer: 29657
+          group-addr: 01:80:C2:00:00:00
+          group-forward-mask: 0
+          group-fwd-mask: 0
+          hash-max: 4096
+          hello-timer: 0
+          mac-ageing-time: 300
+          multicast-last-member-count: 2
+          multicast-last-member-interval: 100
+          multicast-membership-interval: 26000
+          multicast-querier: false
+          multicast-querier-interval: 25500
+          multicast-query-interval: 12500
+          multicast-query-response-interval: 1000
+          multicast-query-use-ifaddr: false
+          multicast-router: auto
+          multicast-snooping: true
+          multicast-startup-query-count: 2
+          multicast-startup-query-interval: 3125
+          stp:
+            enabled: false
+            forward-delay: 15
+            hello-time: 2
+            max-age: 20
+            priority: 32768
+          vlan-protocol: 802.1q
+        port:
+          - name: eth1
+            stp-hairpin-mode: false
+            stp-path-cost: 100
+            stp-priority: 32
 ```
 
 Configuring the route:
