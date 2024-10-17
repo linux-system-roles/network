@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Get may_fail4
+  command: >
+    nmcli -f ipv4.may-fail connection show {{ profile }}
+  register: may_fail4
+  ignore_errors: true
+  changed_when: false
+- name: Get may_fail6
+  command: >
+    nmcli -f ipv6.may-fail connection show {{ profile }}
+  register: may_fail6
+  ignore_errors: true
+  changed_when: false
+- name: "Assert that may_fail4 is configured as specified"
+  assert:
+    that:
+      - may_fail4.stdout.split(":")[1] | trim
+        == "no"
+    msg: "may_fail4 is configured as
+      {{ may_fail4.stdout.split(':')[1] | trim }}
+      but specified as {{ may_fail4 }}"
+- name: "Assert that may_fail6 is configured as specified"
+  assert:
+    that:
+      - may_fail6.stdout.split(":")[1] | trim
+        == "no"
+    msg: "may_fail6 is configured as
+      {{ may_fail6.stdout.split(':')[1] | trim }}
+      but specified as {{ may_fail6 }}"

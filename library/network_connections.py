@@ -1158,6 +1158,8 @@ class NMUtil:
                 )
             if ip["gateway4"] is not None:
                 s_ip4.set_property(NM.SETTING_IP_CONFIG_GATEWAY, ip["gateway4"])
+            if ip["may_fail4"] is not None:
+                s_ip4.set_property(NM.SETTING_IP_CONFIG_MAY_FAIL, ip["may_fail4"])
             if ip["route_metric4"] is not None and ip["route_metric4"] >= 0:
                 s_ip4.set_property(
                     NM.SETTING_IP_CONFIG_ROUTE_METRIC, ip["route_metric4"]
@@ -1205,6 +1207,8 @@ class NMUtil:
                 )
             if ip["gateway6"] is not None:
                 s_ip6.set_property(NM.SETTING_IP_CONFIG_GATEWAY, ip["gateway6"])
+            if ip["may_fail6"] is not None:
+                s_ip6.set_property(NM.SETTING_IP_CONFIG_MAY_FAIL, ip["may_fail6"])
             if ip["route_metric6"] is not None and ip["route_metric6"] >= 0:
                 s_ip6.set_property(
                     NM.SETTING_IP_CONFIG_ROUTE_METRIC, ip["route_metric6"]

@@ -579,6 +579,15 @@ The IP configuration supports the following options:
 
   The default gateway for IPv4 (`gateway4`) or IPv6 (`gateway6`) packets.
 
+- `may_fail4` and `may_fail6`
+
+  When set to TRUE, the overall network configuration can continue even if the IP
+  configuration specified by this property times out. However, for the network
+  configuration to be considered successful, at least one IP configuration must
+  succeed. For instance, in an IPv6-only network, enabling `may_fail4` property allows
+  the network configuration to proceed successfully if the IPv4 configuration fails but
+  the IPv6 configuration must complete.
+
 - `ipv4_ignore_auto_dns` and `ipv6_ignore_auto_dns`
 
   If enabled, the automatically configured name servers and search domains (via
