@@ -6,6 +6,7 @@ network_state: {}
 
 network_allow_restart: false
 
+# BEGIN - DO NOT EDIT THIS BLOCK - rh distros variables
 # Ansible distribution identifiers that the role treats like RHEL
 __network_rh_distros:
   - AlmaLinux
@@ -13,6 +14,16 @@ __network_rh_distros:
   - OracleLinux
   - RedHat
   - Rocky
+
+# Same as above but includes Fedora
+__network_rh_distros_fedora: "{{ __network_rh_distros + ['Fedora'] }}"
+
+# Use this in conditionals to check if distro is Red Hat or clone
+__network_is_rh_distro: "{{ ansible_distribution in __network_rh_distros }}"
+
+# Use this in conditionals to check if distro is Red Hat or clone, or Fedora
+__network_is_rh_distro_fedora: "{{ ansible_distribution in __network_rh_distros_fedora }}"
+# END - DO NOT EDIT THIS BLOCK - rh distros variables
 
 # Use initscripts for RHEL/CentOS < 7, nm otherwise
 network_provider_os_default: "{{
