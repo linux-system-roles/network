@@ -261,6 +261,20 @@ also requires higher NetworkManager's API version since which the
 settings are introduced.</p>
 <p>The <code>network</code> role supports two modules:
 <code>network_connections</code> and <code>network_state</code>.</p>
+<p>Since the backend of <code>network_state</code> is Nmstate, the
+<code>network_state</code> modules represents the future direction for
+the network role, aiming to provide a more streamlined and reliable way
+of managing network. As a result, the focus is on promoting the use of
+<code>network_state</code> over the <code>network_connections</code>
+variable to ensure better consistency and functionality moving forward.
+Additionally, most of the features currently supported in NetworkManager
+are also available with <code>network_state</code>. For more information
+and examples on how to configure the network using Nmstate schema in
+<code>network_state</code> variable, please refer to the official
+documentation at <a href="https://nmstate.io">nmstate.io</a>. For
+detailed syntax and explanations of each parameter, visit <a
+href="https://docs.rs/nmstate/latest/nmstate/index.html">nmstate's API
+documentation</a>.</p>
 <p>For each host a list of networking profiles can be configured via the
 <code>network_connections</code> variable.</p>
 <ul>
@@ -1452,38 +1466,79 @@ class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb24-1"><a href=
 <span id="cb24-33"><a href="#cb24-33" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">prefix-length</span><span class="kw">:</span><span class="at"> </span><span class="dv">64</span></span>
 <span id="cb24-34"><a href="#cb24-34" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">autoconf</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
 <span id="cb24-35"><a href="#cb24-35" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dhcp</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span></code></pre></div>
-<p>Configuring the route:</p>
+<p>Configuring the Linux bridge with custom multicast, stp options,
+along with a port with specific stp settings:</p>
 <div class="sourceCode" id="cb25"><pre
 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_state</span><span class="kw">:</span></span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">interfaces</span><span class="kw">:</span></span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth1</span></span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> br0</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">type</span><span class="kw">:</span><span class="at"> linux-bridge</span></span>
 <span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">state</span><span class="kw">:</span><span class="at"> up</span></span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ipv4</span><span class="kw">:</span></span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">address</span><span class="kw">:</span></span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.0.2.251</span></span>
-<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">prefix-length</span><span class="kw">:</span><span class="at"> </span><span class="dv">24</span></span>
-<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dhcp</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">routes</span><span class="kw">:</span></span>
-<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">config</span><span class="kw">:</span></span>
-<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">destination</span><span class="kw">:</span><span class="at"> 198.51.100.0/24</span></span>
-<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">metric</span><span class="kw">:</span><span class="at"> </span><span class="dv">150</span></span>
-<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">next-hop-address</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.0.2.251</span></span>
-<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">next-hop-interface</span><span class="kw">:</span><span class="at"> eth1</span></span>
-<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">table-id</span><span class="kw">:</span><span class="at"> </span><span class="dv">254</span></span></code></pre></div>
-<p>Configuring the DNS search and server:</p>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">bridge</span><span class="kw">:</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">options</span><span class="kw">:</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">gc-timer</span><span class="kw">:</span><span class="at"> </span><span class="dv">29657</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">group-addr</span><span class="kw">:</span><span class="at"> 01:80:C2:00:00:00</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">group-forward-mask</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">group-fwd-mask</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">hash-max</span><span class="kw">:</span><span class="at"> </span><span class="dv">4096</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">hello-timer</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">mac-ageing-time</span><span class="kw">:</span><span class="at"> </span><span class="dv">300</span></span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-last-member-count</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-last-member-interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">100</span></span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-membership-interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">26000</span></span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-querier</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-querier-interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">25500</span></span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-query-interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">12500</span></span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-query-response-interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">1000</span></span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-query-use-ifaddr</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-router</span><span class="kw">:</span><span class="at"> auto</span></span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-snooping</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-startup-query-count</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-startup-query-interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">3125</span></span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">stp</span><span class="kw">:</span></span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">forward-delay</span><span class="kw">:</span><span class="at"> </span><span class="dv">15</span></span>
+<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">hello-time</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
+<span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">max-age</span><span class="kw">:</span><span class="at"> </span><span class="dv">20</span></span>
+<span id="cb25-32"><a href="#cb25-32" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">priority</span><span class="kw">:</span><span class="at"> </span><span class="dv">32768</span></span>
+<span id="cb25-33"><a href="#cb25-33" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">vlan-protocol</span><span class="kw">:</span><span class="at"> 802.1q</span></span>
+<span id="cb25-34"><a href="#cb25-34" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">port</span><span class="kw">:</span></span>
+<span id="cb25-35"><a href="#cb25-35" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth1</span></span>
+<span id="cb25-36"><a href="#cb25-36" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">stp-hairpin-mode</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb25-37"><a href="#cb25-37" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">stp-path-cost</span><span class="kw">:</span><span class="at"> </span><span class="dv">100</span></span>
+<span id="cb25-38"><a href="#cb25-38" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">stp-priority</span><span class="kw">:</span><span class="at"> </span><span class="dv">32</span></span></code></pre></div>
+<p>Configuring the route:</p>
 <div class="sourceCode" id="cb26"><pre
 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_state</span><span class="kw">:</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">dns-resolver</span><span class="kw">:</span></span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">config</span><span class="kw">:</span></span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">search</span><span class="kw">:</span></span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> example.com</span></span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> example.org</span></span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">server</span><span class="kw">:</span></span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 2001:4860:4860::8888</span></span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fl">8.8.8.8</span></span></code></pre></div>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">interfaces</span><span class="kw">:</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth1</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">state</span><span class="kw">:</span><span class="at"> up</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ipv4</span><span class="kw">:</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.0.2.251</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">prefix-length</span><span class="kw">:</span><span class="at"> </span><span class="dv">24</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dhcp</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">routes</span><span class="kw">:</span></span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">config</span><span class="kw">:</span></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">destination</span><span class="kw">:</span><span class="at"> 198.51.100.0/24</span></span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">metric</span><span class="kw">:</span><span class="at"> </span><span class="dv">150</span></span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">next-hop-address</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.0.2.251</span></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">next-hop-interface</span><span class="kw">:</span><span class="at"> eth1</span></span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">table-id</span><span class="kw">:</span><span class="at"> </span><span class="dv">254</span></span></code></pre></div>
+<p>Configuring the DNS search and server:</p>
+<div class="sourceCode" id="cb27"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_state</span><span class="kw">:</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">dns-resolver</span><span class="kw">:</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">config</span><span class="kw">:</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">search</span><span class="kw">:</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> example.com</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> example.org</span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">server</span><span class="kw">:</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 2001:4860:4860::8888</span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fl">8.8.8.8</span></span></code></pre></div>
 <h2 id="invalid-and-wrong-configuration">Invalid and Wrong
 Configuration</h2>
 <p>The <code>network</code> role rejects invalid configurations. It is
