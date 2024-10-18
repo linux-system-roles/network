@@ -147,3 +147,21 @@ __network_required_facts:
 # the 'gather_subset' parameter of the 'setup' module
 __network_required_facts_subsets: "{{ ['!all', '!min'] +
   __network_required_facts }}"
+
+# BEGIN redhat distros variables
+# Ansible distribution identifiers that the role treats like RHEL
+__network_rh_distros:
+  - AlmaLinux
+  - CentOS
+  - OracleLinux
+  - RedHat
+  - Rocky
+
+# Same as above but includes Fedora
+__network_rh_distros_fedora: "{{ __network_rh_distros + ['Fedora'] }}"
+# Use this in conditionals to check if distro is Red Hat or clone
+__network_is_rh_distro: "{{ ansible_distribution in __network_rh_distros }}"
+
+# Use this in conditionals to check if distro is Red Hat or clone, or Fedora
+__network_is_rh_distro_fedora: "{{ ansible_distribution in __network_rh_distros_fedora }}"
+# END redhat distros variables
