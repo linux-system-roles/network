@@ -98,9 +98,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: Fedora-39
-            ansible_version: 2.17
           - platform: Fedora-40
+            ansible_version: 2.17
+          - platform: Fedora-41
             ansible_version: 2.17
           - platform: CentOS-7-latest
             ansible_version: 2.9
