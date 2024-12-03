@@ -72,8 +72,8 @@ jobs:
           meta_main=meta/main.yml
           # All Fedora are supported, add latest Fedora versions to supported_platforms
           if yq '.galaxy_info.galaxy_tags[]' "$meta_main" | grep -qi fedora$; then
-            supported_platforms+=" Fedora-39"
             supported_platforms+=" Fedora-40"
+            supported_platforms+=" Fedora-41"
           fi
           # Specific Fedora versions supported
           if yq '.galaxy_info.galaxy_tags[]' "$meta_main" | grep -qiP 'fedora\d+$'; then
