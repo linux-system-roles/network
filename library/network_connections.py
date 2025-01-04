@@ -226,14 +226,26 @@ class SysUtil:
         if mac is not None:
             mac = Util.mac_norm(mac)
         for linkinfo in cls.link_infos(refresh).values():
-            if mac is not None and mac not in [
-                linkinfo.get("perm-address", None),
-                linkinfo.get("address", None),
-            ]:
-                continue
-            if ifname is not None and ifname != linkinfo.get("ifname", None):
-                continue
-            return linkinfo
+            perm_address = linkinfo.get("perm-address", None)
+            current_address = linkinfo.get("address", None)
+
+            # Match by perm-address (prioritized)
+            if mac is not None and perm_address not in [None, "00:00:00:00:00:00"]:
+                if mac == perm_address:
+                    return linkinfo
+
+            # Fallback to match by address
+            if mac is not None and (perm_address in [None, "00:00:00:00:00:00"]):
+                if mac == current_address:
+                    matched_by_address = linkinfo  # Save for potential fallback
+
+            if ifname is not None and ifname == linkinfo.get("ifname", None):
+                return linkinfo
+
+        # Return fallback match by address if no perm-address match found
+        if "matched_by_address" in locals():
+            return matched_by_address
+
         return None
 
 
