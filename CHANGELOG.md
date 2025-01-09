@@ -1,6 +1,19 @@
 Changelog
 =========
 
+[1.17.1] - 2025-01-09
+--------------------
+
+### Bug Fixes
+
+- fix: Prioritize find link info by permanent MAC address, with fallback to current address (#749)
+
+### Other Changes
+
+- ci: bump codecov/codecov-action from 4 to 5 (#746)
+- ci: Use Fedora 41, drop Fedora 39 (#747)
+- ci: Use Fedora 41, drop Fedora 39 - part two (#748)
+
 [1.17.0] - 2024-10-30
 --------------------
 
