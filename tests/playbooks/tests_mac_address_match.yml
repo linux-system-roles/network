@@ -1,0 +1,75 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Play for testing MAC address match on device
+  hosts: all
+  vars:
+    # This test requires an Ethernet interface whose permanent
+    # MAC address matches its current MAC address. Ensure that the
+    # specified interface meets this condition.
+    #
+    # Two VLAN profiles are defined to test deterministic behavior when fetching
+    # link information from sysfs. The issue being tested arises when `os.listdir(path)`
+    # returns interfaces in an arbitrary order, potentially listing a VLAN device
+    # before its parent interface. This can cause intermittent "no such interface
+    # exists" errors when applying configurations repeatedly.
+    #
+    # - `vlan_profile1` (e.g., `eth1.3732`) is named with the VLAN ID appended
+    #   after the parent interface, following the standard `<parent>.<vlan_id>` format.
+    # - `vlan_profile2` (e.g., `120-vlan`) has a fixed name, designed to test a scenario
+    #   where lexicographic sorting causes the VLAN to appear before its parent interface.
+    interface: "{{ lookup('env', 'MAC_ADDR_MATCH_INTERFACE') | default('eth1', true) }}"
+    profile: "{{ interface }}"
+    vlan_profile1: "{{ interface }}.3732"
+    vlan_profile2: "120-vlan"
+    lsr_fail_debug:
+      - __network_connections_result
+  tags:
+    - "tests::match"
+  tasks:
+    - name: Show playbook name
+      debug:
+        msg: "this is: playbooks/tests_mac_address_match.yml"
+      tags:
+        - always
+
+    - name: Install ethtool (test dependency)
+      package:
+        name: ethtool
+        state: present
+        use: "{{ (__network_is_ostree | d(false)) |
+          ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
+
+    - name: Retrieve MAC address using ethtool
+      command: ethtool -P {{ interface }}
+      register: mac_address_result
+      changed_when: false
+      failed_when: mac_address_result.rc != 0
+
+    - name: Set the MAC address variable
+      set_fact:
+        mac: "{{ mac_address_result.stdout_lines[-1].split(' ')[-1] }}"
+
+    - name: Display the retrieved MAC address
+      debug:
+        msg: "Retrieved MAC address for {{ interface }}: {{ mac }}"
+
+    - name: Test the MAC address match
+      tags:
+        - tests::match:match
+      block:
+        - name: Include the task 'run_test.yml'
+          include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: Test MAC address match on device
+            lsr_setup:
+              - tasks/find+remove_profile.yml
+              - tasks/assert_profile_absent.yml
+            lsr_test:
+              - tasks/create_mac_address_match.yml
+              - tasks/create_mac_address_match.yml
+            lsr_assert:
+              - tasks/assert_profile_present.yml
+              - tasks/assert_network_connections_succeeded.yml
+            lsr_cleanup:
+              - tasks/cleanup_vlan_and_parent_profile+device.yml
+              - tasks/check_network_dns.yml
