@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Play for testing MAC address match on device
+  hosts: all
+  vars_prompt:
+    - name: "interface"
+      prompt: "Please provide the interface name (e.g., eno2)"
+      private: false
+    - name: "mac"
+      prompt: "Please provide the MAC address to match (e.g., ec:f4:bb:d3:ec:92)"
+      private: false
+  vars:
+    profile: "{{ interface }}"
+    vlan_profile: "{{ interface }}.3732"
+    lsr_fail_debug:
+      - __network_connections_result
+  tags:
+    - "tests::mac"
+  tasks:
+    - name: Show playbook name
+      debug:
+        msg: "this is: playbooks/tests_mac_address_match.yml"
+      tags:
+        - always
+
+    - name: Test the MAC address match
+      tags:
+        - tests::mac:match
+      block:
+        - name: Include the task 'run_test.yml'
+          include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: Test MAC address match on device
+            lsr_setup:
+              - tasks/assert_profile_absent.yml
+            lsr_test:
+              - tasks/create_mac_address_match.yml
+            lsr_assert:
+              - tasks/assert_profile_present.yml
+              - tasks/assert_network_connections_succeeded.yml
+            lsr_cleanup:
+              - tasks/cleanup_vlan_and_parent_profile+device.yml
+              - tasks/check_network_dns.yml
