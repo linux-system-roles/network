@@ -1,0 +1,56 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Find unconfigured Ethernet interfaces with permanent MAC addresses
+  hosts: all
+  tasks:
+    - name: List all Ethernet interfaces
+      command: ls /sys/class/net/
+      register: interfaces
+
+    - name: Find unconfigured Ethernet interfaces with permanent MAC addresses
+      shell: |
+        results=()
+        for iface in {{ interfaces.stdout_lines | join(' ') }}; do
+            # Check if the interface is Ethernet (type = 1)
+            if [[ $(cat /sys/class/net/$iface/type) -eq 1 ]]; then
+                # Check if the interface has no IP address configured
+                if ! ip addr show "$iface" | grep -q "inet "; then
+                    # Retrieve the permanent MAC address
+                    mac=$(ethtool -P "$iface" 2>/dev/null | awk '{print $3}')
+                    if [[ -n $mac && $mac != "not" ]]; then
+                        results+=("$iface $mac")
+                    fi
+                fi
+            fi
+        done
+        printf "%s\n" "${results[@]}"
+      register: unconfigured_interfaces
+      failed_when: false
+
+    - name: Display all unconfigured Ethernet interfaces with permanent MAC addresses
+      debug:
+        msg: "{{ unconfigured_interfaces.stdout_lines }}"
+
+    - name: Find unconfigured non-Ethernet interfaces with permanent MAC addresses
+      shell: |
+        results=()
+        for iface in {{ interfaces.stdout_lines | join(' ') }}; do
+            # Check if the interface is NOT Ethernet (type != 1)
+            if [[ $(cat /sys/class/net/$iface/type) -ne 1 ]]; then
+                # Check if the interface has no IP address configured
+                if ! ip addr show "$iface" | grep -q "inet "; then
+                    # Retrieve the permanent MAC address
+                    mac=$(ethtool -P "$iface" 2>/dev/null | awk '{print $3}')
+                    if [[ -n $mac && $mac != "not" ]]; then
+                        results+=("$iface $mac")
+                    fi
+                fi
+            fi
+        done
+        printf "%s\n" "${results[@]}"
+      register: non_ethernet_unconfigured_interfaces
+      failed_when: false
+
+    - name: Display unconfigured non-Ethernet interfaces with permanent MAC addresses
+      debug:
+        msg: "{{ non_ethernet_unconfigured_interfaces.stdout_lines }}"
