@@ -1,0 +1,65 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Play for testing MAC address match on device
+  hosts: all
+  vars_prompt:
+    - name: "interface"
+      prompt: "The test requires matching an Ethernet interface to its
+        permanent MAC address, ensuring that the permanent MAC address matches
+        the current MAC address. Please provide the name of an interface where
+        its permanent MAC address equals its current MAC address (e.g., eno2)"
+      private: false
+  vars:
+    profile: "{{ interface }}"
+    vlan_profile: "{{ interface }}.3732"
+    lsr_fail_debug:
+      - __network_connections_result
+  tags:
+    - "tests::mac"
+  tasks:
+    - name: Show playbook name
+      debug:
+        msg: "this is: playbooks/tests_mac_address_match.yml"
+      tags:
+        - always
+
+    - name: Install ethtool (test dependency)
+      package:
+        name: ethtool
+        state: present
+        use: "{{ (__network_is_ostree | d(false)) |
+          ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
+
+    - name: Retrieve MAC address using ethtool
+      command: ethtool -P {{ interface }}
+      register: mac_address_result
+      changed_when: false
+      failed_when: mac_address_result.rc != 0
+
+    - name: Set the MAC address variable
+      set_fact:
+        mac: "{{ mac_address_result.stdout_lines[-1].split(' ')[-1] }}"
+
+    - name: Display the retrieved MAC address
+      debug:
+        msg: "Retrieved MAC address for {{ interface }}: {{ mac }}"
+
+    - name: Test the MAC address match
+      tags:
+        - tests::mac:match
+      block:
+        - name: Include the task 'run_test.yml'
+          include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: Test MAC address match on device
+            lsr_setup:
+              - tasks/assert_profile_absent.yml
+            lsr_test:
+              - tasks/create_mac_address_match.yml
+              - tasks/create_mac_address_match.yml
+            lsr_assert:
+              - tasks/assert_profile_present.yml
+              - tasks/assert_network_connections_succeeded.yml
+            lsr_cleanup:
+              - tasks/cleanup_vlan_and_parent_profile+device.yml
+              - tasks/check_network_dns.yml

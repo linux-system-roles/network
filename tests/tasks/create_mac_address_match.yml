@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Include network role
+  include_role:
+    name: linux-system-roles.network
+  vars:
+    network_connections:
+      - name: "{{ interface }}"
+        state: up
+        persistent_state: present
+        autoconnect: true
+        type: ethernet
+        interface_name: "{{ interface }}"
+        mac: "{{ mac }}"
+        ip:
+          dhcp4: false
+          auto6: false
+
+      - name: "{{ vlan_profile }}"
+        state: up
+        persistent_state: present
+        type: vlan
+        parent: "{{ interface }}"
+        vlan:
+          id: 3732
+        autoconnect: true
+        ip:
+          auto_gateway: false
+          ipv6_disabled: true
+          gateway4: 10.10.0.1
+          address: 10.10.0.6/24
+          dhcp4: false
+          auto6: false
+- name: Show result
+  debug:
+    var: __network_connections_result
+...
