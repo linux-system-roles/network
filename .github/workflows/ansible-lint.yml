@@ -40,6 +40,8 @@ jobs:
           set -euxo pipefail
           TOXENV=collection lsr_ci_runtox
           coll_dir=".tox/ansible_collections/$LSR_ROLE2COLL_NAMESPACE/$LSR_ROLE2COLL_NAME"
+          # cleanup after collection conversion
+          rm -rf "$coll_dir/.ansible" .tox/ansible-plugin-scan
           # ansible-lint action requires a .git directory???
           # https://github.com/ansible/ansible-lint/blob/main/action.yml#L45
           mkdir -p "$coll_dir/.git"
