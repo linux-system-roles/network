@@ -35,15 +35,48 @@ jobs:
           pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.4.0"
 
       - name: Convert role to collection format
+        id: collection
         run: |
           set -euxo pipefail
           TOXENV=collection lsr_ci_runtox
           coll_dir=".tox/ansible_collections/$LSR_ROLE2COLL_NAMESPACE/$LSR_ROLE2COLL_NAME"
+          # cleanup after collection conversion
+          rm -rf "$coll_dir/.ansible" .tox/ansible-plugin-scan
           # ansible-lint action requires a .git directory???
           # https://github.com/ansible/ansible-lint/blob/main/action.yml#L45
           mkdir -p "$coll_dir/.git"
+          meta_req_file="${{ github.workspace }}/meta/collection-requirements.yml"
+          test_req_file="${{ github.workspace }}/tests/collection-requirements.yml"
+          if [ -f "$meta_req_file" ] && [ -f "$test_req_file" ]; then
+            coll_req_file="${{ github.workspace }}/req.yml"
+            python -c 'import sys; import yaml
+          hsh1 = yaml.safe_load(open(sys.argv[1]))
+          hsh2 = yaml.safe_load(open(sys.argv[2]))
+          coll = {}
+          for item in hsh1["collections"] + hsh2["collections"]:
+            if isinstance(item, dict):
+              name = item["name"]
+              rec = item
+            else:
+              name = item  # assume string
+              rec = {"name": name}
+            if name not in coll:
+              coll[name] = rec
+          hsh1["collections"] = list(coll.values())
+          yaml.safe_dump(hsh1, open(sys.argv[3], "w"))' "$meta_req_file" "$test_req_file" "$coll_req_file"
+            echo merged "$coll_req_file"
+            cat "$coll_req_file"
+          elif [ -f "$meta_req_file" ]; then
+            coll_req_file="$meta_req_file"
+          elif [ -f "$test_req_file" ]; then
+            coll_req_file="$test_req_file"
+          else
+            coll_req_file=""
+          fi
+          echo "coll_req_file=$coll_req_file" >> $GITHUB_OUTPUT
 
       - name: Run ansible-lint
-        uses: ansible/ansible-lint@v24
+        uses: ansible/ansible-lint@v25
         with:
           working_directory: ${{ github.workspace }}/.tox/ansible_collections/${{ env.LSR_ROLE2COLL_NAMESPACE }}/${{ env.LSR_ROLE2COLL_NAME }}
+          requirements_file: ${{ steps.collection.outputs.coll_req_file }}
