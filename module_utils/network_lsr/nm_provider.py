@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-""" Support for NetworkManager aka the NM provider """
+"""Support for NetworkManager aka the NM provider"""
 
 from __future__ import absolute_import, division, print_function
 
