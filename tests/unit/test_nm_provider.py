@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-""" Tests for network_connections Ansible module """
+"""Tests for network_connections Ansible module"""
 # SPDX-License-Identifier: BSD-3-Clause
 
 import os

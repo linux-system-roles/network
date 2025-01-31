@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: BSD-3-Clause
-""" Check that there is a playbook to run all role tests with both providers
-"""
+"""Check that there is a playbook to run all role tests with both providers"""
 # vim: fileencoding=utf8
 
 import difflib
