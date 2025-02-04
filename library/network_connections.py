@@ -222,31 +222,29 @@ class SysUtil:
         return linkinfos
 
     @classmethod
-    def link_info_find(cls, refresh=False, mac=None, ifname=None):
-        if mac is not None:
+    def link_info_find(cls, mac=None, ifname=None):
+        if mac:
             mac = Util.mac_norm(mac)
-        for linkinfo in cls.link_infos(refresh).values():
-            perm_address = linkinfo.get("perm-address", None)
-            current_address = linkinfo.get("address", None)
 
-            # Match by perm-address (prioritized)
-            if mac is not None and perm_address not in [None, "00:00:00:00:00:00"]:
-                if mac == perm_address:
-                    return linkinfo
+        result = None
+        null_mac = "00:00:00:00:00:00"
 
-            # Fallback to match by address
-            if mac is not None and (perm_address in [None, "00:00:00:00:00:00"]):
-                if mac == current_address:
-                    matched_by_address = linkinfo  # Save for potential fallback
+        for linkinfo in cls.link_infos().values():
+            perm_address = linkinfo.get("perm-address", null_mac)
+            current_address = linkinfo.get("address", null_mac)
 
-            if ifname is not None and ifname == linkinfo.get("ifname", None):
-                return linkinfo
+            if ifname and ifname == linkinfo.get("ifname"):
+                result = linkinfo
+                break
 
-        # Return fallback match by address if no perm-address match found
-        if "matched_by_address" in locals():
-            return matched_by_address
+            if mac:
+                if perm_address != null_mac and mac == perm_address:
+                    result = linkinfo
+                    break
+                elif perm_address == null_mac and mac == current_address:
+                    result = linkinfo
 
-        return None
+        return result
 
 
 ###############################################################################
