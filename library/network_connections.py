@@ -95,6 +95,7 @@ ABSENT_STATE = "absent"
 
 DEFAULT_ACTIVATION_TIMEOUT = 90
 DEFAULT_TIMEOUT = 10
+NULL_MAC = "00:00:00:00:00:00"
 
 
 class CheckMode:
@@ -222,31 +223,28 @@ class SysUtil:
         return linkinfos
 
     @classmethod
-    def link_info_find(cls, refresh=False, mac=None, ifname=None):
-        if mac is not None:
+    def link_info_find(cls, mac=None, ifname=None):
+        if mac:
             mac = Util.mac_norm(mac)
-        for linkinfo in cls.link_infos(refresh).values():
-            perm_address = linkinfo.get("perm-address", None)
-            current_address = linkinfo.get("address", None)
 
-            # Match by perm-address (prioritized)
-            if mac is not None and perm_address not in [None, "00:00:00:00:00:00"]:
+        result = None
+
+        for linkinfo in cls.link_infos().values():
+            perm_address = linkinfo.get("perm-address", NULL_MAC)
+            current_address = linkinfo.get("address", NULL_MAC)
+
+            if ifname and ifname == linkinfo["ifname"]:
+                result = linkinfo
+                break
+
+            if mac:
                 if mac == perm_address:
-                    return linkinfo
+                    result = linkinfo
+                    break
+                elif mac == current_address:
+                    result = linkinfo
 
-            # Fallback to match by address
-            if mac is not None and (perm_address in [None, "00:00:00:00:00:00"]):
-                if mac == current_address:
-                    matched_by_address = linkinfo  # Save for potential fallback
-
-            if ifname is not None and ifname == linkinfo.get("ifname", None):
-                return linkinfo
-
-        # Return fallback match by address if no perm-address match found
-        if "matched_by_address" in locals():
-            return matched_by_address
-
-        return None
+        return result
 
 
 ###############################################################################
