@@ -173,7 +173,7 @@ class SysUtil:
     @staticmethod
     def _link_infos_fetch():
         links = {}
-        for ifname in os.listdir("/sys/class/net/"):
+        for ifname in sorted(os.listdir("/sys/class/net/")):
             if not os.path.islink("/sys/class/net/" + ifname):
                 # /sys/class/net may contain certain entries
                 # that are not interface names, like
