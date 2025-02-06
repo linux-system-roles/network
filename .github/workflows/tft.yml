@@ -180,7 +180,7 @@ jobs:
           tf_scope: private
           api_key: ${{ secrets.TF_API_KEY_RH }}
           update_pull_request_status: false
-          tmt_hardware: '{ "memory": ">= ${{ needs.prepare_vars.outputs.memory }} MB" }'
+          tmt_hardware: '{ "memory": ">= ${{ needs.prepare_vars.outputs.memory }} MB", "network": [{"type": "eth", "device-name": "eth0"}, {"type": "eth", "device-name": "eth1"}] }'
           tmt_plan_filter: "tag:general,network"
 
       - name: Set final commit status
