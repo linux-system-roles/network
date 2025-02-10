@@ -1,0 +1,110 @@
+summary: A general test for a system role
+tag: playbooks_parallel
+provision:
+  # TF uses `how: artemis`, and `tmt try`` uses `how: virtual`.
+  # Hence there is no need to define `how` explicitly.
+  - name: control-node1
+    role: control_node
+    # `connection: system` is required for `how: virtual` to assign VMs a real
+    # IP making SSH configuration easier.
+    # This setting is ignored in `artemis`, so we can leave it as is.
+    connection: system
+  - name: managed-node1
+    role: managed_node
+    connection: system
+    hardware:
+      network:
+        - type: eth
+        - type: eth
+  - name: managed-node2
+    role: managed_node
+    connection: system
+    hardware:
+      network:
+        - type: eth
+        - type: eth
+  - name: managed-node3
+    role: managed_node
+    connection: system
+    hardware:
+      network:
+        - type: eth
+        - type: eth
+  - name: managed-node4
+    role: managed_node
+    connection: system
+    hardware:
+      network:
+        - type: eth
+        - type: eth
+  - name: managed-node5
+    role: managed_node
+    connection: system
+    hardware:
+      network:
+        - type: eth
+        - type: eth
+  - name: managed-node6
+    role: managed_node
+    connection: system
+    hardware:
+      network:
+        - type: eth
+        - type: eth
+environment:
+  ANSIBLE_VER: 2.17
+  REPO_NAME: network
+  PYTHON_VERSION: 3.12
+  SYSTEM_ROLES_ONLY_TESTS: ""
+  TEST_LOCAL_CHANGES: true
+  PR_NUM: ""
+  LINUXSYSTEMROLES_USER: ""
+  LINUXSYSTEMROLES_DOMAIN: ""
+  LINUXSYSTEMROLES_SSH_KEY: ""
+  ARTIFACTS_DIR: ""
+  ARTIFACTS_URL: ""
+  LSR_TFT_DEBUG: false
+prepare:
+  - name: Use vault.centos.org repos (CS 7, 8 EOL workaround)
+    script: |
+      if grep -q 'CentOS Stream release 8' /etc/redhat-release; then
+        sed -i '/^mirror/d;s/#\(baseurl=http:\/\/\)mirror/\1vault/' /etc/yum.repos.d/*.repo
+      fi
+      if grep -q 'CentOS Linux release 7.9' /etc/redhat-release; then
+        sed -i '/^mirror/d;s/#\?\(baseurl=http:\/\/\)mirror/\1vault/' /etc/yum.repos.d/*.repo
+      fi
+  # Replace with feature: epel: enabled once https://github.com/teemtee/tmt/pull/3128 is merged
+  - name: Enable epel to install beakerlib
+    script: |
+      # CS 10 and Fedora doesn't require epel
+      if grep -q -e 'CentOS Stream release 10' -e 'Fedora release' /etc/redhat-release; then
+        exit 0
+      fi
+      yum install epel-release yum-utils -y
+      yum-config-manager --enable epel epel-debuginfo epel-source
+  - name: Test NICs
+    script: lshw -C network
+discover:
+  - name: Prepare managed node
+    how: fmf
+    where: managed_node
+    filter: tag:prep_managed_node
+    url: https://github.com/linux-system-roles/tft-tests
+    ref: main
+  - name: Run test playbooks from control_node
+    how: fmf
+    where: control_node
+    filter: tag:test_playbooks
+    url: https://github.com/linux-system-roles/tft-tests
+    ref: main
+  # Uncomment this step for troubleshooting
+  # This is required because currently testing-farm cli doesn't support running multi-node plans
+  # You can set ID_RSA_PUB in the environment section above to your public key to distribute it to nodes
+  # - name: Inject your ssh public key to test systems
+  #   how: fmf
+  #   where: control_node
+  #   filter: tag:reserve_system
+  #   url: https://github.com/linux-system-roles/tft-tests
+  #   ref: main
+execute:
+    how: tmt

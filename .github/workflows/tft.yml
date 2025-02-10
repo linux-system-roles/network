@@ -157,7 +157,6 @@ jobs:
         uses: sclorg/testing-farm-as-github-action@v3
         if: contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)
         with:
-          git_url: https://github.com/linux-system-roles/tft-tests
           git_ref: main
           pipeline_settings: '{ "type": "tmt-multihost" }'
           environment_settings: '{ "provisioning": { "tags": { "BusinessUnit": "system_roles" } } }'
@@ -180,8 +179,7 @@ jobs:
           tf_scope: private
           api_key: ${{ secrets.TF_API_KEY_RH }}
           update_pull_request_status: false
-          tmt_hardware: '{ "memory": ">= ${{ needs.prepare_vars.outputs.memory }} MB", "network": [{"type": "eth", "device-name": "eth0"}, {"type": "eth", "device-name": "eth1"}] }'
-          tmt_plan_filter: "tag:general,network"
+          tmt_plan_filter: "tag:playbooks_parallel,network"
 
       - name: Set final commit status
         uses: myrotvorets/set-commit-status-action@master
