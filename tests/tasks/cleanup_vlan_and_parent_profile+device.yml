@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Clean up the test devices and the connection profiles
+  tags:
+    - "tests::cleanup"
+  block:
+    - name: Import network role
+      import_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: "{{ profile }}"
+            persistent_state: absent
+            state: down
+          - name: "{{ vlan_profile1 }}"
+            persistent_state: absent
+            state: down
+          - name: "{{ vlan_profile2 }}"
+            persistent_state: absent
+            state: down
+      failed_when: false
+    - name: Delete the device '{{ interface }}'
+      command: ip link del {{ interface }}
+      failed_when: false
+      changed_when: false
+...
