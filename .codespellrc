@@ -1,0 +1,8 @@
+[codespell]
+check-hidden = true
+# Note that `-w` doesn't work when ignore-multiline-regex is set
+# https://github.com/codespell-project/codespell/issues/3642
+ignore-multiline-regex = codespell:ignore-begin.*codespell:ignore-end
+ignore-words = .codespell_ignores
+# skip-file is not available https://github.com/codespell-project/codespell/pull/2759
+skip = .pandoc_template.html5,.README.html,./tests/files/client.key.nocrypt,./tests/files/client.pem

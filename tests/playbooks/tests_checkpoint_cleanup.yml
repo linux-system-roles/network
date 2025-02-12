@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # This test is supposed to check that checkpoints are properly cleaned-up after
 # failures in the module. This test currently uses the initscripts provider to
-# mark a device as unmanaged for NM and then tries to activiate it using NM.
+# mark a device as unmanaged for NM and then tries to activate it using NM.
 # This failed without removing the checkpoint.
 ---
 - name: Play for testing checkpoint cleanup

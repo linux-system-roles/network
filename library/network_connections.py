@@ -306,7 +306,7 @@ class IfcfgUtil:
             return value
 
         if any(ord(c) < ord(" ") for c in value):
-            # needs ansic escaping due to ANSI control caracters (newline)
+            # needs ansic escaping due to ANSI control characters (newline)
             s = "$'"
             for c in value:
                 if ord(c) < ord(c):
@@ -2194,7 +2194,7 @@ class Cmd(object):
         """Hook before making changes"""
 
     def finish_transaction(self):
-        """Hook for after all changes where made successfuly"""
+        """Hook for after all changes where made successfully"""
 
     def rollback_transaction(self, idx, action, error):
         """Hook if configuring a profile results in an error

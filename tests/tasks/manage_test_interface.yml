@@ -36,7 +36,7 @@
   changed_when: false
 - name: Set up veth as managed by NetworkManager
   command: nmcli d set {{ interface }} managed true
-  # The varible for `network_provider` is not exists yet,
+  # The variable for `network_provider` is not exists yet,
   # just ignore error for initscripts
   ignore_errors: true  # noqa ignore-errors
   when: "type == 'veth' and state == 'present'"
