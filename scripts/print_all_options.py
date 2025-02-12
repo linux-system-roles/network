@@ -84,7 +84,7 @@ def parse_validator(validator):
         if not validator.required:
             comment += " optional"
         if minval is not None:
-            comment += " mininum=" + str(minval)
+            comment += " minimum=" + str(minval)
         if maxval:
             if maxval == 0xFFFFFFFF:
                 maxval = hex(maxval)

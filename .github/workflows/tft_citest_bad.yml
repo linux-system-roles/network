@@ -36,7 +36,7 @@ jobs:
           RUN_ID=$(gh api "repos/$REPO/actions/workflows/tft.yml/runs?event=issue_comment" \
             | jq -r "[.workflow_runs[] | select( .display_title == \"$PR_TITLE\" ) | select( .conclusion == \"failure\" ) | .id][0]")
           if [ "$RUN_ID" = "null" ]; then
-            echo "Failed workflow not found, exitting"
+            echo "Failed workflow not found, exiting"
             exit 1
           fi
           echo "Re-running workflow $RUN_ID"

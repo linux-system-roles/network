@@ -1,6 +1,6 @@
 # linux-system-roles/network
 
-[![ansible-lint.yml](https://github.com/linux-system-roles/network/actions/workflows/ansible-lint.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/ansible-lint.yml) [![ansible-test.yml](https://github.com/linux-system-roles/network/actions/workflows/ansible-test.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/ansible-test.yml) [![codeql.yml](https://github.com/linux-system-roles/network/actions/workflows/codeql.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/codeql.yml) [![integration.yml](https://github.com/linux-system-roles/network/actions/workflows/integration.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/integration.yml) [![markdownlint.yml](https://github.com/linux-system-roles/network/actions/workflows/markdownlint.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/markdownlint.yml) [![python-unit-test.yml](https://github.com/linux-system-roles/network/actions/workflows/python-unit-test.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/python-unit-test.yml) [![shellcheck.yml](https://github.com/linux-system-roles/network/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/shellcheck.yml) [![tft.yml](https://github.com/linux-system-roles/network/actions/workflows/tft.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/tft.yml) [![tft_citest_bad.yml](https://github.com/linux-system-roles/network/actions/workflows/tft_citest_bad.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/tft_citest_bad.yml) [![woke.yml](https://github.com/linux-system-roles/network/actions/workflows/woke.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/woke.yml) [![Coverage Status](https://coveralls.io/repos/github/linux-system-roles/network/badge.svg)](https://coveralls.io/github/linux-system-roles/network) [![Code Style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black) [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/linux-system-roles/network.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/linux-system-roles/network/context:python)
+[![ansible-lint.yml](https://github.com/linux-system-roles/network/actions/workflows/ansible-lint.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/ansible-lint.yml) [![ansible-test.yml](https://github.com/linux-system-roles/network/actions/workflows/ansible-test.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/ansible-test.yml) [![codeql.yml](https://github.com/linux-system-roles/network/actions/workflows/codeql.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/codeql.yml) [![codespell.yml](https://github.com/linux-system-roles/network/actions/workflows/codespell.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/codespell.yml) [![integration.yml](https://github.com/linux-system-roles/network/actions/workflows/integration.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/integration.yml) [![markdownlint.yml](https://github.com/linux-system-roles/network/actions/workflows/markdownlint.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/markdownlint.yml) [![python-unit-test.yml](https://github.com/linux-system-roles/network/actions/workflows/python-unit-test.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/python-unit-test.yml) [![shellcheck.yml](https://github.com/linux-system-roles/network/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/shellcheck.yml) [![tft.yml](https://github.com/linux-system-roles/network/actions/workflows/tft.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/tft.yml) [![tft_citest_bad.yml](https://github.com/linux-system-roles/network/actions/workflows/tft_citest_bad.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/tft_citest_bad.yml) [![woke.yml](https://github.com/linux-system-roles/network/actions/workflows/woke.yml/badge.svg)](https://github.com/linux-system-roles/network/actions/workflows/woke.yml) [![Coverage Status](https://coveralls.io/repos/github/linux-system-roles/network/badge.svg)](https://coveralls.io/github/linux-system-roles/network) [![Code Style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black) [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/linux-system-roles/network.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/linux-system-roles/network/context:python)
 
 ## Overview
 
@@ -480,7 +480,7 @@ In general these work like shell globs.
 
 - `*`, matches zero or more of any character
 - `?`, matches any single character
-- `[fo]` - matches any single `f` or `o` character - also supports ranges - `[0-9]`
+- `[fo]` - matches any single `f` or `o` character - also supports ranges - `[0-9]`  <!-- codespell:ignore fo -->
   will match any single digit character
 
 ### `path`
@@ -788,31 +788,31 @@ The ethtool configuration supports the following options:
     coalesce:
       adaptive_rx: true|false  # optional
       adaptive_tx: true|false  # optional
-      pkt_rate_high: 0  # optional mininum=0 maximum=0xffffffff
-      pkt_rate_low: 0  # optional mininum=0 maximum=0xffffffff
-      rx_frames: 0  # optional mininum=0 maximum=0xffffffff
-      rx_frames_high: 0  # optional mininum=0 maximum=0xffffffff
-      rx_frames_irq: 0  # optional mininum=0 maximum=0xffffffff
-      rx_frames_low: 0  # optional mininum=0 maximum=0xffffffff
-      rx_usecs: 0  # optional mininum=0 maximum=0xffffffff
-      rx_usecs_high: 0  # optional mininum=0 maximum=0xffffffff
-      rx_usecs_irq: 0  # optional mininum=0 maximum=0xffffffff
-      rx_usecs_low: 0  # optional mininum=0 maximum=0xffffffff
-      sample_interval: 0  # optional mininum=0 maximum=0xffffffff
-      stats_block_usecs: 0  # optional mininum=0 maximum=0xffffffff
-      tx_frames: 0  # optional mininum=0 maximum=0xffffffff
-      tx_frames_high: 0  # optional mininum=0 maximum=0xffffffff
-      tx_frames_irq: 0  # optional mininum=0 maximum=0xffffffff
-      tx_frames_low: 0  # optional mininum=0 maximum=0xffffffff
-      tx_usecs: 0  # optional mininum=0 maximum=0xffffffff
-      tx_usecs_high: 0  # optional mininum=0 maximum=0xffffffff
-      tx_usecs_irq: 0  # optional mininum=0 maximum=0xffffffff
-      tx_usecs_low: 0  # optional mininum=0 maximum=0xffffffff
+      pkt_rate_high: 0  # optional minimum=0 maximum=0xffffffff
+      pkt_rate_low: 0  # optional minimum=0 maximum=0xffffffff
+      rx_frames: 0  # optional minimum=0 maximum=0xffffffff
+      rx_frames_high: 0  # optional minimum=0 maximum=0xffffffff
+      rx_frames_irq: 0  # optional minimum=0 maximum=0xffffffff
+      rx_frames_low: 0  # optional minimum=0 maximum=0xffffffff
+      rx_usecs: 0  # optional minimum=0 maximum=0xffffffff
+      rx_usecs_high: 0  # optional minimum=0 maximum=0xffffffff
+      rx_usecs_irq: 0  # optional minimum=0 maximum=0xffffffff
+      rx_usecs_low: 0  # optional minimum=0 maximum=0xffffffff
+      sample_interval: 0  # optional minimum=0 maximum=0xffffffff
+      stats_block_usecs: 0  # optional minimum=0 maximum=0xffffffff
+      tx_frames: 0  # optional minimum=0 maximum=0xffffffff
+      tx_frames_high: 0  # optional minimum=0 maximum=0xffffffff
+      tx_frames_irq: 0  # optional minimum=0 maximum=0xffffffff
+      tx_frames_low: 0  # optional minimum=0 maximum=0xffffffff
+      tx_usecs: 0  # optional minimum=0 maximum=0xffffffff
+      tx_usecs_high: 0  # optional minimum=0 maximum=0xffffffff
+      tx_usecs_irq: 0  # optional minimum=0 maximum=0xffffffff
+      tx_usecs_low: 0  # optional minimum=0 maximum=0xffffffff
     ring:
-      rx: 0  # optional mininum=0 maximum=0xffffffff
-      rx_jumbo: 0  # optional mininum=0 maximum=0xffffffff
-      rx_mini: 0  # optional mininum=0 maximum=0xffffffff
-      tx: 0  # optional mininum=0 maximum=0xffffffff
+      rx: 0  # optional minimum=0 maximum=0xffffffff
+      rx_jumbo: 0  # optional minimum=0 maximum=0xffffffff
+      rx_mini: 0  # optional minimum=0 maximum=0xffffffff
+      tx: 0  # optional minimum=0 maximum=0xffffffff
 ```
 
 ### `ieee802_1x`
@@ -959,7 +959,7 @@ following options:
 
 - `lacp_rate`
 
-  In `802.3ad` bonding mode, this option defines the rate in which we requst link
+  In `802.3ad` bonding mode, this option defines the rate in which we request link
   partner to transmit LACPDU packets. The possible values are: `slow`, `fast`.
 
 - `lp_interval`
@@ -978,7 +978,7 @@ following options:
 
 - `num_grat_arp`
 
-  This option specify the number of peer notifications (gratuitious ARPs) to be
+  This option specify the number of peer notifications (gratuitous ARPs) to be
   issued after a failover event. The allowed range for the value is 0 - 255.
 
 - `packets_per_port`
@@ -1464,7 +1464,7 @@ role treats like RHEL, such as AlmaLinux, CentOS, OracleLinux, Rocky.
 As Ansible usually works via the network, for example via SSH, there are some
 limitations to be considered:
 
-The `network` role does not support bootstraping networking configuration. One option
+The `network` role does not support bootstrapping networking configuration. One option
 may be
 [ansible-pull](https://docs.ansible.com/ansible/latest/cli/ansible-pull.html).
 Another option maybe be to initially auto-configure the host during installation (ISO

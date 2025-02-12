@@ -93,7 +93,7 @@ class _NmMainLoop(object):
         self._mainloop = None
 
     def quit(self):
-        logging.debug("NM mainloop quiting")
+        logging.debug("NM mainloop quitting")
         self._mainloop.quit()
         self._clean_up()
 

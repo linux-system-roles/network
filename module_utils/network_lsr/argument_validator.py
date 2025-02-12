@@ -2012,7 +2012,7 @@ class ArgValidator_DictConnection(ArgValidatorDict):
         # If there are no runtime changes, "wait" and "force_state_change" do
         # not make sense
         # FIXME: Maybe this restriction can be removed. Need to make sure that
-        # defaults for wait or force_state_change do not interfer
+        # defaults for wait or force_state_change do not interfere
         if not state:
             while "wait" in valid_fields:
                 valid_fields.remove("wait")
