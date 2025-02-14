@@ -5,4 +5,6 @@ check-hidden = true
 ignore-multiline-regex = codespell:ignore-begin.*codespell:ignore-end
 ignore-words = .codespell_ignores
 # skip-file is not available https://github.com/codespell-project/codespell/pull/2759
+# .pandoc_template.html5 contains a typo in Licence that we shouldn't edit
+# .README.html is generated from README.md automatically - no need to check spelling
 skip = .pandoc_template.html5,.README.html,./tests/files/client.key.nocrypt,./tests/files/client.pem
