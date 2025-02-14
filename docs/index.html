@@ -58,8 +58,9 @@ SOFTWARE.
   </style>
   <style type="text/css">code{white-space: pre;}</style>
   <style type="text/css">
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -70,7 +71,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -726,7 +727,7 @@ In general these work like shell globs.</p>
 <li><code>?</code>, matches any single character</li>
 <li><code>[fo]</code> - matches any single <code>f</code> or
 <code>o</code> character - also supports ranges - <code>[0-9]</code>
-will match any single digit character</li>
+<!-- codespell:ignore fo --> will match any single digit character</li>
 </ul>
 <h2 id="path"><code>path</code></h2>
 <p>The <code>path</code> setting is a list of patterns to match against
@@ -1030,31 +1031,31 @@ class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="
 <span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">coalesce</span><span class="kw">:</span></span>
 <span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">adaptive_rx</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
 <span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">adaptive_tx</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">pkt_rate_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">pkt_rate_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-60"><a href="#cb6-60" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-61"><a href="#cb6-61" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-62"><a href="#cb6-62" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-63"><a href="#cb6-63" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-64"><a href="#cb6-64" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-65"><a href="#cb6-65" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-66"><a href="#cb6-66" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-67"><a href="#cb6-67" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-68"><a href="#cb6-68" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">sample_interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-69"><a href="#cb6-69" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">stats_block_usecs</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-70"><a href="#cb6-70" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-71"><a href="#cb6-71" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-72"><a href="#cb6-72" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-73"><a href="#cb6-73" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-74"><a href="#cb6-74" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-75"><a href="#cb6-75" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-76"><a href="#cb6-76" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-77"><a href="#cb6-77" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
+<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">pkt_rate_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">pkt_rate_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-60"><a href="#cb6-60" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-61"><a href="#cb6-61" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-62"><a href="#cb6-62" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-63"><a href="#cb6-63" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-64"><a href="#cb6-64" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-65"><a href="#cb6-65" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-66"><a href="#cb6-66" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-67"><a href="#cb6-67" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-68"><a href="#cb6-68" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">sample_interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-69"><a href="#cb6-69" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">stats_block_usecs</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-70"><a href="#cb6-70" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-71"><a href="#cb6-71" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-72"><a href="#cb6-72" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-73"><a href="#cb6-73" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-74"><a href="#cb6-74" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-75"><a href="#cb6-75" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-76"><a href="#cb6-76" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-77"><a href="#cb6-77" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
 <span id="cb6-78"><a href="#cb6-78" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ring</span><span class="kw">:</span></span>
-<span id="cb6-79"><a href="#cb6-79" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-80"><a href="#cb6-80" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_jumbo</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-81"><a href="#cb6-81" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_mini</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span>
-<span id="cb6-82"><a href="#cb6-82" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional mininum=0 maximum=0xffffffff</span></span></code></pre></div>
+<span id="cb6-79"><a href="#cb6-79" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-80"><a href="#cb6-80" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_jumbo</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-81"><a href="#cb6-81" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_mini</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb6-82"><a href="#cb6-82" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span></code></pre></div>
 <h2 id="ieee802_1x"><code>ieee802_1x</code></h2>
 <p>Configures 802.1x authentication for an interface.</p>
 <p>Currently, NetworkManager is the only supported provider and EAP-TLS
@@ -1165,7 +1166,7 @@ bond interface in active-backup mode. The possible values are:
 <code>follow</code>.</p></li>
 <li><p><code>lacp_rate</code></p>
 <p>In <code>802.3ad</code> bonding mode, this option defines the rate in
-which we requst link partner to transmit LACPDU packets. The possible
+which we request link partner to transmit LACPDU packets. The possible
 values are: <code>slow</code>, <code>fast</code>.</p></li>
 <li><p><code>lp_interval</code></p>
 <p>This option specifies the number of seconds between instances where
@@ -1177,7 +1178,7 @@ switch.</p></li>
 <p>This option specifies the minimum number of links that must be active
 before asserting the carrier.</p></li>
 <li><p><code>num_grat_arp</code></p>
-<p>This option specify the number of peer notifications (gratuitious
+<p>This option specify the number of peer notifications (gratuitous
 ARPs) to be issued after a failover event. The allowed range for the
 value is 0 - 255.</p></li>
 <li><p><code>packets_per_port</code></p>
@@ -1589,7 +1590,7 @@ CentOS, OracleLinux, Rocky.</p>
 <h1 id="limitations">Limitations</h1>
 <p>As Ansible usually works via the network, for example via SSH, there
 are some limitations to be considered:</p>
-<p>The <code>network</code> role does not support bootstraping
+<p>The <code>network</code> role does not support bootstrapping
 networking configuration. One option may be <a
 href="https://docs.ansible.com/ansible/latest/cli/ansible-pull.html">ansible-pull</a>.
 Another option maybe be to initially auto-configure the host during
