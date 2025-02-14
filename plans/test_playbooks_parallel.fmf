@@ -51,11 +51,18 @@ provision:
       network:
         - type: eth
         - type: eth
+  - name: managed-node7
+    role: managed_node
+    connection: system
+    hardware:
+      network:
+        - type: eth
+        - type: eth
 environment:
   ANSIBLE_VER: 2.17
   REPO_NAME: network
   PYTHON_VERSION: 3.12
-  SYSTEM_ROLES_ONLY_TESTS: ""
+  SYSTEM_ROLES_ONLY_TESTS: ""  # tests_default.yml
   TEST_LOCAL_CHANGES: true
   PR_NUM: ""
   LINUXSYSTEMROLES_USER: ""
@@ -82,8 +89,6 @@ prepare:
       fi
       yum install epel-release yum-utils -y
       yum-config-manager --enable epel epel-debuginfo epel-source
-  - name: Test NICs
-    script: lshw -C network
 discover:
   - name: Prepare managed node
     how: fmf
