@@ -95,6 +95,7 @@ ABSENT_STATE = "absent"
 
 DEFAULT_ACTIVATION_TIMEOUT = 90
 DEFAULT_TIMEOUT = 10
+NULL_MAC = "00:00:00:00:00:00"
 
 
 class CheckMode:
@@ -173,7 +174,7 @@ class SysUtil:
     @staticmethod
     def _link_infos_fetch():
         links = {}
-        for ifname in os.listdir("/sys/class/net/"):
+        for ifname in sorted(os.listdir("/sys/class/net/")):
             if not os.path.islink("/sys/class/net/" + ifname):
                 # /sys/class/net may contain certain entries
                 # that are not interface names, like
@@ -222,31 +223,28 @@ class SysUtil:
         return linkinfos
 
     @classmethod
-    def link_info_find(cls, refresh=False, mac=None, ifname=None):
-        if mac is not None:
+    def link_info_find(cls, mac=None, ifname=None):
+        if mac:
             mac = Util.mac_norm(mac)
-        for linkinfo in cls.link_infos(refresh).values():
-            perm_address = linkinfo.get("perm-address", None)
-            current_address = linkinfo.get("address", None)
 
-            # Match by perm-address (prioritized)
-            if mac is not None and perm_address not in [None, "00:00:00:00:00:00"]:
-                if mac == perm_address:
-                    return linkinfo
+        result = None
 
-            # Fallback to match by address
-            if mac is not None and (perm_address in [None, "00:00:00:00:00:00"]):
-                if mac == current_address:
-                    matched_by_address = linkinfo  # Save for potential fallback
+        for linkinfo in cls.link_infos().values():
+            perm_address = linkinfo.get("perm-address", NULL_MAC)
+            current_address = linkinfo.get("address", NULL_MAC)
 
-            if ifname is not None and ifname == linkinfo.get("ifname", None):
-                return linkinfo
+            if ifname and ifname == linkinfo["ifname"]:
+                result = linkinfo
+                break
 
-        # Return fallback match by address if no perm-address match found
-        if "matched_by_address" in locals():
-            return matched_by_address
+            if mac:
+                if perm_address != NULL_MAC and mac == perm_address:
+                    result = linkinfo
+                    break
+                elif perm_address == NULL_MAC and mac == current_address:
+                    result = linkinfo
 
-        return None
+        return result
 
 
 ###############################################################################
