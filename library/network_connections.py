@@ -168,6 +168,20 @@ class SysUtil:
         return Util.mac_norm(c.strip())
 
     @staticmethod
+    def _link_read_bond_port_perm_hwaddr(ifname):
+        filename = os.path.join(
+            "/sys/class/net",
+            ifname,
+            # wokeignore:rule=slave
+            "bonding_slave",
+            "perm_hwaddr",
+        )
+        if not os.path.exists(filename):
+            return None
+        c = SysUtil._sysctl_read(filename)
+        return Util.mac_norm(c.strip())
+
+    @staticmethod
     def _link_read_permaddress(ifname):
         return ethtool.get_perm_addr(ifname)
 
@@ -187,6 +201,13 @@ class SysUtil:
                 "ifname": ifname,
                 "address": SysUtil._link_read_address(ifname),
                 "perm-address": SysUtil._link_read_permaddress(ifname),
+                # When an interface is added as a port of a bonding device, its MAC
+                # address might change, we need to retrieve and preserve the original
+                # MAC address to ensure the user-provided interface name and MAC match
+                # correctly.
+                "bond-port-perm-hwaddr": SysUtil._link_read_bond_port_perm_hwaddr(
+                    ifname
+                ),
             }
         return links
 
@@ -232,6 +253,7 @@ class SysUtil:
         for linkinfo in cls.link_infos().values():
             perm_address = linkinfo.get("perm-address", NULL_MAC)
             current_address = linkinfo.get("address", NULL_MAC)
+            bond_port_perm_hwaddr = linkinfo.get("bond-port-perm-hwaddr", NULL_MAC)
 
             if ifname and ifname == linkinfo["ifname"]:
                 result = linkinfo
@@ -241,7 +263,7 @@ class SysUtil:
                 if mac == perm_address:
                     result = linkinfo
                     break
-                elif mac == current_address:
+                elif mac in (current_address, bond_port_perm_hwaddr):
                     result = linkinfo
 
         return result
@@ -2180,13 +2202,23 @@ class Cmd(object):
                                     "infiniband interface exists"
                                     % (connection["interface_name"]),
                                 )
-                if li_mac and li_ifname and li_mac != li_ifname:
-                    self.log_fatal(
-                        idx,
-                        "profile specifies interface_name '%s' and mac '%s' but no "
-                        "such interface exists"
-                        % (connection["interface_name"], connection["mac"]),
-                    )
+                    elif connection["mac"]:
+                        perm_address = li_ifname.get("perm-address", NULL_MAC)
+                        current_address = li_ifname.get("address", NULL_MAC)
+                        bond_port_perm_hwaddr = li_ifname.get(
+                            "bond-port-perm-hwaddr", NULL_MAC
+                        )
+                        if (perm_address not in (NULL_MAC, connection["mac"])) or (
+                            perm_address == NULL_MAC
+                            and connection["mac"]
+                            not in (current_address, bond_port_perm_hwaddr)
+                        ):
+                            self.log_fatal(
+                                idx,
+                                "profile specifies interface_name '%s' and mac '%s' "
+                                "but no such interface exists"
+                                % (connection["interface_name"], connection["mac"]),
+                            )
 
     def start_transaction(self):
         """Hook before making changes"""
