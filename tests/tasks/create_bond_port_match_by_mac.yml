@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Retrieve perm_hwaddr using ethtool
+  # wokeignore:rule=slave
+  command: cat /sys/class/net/{{ interface }}/bonding_slave/perm_hwaddr
+  register: mac_address_result
+  changed_when: false
+  failed_when: mac_address_result.rc != 0
+- name: Set the MAC address variable
+  set_fact:
+    mac: "{{ mac_address_result.stdout_lines[-1].split(' ')[-1] }}"
+- name: Display the retrieved MAC address
+  debug:
+    msg: "Retrieved MAC address for {{ interface }}: {{ mac }}"
+- name: Test matching the port device based on the perm_hwaddr
+  import_role:
+    name: linux-system-roles.network
+  vars:
+    network_connections:
+      - name: "{{ profile }}"
+        state: up
+        type: ethernet
+        interface_name: "{{ interface }}"
+        mac: "{{ mac }}"
+...
