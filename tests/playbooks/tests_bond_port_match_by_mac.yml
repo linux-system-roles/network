@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Play for creating the connection to match the port device
+    based on the perm_hwaddr
+  hosts: all
+  vars:
+    controller_profile: bond0
+    controller_device: nm-bond
+    port1_profile: bond0.0
+    dhcp_interface1: test1
+    port2_profile: bond0.1
+    dhcp_interface2: test2
+    profile: test2conn
+    interface: test2
+  tasks:
+    - name: Test creating the connection to match the port device
+        based on the perm_hwaddr
+      tags:
+        - tests::bond:create
+      block:
+        - name: Include the task 'run_test.yml'
+          include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: Given two DHCP-enabled network interfaces,
+              when creating a bond profile with them,
+              then we can still create the connection to match the port device
+              based on the perm_hwaddr
+            lsr_setup:
+              - tasks/create_test_interfaces_with_dhcp.yml
+              - tasks/assert_dhcp_device_present.yml
+            lsr_test:
+              - tasks/create_bond_profile.yml
+              - tasks/create_bond_port_match_by_mac.yml
+            lsr_assert:
+              - tasks/assert_controller_device_present.yml
+              - tasks/assert_profile_present.yml
+            lsr_cleanup:
+              - tasks/cleanup_bond_profile+device.yml
+              - tasks/remove_test_interfaces_with_dhcp.yml
+              - tasks/check_network_dns.yml
