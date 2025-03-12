@@ -1,5 +1,3 @@
 dbus-tools
-git
 network-scripts
-python3-pip
-rsync
+python3-pytest
