@@ -9,7 +9,7 @@
   register: __install_status
   # sometimes the rpm download returns a 403 - I think it is when too
   # many parallel jobs attempt the download from the same controller in
-  # too short a period of time, so the epel server throttles additional
+  # too short a period of time, so the server throttles additional
   # downloads - use a retry here to mitigate
   until: __install_status is success
   retries: 6

@@ -4,9 +4,7 @@
   hosts: all
   vars:
     rpmdependencies:
-      - git
-      - python3-pip
-      - rsync
+      - python3-pytest
 
   tasks:
     - name: Install rpm dependencies
@@ -15,11 +13,6 @@
         name: "{{ rpmdependencies }}"
         use: "{{ (__network_is_ostree | d(false)) |
           ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
-
-    - name: Install Pytest
-      command: "pip3 install pytest"
-      changed_when: false
-
 
 # Import needed in order to install initscripts dependencies on the remote
 # system.
@@ -135,7 +128,7 @@
           block:
             - name: Run pytest with nm
               command: >
-                pytest
+                pytest-3
                 {{ _rundir.path }}/{{ tests_directory | basename }}/integration/
                 --provider=nm
               register: playbook_run
@@ -157,7 +150,7 @@
                   ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
             - name: Run pytest with initscripts
               command: >
-                pytest
+                pytest-3
                 {{ _rundir.path }}/{{ tests_directory | basename }}/integration/
                 --provider=initscripts
               register: playbook_run
