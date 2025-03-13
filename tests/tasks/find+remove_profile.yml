@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Get connection profile for '{{ interface }}'
+  command: "nmcli -g GENERAL.CONNECTION device show {{ interface }}"
+  register: connection_name
+  changed_when: false
+
+- name: Bring down and delete the connection profile for '{{ interface }}'
+  include_role:
+    name: linux-system-roles.network
+  vars:
+    network_connections:
+      - name: "{{ connection_name.stdout }}"
+        persistent_state: absent
+        state: down

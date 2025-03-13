@@ -222,31 +222,15 @@ class SysUtil:
         return linkinfos
 
     @classmethod
-    def link_info_find(cls, refresh=False, mac=None, ifname=None):
-        if mac is not None:
-            mac = Util.mac_norm(mac)
-        for linkinfo in cls.link_infos(refresh).values():
-            perm_address = linkinfo.get("perm-address", None)
-            current_address = linkinfo.get("address", None)
+    def link_info_find(cls, ifname):
+        result = None
 
-            # Match by perm-address (prioritized)
-            if mac is not None and perm_address not in [None, "00:00:00:00:00:00"]:
-                if mac == perm_address:
-                    return linkinfo
+        for linkinfo in cls.link_infos().values():
+            if ifname == linkinfo["ifname"]:
+                result = linkinfo
+                break
 
-            # Fallback to match by address
-            if mac is not None and (perm_address in [None, "00:00:00:00:00:00"]):
-                if mac == current_address:
-                    matched_by_address = linkinfo  # Save for potential fallback
-
-            if ifname is not None and ifname == linkinfo.get("ifname", None):
-                return linkinfo
-
-        # Return fallback match by address if no perm-address match found
-        if "matched_by_address" in locals():
-            return matched_by_address
-
-        return None
+        return result
 
 
 ###############################################################################
@@ -2155,18 +2139,8 @@ class Cmd(object):
                 # permanent MAC address.
                 li_mac = None
                 li_ifname = None
-                if connection["mac"]:
-                    li_mac = SysUtil.link_info_find(mac=connection["mac"])
-                    if not li_mac:
-                        self.log_fatal(
-                            idx,
-                            "profile specifies mac '%s' but no such interface exists"
-                            % (connection["mac"]),
-                        )
                 if connection["interface_name"]:
-                    li_ifname = SysUtil.link_info_find(
-                        ifname=connection["interface_name"]
-                    )
+                    li_ifname = SysUtil.link_info_find(connection["interface_name"])
                     if not li_ifname:
                         if connection["type"] == "ethernet":
                             self.log_fatal(
