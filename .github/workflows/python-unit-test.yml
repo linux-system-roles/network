@@ -20,9 +20,7 @@ jobs:
       matrix:
         pyver_os:
           - ver: "2.7"
-            os: ubuntu-20.04
-          - ver: "3.6"
-            os: ubuntu-20.04
+            os: ubuntu-22.04
           - ver: "3.8"
             os: ubuntu-latest
           - ver: "3.9"
