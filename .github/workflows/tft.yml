@@ -118,7 +118,7 @@ jobs:
       ARTIFACTS_DIR_NAME: "tf_${{ github.event.repository.name }}-${{ github.event.issue.number }}_\
         ${{ matrix.platform }}-${{ matrix.ansible_version }}_\
         ${{ needs.prepare_vars.outputs.datetime }}/artifacts"
-      ARTIFACT_TARGET_DIR: /srv/pub/alt/${{ vars.LINUXSYSTEMROLES_USER }}/logs
+      ARTIFACT_TARGET_DIR: /srv/pub/alt/${{ vars.SR_LSR_USER }}/logs
     steps:
       - name: Set variables with DATETIME and artifact location
         id: set_vars
@@ -126,12 +126,12 @@ jobs:
           printf -v DATETIME '%(%Y%m%d-%H%M%S)T' -1
           ARTIFACTS_DIR_NAME="tf_${{ github.event.repository.name }}-${{ github.event.issue.number }}_\
           ${{ matrix.platform }}-${{ matrix.ansible_version }}_$DATETIME/artifacts"
-          ARTIFACTS_TARGET_DIR=/srv/pub/alt/${{ vars.LINUXSYSTEMROLES_USER }}/logs
+          ARTIFACTS_TARGET_DIR=/srv/pub/alt/${{ vars.SR_LSR_USER }}/logs
           ARTIFACTS_DIR=$ARTIFACTS_TARGET_DIR/$ARTIFACTS_DIR_NAME
-          ARTIFACTS_URL=https://dl.fedoraproject.org/pub/alt/${{ vars.LINUXSYSTEMROLES_USER }}/logs/$ARTIFACTS_DIR_NAME
+          ARTIFACTS_URL=https://dl.fedoraproject.org/pub/alt/${{ vars.SR_LSR_USER }}/logs/$ARTIFACTS_DIR_NAME
           echo "DATETIME=$DATETIME" >> $GITHUB_OUTPUT
-          echo "ARTIFACTS_DIR=$ARTIFACTS_DIR" >> $GITHUB_OUTPUT
-          echo "ARTIFACTS_URL=$ARTIFACTS_URL" >> $GITHUB_OUTPUT
+          echo "SR_ARTIFACTS_DIR=$SR_ARTIFACTS_DIR" >> $GITHUB_OUTPUT
+          echo "SR_ARTIFACTS_URL=$SR_ARTIFACTS_URL" >> $GITHUB_OUTPUT
 
       - name: Set commit status as pending
         if: contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)
@@ -160,18 +160,18 @@ jobs:
           git_ref: main
           pipeline_settings: '{ "type": "tmt-multihost" }'
           environment_settings: '{ "provisioning": { "tags": { "BusinessUnit": "system_roles" } } }'
-          # Keeping ARTIFACTS_URL at the bottom makes the link in logs clickable
-          variables: "ANSIBLE_VER=${{ matrix.ansible_version }};\
-            REPO_NAME=${{ github.event.repository.name }};\
-            GITHUB_ORG=${{ github.repository_owner }};\
-            PR_NUM=${{ github.event.issue.number }};\
-            ARTIFACTS_DIR=${{ steps.set_vars.outputs.ARTIFACTS_DIR }};\
-            TEST_LOCAL_CHANGES=false;\
-            LINUXSYSTEMROLES_USER=${{ vars.LINUXSYSTEMROLES_USER }};\
-            ARTIFACTS_URL=${{ steps.set_vars.outputs.ARTIFACTS_URL }}"
+          # Keeping SR_ARTIFACTS_URL at the bottom makes the link in logs clickable
+          variables: "SR_ANSIBLE_VER=${{ matrix.ansible_version }};\
+            SR_REPO_NAME=${{ github.event.repository.name }};\
+            SR_GITHUB_ORG=${{ github.repository_owner }};\
+            SR_PR_NUM=${{ github.event.issue.number }};\
+            SR_ARTIFACTS_DIR=${{ steps.set_vars.outputs.SR_ARTIFACTS_DIR }};\
+            SR_TEST_LOCAL_CHANGES=false;\
+            SR_LSR_USER=${{ vars.SR_LSR_USER }};\
+            SR_ARTIFACTS_URL=${{ steps.set_vars.outputs.SR_ARTIFACTS_URL }}"
           # Note that LINUXSYSTEMROLES_SSH_KEY must be single-line, TF doesn't read multi-line variables fine.
-          secrets: "LINUXSYSTEMROLES_DOMAIN=${{ secrets.LINUXSYSTEMROLES_DOMAIN }};\
-            LINUXSYSTEMROLES_SSH_KEY=${{ secrets.LINUXSYSTEMROLES_SSH_KEY }}"
+          secrets: "SR_LSR_DOMAIN=${{ secrets.SR_LSR_DOMAIN }};\
+            SR_LSR_SSH_KEY=${{ secrets.SR_LSR_SSH_KEY }}"
           compose: ${{ matrix.platform }}
           # There are two blockers for using public ranch:
           # 1. multihost is not supported in public https://github.com/teemtee/tmt/issues/2620
@@ -189,4 +189,4 @@ jobs:
           status: ${{ job.status }}
           context: ${{ matrix.platform }}|ansible-${{ matrix.ansible_version }}
           description: Test finished
-          targetUrl: ${{ steps.set_vars.outputs.ARTIFACTS_URL }}
+          targetUrl: ${{ steps.set_vars.outputs.SR_ARTIFACTS_URL }}
