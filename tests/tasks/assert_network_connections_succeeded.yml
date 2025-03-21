@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Assert that configuring network connections is succeeded
+  assert:
+    that:
+      - __network_connections_result.failed == false
+    msg: Configuring network connections is failed with the error
+      "{{ __network_connections_result.stderr }}"
