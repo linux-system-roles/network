@@ -28,89 +28,134 @@
         mode: "0644"
         create: true
 
-    - name: Configure connection profile and specify the numeric table in
-        static routes
-      import_role:
-        name: linux-system-roles.network
-      vars:
-        network_connections:
-          - name: "{{ interface }}"
-            interface_name: "{{ interface }}"
-            state: up
-            type: ethernet
-            autoconnect: true
-            ip:
-              dhcp4: false
-              address:
-                - 198.51.100.3/26
-                - 2001:db8::2/32
-              route:
-                - network: 198.51.100.64
-                  prefix: 26
-                  gateway: 198.51.100.6
-                  metric: 4
-                  table: 30200
-                - network: 198.51.100.128
-                  prefix: 26
-                  gateway: 198.51.100.1
-                  metric: 2
-                  table: 30400
-                - network: 2001:db8::4
-                  prefix: 32
-                  gateway: 2001:db8::1
-                  metric: 2
-                  table: 30600
-              routing_rule:
-                - priority: 30200
-                  from: 198.51.100.58/26
-                  table: 30200
-                - priority: 30201
-                  family: ipv4
-                  fwmark: 1
-                  fwmask: 1
-                  table: 30200
-                - priority: 30202
-                  family: ipv4
-                  ipproto: 6
-                  table: 30200
-                - priority: 30203
-                  family: ipv4
-                  sport: 128 - 256
-                  table: 30200
-                - priority: 30204
-                  family: ipv4
-                  tos: 8
-                  table: 30200
-                - priority: 30400
-                  to: 198.51.100.128/26
-                  table: 30400
-                - priority: 30401
-                  family: ipv4
-                  iif: iiftest
-                  table: 30400
-                - priority: 30402
-                  family: ipv4
-                  oif: oiftest
-                  table: 30400
-                - priority: 30403
-                  from: 0.0.0.0/0
-                  to: 0.0.0.0/0
-                  table: 30400
-                - priority: 30600
-                  to: 2001:db8::4/32
-                  table: 30600
-                - priority: 30601
-                  family: ipv6
-                  dport: 128 - 256
-                  invert: true
-                  table: 30600
-                - priority: 30602
-                  from: ::/0
-                  to: ::/0
-                  table: 30600
-                - priority: 200
-                  from: 198.51.100.56/26
-                  table: custom
+    - name: Set __network_end_play variable
+      set_fact:
+        __network_end_play: false
+
+    - name: Configure routes and routing rules with error handling
+      block:
+        - name: Configure connection profile and specify the numeric table in
+            static routes
+          import_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                interface_name: "{{ interface }}"
+                state: up
+                type: ethernet
+                autoconnect: true
+                ip:
+                  dhcp4: false
+                  address:
+                    - 198.51.100.3/26
+                    - 2001:db8::2/32
+                  route:
+                    - network: 198.51.100.64
+                      prefix: 26
+                      gateway: 198.51.100.6
+                      metric: 4
+                      table: 30200
+                    - network: 198.51.100.128
+                      prefix: 26
+                      gateway: 198.51.100.1
+                      metric: 2
+                      table: 30400
+                    - network: 2001:db8::4
+                      prefix: 32
+                      gateway: 2001:db8::1
+                      metric: 2
+                      table: 30600
+                  routing_rule:
+                    - priority: 30200
+                      from: 198.51.100.58/26
+                      table: 30200
+                    - priority: 30201
+                      family: ipv4
+                      fwmark: 1
+                      fwmask: 1
+                      table: 30200
+                    - priority: 30202
+                      family: ipv4
+                      ipproto: 6
+                      table: 30200
+                    - priority: 30203
+                      family: ipv4
+                      sport: 128 - 256
+                      table: 30200
+                    - priority: 30204
+                      family: ipv4
+                      tos: 8
+                      table: 30200
+                    - priority: 30205
+                      uid: 2000 - 3000
+                      family: ipv4
+                      table: 30200
+                    - priority: 30206
+                      suppress_prefixlength: 8
+                      family: ipv4
+                      table: 30200
+                    - priority: 30400
+                      to: 198.51.100.128/26
+                      table: 30400
+                    - priority: 30401
+                      family: ipv4
+                      iif: iiftest
+                      table: 30400
+                    - priority: 30402
+                      family: ipv4
+                      oif: oiftest
+                      table: 30400
+                    - priority: 30403
+                      from: 0.0.0.0/0
+                      to: 0.0.0.0/0
+                      table: 30400
+                    - priority: 30600
+                      to: 2001:db8::4/32
+                      table: 30600
+                    - priority: 30601
+                      family: ipv6
+                      dport: 128 - 256
+                      invert: true
+                      table: 30600
+                    - priority: 30602
+                      from: ::/0
+                      to: ::/0
+                      table: 30600
+                    - priority: 30603
+                      uid: 6000 - 8000
+                      family: ipv6
+                      table: 30600
+                    - priority: 30604
+                      suppress_prefixlength: 24
+                      family: ipv6
+                      table: 30600
+                    - priority: 200
+                      from: 198.51.100.56/26
+                      table: custom
+
+      rescue:
+        - name: Assert that the routing rule attribute 'suppress_prefixlength'
+              validation failure is not raised when the distro's major version is 7
+          assert:
+            that:
+              - __network_connections_result.stderr is search("the routing rule
+                selector 'suppress_prefixlength' is not supported in NetworkManger
+                until NM 1.20")
+            msg: The routing rule attribute 'suppress_prefixlength' validation
+              failure is not raised when the distro's major version is 7
+          when: ansible_distribution_major_version == "7"
+
+        - name: Clear errors
+          meta: clear_host_errors
+
+        - name: Reset __network_end_play variable
+          set_fact:
+            __network_end_play: true
+
+        - name: Force playbook end earlier after rescue
+          meta: end_play
+
     # the routing rule selector sport and ipproto are not supported by iproute
     # since v4.17.0, and the iproute installed in CentOS-7 and RHEL-7 is
     # v4.11.0
@@ -168,6 +213,10 @@
             128-256 lookup 30200")
           - route_rule_table_30200.stdout is search("30204:(\s+)from all tos
             (0x08|throughput) lookup 30200")
+          - route_rule_table_30200.stdout is search("30205:(\s+)from all
+            uidrange 2000-3000 lookup 30200")
+          - route_rule_table_30200.stdout is search("30206:(\s+)from all lookup
+            30200 suppress_prefixlength 8")
         msg: "the routing rule with table lookup 30200 does not match the
           specified rule"
       when: ansible_distribution_major_version != "7"
@@ -194,6 +243,10 @@
             2001:db8::4/32 lookup 30600")
           - route_rule_table_30600.stdout is search("30601:(\s+)not from all
             dport 128-256 lookup 30600")
+          - route_rule_table_30600.stdout is search("30603:(\s+)from all
+            uidrange 6000-8000 lookup 30600")
+          - route_rule_table_30600.stdout is search("30604:(\s+)from all
+            lookup 30600 suppress_prefixlength 24")
         msg: "the routing rule with table lookup 30600 does not match the
           specified rule"
       when: ansible_distribution_major_version != "7"
@@ -222,6 +275,10 @@
             0.0.0.0/0 sport 128-256 table 30200")
           - connection_route_rule.stdout is search("priority 30204 from
             0.0.0.0/0 tos 0x08 table 30200")
+          - connection_route_rule.stdout is search("priority 30205 from
+            0.0.0.0/0 uidrange 2000-3000 table 30200")
+          - connection_route_rule.stdout is search("priority 30206 from
+            0.0.0.0/0 suppress_prefixlength 8 table 30200")
           - connection_route_rule.stdout is search("priority 30400 to
             198.51.100.128/26 table 30400")
           - connection_route_rule.stdout is search("priority 30401 from
@@ -247,26 +304,27 @@
             ::/0 dport 128-256 table 30600")
           - connection_route_rule6.stdout is search("priority 30602 from
             ::/0 table 30600")
+          - connection_route_rule6.stdout is search("priority 30603 from
+            ::/0 uidrange 6000-8000 table 30600")
+          - connection_route_rule6.stdout is search("priority 30604 from
+            ::/0 suppress_prefixlength 24 table 30600")
         msg: "the specified IPv6 routing rule was not configured in the
           connection '{{ interface }}'"
 
+- name: Remove profile and device, assert device and profile are absent
+  hosts: all
+  tasks:
     - name: Remove the dedicated test file in `/etc/iproute2/rt_tables.d/`
       file:
         state: absent
         path: /etc/iproute2/rt_tables.d/table.conf
-
-- name: Import the playbook 'down_profile+delete_interface.yml'
-  import_playbook: down_profile+delete_interface.yml
-  vars:
-    profile: "{{ interface }}"
-# FIXME: assert profile/device down
-- name: Import the playbook 'remove_profile.yml'
-  import_playbook: remove_profile.yml
-  vars:
-    profile: "{{ interface }}"
-- name: Assert device and profile are absent
-  hosts: all
-  tasks:
+    - name: Include the task 'remove+down_profile.yml'
+      include_tasks: tasks/remove+down_profile.yml
+      vars:
+        profile: "{{ interface }}"
+      when: not __network_end_play | d(false)
+    - name: Include the task 'delete_interface.yml'
+      include_tasks: tasks/delete_interface.yml
     - name: Include the task 'assert_profile_absent.yml'
       include_tasks: tasks/assert_profile_absent.yml
       vars:
