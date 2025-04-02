@@ -2675,7 +2675,7 @@ class ArgValidator_ListConnections(ArgValidatorList):
             for routing_rule in connection["ip"]["routing_rule"]:
                 if routing_rule["suppress_prefixlength"] is not None:
                     if not hasattr(
-                        Util.NM(), "NM_IP_ROUTING_RULE_ATTR_SUPPRESS_PREFIXLENGTH"
+                        Util.NM().IPRoutingRule, "set_suppress_prefixlength"
                     ):
                         raise ValidationError.from_connection(
                             idx,
@@ -2684,9 +2684,7 @@ class ArgValidator_ListConnections(ArgValidatorList):
                         )
             for routing_rule in connection["ip"]["routing_rule"]:
                 if routing_rule["uid"] is not None:
-                    if not hasattr(
-                        Util.NM(), "NM_IP_ROUTING_RULE_ATTR_UID_RANGE_START"
-                    ):
+                    if not hasattr(Util.NM().IPRoutingRule, "set_uid_range"):
                         raise ValidationError.from_connection(
                             idx,
                             "the routing rule selector 'uid' is not supported in "
