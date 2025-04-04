@@ -27,6 +27,8 @@ jobs:
             os: ubuntu-latest
           - ver: "3.11"
             os: ubuntu-latest
+          - ver: "3.12"
+            os: ubuntu-latest
     runs-on: ${{ matrix.pyver_os.os }}
     steps:
       - name: Update git
