@@ -1,0 +1,6 @@
+---
+standard-inventory-qcow2:
+  qemu:
+    # Use qemu-system-x86_64 -net nic,model=help for a list of available devices.
+    net_nic_list:
+      - virtio
