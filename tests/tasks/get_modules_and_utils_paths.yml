@@ -40,55 +40,59 @@
 # would translate to tar -C /home/user/.ansible/collections \
 # ansible_collections/fedora/linux_system_roles/plugins/modules
 - name: Find parent directory and path of modules
-  shell: |
-    set -euxo pipefail
-    for dir in {{ modules_search_path | join(" ") }}; do
-      if [ -f "$dir/network_connections.py" ]; then
-        readlink -f "$(dirname "$dir")"
-        basename "$dir"
-        exit 0
-      fi
-    done
-    for dir in {{ collection_paths | join(" ") }}; do
-      if [ ! -d "$dir" ]; then continue; fi
-      cd "$dir"
-      for subdir in ansible_collections/*/*/plugins/modules; do
-        if [ -f "$subdir/network_connections.py" ]; then
-          echo "$dir"
-          echo "$subdir"
+  shell:
+    executable: /bin/bash  # ensure pipefail setting
+    cmd: |
+      set -euxo pipefail
+      for dir in {{ modules_search_path | join(" ") }}; do
+        if [ -f "$dir/network_connections.py" ]; then
+          readlink -f "$(dirname "$dir")"
+          basename "$dir"
           exit 0
         fi
       done
-    done
-    echo network_connections.py not found
-    exit 1
+      for dir in {{ collection_paths | join(" ") }}; do
+        if [ ! -d "$dir" ]; then continue; fi
+        cd "$dir"
+        for subdir in ansible_collections/*/*/plugins/modules; do
+          if [ -f "$subdir/network_connections.py" ]; then
+            echo "$dir"
+            echo "$subdir"
+            exit 0
+          fi
+        done
+      done
+      echo network_connections.py not found
+      exit 1
   delegate_to: localhost
   register: modules_parent_and_dir
   changed_when: false
 
 - name: Find parent directory and path of module_utils
-  shell: |
-    set -euxo pipefail
-    for dir in {{ module_utils_search_path | join(" ") }}; do
-      if [ -d "$dir/network_lsr" ]; then
-        readlink -f "$(dirname "$dir")"
-        basename "$dir"
-        exit 0
-      fi
-    done
-    for dir in {{ collection_paths | join(" ") }}; do
-      if [ ! -d "$dir" ]; then continue; fi
-      cd "$dir"
-      for subdir in ansible_collections/*/*/plugins/module_utils; do
-        if [ -d "$subdir/network_lsr" ]; then
-          echo "$dir"
-          echo "$subdir"
+  shell:
+    executable: /bin/bash  # ensure pipefail setting
+    cmd: |
+      set -euxo pipefail
+      for dir in {{ module_utils_search_path | join(" ") }}; do
+        if [ -d "$dir/network_lsr" ]; then
+          readlink -f "$(dirname "$dir")"
+          basename "$dir"
           exit 0
         fi
       done
-    done
-    echo network_lsr not found
-    exit 1
+      for dir in {{ collection_paths | join(" ") }}; do
+        if [ ! -d "$dir" ]; then continue; fi
+        cd "$dir"
+        for subdir in ansible_collections/*/*/plugins/module_utils; do
+          if [ -d "$subdir/network_lsr" ]; then
+            echo "$dir"
+            echo "$subdir"
+            exit 0
+          fi
+        done
+      done
+      echo network_lsr not found
+      exit 1
   delegate_to: localhost
   register: module_utils_parent_and_dir
   changed_when: false
