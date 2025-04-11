@@ -32,7 +32,7 @@ jobs:
       - name: Install tox, tox-lsr
         run: |
           set -euxo pipefail
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.4.0"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.5.1"
 
       - name: Convert role to collection format
         id: collection
@@ -80,3 +80,5 @@ jobs:
         with:
           working_directory: ${{ github.workspace }}/.tox/ansible_collections/${{ env.LSR_ROLE2COLL_NAMESPACE }}/${{ env.LSR_ROLE2COLL_NAME }}
           requirements_file: ${{ steps.collection.outputs.coll_req_file }}
+        env:
+          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}/.tox

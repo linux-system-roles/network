@@ -1,0 +1,129 @@
+---
+name: QEMU/KVM Integration tests
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+  merge_group:
+    branches:
+      - main
+    types:
+      - checks_requested
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # This is required for the ability to create/update the Pull request status
+  statuses: write
+jobs:
+  qemu_kvm:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario:
+          - { image: "centos-9", env: "qemu-ansible-core-2.16" }
+          - { image: "centos-10", env: "qemu-ansible-core-2.17" }
+          # ansible/libdnf5 bug: https://issues.redhat.com/browse/RHELMISC-10110
+          # - { image: "fedora-41", env: "qemu-ansible-core-2.17" }
+          - { image: "fedora-42", env: "qemu-ansible-core-2.17" }
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Check if platform is supported
+        id: check_platform
+        run: |
+          set -euxo pipefail
+          image="${{ matrix.scenario.image }}"
+
+          # convert image to tag formats
+          platform=
+          platform_version=
+          case "$image" in
+          centos-*) platform=el; platform_version=el"${image#centos-}" ;;
+          fedora-*) platform=fedora; platform_version="${image/-/}" ;;
+          esac
+          supported=
+          if yq -e '.galaxy_info.galaxy_tags[] | select(. == "'${platform_version}'" or . == "'${platform}'")' meta/main.yml; then
+            supported=true
+          fi
+
+          echo "supported=$supported" >> "$GITHUB_OUTPUT"
+
+      - name: Set up /dev/kvm
+        if: steps.check_platform.outputs.supported
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm --settle
+          ls -l /dev/kvm
+
+      - name: Disable man-db to speed up package install
+        if: steps.check_platform.outputs.supported
+        run: |
+          echo "set man-db/auto-update false" | sudo debconf-communicate
+          sudo dpkg-reconfigure man-db
+
+      - name: Install test dependencies
+        if: steps.check_platform.outputs.supported
+        run: |
+          set -euxo pipefail
+          python3 -m pip install --upgrade pip
+          sudo apt update
+          sudo apt install -y --no-install-recommends git ansible-core genisoimage qemu-system-x86
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.5.1"
+
+      - name: Configure tox-lsr
+        if: steps.check_platform.outputs.supported
+        run: >-
+          curl -o ~/.config/linux-system-roles.json
+          https://raw.githubusercontent.com/linux-system-roles/linux-system-roles.github.io/master/download/linux-system-roles.json
+
+      - name: Run qemu/kvm tox integration tests
+        if: steps.check_platform.outputs.supported
+        run: >-
+          tox -e ${{ matrix.scenario.env }} -- --image-name ${{ matrix.scenario.image }} --make-batch
+          --log-level=debug --skip-tags tests::infiniband --
+
+      - name: Test result summary
+        if: steps.check_platform.outputs.supported && always()
+        run: |
+          set -euo pipefail
+          # some platforms may have setup/cleanup playbooks - need to find the
+          # actual test playbook that starts with tests_
+          while read code start end test_files; do
+              for f in $test_files; do
+                  f="$(basename $f)"
+                  if [[ "$f" =~ ^tests_ ]]; then
+                      break
+                  fi
+              done
+              if [ "$code" = "0" ]; then
+                  echo -n "PASS: "
+              else
+                  echo -n "FAIL: "
+              fi
+              echo "$f"
+          done < batch.report
+
+      - name: Show test logs on failure
+        if: steps.check_platform.outputs.supported && failure()
+        run: |
+          set -euo pipefail
+          for f in tests/*.log; do
+              echo "::group::$(basename $f)"
+              cat "$f"
+              echo "::endgroup::"
+          done
+
+      - name: Set commit status as success with a description that platform is skipped
+        if: ${{ steps.check_platform.outputs.supported == '' }}
+        uses: myrotvorets/set-commit-status-action@master
+        with:
+          status: success
+          context: "${{ github.workflow }} / qemu_kvm (${{ matrix.scenario.image }}, ${{ matrix.scenario.env }}) (pull_request)"
+          description: The role does not support this platform. Skipping.
+          targetUrl: ""
