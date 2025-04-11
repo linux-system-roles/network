@@ -21,13 +21,13 @@ jobs:
         pyver_os:
           - ver: "2.7"
             os: ubuntu-22.04
-          - ver: "3.8"
-            os: ubuntu-latest
           - ver: "3.9"
             os: ubuntu-latest
           - ver: "3.10"
             os: ubuntu-latest
           - ver: "3.11"
+            os: ubuntu-latest
+          - ver: "3.12"
             os: ubuntu-latest
     runs-on: ${{ matrix.pyver_os.os }}
     steps:
@@ -65,7 +65,7 @@ jobs:
             tox=tox
             virtualenv=virtualenv
           fi
-          pip install "$tox" "$virtualenv" "git+https://github.com/linux-system-roles/tox-lsr@3.4.0"
+          pip install "$tox" "$virtualenv" "git+https://github.com/linux-system-roles/tox-lsr@3.5.1"
           # If you have additional OS dependency packages e.g. libcairo2-dev
           # then put them in .github/config/ubuntu-requirements.txt, one
           # package per line.
