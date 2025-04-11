@@ -11,7 +11,7 @@ jobs:
     if: |
       github.event.issue.pull_request
       && contains(fromJson('["[citest_bad]", "[citest-bad]", "[citest bad]"]'), github.event.comment.body)
-      && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR", "CONTRIBUTOR"]'), github.event.comment.author_association)
+      && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
     permissions:
       actions: write # for re-running failed jobs: https://docs.github.com/en/rest/actions/workflow-runs?apiVersion=2022-11-28#re-run-a-job-from-a-workflow-run
     runs-on: ubuntu-latest
