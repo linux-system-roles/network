@@ -17,7 +17,7 @@
     #   after the parent interface, following the standard `<parent>.<vlan_id>` format.
     # - `vlan_profile2` (e.g., `120-vlan`) has a fixed name, designed to test a scenario
     #   where lexicographic sorting causes the VLAN to appear before its parent interface.
-    interface: "{{ lookup('env', 'MAC_ADDR_MATCH_INTERFACE') | default('eth1', true) }}"
+    default_interface: "{{ lookup('env', 'MAC_ADDR_MATCH_INTERFACE') | default('eth1', true) }}"
     profile: "{{ interface }}"
     vlan_profile1: "{{ interface }}.3732"
     vlan_profile2: "120-vlan"
@@ -38,6 +38,24 @@
         state: present
         use: "{{ (__network_is_ostree | d(false)) |
           ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
+
+    - name: Find interface to use
+      shell:
+        executable: /bin/bash
+        cmd: |
+          set -euxo pipefail
+          for iface in '{{ default_interface }}' ens4; do
+            if ip addr show "$iface" 1>&2; then
+              break
+            fi
+          done
+          echo "$iface"
+      changed_when: false
+      register: __network_interface_cmd
+
+    - name: Set interface to use
+      set_fact:
+        interface: "{{ __network_interface_cmd.stdout | trim }}"
 
     - name: Retrieve MAC address using ethtool
       command: ethtool -P {{ interface }}
