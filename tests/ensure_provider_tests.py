@@ -84,8 +84,12 @@ ibution_major_version | int < 9",
     "playbooks/tests_provider.yml": {
         MINIMUM_VERSION: "'1.20.0'",
         "comment": "# NetworKmanager 1.20.0 added support for forgetting profiles",
-        EXTRA_RUN_CONDITION: "ansible_distribution not in ['RedHat', 'CentOS'] or\n      ansible_distr\
-ibution_major_version | int < 9",
+        EXTRA_RUN_CONDITION: (
+            "(ansible_distribution == 'Fedora'\n"
+            "       and ansible_distribution_major_version | int < 41)\n"
+            "      or ansible_distribution not in ['RedHat', 'CentOS', 'Fedora']\n"
+            "      or ansible_distribution_major_version | int < 9"
+        ),
     },
     "playbooks/tests_eth_pci_address_match.yml": {
         MINIMUM_VERSION: "'1.26.0'",
