@@ -43,5 +43,7 @@
     - ansible_distribution_major_version != '6'
 
     - networkmanager_version is version('1.20.0', '>=')
-    - ansible_distribution not in ['RedHat', 'CentOS'] or
-      ansible_distribution_major_version | int < 9
+    - (ansible_distribution == 'Fedora'
+       and ansible_distribution_major_version | int < 41)
+      or ansible_distribution not in ['RedHat', 'CentOS', 'Fedora']
+      or ansible_distribution_major_version | int < 9
