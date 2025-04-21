@@ -127,11 +127,19 @@
                 fi
             done
         fi
+        # NOTE: When running tests with a qemu managed node, the dhcp
+        # used by qemu interferes with the dhcp used in the test, which
+        # can cause the test to hang.  Exclude the qemu interfaces from
+        # using the test dhcp.  Note that this only affects the qemu tests -
+        # testing farm and other tests with "real" machines will have a
+        # different mac address - the mac addresses used below are specific
+        # to qemu virtual devices.
         dnsmasq \
             --pid-file=/run/dhcp_testbr.pid \
             --dhcp-leasefile=/run/dhcp_testbr.lease \
             --dhcp-range=192.0.2.1,192.0.2.254,240 \
             --dhcp-range=2001:DB8::10,2001:DB8::1FF,slaac,64,240 \
-            --enable-ra --interface=testbr --bind-interfaces
+            --enable-ra --interface=testbr --bind-interfaces \
+            --dhcp-host 52:54:00:12:34:56,ignore --dhcp-host 52:54:00:12:34:57,ignore
     fi
   changed_when: false
