@@ -74,7 +74,7 @@ jobs:
           python3 -m pip install --upgrade pip
           sudo apt update
           sudo apt install -y --no-install-recommends git ansible-core genisoimage qemu-system-x86
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.5.1"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.6.0"
 
       - name: Configure tox-lsr
         if: steps.check_platform.outputs.supported
@@ -109,14 +109,29 @@ jobs:
               echo "$f"
           done < batch.report
 
-      - name: Show test logs on failure
+      - name: Upload test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: "logs-${{ matrix.scenario.image }}-${{ matrix.scenario.env }}"
+          path: |
+            tests/*.log
+            artifacts/default_provisioners.log
+            artifacts/*.qcow2.*.log
+            batch.txt
+            batch.report
+          retention-days: 30
+
+      - name: Show test log failures
         if: steps.check_platform.outputs.supported && failure()
         run: |
           set -euo pipefail
           for f in tests/*.log; do
-              echo "::group::$(basename $f)"
-              cat "$f"
-              echo "::endgroup::"
+              if FAIL=$(grep -B100 -A30 "fatal:" "$f"); then
+                  echo "::group::$(basename $f)"
+                  echo "$FAIL"
+                  echo "::endgroup::"
+              fi
           done
 
       - name: Set commit status as success with a description that platform is skipped
