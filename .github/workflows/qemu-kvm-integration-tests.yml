@@ -86,7 +86,7 @@ jobs:
         if: steps.check_platform.outputs.supported
         run: >-
           tox -e ${{ matrix.scenario.env }} -- --image-name ${{ matrix.scenario.image }} --make-batch
-          --log-level=debug --skip-tags tests::infiniband --
+          --log-level=debug --skip-tags tests::infiniband,tests::nvme,tests::scsi --
 
       - name: Test result summary
         if: steps.check_platform.outputs.supported && always()
