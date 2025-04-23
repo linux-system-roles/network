@@ -1,6 +1,36 @@
 Changelog
 =========
 
+[1.17.2] - 2025-04-23
+--------------------
+
+### Bug Fixes
+
+- fix: Refine MAC validation using interface name (#768)
+- fix: Remove MAC address matching from SysUtil.link_info_find() (#769)
+- fix: Correct attribute checks for routing rule validation (#774)
+
+### Other Changes
+
+- ci: Check spelling with codespell (#754)
+- ci: ansible-plugin-scan is disabled for now (#755)
+- ci: bump ansible-lint to v25; provide collection requirements for ansible-lint (#758)
+- refactor: fix python black formatting (#759)
+- ci: Add an additional NIC for test purposes (#762)
+- ci: Add test plan in .ci dir to be able to customize it per each role (#763)
+- ci: Add test plan that runs CI tests and customize it for each role (#765)
+- test: do not need to install from epel or pip (#770)
+- ci: In test plans, prefix all relate variables with SR_ (#771)
+- ci: Fix bug with ARTIFACTS_URL after prefixing with SR_ (#773)
+- ci: several changes related to new qemu test, ansible-lint, python versions, ubuntu versions (#776)
+- test: add another network interface device for qemu tests (#777)
+- test: set shell to /bin/bash in order to use pipefail (#778)
+- test: find second interface to use for mac address match (#779)
+- test: skip initscript related tests on Fedora 41 and later (#780)
+- test: exclude qemu interfaces from dhcp (#781)
+- ci: use tox-lsr 3.6.0; improve qemu test logging (#782)
+- ci: skip storage scsi, nvme tests in github qemu ci (#783)
+
 [1.17.1] - 2025-01-09
 --------------------
 
