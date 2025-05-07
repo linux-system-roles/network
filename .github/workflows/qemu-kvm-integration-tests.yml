@@ -1,5 +1,5 @@
 ---
-name: QEMU/KVM Integration tests
+name: Test
 on:  # yamllint disable-line rule:truthy
   pull_request:
   merge_group:
@@ -17,18 +17,34 @@ permissions:
   # This is required for the ability to create/update the Pull request status
   statuses: write
 jobs:
-  qemu_kvm:
+  scenario:
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
         scenario:
+          # QEMU
           - { image: "centos-9", env: "qemu-ansible-core-2.16" }
           - { image: "centos-10", env: "qemu-ansible-core-2.17" }
           # ansible/libdnf5 bug: https://issues.redhat.com/browse/RHELMISC-10110
           # - { image: "fedora-41", env: "qemu-ansible-core-2.17" }
           - { image: "fedora-42", env: "qemu-ansible-core-2.17" }
+
+          # container
+          - { image: "centos-9", env: "container-ansible-core-2.16" }
+          - { image: "centos-9-bootc", env: "container-ansible-core-2.16" }
+          # broken on non-running dbus
+          # - { image: "centos-10", env: "container-ansible-core-2.17" }
+          - { image: "centos-10-bootc", env: "container-ansible-core-2.17" }
+          - { image: "fedora-41", env: "container-ansible-core-2.17" }
+          - { image: "fedora-42", env: "container-ansible-core-2.17" }
+          - { image: "fedora-41-bootc", env: "container-ansible-core-2.17" }
+          - { image: "fedora-42-bootc", env: "container-ansible-core-2.17" }
+
+    env:
+      TOX_ARGS: "--skip-tags tests::infiniband,tests::nvme,tests::scsi"
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -38,6 +54,7 @@ jobs:
         run: |
           set -euxo pipefail
           image="${{ matrix.scenario.image }}"
+          image="${image%-bootc}"
 
           # convert image to tag formats
           platform=
@@ -49,6 +66,20 @@ jobs:
           supported=
           if yq -e '.galaxy_info.galaxy_tags[] | select(. == "'${platform_version}'" or . == "'${platform}'")' meta/main.yml; then
             supported=true
+          fi
+
+          # bootc build support (in buildah) has a separate flag
+          if [ "${{ matrix.scenario.image }}" != "$image" ]; then
+          if ! yq -e '.galaxy_info.galaxy_tags[] | select(. == "containerbuild")' meta/main.yml; then
+              supported=
+            fi
+          else
+            # roles need to opt into support for running in a system container
+            env="${{ matrix.scenario.env }}"
+            if [ "${env#container}" != "$env" ] &&
+              ! yq -e '.galaxy_info.galaxy_tags[] | select(. == "container")' meta/main.yml; then
+              supported=
+            fi
           fi
 
           echo "supported=$supported" >> "$GITHUB_OUTPUT"
@@ -74,7 +105,7 @@ jobs:
           python3 -m pip install --upgrade pip
           sudo apt update
           sudo apt install -y --no-install-recommends git ansible-core genisoimage qemu-system-x86
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.6.0"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.8.0"
 
       - name: Configure tox-lsr
         if: steps.check_platform.outputs.supported
@@ -82,14 +113,14 @@ jobs:
           curl -o ~/.config/linux-system-roles.json
           https://raw.githubusercontent.com/linux-system-roles/linux-system-roles.github.io/master/download/linux-system-roles.json
 
-      - name: Run qemu/kvm tox integration tests
-        if: steps.check_platform.outputs.supported
+      - name: Run qemu integration tests
+        if: steps.check_platform.outputs.supported && startsWith(matrix.scenario.env, 'qemu')
         run: >-
           tox -e ${{ matrix.scenario.env }} -- --image-name ${{ matrix.scenario.image }} --make-batch
           --log-level=debug --skip-tags tests::infiniband,tests::nvme,tests::scsi --
 
-      - name: Test result summary
-        if: steps.check_platform.outputs.supported && always()
+      - name: Qemu result summary
+        if: steps.check_platform.outputs.supported && startsWith(matrix.scenario.env, 'qemu') && always()
         run: |
           set -euo pipefail
           # some platforms may have setup/cleanup playbooks - need to find the
@@ -109,6 +140,24 @@ jobs:
               echo "$f"
           done < batch.report
 
+      - name: Run container tox integration tests
+        if: steps.check_platform.outputs.supported && startsWith(matrix.scenario.env, 'container')
+        run: |
+          set -euo pipefail
+          # HACK: debug.py/profile.py setup is broken
+          export LSR_CONTAINER_PROFILE=false
+          export LSR_CONTAINER_PRETTY=false
+          rc=0
+          for t in tests/tests_*.yml; do
+              if tox -e ${{ matrix.scenario.env }} -- --image-name ${{ matrix.scenario.image }} $t > ${t}.log 2>&1; then
+                  echo "PASS: $(basename $t)"
+              else
+                  echo "FAIL: $(basename $t)"
+                  rc=1
+              fi
+          done
+          exit $rc
+
       - name: Upload test logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -127,7 +176,7 @@ jobs:
         run: |
           set -euo pipefail
           for f in tests/*.log; do
-              if FAIL=$(grep -B100 -A30 "fatal:" "$f"); then
+              if FAIL=$(grep -E -B100 -A30 "fatal:|An exception occurred" "$f"); then
                   echo "::group::$(basename $f)"
                   echo "$FAIL"
                   echo "::endgroup::"
@@ -139,6 +188,6 @@ jobs:
         uses: myrotvorets/set-commit-status-action@master
         with:
           status: success
-          context: "${{ github.workflow }} / qemu_kvm (${{ matrix.scenario.image }}, ${{ matrix.scenario.env }}) (pull_request)"
+          context: "${{ github.workflow }} / scenario (${{ matrix.scenario.image }}, ${{ matrix.scenario.env }}) (pull_request)"
           description: The role does not support this platform. Skipping.
           targetUrl: ""
