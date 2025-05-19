@@ -105,7 +105,7 @@ jobs:
           python3 -m pip install --upgrade pip
           sudo apt update
           sudo apt install -y --no-install-recommends git ansible-core genisoimage qemu-system-x86
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.8.0"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.9.0"
 
       - name: Configure tox-lsr
         if: steps.check_platform.outputs.supported
@@ -117,7 +117,8 @@ jobs:
         if: steps.check_platform.outputs.supported && startsWith(matrix.scenario.env, 'qemu')
         run: >-
           tox -e ${{ matrix.scenario.env }} -- --image-name ${{ matrix.scenario.image }} --make-batch
-          --log-level=debug --skip-tags tests::infiniband,tests::nvme,tests::scsi --
+          --log-level debug --skip-tags tests::infiniband,tests::nvme,tests::scsi
+          --lsr-report-errors-url DEFAULT --
 
       - name: Qemu result summary
         if: steps.check_platform.outputs.supported && startsWith(matrix.scenario.env, 'qemu') && always()
@@ -127,15 +128,18 @@ jobs:
           # actual test playbook that starts with tests_
           while read code start end test_files; do
               for f in $test_files; do
-                  f="$(basename $f)"
+                  test_file="$f"
+                  f="$(basename $test_file)"
                   if [[ "$f" =~ ^tests_ ]]; then
                       break
                   fi
               done
               if [ "$code" = "0" ]; then
                   echo -n "PASS: "
+                  mv "$test_file.log" "${test_file}-SUCCESS.log"
               else
                   echo -n "FAIL: "
+                  mv "$test_file.log" "${test_file}-FAIL.log"
               fi
               echo "$f"
           done < batch.report
@@ -151,8 +155,10 @@ jobs:
           for t in tests/tests_*.yml; do
               if tox -e ${{ matrix.scenario.env }} -- --image-name ${{ matrix.scenario.image }} $t > ${t}.log 2>&1; then
                   echo "PASS: $(basename $t)"
+                  mv "${t}.log" "${t}-SUCCESS.log"
               else
                   echo "FAIL: $(basename $t)"
+                  mv "${t}.log" "${t}-FAIL.log"
                   rc=1
               fi
           done
@@ -175,13 +181,14 @@ jobs:
         if: steps.check_platform.outputs.supported && failure()
         run: |
           set -euo pipefail
-          for f in tests/*.log; do
-              if FAIL=$(grep -E -B100 -A30 "fatal:|An exception occurred" "$f"); then
-                  echo "::group::$(basename $f)"
-                  echo "$FAIL"
-                  echo "::endgroup::"
-              fi
+          # grab check_logs.py script
+          curl -s -L -o check_logs.py https://raw.githubusercontent.com/linux-system-roles/auto-maintenance/refs/heads/main/check_logs.py
+          chmod +x check_logs.py
+          declare -a cmdline=(./check_logs.py --github-action-format)
+          for log in tests/*-FAIL.log; do
+              cmdline+=(--lsr-error-log "$log")
           done
+          "${cmdline[@]}"
 
       - name: Set commit status as success with a description that platform is skipped
         if: ${{ steps.check_platform.outputs.supported == '' }}
