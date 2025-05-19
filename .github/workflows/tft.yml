@@ -72,8 +72,8 @@ jobs:
           meta_main=meta/main.yml
           # All Fedora are supported, add latest Fedora versions to supported_platforms
           if yq '.galaxy_info.galaxy_tags[]' "$meta_main" | grep -qi fedora$; then
-            supported_platforms+=" Fedora-40"
             supported_platforms+=" Fedora-41"
+            supported_platforms+=" Fedora-42"
           fi
           # Specific Fedora versions supported
           if yq '.galaxy_info.galaxy_tags[]' "$meta_main" | grep -qiP 'fedora\d+$'; then
@@ -98,9 +98,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: Fedora-40
-            ansible_version: 2.17
           - platform: Fedora-41
+            ansible_version: 2.17
+          - platform: Fedora-42
             ansible_version: 2.17
           - platform: CentOS-7-latest
             ansible_version: 2.9
