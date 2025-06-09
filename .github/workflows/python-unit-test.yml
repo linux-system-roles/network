@@ -83,7 +83,7 @@ jobs:
           # NOTE: The use of flake8, pylint, black with specific
           # python envs is arbitrary and must be changed in tox-lsr
           case "$toxpyver" in
-          310) toxenvs="${toxenvs},coveralls,flake8,pylint,black" ;;
+          311) toxenvs="${toxenvs},coveralls,flake8,pylint,black" ;;
           *) toxenvs="${toxenvs},coveralls" ;;
           esac
           TOXENV="$toxenvs" lsr_ci_runtox
