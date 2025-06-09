@@ -101,7 +101,7 @@ jobs:
           - platform: Fedora-41
             ansible_version: 2.17
           - platform: Fedora-42
-            ansible_version: 2.17
+            ansible_version: 2.19
           - platform: CentOS-7-latest
             ansible_version: 2.9
           - platform: CentOS-Stream-8
