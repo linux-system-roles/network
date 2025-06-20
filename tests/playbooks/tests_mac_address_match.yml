@@ -18,6 +18,7 @@
     # - `vlan_profile2` (e.g., `120-vlan`) has a fixed name, designed to test a scenario
     #   where lexicographic sorting causes the VLAN to appear before its parent interface.
     default_interface: "{{ lookup('env', 'MAC_ADDR_MATCH_INTERFACE') | default('eth1', true) }}"
+    interfaces_to_check: "{{ [default_interface] + ['eth1', 'ens4', 'ens6'] | unique | list }}"
     profile: "{{ interface }}"
     vlan_profile1: "{{ interface }}.3732"
     vlan_profile2: "120-vlan"
@@ -44,12 +45,18 @@
         executable: /bin/bash
         cmd: |
           set -euxo pipefail
-          for iface in '{{ default_interface }}' ens4; do
+          for iface in {{ interfaces_to_check | join(" ") }}; do
             if ip addr show "$iface" 1>&2; then
+              # interface exists, but may be an alias or altname
+              # find the real name
+              real_iface="$(ip addr show "$iface" | awk -F'[ :]'  '/^[^ ]/ {print $3}')"
               break
             fi
           done
-          echo "$iface"
+          if [ -z "${real_iface:-}" ]; then
+            real_iface=UNKNOWN_DEVICE
+          fi
+          echo "$real_iface"
       changed_when: false
       register: __network_interface_cmd
 
