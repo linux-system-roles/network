@@ -55,7 +55,7 @@
         name: linux-system-roles.network
       vars:
         network_connections:
-          - name: "{{ interface | default('802-1x-test') }}"
+          - name: "{{ lsr_interface | d(interface | d('802-1x-test')) }}"
             interface_name: veth2
             state: up
             type: ethernet

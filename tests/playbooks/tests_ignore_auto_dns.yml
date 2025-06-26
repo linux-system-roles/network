@@ -36,27 +36,52 @@
                   auto6: true
                   address:
                     - 198.51.100.3/24
-        - name: Get the nmcli ipv4.ignore-auto-dns setting
-          command: nmcli -f ipv4.ignore-auto-dns c show {{ interface }}
-          register: ipv4_ignore_auto_dns
-          changed_when: false
 
-        - name: Get the nmcli ipv6.ignore-auto-dns setting
-          command: nmcli -f ipv6.ignore-auto-dns c show {{ interface }}
-          register: ipv6_ignore_auto_dns
-          changed_when: false
+        # the nmcli and .nmconnection file formats are very different, so we
+        # need to do online and offline checks in different code paths
+        - name: Online check
+          when: __network_is_booted | bool
+          block:
+            - name: Get the nmcli ipv4.ignore-auto-dns setting
+              command: nmcli -f ipv4.ignore-auto-dns c show {{ interface }}
+              register: ipv4_ignore_auto_dns
+              changed_when: false
 
-        - name: Assert that the setting ipv4.ignore-auto-dns is 'no'
-          assert:
-            that:
-              - "'no' in ipv4_ignore_auto_dns.stdout"
-            msg: "the setting ipv4.ignore-auto-dns is 'yes'"
+            - name: Get the nmcli ipv6.ignore-auto-dns setting
+              command: nmcli -f ipv6.ignore-auto-dns c show {{ interface }}
+              register: ipv6_ignore_auto_dns
+              changed_when: false
 
-        - name: Assert that the setting ipv6.ignore-auto-dns is 'yes'
-          assert:
-            that:
-              - "'yes' in ipv6_ignore_auto_dns.stdout"
-            msg: "the setting ipv6.ignore-auto-dns is 'no'"
+            - name: Assert that the setting ipv4.ignore-auto-dns is 'no'
+              assert:
+                that:
+                  - "'no' in ipv4_ignore_auto_dns.stdout"
+                msg: "the setting ipv4.ignore-auto-dns is 'yes'"
+
+            - name: Assert that the setting ipv6.ignore-auto-dns is 'yes'
+              assert:
+                that:
+                  - "'yes' in ipv6_ignore_auto_dns.stdout"
+                msg: "the setting ipv6.ignore-auto-dns is 'no'"
+
+        - name: Offline check
+          when: not __network_is_booted | bool
+          block:
+            # noqa command-instead-of-module
+            - name: Check that .nmconnection file has no ipv4.ignore-auto-dns setting
+              command: >
+                sed -n '/^\[ipv4\]/,/^$/ {/ignore-auto-dns=/p}' /etc/NetworkManager/system-connections/{{ interface }}.nmconnection
+              changed_when: false
+              register: ipv4_ignore_auto_dns_file
+              failed_when: ipv4_ignore_auto_dns_file.stdout | trim != ""
+
+            # noqa command-instead-of-module
+            - name: Check that .nmconnection file has ipv6.ignore-auto-dns setting
+              command: >
+                sed -n '/^\[ipv6\]/,/^$/ {/ignore-auto-dns=/p}' /etc/NetworkManager/system-connections/{{ interface }}.nmconnection
+              changed_when: false
+              register: ipv6_ignore_auto_dns_file
+              failed_when: ipv6_ignore_auto_dns_file.stdout | trim != "ignore-auto-dns=true"
 
       always:
         - name: Remove test configuration

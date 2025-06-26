@@ -1,0 +1,78 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Inputs:
+# lsr_command: The command to run with the "command" module
+# command can be either a string or a list
+# lsr_shell: The command to run with the "shell" module
+# lsr_packages: Any packages that need to be installed first
+#   to provide the command, if any
+# lsr_stdout: The string to look for in the stdout of the command
+# lsr_stderr: The string to look for in the stderr of the command
+# lsr_not_stdout: This string must not be present in the stdout of the command
+# lsr_not_stderr: This string must not be present in the stderr of the command
+# Output:
+# Will raise an error if command fails
+# Will raise an error if stdout/stderr do not match given strings
+---
+- name: Ensure test packages are present
+  package:
+    name: "{{ lsr_packages }}"
+    state: present
+    use: "{{ (__network_is_ostree | d(false)) |
+              ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
+  when: lsr_packages | d([]) | length > 0
+
+- name: Run command and collect output
+  command:
+    cmd: "{{ lsr_command if lsr_command is string else omit }}"
+    argv: "{{ lsr_command if lsr_command is not string else omit }}"
+  when: lsr_command | d("") | length > 0
+  changed_when: false
+  register: __cmd_output
+
+# noqa command-instead-of-shell
+- name: Run command and collect output with shell
+  shell: "{{ lsr_shell }}"
+  when: lsr_shell | d("") | length > 0
+  changed_when: false
+  register: __shell_output
+
+- name: Set command output
+  set_fact:
+    __command_output: "{{ __cmd_output if lsr_command | d('') | length > 0 else __shell_output }}"
+
+- name: Set previous command output for before/after comparisons
+  set_fact:
+    __previous_command_output: "{{ __command_output }}"
+
+- name: Assert lsr_stdout is in stdout
+  assert:
+    that: lsr_stdout in __command_output.stdout
+  when: lsr_stdout | d("") | length > 0
+
+- name: Assert lsr_stdout_lines is in stdout
+  assert:
+    that: lsr_stdout_lines is subset(__command_output.stdout_lines)
+  when: lsr_stdout_lines | d([]) | length > 0
+
+# assert that each regex in the list is in the stdout
+- name: Assert lsr_stdout_regex_list is in stdout
+  assert:
+    that: __command_output.stdout is search(lsr_stdout_regex_list_item)
+  loop: "{{ lsr_stdout_regex_list | d([]) }}"
+  loop_control:
+    loop_var: lsr_stdout_regex_list_item
+
+- name: Assert lsr_not_stdout is not in stdout
+  assert:
+    that: lsr_not_stdout not in __command_output.stdout
+  when: lsr_not_stdout | d("") | length > 0
+
+- name: Assert lsr_stderr is in stderr
+  assert:
+    that: lsr_stderr in __command_output.stderr
+  when: lsr_stderr | d("") | length > 0
+
+- name: Assert lsr_not_stderr is not in stderr
+  assert:
+    that: lsr_not_stderr not in __command_output.stderr
+  when: lsr_not_stderr | d("") | length > 0

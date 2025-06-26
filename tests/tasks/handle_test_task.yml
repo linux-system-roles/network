@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Handle test task file
+  include_tasks: "{{ lsr_test_item }}"
+  when: lsr_test_item is string
+
+- name: Handle test task with network role
+  when:
+    - lsr_test_item is mapping
+    - lsr_test_item.get("network_connections") is not none
+    - lsr_test_item.get("condition", true)
+  block:
+    - name: Include network role
+      include_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections: "{{ lsr_test_item['network_connections'] }}"
+
+    - name: Show result
+      debug:
+        var: __network_connections_result

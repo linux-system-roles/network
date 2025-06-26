@@ -5,51 +5,36 @@
   vars:
     interface: LSR-TST-br31
   tasks:
-    - name: Include the task 'show_interfaces.yml'
-      include_tasks: tasks/show_interfaces.yml
-
-    - name: Include the task 'assert_device_absent.yml'
-      include_tasks: tasks/assert_device_absent.yml
-
-    - name: Add test bridge
-      include_role:
-        name: linux-system-roles.network
+    - name: Include the task 'run_test.yml'
+      include_tasks: tasks/run_test.yml
       vars:
-        network_connections:
-          - name: "{{ interface }}"
-            interface_name: "{{ interface }}"
-            state: up
-            type: bridge
-            ip:
-              dhcp4: false
-              auto6: true
-
-    - name: Assert device present
-      include_tasks: tasks/assert_device_present.yml
-
-    - name: Assert profile present
-      include_tasks: tasks/assert_profile_present.yml
-      vars:
-        profile: "{{ interface }}"
-
-    - name: Include the task 'down_profile+delete_interface.yml'
-      include_tasks: tasks/down_profile+delete_interface.yml
-      vars:
-        profile: "{{ interface }}"
-    # FIXME: assert profile/device down
-
-    - name: Include the task 'remove_profile.yml'
-      include_tasks: tasks/remove_profile.yml
-      vars:
-        profile: "{{ interface }}"
-
-    - name: Assert profile absent
-      include_tasks: tasks/assert_profile_absent.yml
-      vars:
-        profile: "{{ interface }}"
-
-    - name: Assert device absent
-      include_tasks: tasks/assert_device_absent.yml
-
-    - name: Verify network state restored to default
-      include_tasks: tasks/check_network_dns.yml
+        lsr_description: Test configuring bridges
+        lsr_setup:
+          - tasks/show_interfaces.yml
+          - what: tasks/assert_device_absent.yml
+            condition: "{{ not __bootc_validation | d(false) }}"
+        lsr_test:
+          - network_connections:
+              - name: "{{ interface }}"
+                interface_name: "{{ interface }}"
+                state: up
+                type: bridge
+                ip:
+                  dhcp4: false
+                  auto6: true
+        lsr_assert:
+          - tasks/assert_device_present.yml
+          - what: tasks/assert_profile_present.yml
+            profile: "{{ interface }}"
+        lsr_cleanup:
+          - what: tasks/down_profile+delete_interface.yml
+            condition: "{{ __network_is_booted }}"
+            profile: "{{ interface }}"
+            lsr_persistent_state: absent
+          - what: tasks/remove_profile.yml
+            profile: "{{ interface }}"
+          - what: tasks/assert_profile_absent.yml
+            profile: "{{ interface }}"
+          - what: tasks/assert_device_absent.yml
+            profile: "{{ interface }}"
+          - tasks/check_network_dns.yml

@@ -1,15 +1,15 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- name: Get connection profile for '{{ interface }}'
+- name: Get connection profile for '{{ lsr_interface | d(interface) }}'
   shell:
     executable: /bin/bash
     cmd: |
       set -euo pipefail
-      connection="$(nmcli -g GENERAL.CONNECTION device show {{ interface | quote }})" || :
+      connection="$(nmcli -g GENERAL.CONNECTION device show {{ lsr_interface | d(interface) | quote }})" || :
       if [ -z "$connection" ]; then
-        nmcli device connect {{ interface | quote }} 1>&2
+        nmcli device connect {{ lsr_interface | d(interface) | quote }} 1>&2
       fi
-      nmcli -g GENERAL.CONNECTION device show {{ interface | quote }}
+      nmcli -g GENERAL.CONNECTION device show {{ lsr_interface | d(interface) | quote }}
   register: connection_name
   changed_when: false
 
@@ -22,7 +22,7 @@
     nmcli device status || :
     nmcli device show || :
     nmcli connection show || :
-    nmcli connection show '{{ interface }}' || :
+    nmcli connection show '{{ lsr_interface | d(interface) }}' || :
     ip a
     echo connection_name: {{ connection_name | to_nice_json | quote }} || :
     ls -alrtF /etc/sysconfig/network-scripts || :
@@ -59,7 +59,7 @@
   when: connection_name is failed or connection_name.stdout | length == 0
   failed_when: connection_name is failed or connection_name.stdout | length == 0
 
-- name: Bring down and delete the connection profile for '{{ interface }}'
+- name: Bring down and delete the connection profile for '{{ lsr_interface | d(interface) }}'
   include_role:
     name: linux-system-roles.network
   vars:

@@ -12,194 +12,129 @@
       tags:
         - always
 
-    - name: "INIT: Ethtool ring tests"
-      debug:
-        msg: "##################################################"
-    - name: Include the task 'show_interfaces.yml'
-      include_tasks: tasks/show_interfaces.yml
-    - name: Include the task 'manage_test_interface.yml'
-      include_tasks: tasks/manage_test_interface.yml
-      vars:
-        state: present
-    - name: Include the task 'assert_device_present.yml'
-      include_tasks: tasks/assert_device_present.yml
-    - name: Install ethtool (test dependency)
-      package:
-        name: ethtool
-        state: present
-        use: "{{ (__network_is_ostree | d(false)) |
-          ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
+    - name: Include network role vars used by tests
+      include_role:
+        name: linux-system-roles.network
+        tasks_from: set_facts.yml
+        public: true
 
-    - name: Test ethtool ring settings
+    - name: Run tests
       block:
-        - name: >-
-            TEST: I can create a profile without any ring option.
-          debug:
-            msg: "##################################################"
-        - name: Import network role
-          import_role:
-            name: linux-system-roles.network
+        - name: Test creating profile without changing ethtool ring settings
+          when:
+            - __network_is_booted
+            - not __bootc_validation | d(false)
+          include_tasks: tasks/run_test.yml
           vars:
-            network_connections:
-              - name: "{{ interface }}"
-                type: ethernet
-                state: up
-                ip:
-                  dhcp4: false
-                  auto6: false
+            lsr_description: Test creating profile without changing ethtool ring settings
+            lsr_setup:
+              - tasks/show_interfaces.yml
+              - what: tasks/manage_test_interface.yml
+                state: present
+              - tasks/assert_device_present.yml
+            lsr_test:
+              - network_connections:
+                  - name: "{{ interface }}"
+                    type: ethernet
+                    state: up
+                    ip:
+                      dhcp4: false
+                      auto6: false
+            lsr_assert:  # NOTE: Cleanup is done in always at very end of file
+              - what: tasks/assert_command_output.yml
+                condition: "{{ network_provider == 'nm' }}"
+                lsr_command: nmcli -g ethtool.ring-rx c show {{ interface | quote }}
+                lsr_not_stdout: ring-rx
+              - what: tasks/assert_command_output.yml
+                condition: "{{ network_provider == 'initscripts' }}"
+                lsr_command: cat /etc/sysconfig/network-scripts/ifcfg-{{ interface | quote }}
+                lsr_not_stdout: ETHTOOL
+            lsr_cleanup: []
 
-        - name: Get profile's ring options
-          command: nmcli -g ethtool.ring-rx c show {{ interface }}
-          register: no_ring_nm
-          when:
-            - network_provider == "nm"
-          changed_when: false
-        - name: "ASSERT: The profile does not contain ring options"
-          assert:
-            that: no_ring_nm.stdout | length == 0
-          when:
-            - network_provider == "nm"
-        - name: Get profile's ring options
-          command:
-            grep ETHTOOL /etc/sysconfig/network-scripts/ifcfg-{{ interface }}
-          register: no_ring_initscripts
-          ignore_errors: true
-          when:
-            - network_provider == "initscripts"
-          changed_when: false
-        - name: "ASSERT: The profile does not contain ring options"
-          assert:
-            that: no_ring_initscripts.stdout | length == 0
-          when:
-            - network_provider == "initscripts"
-
-        - name: >-
-            TEST: I can set rx.
-          debug:
-            msg: "##################################################"
-        - name: Import network role
-          import_role:
-            name: linux-system-roles.network
+        - name: "TEST: I can set rx ring settings."
+          include_tasks: tasks/run_test.yml
           vars:
-            network_connections:
-              - name: "{{ interface }}"
-                type: ethernet
-                state: up
-                ip:
-                  dhcp4: false
-                  auto6: false
-                ethtool:
-                  ring:
-                    rx: 128
-                    rx_jumbo: 128
-                    rx_mini: 128
-                    tx: 128
+            lsr_description: Test setting rx ring settings
+            lsr_setup:
+              - tasks/show_interfaces.yml
+              - what: tasks/manage_test_interface.yml
+                state: present
+              - tasks/assert_device_present.yml
+            lsr_test:
+              - network_connections:
+                  - name: "{{ interface }}"
+                    type: ethernet
+                    state: up
+                    ip:
+                      dhcp4: false
+                      auto6: false
+                    ethtool:
+                      ring:
+                        rx: 128
+                        rx_jumbo: 128
+                        rx_mini: 128
+                        tx: 128
+            lsr_assert:
+              - what: tasks/assert_connection_settings.yml
+                condition: "{{ network_provider == 'nm' }}"
+                lsr_connection_name: "{{ interface }}"
+                lsr_connection_settings:
+                  - section: ethtool
+                    option: ring-rx
+                    value: "128"
+                  - section: ethtool
+                    option: ring-rx-jumbo
+                    value: "128"
+                  - section: ethtool
+                    option: ring-rx-mini
+                    value: "128"
+                  - section: ethtool
+                    option: ring-tx
+                    value: "128"
+              - what: tasks/assert_command_output.yml
+                condition: "{{ network_provider == 'initscripts' }}"
+                lsr_command: grep ETHTOOL /etc/sysconfig/network-scripts/ifcfg-{{ interface | quote }}
+                lsr_stdout_lines:
+                  - rx 128
+                  - rx-jumbo 128
+                  - rx-mini 128
+                  - tx 128
+            lsr_cleanup: []
 
-        - name: Get profile's ethtool.ring-rx options
-          command: nmcli -g ethtool.ring-rx c show {{ interface }}
-          register: with_ring_rx
+        - name: Test clearing ethtool ring settings
           when:
-            - network_provider == "nm"
-          changed_when: false
-        - name: Assert ethtool.ring-rx option set in profile
-          assert:
-            that: with_ring_rx.stdout == '128'
-          when:
-            - network_provider == "nm"
-        - name: Get profile's ethtool.ring-rx-jumbo options
-          command: nmcli -g ethtool.ring-rx-jumbo c show {{ interface }}
-          register: with_ring_rx_jumbo
-          when:
-            - network_provider == "nm"
-          changed_when: false
-        - name: Assert ethtool.ring-rx-jumbo option set in profile
-          assert:
-            that: with_ring_rx_jumbo.stdout == '128'
-          when:
-            - network_provider == "nm"
-        - name: Get profile's ethtool.ring-rx-mini options
-          command: nmcli -g ethtool.ring-rx-mini c show {{ interface }}
-          register: with_ring_rx_mini
-          when:
-            - network_provider == "nm"
-          changed_when: false
-        - name: Assert ethtool.ring-rx-mini option set in profile
-          assert:
-            that: with_ring_rx_mini.stdout == '128'
-          when:
-            - network_provider == "nm"
-        - name: Get profile's ethtool.ring-tx options
-          command: nmcli -g ethtool.ring-tx c show {{ interface }}
-          register: with_ring_tx
-          when:
-            - network_provider == "nm"
-          changed_when: false
-        - name: Assert ethtool.ring-tx option set in profile
-          assert:
-            that: with_ring_tx.stdout == '128'
-          when:
-            - network_provider == "nm"
-
-        - name: Get profile's ethtool.ring options
-          command:
-            grep ETHTOOL /etc/sysconfig/network-scripts/ifcfg-{{ interface }}
-          register: with_ring
-          ignore_errors: true
-          when:
-            - network_provider == "initscripts"
-          changed_when: false
-        - name: Assert ethtool.ring option set in profile
-          assert:
-            that:
-              - '"rx 128" in with_ring.stdout'
-              - '"rx-jumbo 128" in with_ring.stdout'
-              - '"rx-mini 128" in with_ring.stdout'
-              - '"tx 128" in with_ring.stdout'
-          when:
-            - network_provider == "initscripts"
-
-        - name: "TEST: I can clear ring options"
-          debug:
-            msg: "##################################################"
-        - name: Import network role
-          import_role:
-            name: linux-system-roles.network
+            - __network_is_booted
+            - not __bootc_validation | d(false)
+          include_tasks: tasks/run_test.yml
           vars:
-            network_connections:
-              - name: "{{ interface }}"
-                type: ethernet
-                state: up
-                ip:
-                  dhcp4: false
-                  auto6: false
-
-        - name: Get profile's ring options
-          command: nmcli -g ethtool.ring-rx c show {{ interface }}
-          register: clear_ring_nm
-          when:
-            - network_provider == "nm"
-          changed_when: false
-        - name: "ASSERT: The profile does reset ring options"
-          assert:
-            that: clear_ring_nm.stdout | length == 0
-          when:
-            - network_provider == "nm"
-        - name: Get profile's ring options
-          command:
-            grep ETHTOOL /etc/sysconfig/network-scripts/ifcfg-{{ interface }}
-          register: clear_ring_initscripts
-          ignore_errors: true
-          when:
-            - network_provider == "initscripts"
-          changed_when: false
-        - name: "ASSERT: The profile does reset ring options"
-          assert:
-            that: clear_ring_initscripts.stdout | length == 0
-          when:
-            - network_provider == "initscripts"
+            lsr_description: Test clearing ethtool ring settings
+            lsr_setup:
+              - tasks/show_interfaces.yml
+              - what: tasks/manage_test_interface.yml
+                state: present
+              - tasks/assert_device_present.yml
+            lsr_test:
+              - network_connections:
+                  - name: "{{ interface }}"
+                    type: ethernet
+                    state: up
+                    ip:
+                      dhcp4: false
+                      auto6: false
+            lsr_assert:  # NOTE: Cleanup is done in always at very end of file
+              - what: tasks/assert_command_output.yml
+                condition: "{{ network_provider == 'nm' }}"
+                lsr_command: nmcli -g ethtool.ring-rx c show {{ interface | quote }}
+                lsr_not_stdout: ring-rx
+              - what: tasks/assert_command_output.yml
+                condition: "{{ network_provider == 'initscripts' }}"
+                lsr_command: cat /etc/sysconfig/network-scripts/ifcfg-{{ interface | quote }}
+                lsr_not_stdout: ETHTOOL
+            lsr_cleanup: []
 
       always:
         - name: Clean up the test device and the connection profile
+          when: ansible_connection != "buildah"
           tags:
             - "tests::cleanup"
           block:

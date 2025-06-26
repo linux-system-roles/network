@@ -2,7 +2,9 @@
 ---
 - name: Include the task 'get_interface_stat.yml'
   include_tasks: get_interface_stat.yml
-- name: "Assert that the interface is present - '{{ interface }}'"
+  when: ansible_connection != 'buildah'
+- name: "Assert that the interface is present - '{{ lsr_interface | d(interface) }}'"
   assert:
     that: interface_stat.stat.exists
-    msg: "{{ interface }} does not exist"
+    msg: "{{ lsr_interface | d(interface) }} does not exist"
+  when: ansible_connection != 'buildah'

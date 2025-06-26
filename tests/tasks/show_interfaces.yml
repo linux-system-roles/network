@@ -2,6 +2,8 @@
 ---
 - name: Include the task 'get_current_interfaces.yml'
   include_tasks: get_current_interfaces.yml
+  when: ansible_connection != 'buildah'
 - name: Show current_interfaces
   debug:
     msg: "current_interfaces: {{ current_interfaces }}"
+  when: ansible_connection != 'buildah'

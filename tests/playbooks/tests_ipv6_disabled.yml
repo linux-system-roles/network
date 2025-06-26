@@ -44,10 +44,13 @@
           vars:
             errmsg: ip.ipv6_disabled is not supported by the running version of NetworkManager
 
-    - name: Verify nmcli connection ipv6.method
-      shell: |
-        set -euxo pipefail
-        nmcli connection show {{ interface }} | grep ipv6.method
+    - name: Verify NM connection ipv6.method
+      command: >-
+        {{
+          ("nmcli -f ipv6.method connection show " ~ interface)
+          if __network_is_booted else
+          ("sed -n '/^\[ipv6\]/,/^$/ {/method=/p}' /etc/NetworkManager/system-connections/" ~ interface ~ ".nmconnection")
+        }}
       register: ipv6_method
       ignore_errors: true
       changed_when: false

@@ -3,6 +3,7 @@
 - name: Debug
   debug:
     msg: facts {{ ansible_facts | to_nice_json }}
+  when: ansible_verbosity | default(0) >= 3
 
 # This task can be removed once the RHEL-8.5 is not tested anymore
 - name: Install hostapd via CentOS Stream
@@ -66,6 +67,7 @@
     # Enable forwarding of EAP 802.1x messages through software bridge "br1".
     echo 8 > /sys/class/net/br1/bridge/group_fwd_mask
   changed_when: false
+  when: __network_is_booted
 
 - name: Create hostapd config
   copy:
@@ -98,3 +100,20 @@
 - name: Run hostapd in namespace
   shell: ip netns exec ns1 hostapd -B /etc/hostapd/wired.conf && sleep 5
   changed_when: false
+  when: __network_is_booted
+
+# Reload test connection - nm tries to start the connection at boot
+# but fails because the devices are not created yet - so restart the connection
+# here after the devices are created and hostapd is running
+- name: Reload test connection
+  shell:
+    executable: /bin/bash
+    cmd: |
+      set -euo pipefail
+      exec 1>&2
+      nmcli connection down {{ lsr_interface | d(interface) }} || :
+      nmcli connection up {{ lsr_interface | d(interface) }}
+  changed_when: false
+  when:
+    - network_provider == "nm"
+    - __bootc_validation | default(false)
