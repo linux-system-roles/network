@@ -39,7 +39,7 @@
               # not take precedence over other routes or not ignore other
               # routes
               route_metric4: 65535
-    - name: Include the task 'assert_device_present.yml'
+    - name: Include the task 'assert_device_present.yml' again
       include_tasks: tasks/assert_device_present.yml
     - name: Include the task 'assert_profile_present.yml'
       include_tasks: tasks/assert_profile_present.yml
@@ -67,7 +67,7 @@
     - name: "TEARDOWN: remove profiles."
       debug:
         msg: "##################################################"
-    - name: Import network role
+    - name: Import network role to remove interface
       import_role:
         name: linux-system-roles.network
       vars:
@@ -76,7 +76,7 @@
             persistent_state: absent
             state: down
       ignore_errors: true  # noqa ignore-errors
-    - name: Include the task 'manage_test_interface.yml'
+    - name: Include the task 'manage_test_interface.yml' to remove interface
       include_tasks: tasks/manage_test_interface.yml
       vars:
         state: absent
@@ -84,11 +84,11 @@
         TEST: I can configure an interface with auto_gateway disabled
       debug:
         msg: "##################################################"
-    - name: Include the task 'manage_test_interface.yml'
+    - name: Include the task 'manage_test_interface.yml' to disable auto_gateway
       include_tasks: tasks/manage_test_interface.yml
       vars:
         state: present
-    - name: Import network role
+    - name: Import network role to disable auto_gateway
       import_role:
         name: linux-system-roles.network
       vars:
@@ -105,13 +105,13 @@
                 - "203.0.113.2/24"
               gateway6: "2001:db8::1"
               gateway4: "203.0.113.1"
-    - name: Include the task 'assert_device_present.yml'
+    - name: Include the task 'assert_device_present.yml' - 3
       include_tasks: tasks/assert_device_present.yml
-    - name: Include the task 'assert_profile_present.yml'
+    - name: Include the task 'assert_profile_present.yml' again
       include_tasks: tasks/assert_profile_present.yml
       vars:
         profile: "{{ interface }}"
-    - name: "Show ipv4 routes"
+    - name: "Show ipv4 routes again"
       command: "ip route"
       register: ipv4_routes
       changed_when: false
@@ -120,7 +120,7 @@
         that: __test_str not in ipv4_routes.stdout
       vars:
         __test_str: default via 203.0.113.1 dev {{ interface }}
-    - name: "Get ipv6 routes"
+    - name: "Get ipv6 routes again"
       command: "ip -6 route"
       register: ipv6_route
       changed_when: false
@@ -130,10 +130,10 @@
       vars:
         __test_str: default via 2001:db8::1 dev {{ interface }}
       when: network_provider == "nm"
-    - name: "TEARDOWN: remove profiles."
+    - name: "TEARDOWN: remove profiles. again"
       debug:
         msg: "##################################################"
-    - name: Import network role
+    - name: Import network role to remove interface again
       import_role:
         name: linux-system-roles.network
       vars:
@@ -142,7 +142,7 @@
             persistent_state: absent
             state: down
       ignore_errors: true  # noqa ignore-errors
-    - name: Include the task 'manage_test_interface.yml'
+    - name: Include the task 'manage_test_interface.yml' to remove interface again
       include_tasks: tasks/manage_test_interface.yml
       vars:
         state: absent

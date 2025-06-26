@@ -2,27 +2,24 @@
 ---
 - name: Test configuring bridges
   hosts: all
-  tasks:
-    - name: Define vars
-      set_fact:
-        interface: "LSR-TST-br31"
-        cloned_mac: "12:23:34:45:56:70"
-
-- name: Add test bridge
-  hosts: all
   vars:
-    network_connections:
-      - name: "{{ interface }}"
-        interface_name: "{{ interface }}"
-        state: up
-        type: bridge
-        ip:
-          dhcp4: false
-          auto6: true
-        cloned_mac: "{{ cloned_mac }}"
-  roles:
-    - linux-system-roles.network
+    interface: "LSR-TST-br31"
+    cloned_mac: "12:23:34:45:56:70"
   tasks:
+    - name: Add test bridge
+      include_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: "{{ interface }}"
+            interface_name: "{{ interface }}"
+            state: up
+            type: bridge
+            ip:
+              dhcp4: false
+              auto6: true
+            cloned_mac: "{{ cloned_mac }}"
+
     - name: Verify ifcfg MACADDR entry
       command: >-
         grep ^MACADDR= /etc/sysconfig/network-scripts/ifcfg-{{ interface }}
@@ -51,18 +48,15 @@
             cloned_mac_address_nm.stdout.find(cloned_mac) != -1
         msg: "cloned-mac-address is configured incorrectly"
 
-- name: Import the playbook 'down_profile+delete_interface.yml'
-  import_playbook: down_profile+delete_interface.yml
-  vars:
-    profile: "{{ interface }}"
+    - name: Include the tasks 'down_profile+delete_interface.yml'
+      include_tasks: tasks/down_profile+delete_interface.yml
+      vars:
+        profile: "{{ interface }}"
 
-- name: Import the playbook 'remove_profile.yml'
-  import_playbook: remove_profile.yml
-  vars:
-    profile: "{{ interface }}"
+    - name: Include the task 'remove_profile.yml'
+      include_tasks: tasks/remove_profile.yml
+      vars:
+        profile: "{{ interface }}"
 
-- name: Verify that cleanup restored state to default
-  hosts: all
-  tasks:
     - name: Verify network state restored to default
       include_tasks: tasks/check_network_dns.yml

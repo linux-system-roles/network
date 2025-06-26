@@ -5,18 +5,15 @@
   vars:
     type: veth
     interface: ethtest0
-
   tasks:
-    - name: "Set type={{ type }} and interface={{ interface }}"  # noqa name
-      set_fact:
-        type: "{{ type }}"
-        interface: "{{ interface }}"
     - name: Include the task 'show_interfaces.yml'
       include_tasks: tasks/show_interfaces.yml
+
     - name: Include the task 'manage_test_interface.yml'
       include_tasks: tasks/manage_test_interface.yml
       vars:
         state: present
+
     - name: Include the task 'assert_device_present.yml'
       include_tasks: tasks/assert_device_present.yml
 
@@ -24,31 +21,28 @@
       set_fact:
         connection_failed: false
 
-    - name: Import network role
-      import_role:
-        name: linux-system-roles.network
-      vars:
-        network_connections:
-          - name: "{{ interface }}"
-            interface_name: "{{ interface }}"
-            type: ethernet
-            ip:
-              ipv6_disabled: true
-        __header: "# Ansible managed test header"
-      ignore_errors: true  # noqa ignore-errors
-      changed_when: false
+    - name: Try configuration
+      block:
+        - name: Include network role
+          include_role:
+            name: linux-system-roles.network
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                interface_name: "{{ interface }}"
+                type: ethernet
+                ip:
+                  ipv6_disabled: true
+            __header: "# Ansible managed test header"
 
-    - name: Assert that configuring `ipv6_disabled` will only fail when the
-            running version of NetworKManager does not support it
-      assert:
-        that:
-          - __network_connections_result.stderr is
-            search("ip.ipv6_disabled is not supported by the running version
-            of NetworkManager")
-        msg: Reconfiguring network connection is not failed with the error
-             "ip.ipv6_disabled is not supported by the running version of
-             NetworkManger"
-      when: __network_connections_result.failed
+      rescue:
+        - name: Assert that configuring `ipv6_disabled` will only fail when the
+                running version of NetworkManager does not support it
+          assert:
+            that: ansible_failed_result.stderr is search(errmsg)
+            msg: Reconfiguring network connection is not failed with the error {{ errmsg }}
+          vars:
+            errmsg: ip.ipv6_disabled is not supported by the running version of NetworkManager
 
     - name: Verify nmcli connection ipv6.method
       shell: |
@@ -71,28 +65,28 @@
         connection_failed: true
       when: __network_connections_result.failed
 
-- name: Import the playbook 'down_profile.yml'
-  import_playbook: down_profile.yml
-  vars:
-    profile: "{{ interface }}"
-  when: not connection_failed
+    - name: Include the task 'down_profile.yml'
+      include_tasks: tasks/down_profile.yml
+      vars:
+        profile: "{{ interface }}"
+      when: not connection_failed
 
-# FIXME: assert profile/device down
-- name: Import the playbook 'remove_profile.yml'
-  import_playbook: remove_profile.yml
-  vars:
-    profile: "{{ interface }}"
-- name: Delete the interface, then assert that device and profile are absent
-  hosts: all
-  tasks:
+    # FIXME: assert profile/device down
+    - name: Include the tasks 'remove_profile.yml'
+      include_tasks: tasks/remove_profile.yml
+      vars:
+        profile: "{{ interface }}"
+
     - name: Include the task 'delete_interface.yml'
       include_tasks: tasks/delete_interface.yml
+
     - name: Include the task 'assert_profile_absent.yml'
       include_tasks: tasks/assert_profile_absent.yml
       vars:
         profile: "{{ interface }}"
+
     - name: Include the task 'assert_device_absent.yml'
       include_tasks: tasks/assert_device_absent.yml
+
     - name: Verify network state restored to default
       include_tasks: tasks/check_network_dns.yml
-...

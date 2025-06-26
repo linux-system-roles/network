@@ -6,22 +6,20 @@
     type: veth
     interface: ethtest0
   tasks:
-    - name: "Set type={{ type }} and interface={{ interface }}"  # noqa name
-      set_fact:
-        type: "{{ type }}"
-        interface: "{{ interface }}"
     - name: Include the task 'show_interfaces.yml'
       include_tasks: tasks/show_interfaces.yml
+
     - name: Include the task 'manage_test_interface.yml'
       include_tasks: tasks/manage_test_interface.yml
       vars:
         state: present
+
     - name: Include the task 'assert_device_present.yml'
       include_tasks: tasks/assert_device_present.yml
 
     - name: Configure connection profile and specify the route types in
         static routes
-      import_role:
+      include_role:
         name: linux-system-roles.network
       vars:
         network_connections:
@@ -102,7 +100,7 @@
           specified route"
 
     - name: Removing some routes
-      import_role:
+      include_role:
         name: linux-system-roles.network
       vars:
         network_connections:
@@ -173,24 +171,24 @@
         msg: "the route table 30600 does not exist or does not contain the
           type routes"
 
-- name: Import the playbook 'down_profile+delete_interface.yml'
-  import_playbook: down_profile+delete_interface.yml
-  vars:
-    profile: "{{ interface }}"
-# FIXME: assert profile/device down
-- name: Import the playbook 'remove_profile.yml'
-  import_playbook: remove_profile.yml
-  vars:
-    profile: "{{ interface }}"
-- name: Assert device and profile are absent
-  hosts: all
-  tasks:
+    - name: Include the tasks 'down_profile+delete_interface.yml'
+      include_tasks: tasks/down_profile+delete_interface.yml
+      vars:
+        profile: "{{ interface }}"
+
+    # FIXME: assert profile/device down
+    - name: Include the task 'remove_profile.yml'
+      include_tasks: tasks/remove_profile.yml
+      vars:
+        profile: "{{ interface }}"
+
     - name: Include the task 'assert_profile_absent.yml'
       include_tasks: tasks/assert_profile_absent.yml
       vars:
         profile: "{{ interface }}"
+
     - name: Include the task 'assert_device_absent.yml'
       include_tasks: tasks/assert_device_absent.yml
+
     - name: Verify network state restored to default
       include_tasks: tasks/check_network_dns.yml
-...

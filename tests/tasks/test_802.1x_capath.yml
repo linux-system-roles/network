@@ -90,23 +90,23 @@
   rescue:
     - name: Show failed item
       debug:
-        var: "{{ item }}"
-      with_items:
-        - ansible_failed_result
-        - ansible_failed_task
-        - __network_nm_nvr.stdout
-        - __NM_capath_ignored_NVRs
+        msg: item {{ item }}
+      loop:
+        - "{{ ansible_failed_result }}"
+        - "{{ ansible_failed_task }}"
+        - "{{ __network_nm_nvr.stdout }}"
+        - "{{ __NM_capath_ignored_NVRs }}"
       changed_when: false
 
     - name: Assert role behavior
       vars:
-        expected_failure: __network_nm_nvr.stdout in __NM_capath_ignored_NVRs
-        failure: __network_connections_result.failed
+        expected_failure: "{{ __network_nm_nvr.stdout in __NM_capath_ignored_NVRs }}"
+        failure: "{{ __network_connections_result is failed }}"
       assert:
         that: (failure and expected_failure) or
           (not failure and not expected_failure)
-        msg: "Role {{ failure and 'failed' or 'did not fail' }} but was expected
-          {{ expected_failure and '' or 'not' }} to fail.
+        msg: "Role {{ failure | ternary('failed', 'did not fail') }} but was expected
+          {{ expected_failure | ternary('', 'not') }} to fail.
           NM NVR: {{ __network_nm_nvr.stdout }}"
     - name: Assert role failure
       assert:

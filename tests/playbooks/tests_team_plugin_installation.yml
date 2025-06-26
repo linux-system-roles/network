@@ -55,7 +55,7 @@
               - tasks/cleanup_profile+device.yml
               - tasks/check_network_dns.yml
 
-    - name: "Get the rpm package facts"
+    - name: "Get the rpm package facts again"
       package_facts:
         manager: "auto"
 

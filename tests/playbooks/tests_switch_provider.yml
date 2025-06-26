@@ -4,13 +4,10 @@
 # set network provider and gather facts
 - name: Switch initscripts provider to nm
   hosts: all
+  vars:
+    network_provider: initscripts
+    interface: LST-TST-br34
   tasks:
-    - name: Set fact to use initscripts network_provider
-      set_fact:
-        network_provider: initscripts
-        interface: LST-TST-br34
-      tags:
-        - always
     - name: "Through the initscripts provider, create test bridge
         {{ interface }}"
       include_role:
@@ -23,20 +20,25 @@
             ip:
               dhcp4: false
               auto6: false
+
     - name: Include the task 'assert_device_present.yml'
       include_tasks: tasks/assert_device_present.yml
+
     - name: Include the task 'remove+down_profile.yml'
       include_tasks: tasks/remove+down_profile.yml
       vars:
         profile: "{{ interface }}"
     # The initscripts should not remove the interface for down/absent
-    - name: Include the task 'assert_device_present.yml'
+
+    - name: Include the task 'assert_device_present.yml' with new profile
       include_tasks: tasks/assert_device_present.yml
+
     - name: Set fact to use nm network_provider
       set_fact:
         network_provider: nm
       tags:
         - always
+
     - name: "Through the nm provider, create test bridge {{ interface }}"
       include_role:
         name: linux-system-roles.network
@@ -48,18 +50,24 @@
             ip:
               dhcp4: false
               auto6: false
-    - name: Include the task 'assert_device_present.yml'
+
+    - name: Include the task 'assert_device_present.yml' with nm provider
       include_tasks: tasks/assert_device_present.yml
-    - name: Include the task 'remove+down_profile.yml'
+
+    - name: Include the task 'remove+down_profile.yml' with nm provider
       include_tasks: tasks/remove+down_profile.yml
       vars:
         profile: "{{ interface }}"
+
     # NetworkManager should not remove pre-exist interface for down/absent
-    - name: Include the task 'assert_device_present.yml'
+    - name: Include the task 'assert_device_present.yml' with nm provider again
       include_tasks: tasks/assert_device_present.yml
+
     - name: Include the task 'delete_interface.yml'
       include_tasks: tasks/delete_interface.yml
+
     - name: Include the task 'assert_device_absent.yml'
       include_tasks: tasks/assert_device_absent.yml
+
     - name: Verify network state restored to default
       include_tasks: tasks/check_network_dns.yml

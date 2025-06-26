@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- name: Include network role
+- name: Remove {{ profile }}
   include_role:
     name: linux-system-roles.network
   vars:
     network_connections:
-      - name: "{{ interface }}"
+      - name: "{{ profile }}"
         persistent_state: absent
-...

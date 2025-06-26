@@ -8,8 +8,14 @@
   tasks:
     - name: Include the task 'el_repo_setup.yml'
       include_tasks: tasks/el_repo_setup.yml
+
+    # module_warning - see https://github.com/ansible/ansible/issues/85394
     - name: Test warning and info logs
       assert:
         that:
-          - "'warnings' not in __network_connections_result"
+          - "'warnings' not in __network_connections_result or
+             __network_connections_result.warnings | reject('match', module_warning ~ '$') | list | length == 0"
         msg: "There are warnings"
+      vars:
+        module_warning: >-
+          Error loading plugin 'ansible.netcommon.network': No module named 'ansible_collections.ansible.netcommon'
