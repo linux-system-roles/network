@@ -12,137 +12,66 @@
       tags:
         - always
 
-    - name: "INIT: Ethtool feeatures tests"
-      debug:
-        msg: "##################################################"
-    - name: Include the task 'show_interfaces.yml'
-      include_tasks: tasks/show_interfaces.yml
-    - name: Include the task 'manage_test_interface.yml'
-      include_tasks: tasks/manage_test_interface.yml
-      vars:
-        state: present
-    - name: Include the task 'assert_device_present.yml'
-      include_tasks: tasks/assert_device_present.yml
-    - name: Install ethtool (test dependency)
-      package:
-        name: ethtool
-        state: present
-        use: "{{ (__network_is_ostree | d(false)) |
-          ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
+    - name: Include network role vars used by tests
+      include_role:
+        name: linux-system-roles.network
+        tasks_from: set_facts.yml
+        public: true
 
-    - name: Test ethtool features settings
+    - name: Run tests
       block:
-        - name: >-
-            TEST: I can create a profile without changing the ethtool features.
-          debug:
-            msg: "##################################################"
-        - name: Get current device features
-          command: "ethtool --show-features {{ interface }}"
-          register: original_ethtool_features
-          changed_when: false
-        - name: Import network role
-          import_role:
-            name: linux-system-roles.network
+        - name: Test creating profile without changing ethtool features
+          when:
+            - __network_is_booted
+            - not __bootc_validation | d(false)
+          include_tasks: tasks/run_test.yml
           vars:
-            network_connections:
-              - name: "{{ interface }}"
-                state: up
-                type: ethernet
-                ip:
-                  dhcp4: "no"
-                  auto6: "no"
-        - name: Get current device features
-          command: "ethtool --show-features {{ interface }}"
-          register: ethtool_features
-          changed_when: false
-        - name: "ASSERT: The profile does not change the ethtool features"
-          assert:
-            that:
-              - original_ethtool_features.stdout == ethtool_features.stdout
+            lsr_description: Test creating profile without changing ethtool features
+            lsr_setup:
+              - tasks/show_interfaces.yml
+              - what: tasks/manage_test_interface.yml
+                state: present
+              - tasks/assert_device_present.yml
+              - what: tasks/assert_command_output.yml
+                lsr_packages: [ethtool]
+                lsr_command: ethtool --show-features {{ interface | quote }}
+            lsr_test:
+              - network_connections:
+                  - name: "{{ interface }}"
+                    state: up
+                    type: ethernet
+                    ip:
+                      dhcp4: "no"
+                      auto6: "no"
+            lsr_assert:  # NOTE: Cleanup is done in always at very end of file
+              - what: tasks/assert_command_output.yml
+                lsr_packages: [ethtool]
+                lsr_command: ethtool --show-features {{ interface | quote }}
+                lsr_stdout: "{{ __previous_command_output.stdout }}"
+            lsr_cleanup: []
 
-        - name: >-
-            TEST: I can disable gro and tx-tcp-segmentation and enable gso.
-          debug:
-            msg: "##################################################"
-        - name: Import network role
-          import_role:
-            name: linux-system-roles.network
+        - name: Set original ethtool features
+          when:
+            - __network_is_booted
+            - not __bootc_validation | d(false)
+          set_fact:
+            original_ethtool_features: "{{ __previous_command_output }}"
+
+        - name: "TEST: I can disable gro and tx-tcp-segmentation and enable gso."
+          include_tasks: tasks/run_test.yml
           vars:
-            network_connections:
-              - name: "{{ interface }}"
-                state: up
-                type: ethernet
-                ip:
-                  dhcp4: "no"
-                  auto6: "no"
-                ethtool:
-                  features:
-                    gro: "no"
-                    gso: "yes"
-                    tx-tcp-segmentation: "no"
-        - name: Get current device features
-          command: "ethtool --show-features {{ interface }}"
-          register: ethtool_features
-          changed_when: false
-        - name: Show ethtool_features
-          debug:
-            var: ethtool_features.stdout_lines
-        - name: Assert device features
-          assert:
-            that:
-              - >-
-                  'generic-receive-offload: off' in
-                  ethtool_features.stdout_lines
-              - >-
-                  'generic-segmentation-offload: on' in
-                  ethtool_features.stdout_lines
-              - >-
-                  'tx-tcp-segmentation: off' in
-                  ethtool_features.stdout_lines | map('trim')
-
-        - name: >-
-            TEST: I can enable tx_tcp_segmentation (using underscores).
-          debug:
-            msg: "##################################################"
-        - name: Import network role
-          import_role:
-            name: linux-system-roles.network
-          vars:
-            network_connections:
-              - name: "{{ interface }}"
-                state: up
-                type: ethernet
-                ip:
-                  dhcp4: "no"
-                  auto6: "no"
-                ethtool:
-                  features:
-                    tx_tcp_segmentation: "yes"
-        - name: Get current device features
-          command: "ethtool --show-features {{ interface }}"
-          register: ethtool_features
-          changed_when: false
-        - name: Show ethtool_features
-          debug:
-            var: ethtool_features.stdout_lines
-        - name: Assert device features
-          assert:
-            that:
-              - >-
-                  'tx-tcp-segmentation: on' in
-                  ethtool_features.stdout_lines | map('trim')
-
-        - name: I cannot change tx_tcp_segmentation and tx-tcp-segmentation at
-                the same time.
-          block:
-            - name: >-
-                TEST: Change feature with both underscores and dashes.
-              debug:
-                msg: "##################################################"
-            - name: Configure ethtool features setting
-              network_connections:
-                provider: "{{ network_provider | mandatory }}"
-                connections:
+            lsr_description: Test creating profile without changing ethtool features
+            lsr_setup:
+              - tasks/show_interfaces.yml
+              - what: tasks/manage_test_interface.yml
+                state: present
+              - tasks/assert_device_present.yml
+              - what: tasks/assert_command_output.yml
+                condition: "{{ __network_is_booted }}"
+                lsr_packages: [ethtool]
+                lsr_command: ethtool --show-features {{ interface | quote }}
+            lsr_test:
+              - network_connections:
                   - name: "{{ interface }}"
                     state: up
                     type: ethernet
@@ -151,10 +80,90 @@
                       auto6: "no"
                     ethtool:
                       features:
-                        tx_tcp_segmentation: "no"
+                        gro: "no"
+                        gso: "yes"
                         tx-tcp-segmentation: "no"
-                __header: "# Ansible managed test header"
-              register: __network_connections_result
+            lsr_assert:
+              - what: tasks/assert_connection_settings.yml
+                condition: "{{ network_provider == 'nm' }}"
+                lsr_connection_name: "{{ interface }}"
+                lsr_connection_settings:
+                  - section: ethtool
+                    option: feature-gro
+                    value: "false"
+                    nmvalue: "off"
+                  - section: ethtool
+                    option: feature-gso
+                    value: "true"
+                    nmvalue: "on"
+                  - section: ethtool
+                    option: feature-tx-tcp-segmentation
+                    value: "false"
+                    nmvalue: "off"
+              - what: tasks/assert_command_output.yml
+                condition: "{{ __network_is_booted }}"
+                lsr_packages: [ethtool]
+                lsr_command: ethtool --show-features {{ interface | quote }}
+                lsr_stdout_lines:
+                  - "generic-receive-offload: off"
+                  - "generic-segmentation-offload: on"
+                  - "\ttx-tcp-segmentation: off"  # noqa no-tabs
+            lsr_cleanup: []
+
+        - name: >-
+            TEST: I can enable tx_tcp_segmentation (using underscores).
+          when:
+            - __network_is_booted
+            - not __bootc_validation | d(false)
+          include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: Test enabling tx_tcp_segmentation (using underscores)
+            lsr_setup: []
+            lsr_test:
+              - network_connections:
+                  - name: "{{ interface }}"
+                    state: up
+                    type: ethernet
+                    ip:
+                      dhcp4: "no"
+                      auto6: "no"
+                    ethtool:
+                      features:
+                        tx_tcp_segmentation: "yes"
+            lsr_assert:
+              - what: tasks/assert_command_output.yml
+                lsr_packages: [ethtool]
+                lsr_command: ethtool --show-features {{ interface | quote }}
+                lsr_stdout_lines:
+                  - "\ttx-tcp-segmentation: on"  # noqa no-tabs
+            lsr_cleanup: []
+
+        - name: I cannot change tx_tcp_segmentation and tx-tcp-segmentation at
+                the same time.
+          when:
+            - __network_is_booted
+            - not __bootc_validation | d(false)
+          block:
+            - name: >-
+                TEST: Change feature with both underscores and dashes.
+              include_tasks: tasks/run_test.yml
+              vars:
+                lsr_description: Test changing feature with both underscores and dashes
+                lsr_setup: []
+                lsr_test:
+                  - network_connections:
+                      - name: "{{ interface }}"
+                        state: up
+                        type: ethernet
+                        ip:
+                          dhcp4: "no"
+                          auto6: "no"
+                        ethtool:
+                          features:
+                            tx_tcp_segmentation: "no"
+                            tx-tcp-segmentation: "no"
+                lsr_assert: []
+                lsr_cleanup: []
           rescue:
             - name: Show network_connections result
               debug:
@@ -168,7 +177,6 @@
                   fatal error: configuration error:
                   connections[0].ethtool.features: duplicate key
                   'tx_tcp_segmentation'
-
           always:
             - name: Check failure
               debug:
@@ -178,32 +186,30 @@
                 that: __network_connections_result.failed
 
         - name: "TEST: I can reset features to their original value."
-          debug:
-            msg: "##################################################"
-        - name: Import network role
-          import_role:
-            name: linux-system-roles.network
-          vars:
-            network_connections:
-              - name: "{{ interface }}"
-                state: up
-                type: ethernet
-                ip:
-                  dhcp4: "no"
-                  auto6: "no"
-        - name: Get current device features
-          command: "ethtool --show-features {{ interface }}"
-          register: ethtool_features
-          changed_when: false
-        # Resetting the ethtools only works with NetworkManager
-        - name: "ASSERT: The profile does not change the ethtool features"
-          assert:
-            that:
-              - original_ethtool_features.stdout == ethtool_features.stdout
           when:
-            network_provider == 'nm'
+            - __network_is_booted
+            - not __bootc_validation | d(false)
+          include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: Test resetting features to their original value
+            lsr_setup: []
+            lsr_test:
+              - network_connections:
+                  - name: "{{ interface }}"
+                    state: up
+                    type: ethernet
+                    ip:
+                      dhcp4: "no"
+                      auto6: "no"
+            lsr_assert:
+              - what: tasks/assert_command_output.yml
+                lsr_packages: [ethtool]
+                lsr_command: ethtool --show-features {{ interface | quote }}
+                lsr_stdout: "{{ original_ethtool_features.stdout }}"
+            lsr_cleanup: []
       always:
         - name: Clean up the test device and the connection profile
+          when: ansible_connection != "buildah"
           tags:
             - "tests::cleanup"
           block:
