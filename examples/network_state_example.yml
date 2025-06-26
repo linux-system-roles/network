@@ -176,13 +176,13 @@
         network_state:
           routes:
             config:
-            - destination: ::/0
-              next-hop-interface: eth1
-              next-hop-address: fe80::1
+              - destination: ::/0
+                next-hop-interface: eth1
+                next-hop-address: fe80::1
       ansible.builtin.include_role:
         name: linux-system-roles.network
 
-    - name: Configure the ethernet device eth1 with dhcp4 configured
+    - name: Configure the ethernet device eth1 with dhcp4 configured again
       vars:
         network_state:
           interfaces:

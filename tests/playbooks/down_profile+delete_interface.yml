@@ -1,9 +1,0 @@
-# SPDX-License-Identifier: BSD-3-Clause
----
-- name: Import the playbook 'down_profile.yml'
-  import_playbook: down_profile.yml
-- name: Delete the interface
-  hosts: all
-  tasks:
-    - name: Include the task 'delete_interface.yml'
-      include_tasks: tasks/delete_interface.yml

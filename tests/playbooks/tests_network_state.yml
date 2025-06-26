@@ -25,13 +25,13 @@
       set_fact:
         type: "{{ type }}"
         interface: "{{ interface1 }}"
-    - name: Include the task 'show_interfaces.yml'
+    - name: Include the task 'show_interfaces.yml' again
       include_tasks: tasks/show_interfaces.yml
-    - name: Include the task 'manage_test_interface.yml'
+    - name: Include the task 'manage_test_interface.yml' after changing interface
       include_tasks: tasks/manage_test_interface.yml
       vars:
         state: present
-    - name: Include the task 'assert_device_present.yml'
+    - name: Include the task 'assert_device_present.yml' after changing interface
       include_tasks: tasks/assert_device_present.yml
 
 
@@ -189,9 +189,9 @@
       set_fact:
         type: "{{ type }}"
         interface: "{{ interface0 }}"
-    - name: Include the task 'delete_interface.yml'
+    - name: Include the task 'delete_interface.yml' again
       include_tasks: tasks/delete_interface.yml
-    - name: Include the task 'assert_device_absent.yml'
+    - name: Include the task 'assert_device_absent.yml' again
       include_tasks: tasks/assert_device_absent.yml
     - name: Verify network state restored to default
       include_tasks: tasks/check_network_dns.yml

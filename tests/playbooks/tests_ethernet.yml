@@ -1,81 +1,69 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- name: Play for showing the network provider
-  hosts: all
-  tasks:
-    - name: Show inside ethernet tests
-      debug:
-        msg: Inside ethernet tests
-    - name: Show network_provider
-      debug:
-        var: network_provider
-
 - name: Test configuring ethernet devices
   hosts: all
   vars:
     type: veth
     interface: lsr27
-
   tasks:
-    - name: "Set type={{ type }} and interface={{ interface }}"  # noqa name
-      set_fact:
-        type: "{{ type }}"
-        interface: "{{ interface }}"
-    - name: Include the task 'show_interfaces.yml'
-      include_tasks: tasks/show_interfaces.yml
-    - name: Include the task 'manage_test_interface.yml'
-      include_tasks: tasks/manage_test_interface.yml
-      vars:
-        state: present
-    - name: Include the task 'assert_device_present.yml'
-      include_tasks: tasks/assert_device_present.yml
+    - name: Show inside ethernet tests
+      debug:
+        msg: Inside ethernet tests
 
-- name: Test static interface up
-  hosts: all
-  vars:
-    network_connections:
-      - name: "{{ interface }}"
-        interface_name: "{{ interface }}"
-        state: up
-        type: ethernet
-        autoconnect: true
-        ip:
-          address: 192.0.2.1/24
-  roles:
-    - linux-system-roles.network
-  tasks:
-    - name: Include the task 'assert_output_in_stderr_without_warnings.yml'
-      include_tasks: tasks/assert_output_in_stderr_without_warnings.yml
-
-- name: Play for cleaning up the test device and the connection profile
-  hosts: all
-  tasks:
     - name: Show network_provider
       debug:
         var: network_provider
 
-# FIXME: assert profile present
-# FIXME: assert profile/device up + IP address
-- name: Import the playbook 'down_profile+delete_interface.yml'
-  import_playbook: down_profile+delete_interface.yml
-  vars:
-    profile: "{{ interface }}"
-# FIXME: assert profile/device down
-- name: Import the playbook 'remove_profile.yml'
-  import_playbook: remove_profile.yml
-  vars:
-    profile: "{{ interface }}"
-- name: Assert device and profile are absent
-  hosts: all
-  tasks:
+    - name: Include the task 'show_interfaces.yml'
+      include_tasks: tasks/show_interfaces.yml
+
+    - name: Include the task 'manage_test_interface.yml'
+      include_tasks: tasks/manage_test_interface.yml
+      vars:
+        state: present
+
+    - name: Include the task 'assert_device_present.yml'
+      include_tasks: tasks/assert_device_present.yml
+
+    - name: Test static interface up
+      include_role:
+        name: linux-system-roles.network
+      vars:
+        network_connections:
+          - name: "{{ interface }}"
+            interface_name: "{{ interface }}"
+            state: up
+            type: ethernet
+            autoconnect: true
+            ip:
+              address: 192.0.2.1/24
+
+    - name: Include the task 'assert_output_in_stderr_without_warnings.yml'
+      include_tasks: tasks/assert_output_in_stderr_without_warnings.yml
+
+    - name: Show network_provider after running role
+      debug:
+        var: network_provider
+
+    # FIXME: assert profile present
+    # FIXME: assert profile/device up + IP address
+    - name: Include the tasks 'down_profile+delete_interface.yml'
+      include_tasks: tasks/down_profile+delete_interface.yml
+      vars:
+        profile: "{{ interface }}"
+
+    # FIXME: assert profile/device down
+    - name: Include the task 'remove_profile.yml'
+      include_tasks: tasks/remove_profile.yml
+      vars:
+        profile: "{{ interface }}"
+
     - name: Include the task 'assert_profile_absent.yml'
       include_tasks: tasks/assert_profile_absent.yml
       vars:
         profile: "{{ interface }}"
     - name: Include the task 'assert_device_absent.yml'
       include_tasks: tasks/assert_device_absent.yml
-- name: Verify that cleanup restored state to default
-  hosts: all
-  tasks:
+
     - name: Verify network state restored to default
       include_tasks: tasks/check_network_dns.yml

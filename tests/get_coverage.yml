@@ -45,7 +45,7 @@
         hidden: true
       register: files_to_delete
 
-    - name: Remove old data
+    - name: Remove old data from files_to_delete
       file:
         path: "{{ item.path }}"
         state: absent

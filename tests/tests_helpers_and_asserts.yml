@@ -12,7 +12,7 @@
         type: veth
         interface: veth1298
 
-    - name: Test veth interface management
+    - name: Test veth interface management with dummy interface
       include_tasks: tasks/create_and_remove_interface.yml
       vars:
         type: dummy
