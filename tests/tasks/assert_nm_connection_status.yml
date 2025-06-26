@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Inputs
+# - lsr_connection_name: the connection name
+# - lsr_connection_output: the output pattern to search for
+# - network_provider: the network provider
+---
+- name: Assert NM connection status
+  when:
+    - lsr_connection_name is defined
+    - lsr_connection_output is defined
+    - network_provider == "nm"
+    - __network_is_booted
+  block:
+    - name: Show connection status
+      command: nmcli connection show {{ lsr_connection_name | quote }}
+      changed_when: false
+      register: __lsr_nm_connection_status
+
+    - name: Assert connection status
+      assert:
+        that: __lsr_nm_connection_status.stdout is search(lsr_connection_output)

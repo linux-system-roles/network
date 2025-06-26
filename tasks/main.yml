@@ -4,6 +4,13 @@
 - name: Ensure ansible_facts used by role
   include_tasks: tasks/set_facts.yml
 
+- name: Switch to offline NM backend if host is not booted
+  set_fact:
+    network_provider: "nm_offline"
+  when:
+    - network_provider == "nm"
+    - not __network_is_booted
+
 - name: Print network provider
   debug:
     msg: "Using network provider: {{ network_provider }}"
@@ -14,7 +21,7 @@
     msg: Only the `nm` provider supports using the `network_state` variable
   when:
     - network_state != {}
-    - network_provider == "initscripts"
+    - network_provider != "nm"
 
 - name: Abort applying the network state configuration if the system version
     of the managed host is below 8
@@ -151,10 +158,10 @@
 - name: Enable and start NetworkManager
   service:
     name: "{{ network_service_name }}"
-    state: started
+    state: "{{ 'started' if __network_is_booted else omit }}"
     enabled: true
   when:
-    - network_provider == "nm" or network_state != {}
+    - network_provider in ["nm", "nm_offline"] or network_state != {}
   no_log: true
 
 # If any 802.1x connections are used, the wpa_supplicant
@@ -162,10 +169,10 @@
 - name: Enable and start wpa_supplicant
   service:
     name: wpa_supplicant
-    state: started
+    state: "{{ 'started' if __network_is_booted else omit }}"
     enabled: true
   when:
-    - network_provider == "nm"
+    - network_provider in ["nm", "nm_offline"]
     - __network_wpa_supplicant_required
 
 - name: Enable network service
