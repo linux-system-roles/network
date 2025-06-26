@@ -47,13 +47,6 @@
     - name: Include the task 'assert_output_in_stderr_without_warnings.yml'
       include_tasks: tasks/assert_output_in_stderr_without_warnings.yml
 
-- name: Play for cleaning up the test device and the connection profile
-  hosts: all
-  tasks:
-    - name: Show network_provider
-      debug:
-        var: network_provider
-
 # FIXME: assert profile present
 # FIXME: assert profile/device up + IP address
 - name: Import the playbook 'down_profile+delete_interface.yml'
