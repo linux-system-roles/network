@@ -23,13 +23,13 @@
     - name: Set interface1
       set_fact:
         interface: "{{ interface1 }}"
-    - name: Show interfaces
+    - name: Show interfaces again
       include_tasks: tasks/show_interfaces.yml
-    - name: Manage test interface
+    - name: Manage test interface with second interface
       include_tasks: tasks/manage_test_interface.yml
       vars:
         state: present
-    - name: Assert device is present
+    - name: Assert device is present with second interface
       include_tasks: tasks/assert_device_present.yml
     - name: Test the route or the warning log when configuring the route with
         or without the interface name

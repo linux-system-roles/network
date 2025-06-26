@@ -1,10 +1,16 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
+# module_warning - see https://github.com/ansible/ansible/issues/85394
 - name: "Assert that warnings is empty"
   assert:
     that:
-      - "'warnings' not in __network_connections_result"
+      - "'warnings' not in __network_connections_result or
+         __network_connections_result.warnings | reject('match', module_warning ~ '$') | list | length == 0"
     msg: "There are unexpected warnings"
+  vars:
+    module_warning: >-
+      Error loading plugin 'ansible.netcommon.network': No module named 'ansible_collections.ansible.netcommon'
+
 - name: "Assert that there is output in stderr"
   assert:
     that:

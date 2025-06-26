@@ -36,7 +36,7 @@
               key_mgmt: "wpa-psk"
               password: "p@55w0rD"
 
-    - name: "Get the rpm package facts"
+    - name: "Get the rpm package facts again"
       package_facts:
         manager: "auto"
 

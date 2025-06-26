@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Include the task 'down_profile.yml'
+  include_tasks: down_profile.yml
+
+- name: Include the task 'delete_interface.yml'
+  include_tasks: tasks/delete_interface.yml
