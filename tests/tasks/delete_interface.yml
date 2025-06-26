@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
 - name: Remove test interface if necessary
-  command: "ip link del {{ interface }}"
-  ignore_errors: true  # noqa ignore-errors
-  changed_when: false
+  command: ip link del {{ lsr_interface | d(interface) | quote }}
+  changed_when: true
+  register: __delete_interface_result
+  failed_when:
+    - __delete_interface_result.rc != 0
+    - __delete_interface_result.stderr is not search("Cannot find device")
 ...

@@ -143,3 +143,17 @@
             --dhcp-host 52:54:00:12:34:56,ignore --dhcp-host 52:54:00:12:34:57,ignore
     fi
   changed_when: false
+  when: ansible_connection != "buildah"
+
+# When doing bootc validation, have to restart NetworkManager services
+# to pick up newly created devices
+- name: Restart NetworkManager services for testing
+  service:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - NetworkManager.service
+    - NetworkManager-wait-online.service
+  when:
+    - network_provider == "nm"
+    - __bootc_validation | d(false)

@@ -8,7 +8,7 @@
       vars:
         network_allow_restart: '{{ wifi_restart_network }}'
         network_connections:
-          - name: "{{ interface }}"
+          - name: "{{ lsr_interface | d(interface) }}"
             type: wireless
             wireless:
               ssid: "My WPA2-PSK Network"

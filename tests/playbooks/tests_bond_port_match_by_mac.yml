@@ -29,7 +29,44 @@
               - tasks/create_test_interfaces_with_dhcp.yml
               - tasks/assert_dhcp_device_present.yml
             lsr_test:
-              - tasks/create_bond_profile.yml
+              - network_connections:
+                  # Create a bond controller
+                  - name: "{{ controller_profile }}"
+                    state: up
+                    type: bond
+                    interface_name: "{{ controller_device }}"
+                    bond:
+                      mode: 802.3ad
+                      ad_actor_sys_prio: 65535
+                      ad_actor_system: 00:00:5e:00:53:5d
+                      ad_select: stable
+                      ad_user_port_key: 1023
+                      all_ports_active: true
+                      downdelay: 0
+                      lacp_rate: slow
+                      lp_interval: 128
+                      miimon: 110
+                      min_links: 0
+                      num_grat_arp: 64
+                      primary_reselect: better
+                      resend_igmp: 225
+                      updelay: 0
+                      use_carrier: true
+                      xmit_hash_policy: encap2+3
+                    ip:
+                      route_metric4: 65535
+                  # add an ethernet to the bond
+                  - name: "{{ port1_profile }}"
+                    state: up
+                    type: ethernet
+                    interface_name: "{{ dhcp_interface1 }}"
+                    controller: "{{ controller_profile }}"
+                  # add a second ethernet to the bond
+                  - name: "{{ port2_profile }}"
+                    state: up
+                    type: ethernet
+                    interface_name: "{{ dhcp_interface2 }}"
+                    controller: "{{ controller_profile }}"
               - tasks/create_bond_port_match_by_mac.yml
             lsr_assert:
               - tasks/assert_controller_device_present.yml

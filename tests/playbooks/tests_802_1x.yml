@@ -5,21 +5,14 @@
   vars:
     interface: 802-1x-test
   tasks:
-    - name: "INIT: 802.1x tests"
-      debug:
-        msg: "##################################################"
-    - name: Include the task 'setup_802.1x.yml'
-      include_tasks: tasks/setup_802.1x.yml
-    - name: Test configuring 802.1x authentication
-      block:
-        - name: "TEST: 802.1x profile with private key password and ca cert"
-          debug:
-            msg: "##################################################"
-        - name: Import network role
-          import_role:
-            name: linux-system-roles.network
-          vars:
-            network_connections:
+    - name: Test setting 802.1x authentication
+      include_tasks: tasks/run_test.yml
+      vars:
+        lsr_description: Test 802.1x authentication
+        lsr_setup:
+          - tasks/setup_802.1x.yml
+        lsr_test:
+          - network_connections:
               - name: "{{ interface }}"
                 interface_name: veth2
                 state: up
@@ -38,28 +31,25 @@
                     - none
                   client_cert: /etc/pki/tls/client.pem
                   ca_cert: /etc/pki/tls/cacert.pem
-        - name: Ensure ping command is present
-          package:
-            name: iputils
-            state: present
-            use: "{{ (__network_is_ostree | d(false)) |
-              ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
-        - name: "TEST: I can ping the EAP server"
-          command: ping -c1 203.0.113.1
-          changed_when: false
-        - name: Import network role
-          import_role:
-            name: linux-system-roles.network
-          vars:
-            network_connections:
-              - name: "{{ interface }}"
-                persistent_state: absent
-                state: down
-        - name: >-
-            TEST: 802.1x profile with unencrypted private key,
-            domain suffix match, and system ca certs
-          debug:
-            msg: "##################################################"
+        lsr_assert:
+          - what: tasks/assert_command_output.yml
+            condition: "{{ __network_is_booted }}"
+            lsr_command: ping -c1 203.0.113.1
+            lsr_packages: [iputils]
+        lsr_cleanup:
+          - what: tasks/down_profile+delete_interface.yml
+            condition: "{{ __network_is_booted and not __bootc_validation | default(false) }}"
+            profile: "{{ interface }}"
+            lsr_persistent_state: absent
+          - tasks/check_network_dns.yml
+
+    - name: Stop test if building image or validation is enabled
+      meta: end_host
+      when: ansible_connection | d("") == "buildah" or __bootc_validation | default(false)
+
+    - name: >-
+        Test 802.1x profile with unencrypted private key, domain suffix match, and system ca certs
+      block:
         - name: Copy cacert to system truststore
           copy:
             src: cacert.pem
