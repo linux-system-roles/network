@@ -45,8 +45,54 @@
       debug:
         var: network_provider
 
-    # FIXME: assert profile present
-    # FIXME: assert profile/device up + IP address
+    - name: Get NM connection file
+      slurp:
+        src: "/etc/NetworkManager/system-connections/{{ interface }}.nmconnection"
+      register: nm_connection_file
+      when:
+        - network_provider == 'nm'
+        # RHEL up to 8 uses initscripts backend
+        - ansible_distribution_major_version | int >= 9
+
+    - name: Assert settings in NM connection file
+      assert:
+        that:
+          - "('interface-name=' + interface) in nm_connection_file.content | b64decode"
+          - "'type=ethernet' in nm_connection_file.content | b64decode"
+          - "'address1=192.0.2.1/24' in nm_connection_file.content | b64decode"
+          - "'method=manual' in nm_connection_file.content | b64decode"
+      when:
+        - network_provider == 'nm'
+        # RHEL up to 8 uses initscripts backend
+        - ansible_distribution_major_version | int >= 9
+
+    - name: Get NM connection status
+      command: "nmcli connection show {{ interface }}"
+      changed_when: false
+      register: nm_connection_status
+      when: network_provider == 'nm'
+
+    - name: Assert NM connection status
+      assert:
+        that:
+          - nm_connection_status.stdout is search("ipv4.addresses:\s+192.0.2.1/24")
+      when: network_provider == 'nm'
+
+    - name: Get initscripts connection file
+      slurp:
+        src: "/etc/sysconfig/network-scripts/ifcfg-{{ interface }}"
+      register: initscripts_connection_file
+      when: network_provider == 'initscripts' or ansible_distribution_major_version | int < 9
+
+    - name: Assert settings in initscripts connection file
+      assert:
+        that:
+          - "'TYPE=Ethernet' in initscripts_connection_file.content | b64decode"
+          - "'DEVICE={{ interface }}' in initscripts_connection_file.content | b64decode"
+          - "'IPADDR=192.0.2.1' in initscripts_connection_file.content | b64decode"
+          - "'PREFIX=24' in initscripts_connection_file.content | b64decode"
+      when: network_provider == 'initscripts' or ansible_distribution_major_version | int < 9
+
     - name: Include the tasks 'down_profile+delete_interface.yml'
       include_tasks: tasks/down_profile+delete_interface.yml
       vars:

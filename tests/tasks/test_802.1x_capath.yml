@@ -16,9 +16,6 @@
       - NetworkManager-1.18.4-3.el7.x86_64
       - NetworkManager-1.20.0-3.el8.x86_64
       - NetworkManager-1.22.8-4.el8.x86_64
-      - NetworkManager-1.20.4-1.fc31.x86_64
-      - NetworkManager-1.22.10-1.fc32.x86_64
-      - NetworkManager-1.22.12-1.fc32.x86_64
 - name: Create directory for ca_path test
   file:
     path: "/etc/pki/tls/my_ca_certs"
@@ -103,8 +100,7 @@
         expected_failure: "{{ __network_nm_nvr.stdout in __NM_capath_ignored_NVRs }}"
         failure: "{{ __network_connections_result is failed }}"
       assert:
-        that: (failure and expected_failure) or
-          (not failure and not expected_failure)
+        that: failure == expected_failure
         msg: "Role {{ failure | ternary('failed', 'did not fail') }} but was expected
           {{ expected_failure | ternary('', 'not') }} to fail.
           NM NVR: {{ __network_nm_nvr.stdout }}"
