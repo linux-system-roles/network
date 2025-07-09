@@ -1,6 +1,14 @@
 Changelog
 =========
 
+[1.17.4] - 2025-07-09
+--------------------
+
+### Other Changes
+
+- tests: Assert ethernet profile and device state (#793)
+- docs: Add guide for running CI tests locally with tox-lsr (#796)
+
 [1.17.3] - 2025-07-02
 --------------------
 
