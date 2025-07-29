@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
-- name: Run the tasklist {{ task }}
+- name: Run the tasklist
   hosts: all
   tasks:
     - name: Include the task '{{ task }}'

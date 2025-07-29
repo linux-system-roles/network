@@ -68,6 +68,16 @@
         - name: Update ca trust
           command: update-ca-trust
           changed_when: false
+        - name: Workaround for EL10 CA trust location
+          shell:
+            cmd: |
+              set -euxo pipefail
+              exec 1>&2
+              if [ ! -f /etc/pki/tls/cert.pem ]; then
+                ln -s /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem /etc/pki/tls/cert.pem
+              fi
+            executable: /bin/bash
+          changed_when: false
         - name: Import network role
           import_role:
             name: linux-system-roles.network
