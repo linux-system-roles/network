@@ -1,6 +1,13 @@
 Changelog
 =========
 
+[1.17.5] - 2025-08-01
+--------------------
+
+### Other Changes
+
+- test: ensure /etc/pki/tls/cert.pem exists for 802 tests on EL10 (#798)
+
 [1.17.4] - 2025-07-09
 --------------------
 
