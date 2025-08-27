@@ -80,7 +80,10 @@ ibution_major_version | int < 9",
     "playbooks/tests_infiniband.yml": {},
     "playbooks/tests_ipv6_disabled.yml": {},
     "playbooks/tests_ipv6_dns_search.yml": {},
-    "playbooks/tests_mac_address_match.yml": {},
+    "playbooks/tests_mac_address_match.yml": {
+        MINIMUM_VERSION: "'1.18.0'",
+        "comment": "# needs any old version of NM",
+    },
     "playbooks/tests_provider.yml": {
         MINIMUM_VERSION: "'1.20.0'",
         "comment": "# NetworKmanager 1.20.0 added support for forgetting profiles",

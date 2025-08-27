@@ -33,6 +33,11 @@
       tags:
         - always
 
+    - name: Ensure NetworkManager is running
+      service:
+        name: NetworkManager
+        state: started
+
     - name: Install ethtool (test dependency)
       package:
         name: ethtool
