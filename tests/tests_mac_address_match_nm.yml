@@ -14,10 +14,32 @@
       tags:
         - always
 
+    - name: Install NetworkManager and get NetworkManager version
+      when:
+        - ansible_distribution_major_version != '6'
+      tags:
+        - always
+      block:
+        - name: Install NetworkManager
+          package:
+            name: NetworkManager
+            state: present
+            use: "{{ (__network_is_ostree | d(false)) |
+                     ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
+        - name: Get package info
+          package_facts:
+        - name: Get NetworkManager version
+          set_fact:
+            networkmanager_version: "{{
+              ansible_facts.packages['NetworkManager'][0]['version'] }}"
+
 
 # The test requires or should run with NetworkManager, therefore it cannot run
 # on RHEL/CentOS 6
+# needs any old version of NM
 - name: Import the playbook 'playbooks/tests_mac_address_match.yml'
   import_playbook: playbooks/tests_mac_address_match.yml
   when:
     - ansible_distribution_major_version != '6'
+
+    - networkmanager_version is version('1.18.0', '>=')
