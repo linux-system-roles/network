@@ -65,12 +65,18 @@ MINIMUM_VERSION = "minimum_version"
 EXTRA_RUN_CONDITION = "extra_run_condition"
 NM_ONLY_TESTS = {
     "playbooks/tests_802_1x_updated.yml": {
-        EXTRA_RUN_CONDITION: "ansible_distribution != 'RedHat' or\n      ansible_distr\
-ibution_major_version | int < 9",
+        EXTRA_RUN_CONDITION: (
+            "(ansible_distribution != 'RedHat' and\n"
+            "       ansible_distribution_major_version | int > 7) or\n"
+            "      ansible_distribution_major_version | int == 8"
+        ),
     },
     "playbooks/tests_802_1x.yml": {
-        EXTRA_RUN_CONDITION: "ansible_distribution != 'RedHat' or\n      ansible_distr\
-ibution_major_version | int < 9",
+        EXTRA_RUN_CONDITION: (
+            "(ansible_distribution != 'RedHat' and\n"
+            "       ansible_distribution_major_version | int > 7) or\n"
+            "      ansible_distribution_major_version | int == 8"
+        ),
     },
     "playbooks/tests_ignore_auto_dns.yml": {},
     "playbooks/tests_bond_options.yml": {},
