@@ -21,5 +21,6 @@
   import_playbook: playbooks/tests_802_1x_updated.yml
   when:
     - ansible_distribution_major_version != '6'
-    - ansible_distribution != 'RedHat' or
-      ansible_distribution_major_version | int < 9
+    - (ansible_distribution != 'RedHat' and
+       ansible_distribution_major_version | int > 7) or
+      ansible_distribution_major_version | int == 8
