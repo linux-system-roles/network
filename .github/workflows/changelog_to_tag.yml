@@ -22,7 +22,7 @@ jobs:
           sudo apt install -y git
 
       - name: checkout PR
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Get tag and message from the latest CHANGELOG.md commit
         id: tag
