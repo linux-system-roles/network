@@ -2771,6 +2771,11 @@ class IPRouteUtils(object):
     def get_route_tables_mapping(cls):
         if not hasattr(cls, "_cached_rt_tables"):
             mapping = {}
+            # look in static built-in route tables file first
+            cls._parse_route_tables_mapping_from_file(
+                "/usr/share/iproute2/rt_tables", mapping
+            )
+            # then look in the user-defined route tables file
             cls._parse_route_tables_mapping_from_file(
                 "/etc/iproute2/rt_tables", mapping
             )

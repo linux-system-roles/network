@@ -49,6 +49,11 @@
                   metric: 50
                   table: 30200
                   src: 198.51.100.3
+                - network: 198.51.101.128
+                  prefix: 26
+                  gateway: 198.51.101.1
+                  metric: 2
+                  table: main
 
     - name: Get the routes from the route table 30200
       command: ip route show table 30200
@@ -59,6 +64,12 @@
     - name: Get the routes from the route table 30400
       command: ip route show table 30400
       register: route_table_30400
+      ignore_errors: true
+      changed_when: false
+
+    - name: Get the routes from the route table main
+      command: ip route show table main
+      register: route_table_main
       ignore_errors: true
       changed_when: false
 
@@ -79,6 +90,14 @@
           - route_table_30400.stdout is search("198.51.100.128/26 via
             198.51.100.1 dev ethtest0 proto static metric 2")
         msg: "the route table 30400 does not exist or does not contain the
+          specified route"
+
+    - name: Assert that the route table main contains the specified route
+      assert:
+        that:
+          - route_table_main.stdout is search("198.51.101.128/26 via
+            198.51.101.1 dev ethtest0 proto static metric 2")
+        msg: "the route table main does not exist or does not contain the
           specified route"
 
     - name: Create a dedicated test file in `/etc/iproute2/rt_tables.d/` and
@@ -121,6 +140,11 @@
                   metric: 50
                   table: custom
                   src: 198.51.100.3
+                - network: 198.51.101.128
+                  prefix: 26
+                  gateway: 198.51.101.1
+                  metric: 2
+                  table: custom
 
     - name: Get the routes from the named route table 'custom'
       command: ip route show table custom
@@ -139,6 +163,8 @@
           - route_table_custom.stdout is search("192.0.2.64/26 via
             198.51.100.8 dev ethtest0 proto static src 198.51.100.3
             metric 50")
+          - route_table_custom.stdout is search("198.51.101.128/26 via
+            198.51.101.1 dev ethtest0 proto static metric 2")
         msg: "the named route table 'custom' does not exist or does not contain
           the specified route"
 
