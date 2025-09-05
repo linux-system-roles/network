@@ -33,8 +33,9 @@ jobs:
             echo "The workflow $PENDING_RUN is still running, wait for it to finish to re-run"
             exit 1
           fi
+          # TF tests can fail or can be cancelled due to TF internal issues
           RUN_ID=$(gh api "repos/$REPO/actions/workflows/tft.yml/runs?event=issue_comment" \
-            | jq -r "[.workflow_runs[] | select( .display_title == \"$PR_TITLE\" ) | select( .conclusion == \"failure\" ) | .id][0]")
+            | jq -r "[.workflow_runs[] | select( .display_title == \"$PR_TITLE\" ) | select( .conclusion == \"failure\" or .conclusion == \"cancelled\" ) | .id][0]")
           if [ "$RUN_ID" = "null" ]; then
             echo "Failed workflow not found, exiting"
             exit 1

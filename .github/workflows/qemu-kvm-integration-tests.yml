@@ -105,7 +105,7 @@ jobs:
           python3 -m pip install --upgrade pip
           sudo apt update
           sudo apt install -y --no-install-recommends git ansible-core genisoimage qemu-system-x86
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.11.0"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.11.1"
 
       # HACK: Drop this when moving this workflow to 26.04 LTS
       - name: Update podman to 5.x for compatibility with bootc-image-builder's podman 5
@@ -199,7 +199,7 @@ jobs:
               if tox -e "$env" -- --image-file "$(pwd)/$image_file" \
                      --log-level debug $TOX_ARGS \
                      --lsr-report-errors-url DEFAULT \
-                     -e __bootc_validation=true \
+                     -e "__bootc_validation: true" \
                      -- "$test" >out 2>&1; then
                   mv out "${test}-PASS.log"
               else
