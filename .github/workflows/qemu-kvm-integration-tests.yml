@@ -30,6 +30,7 @@ jobs:
           # ansible/libdnf5 bug: https://issues.redhat.com/browse/RHELMISC-10110
           # - { image: "fedora-41", env: "qemu-ansible-core-2.17" }
           - { image: "fedora-42", env: "qemu-ansible-core-2.19" }
+          - { image: "leap-15.6", env: "qemu-ansible-core-2.18" }
 
           # container
           - { image: "centos-9", env: "container-ansible-core-2.16" }
@@ -62,6 +63,7 @@ jobs:
           case "$image" in
           centos-*) platform=el; platform_version=el"${image#centos-}" ;;
           fedora-*) platform=fedora; platform_version="${image/-/}" ;;
+          leap-*) platform=leap; platform_version="${image}" ;;
           esac
           supported=
           if yq -e '.galaxy_info.galaxy_tags[] | select(. == "'${platform_version}'" or . == "'${platform}'")' meta/main.yml; then
