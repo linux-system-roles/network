@@ -69,6 +69,15 @@ prepare:
       if grep -q 'CentOS Linux release 7.9' /etc/redhat-release; then
         sed -i '/^mirror/d;s/#\?\(baseurl=http:\/\/\)mirror/\1vault/' /etc/yum.repos.d/*.repo
       fi
+  # Replace with feature: epel: enabled once https://github.com/teemtee/tmt/pull/3128 is merged
+  - name: Enable epel to install beakerlib
+    script: |
+      # CS 10 and Fedora doesn't require epel
+      if grep -q -e 'CentOS Stream release 10' -e 'Fedora release' /etc/redhat-release; then
+        exit 0
+      fi
+      yum install epel-release yum-utils -y
+      yum-config-manager --enable epel epel-debuginfo epel-source
 discover:
   - name: Prepare managed node
     how: fmf
@@ -91,11 +100,5 @@ discover:
   #   filter: tag:reserve_system
   #   url: https://github.com/linux-system-roles/tft-tests
   #   ref: main
-adjust:
-  - when: distro == rhel-9 or distro == centos-stream-9 or distro == rhel-10 or distro == centos-stream-10
-    prepare+:
-      - how: feature
-        epel: enabled
-        order: 10
 execute:
-  how: tmt
+    how: tmt
