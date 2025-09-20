@@ -201,7 +201,7 @@ jobs:
               if tox -e "$env" -- --image-file "$(pwd)/$image_file" \
                      --log-level debug $TOX_ARGS \
                      --lsr-report-errors-url DEFAULT \
-                     -e "__bootc_validation: true" \
+                     -e '{"__bootc_validation": true}' \
                      -- "$test" >out 2>&1; then
                   mv out "${test}-PASS.log"
               else
