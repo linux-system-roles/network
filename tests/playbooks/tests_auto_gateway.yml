@@ -6,145 +6,97 @@
     type: veth
     interface: veth0
   tasks:
-    - name: Include the task 'show_interfaces.yml'
-      include_tasks: tasks/show_interfaces.yml
-    - name: Include the task 'manage_test_interface.yml'
-      include_tasks: tasks/manage_test_interface.yml
+    - name: Test setting auto_gateway to true
+      include_tasks: tasks/run_test.yml
       vars:
-        state: present
-    - name: Include the task 'assert_device_present.yml'
-      include_tasks: tasks/assert_device_present.yml
-    - name: >-
-        TEST: I can configure an interface with auto_gateway enabled
-      debug:
-        msg: "##################################################"
-    - name: Import network role
-      import_role:
-        name: linux-system-roles.network
+        lsr_description: Test auto_gateway setting to true
+        lsr_setup:
+          - what: tasks/manage_test_interface.yml
+            state: present
+          - tasks/assert_device_present.yml
+        lsr_test:
+          - network_connections:
+              - name: "{{ interface }}"
+                type: ethernet
+                state: up
+                ip:
+                  auto_gateway: true
+                  dhcp4: false
+                  auto6: false
+                  address:
+                    - "2001:db8::2/64"
+                    - "203.0.113.2/24"
+                  gateway6: "2001:db8::1"
+                  gateway4: "203.0.113.1"
+                  # change the default route metric to higher value so that it will
+                  # not take precedence over other routes or not ignore other
+                  # routes
+                  route_metric4: 65535
+        lsr_assert:
+          - tasks/assert_device_present.yml
+          - what: tasks/assert_profile_present.yml
+            profile: "{{ interface }}"
+          - what: tasks/assert_command_output.yml
+            condition: "{{ __network_is_booted }}"
+            lsr_command: ip route
+            lsr_stdout: default via 203.0.113.1 dev {{ interface }}
+          - what: tasks/assert_command_output.yml
+            condition: "{{ __network_is_booted and network_provider == 'nm' }}"
+            lsr_command: ip -6 route
+            lsr_stdout: default via 2001:db8::1 dev {{ interface }}
+        lsr_cleanup:
+          - what: tasks/down_profile+delete_interface.yml
+            condition: "{{ __network_is_booted }}"
+            profile: "{{ interface }}"
+            lsr_persistent_state: absent
+          - what: tasks/manage_test_interface.yml
+            state: absent
+          - tasks/check_network_dns.yml
+
+    - name: Stop test if building image or validation is enabled
+      meta: end_host
+      when: ansible_connection | d("") == "buildah" or __bootc_validation | default(false)
+
+    - name: Test setting auto_gateway to false
+      include_tasks: tasks/run_test.yml
       vars:
-        network_connections:
-          - name: "{{ interface }}"
-            type: ethernet
-            state: up
-            ip:
-              auto_gateway: true
-              dhcp4: false
-              auto6: false
-              address:
-                - "2001:db8::2/64"
-                - "203.0.113.2/24"
-              gateway6: "2001:db8::1"
-              gateway4: "203.0.113.1"
-              # change the default route metric to higher value so that it will
-              # not take precedence over other routes or not ignore other
-              # routes
-              route_metric4: 65535
-    - name: Include the task 'assert_device_present.yml' again
-      include_tasks: tasks/assert_device_present.yml
-    - name: Include the task 'assert_profile_present.yml'
-      include_tasks: tasks/assert_profile_present.yml
-      vars:
-        profile: "{{ interface }}"
-    - name: "Show ipv4 routes"
-      command: "ip route"
-      register: ipv4_routes
-      changed_when: false
-    - name: "Assert default ipv4 route is present"
-      assert:
-        that: __test_str in ipv4_routes.stdout
-      vars:
-        __test_str: default via 203.0.113.1 dev {{ interface }}
-    - name: "Get ipv6 routes"
-      command: "ip -6 route"
-      register: ipv6_route
-      changed_when: false
-    - name: "Assert default ipv6 route is present"
-      assert:
-        that: __test_str in ipv6_route.stdout
-      vars:
-        __test_str: default via 2001:db8::1 dev {{ interface }}
-      when: network_provider == "nm"
-    - name: "TEARDOWN: remove profiles."
-      debug:
-        msg: "##################################################"
-    - name: Import network role to remove interface
-      import_role:
-        name: linux-system-roles.network
-      vars:
-        network_connections:
-          - name: "{{ interface }}"
-            persistent_state: absent
-            state: down
-      ignore_errors: true  # noqa ignore-errors
-    - name: Include the task 'manage_test_interface.yml' to remove interface
-      include_tasks: tasks/manage_test_interface.yml
-      vars:
-        state: absent
-    - name: >-
-        TEST: I can configure an interface with auto_gateway disabled
-      debug:
-        msg: "##################################################"
-    - name: Include the task 'manage_test_interface.yml' to disable auto_gateway
-      include_tasks: tasks/manage_test_interface.yml
-      vars:
-        state: present
-    - name: Import network role to disable auto_gateway
-      import_role:
-        name: linux-system-roles.network
-      vars:
-        network_connections:
-          - name: "{{ interface }}"
-            type: ethernet
-            state: up
-            ip:
-              auto_gateway: false
-              dhcp4: false
-              auto6: false
-              address:
-                - "2001:db8::2/64"
-                - "203.0.113.2/24"
-              gateway6: "2001:db8::1"
-              gateway4: "203.0.113.1"
-    - name: Include the task 'assert_device_present.yml' - 3
-      include_tasks: tasks/assert_device_present.yml
-    - name: Include the task 'assert_profile_present.yml' again
-      include_tasks: tasks/assert_profile_present.yml
-      vars:
-        profile: "{{ interface }}"
-    - name: "Show ipv4 routes again"
-      command: "ip route"
-      register: ipv4_routes
-      changed_when: false
-    - name: "Assert default ipv4 route is absent"
-      assert:
-        that: __test_str not in ipv4_routes.stdout
-      vars:
-        __test_str: default via 203.0.113.1 dev {{ interface }}
-    - name: "Get ipv6 routes again"
-      command: "ip -6 route"
-      register: ipv6_route
-      changed_when: false
-    - name: "Assert default ipv6 route is absent"
-      assert:
-        that: __test_str not in ipv6_route.stdout
-      vars:
-        __test_str: default via 2001:db8::1 dev {{ interface }}
-      when: network_provider == "nm"
-    - name: "TEARDOWN: remove profiles. again"
-      debug:
-        msg: "##################################################"
-    - name: Import network role to remove interface again
-      import_role:
-        name: linux-system-roles.network
-      vars:
-        network_connections:
-          - name: "{{ interface }}"
-            persistent_state: absent
-            state: down
-      ignore_errors: true  # noqa ignore-errors
-    - name: Include the task 'manage_test_interface.yml' to remove interface again
-      include_tasks: tasks/manage_test_interface.yml
-      vars:
-        state: absent
-    - name: Verify network state restored to default
-      include_tasks: tasks/check_network_dns.yml
+        lsr_description: Test auto_gateway setting to false
+        lsr_setup:
+          - what: tasks/manage_test_interface.yml
+            state: present
+          - tasks/assert_device_present.yml
+        lsr_test:
+          - network_connections:
+              - name: "{{ interface }}"
+                type: ethernet
+                state: up
+                ip:
+                  auto_gateway: false
+                  dhcp4: false
+                  auto6: false
+                  address:
+                    - "2001:db8::2/64"
+                    - "203.0.113.2/24"
+                  gateway6: "2001:db8::1"
+                  gateway4: "203.0.113.1"
+        lsr_assert:
+          - tasks/assert_device_present.yml
+        lsr_assert_when:
+          - what: tasks/assert_profile_present.yml
+            profile: "{{ interface }}"
+          - what: tasks/assert_command_output.yml
+            condition: "{{ __network_is_booted }}"
+            lsr_command: ip route
+            lsr_not_stdout: default via 203.0.113.1 dev {{ interface }}
+          - what: tasks/assert_command_output.yml
+            condition: "{{ __network_is_booted and network_provider == 'nm' }}"
+            lsr_command: ip -6 route
+            lsr_not_stdout: default via 2001:db8::1 dev {{ interface }}
+        lsr_cleanup:
+          - what: tasks/down_profile+delete_interface.yml
+            condition: "{{ __network_is_booted }}"
+            profile: "{{ interface }}"
+            lsr_persistent_state: absent
+          - what: tasks/manage_test_interface.yml
+            state: absent
+          - tasks/check_network_dns.yml
