@@ -2407,6 +2407,10 @@ class Cmd_nm(Cmd):
             # Delete all profiles except explicitly included
             black_list_names = ArgUtil.connection_get_non_absent_names(self.connections)
 
+            # Keep loopback device too. Deleting it would trigger a 'changed' state
+            # every time the playbook is run as the device is recreated
+            black_list_names.add("lo")
+
         for nm_profile in self._nm_provider.get_connections():
             if name and nm_profile.get_id() != name:
                 continue
