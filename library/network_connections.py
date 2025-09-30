@@ -2851,13 +2851,13 @@ class Cmd_nm_offline(Cmd):
             for rule in c_ip["routing_rule"]:
                 rule_parts = []
                 if rule.get("priority"):
-                    rule_parts.append(f"priority {rule['priority']}")
+                    rule_parts.append("priority " + rule["priority"])
                 if rule.get("from"):
-                    rule_parts.append(f"from {rule['from']}")
+                    rule_parts.append("from " + rule["from"])
                 if rule.get("to"):
-                    rule_parts.append(f"to {rule['to']}")
+                    rule_parts.append("to " + rule["to"])
                 if rule.get("table"):
-                    rule_parts.append(f"table {rule['table']}")
+                    rule_parts.append("table " + rule["table"])
 
                 if rule_parts:
                     rule_str = " ".join(rule_parts)
@@ -3012,21 +3012,21 @@ class Cmd_nm_offline(Cmd):
                             value = "on"
                         else:
                             value = "off"
-                        argv.extend([f"ethtool.feature-{feature_name}", value])
+                        argv.extend(["ethtool.feature-" + feature_name, value])
 
             # ethtool coalesce settings
             if ethtool.get("coalesce"):
                 for param, value in ethtool["coalesce"].items():
                     if value is not None:
                         param_name = param.replace("_", "-")
-                        argv.extend([f"ethtool.coalesce-{param_name}", str(value)])
+                        argv.extend(["ethtool.coalesce-" + param_name, str(value)])
 
             # ethtool ring settings
             if ethtool.get("ring"):
                 for param, value in ethtool["ring"].items():
                     if value is not None:
                         param_name = param.replace("_", "-")
-                        argv.extend([f"ethtool.ring-{param_name}", str(value)])
+                        argv.extend(["ethtool.ring-" + param_name, str(value)])
 
         # ieee802_1x settings
         if connection.get("ieee802_1x"):
