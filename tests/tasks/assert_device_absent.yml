@@ -2,7 +2,7 @@
 ---
 - name: Include the task 'get_interface_stat.yml'
   include_tasks: get_interface_stat.yml
-- name: "Assert that the interface is absent - '{{ interface }}'"
+- name: "Assert that the interface is absent - '{{ lsr_interface | d(interface) }}'"
   assert:
     that: not interface_stat.stat.exists
-    msg: "{{ interface }} exists"
+    msg: "{{ lsr_interface | d(interface) }} exists"

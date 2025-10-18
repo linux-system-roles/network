@@ -1,0 +1,90 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Inputs
+# - lsr_connection_name: the connection name
+# - network_provider: the network provider
+# - lsr_connection_settings: the connection file settings for NM files
+---
+- name: Assert NM connection settings
+  when:
+    - lsr_connection_name is defined
+    - lsr_connection_settings | d({}) | length > 0
+    - network_provider == "nm"
+    - ansible_distribution_major_version | int >= 9
+  vars:
+    __nm_connection_file_path: /etc/NetworkManager/system-connections/{{ lsr_connection_name }}.nmconnection
+  block:
+    - name: Show connection file
+      command: cat {{ __nm_connection_file_path | quote }}
+      changed_when: false
+      when: ansible_verbosity | int >= 2
+
+    - name: Stat connection file
+      stat:
+        path: "{{ __nm_connection_file_path }}"
+      register: __nm_connection_file_stat
+
+    - name: Assert settings in NM connection file
+      community.general.ini_file:
+        path: "{{ __nm_connection_file_path }}"
+        section: "{{ __nm_connection_file_item.section }}"
+        option: "{{ __nm_connection_file_item.option }}"
+        value: "{{ __nm_connection_file_item.value }}"
+        state: present
+        ignore_spaces: true
+        owner: "{{ __nm_connection_file_stat.stat.pw_name }}"
+        group: "{{ __nm_connection_file_stat.stat.gr_name }}"
+        mode: "{{ __nm_connection_file_stat.stat.mode }}"
+      register: __nm_connection_file
+      # nm only values do not define value
+      loop: "{{ lsr_connection_settings | selectattr('value', 'defined') | list }}"
+      loop_control:
+        loop_var: __nm_connection_file_item
+      failed_when: __nm_connection_file is changed
+
+    - name: Get nmcli connection settings
+      command: nmcli --fields all --terse connection show {{ lsr_connection_name | quote }}
+      register: __nm_connection_settings
+      changed_when: false
+      when: __network_is_booted
+
+    - name: Assert nmcli connection settings
+      assert:
+        that: setting in __nm_connection_settings.stdout_lines
+      loop: "{{ nmitems + items }}"
+      loop_control:
+        loop_var: __nm_connection_item
+      when: __network_is_booted
+      vars:
+        nmitems: "{{ lsr_connection_settings | selectattr('nmvalue', 'defined') | selectattr('nmvalue') | list }}"
+        items: "{{ lsr_connection_settings | rejectattr('nmvalue', 'defined') | list }}"
+        section: "{{ __nm_connection_item.section }}"
+        option: "{{ 'addresses' if __nm_connection_item.option == 'address1' else __nm_connection_item.option }}"
+        value: "{{ __nm_connection_item.nmvalue
+          if __nm_connection_item.nmvalue is defined and __nm_connection_item.nmvalue
+          else __nm_connection_item.value }}"
+        setting: "{{ section ~ '.' ~ option ~ ':' ~ value }}"
+
+- name: Assert initscripts file settings
+  when:
+    - lsr_connection_name is defined
+    - lsr_connection_settings | d({}) | length > 0
+    - network_provider == "initscripts" or ansible_distribution_major_version | int < 9
+  vars:
+    __initscripts_connection_file_path: /etc/sysconfig/network-scripts/ifcfg-{{ lsr_connection_name }}
+  block:
+    - name: Show connection file
+      command: cat {{ __initscripts_connection_file_path | quote }}
+      changed_when: false
+      when: ansible_verbosity | int >= 2
+
+    - name: Slurp connection file
+      slurp:
+        src: "{{ __initscripts_connection_file_path }}"
+      register: __initscripts_connection_file
+
+    - name: Assert settings in initscripts connection file
+      assert:
+        that: __initscripts_connection_item in __initscripts_connection_file.content | b64decode
+      loop: "{{ lsr_connection_settings }}"
+      loop_control:
+        loop_var: __initscripts_connection_item

@@ -19,8 +19,8 @@
             persistent_state: absent
             state: down
       failed_when: false
-    - name: Delete the device '{{ interface }}'
-      command: ip link del {{ interface }}
+    - name: Delete the device '{{ lsr_interface | d(interface) }}'
+      command: ip link del {{ lsr_interface | d(interface) }}
       failed_when: false
       changed_when: false
 ...
