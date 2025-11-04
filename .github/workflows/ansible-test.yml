@@ -33,7 +33,7 @@ jobs:
       - name: Install tox, tox-lsr
         run: |
           set -euxo pipefail
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.12.0"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.13.0"
 
       - name: Convert role to collection format
         run: |
