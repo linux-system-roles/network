@@ -31,8 +31,10 @@ network_provider_os_default: "{{
         ansible_distribution_major_version is version('7', '<')
         else 'nm' }}"
 # If NetworkManager.service is running, assume that 'nm' is currently in-use,
-# otherwise initscripts
+# otherwise initscripts. However, in non-booted environments we don't have
+# ansible_facts.services, so use the above OS default.
 __network_provider_current: "{{
+    network_provider_os_default if ansible_facts.services is not defined else
     'nm' if 'NetworkManager.service' in ansible_facts.services and
         ansible_facts.services['NetworkManager.service']['state'] == 'running'
         else 'initscripts' }}"
@@ -134,6 +136,9 @@ __network_packages_default_initscripts_bridge | select() | list()
 # be overwritten as host variables or via vars/*.yml.
 __network_provider_setup:
   nm:
+    service_name: "{{ __network_service_name_default_nm }}"
+    packages: "{{ __network_packages_default_nm }}"
+  nm_offline:
     service_name: "{{ __network_service_name_default_nm }}"
     packages: "{{ __network_packages_default_nm }}"
   initscripts:

@@ -72,26 +72,85 @@
             - "{{ controller_profile }}"
             - "{{ port1_profile }}"
             - "{{ port2_profile }}"
-        - name: "** TEST check polling interval"
-          command: grep 'Polling Interval'
-                   /proc/net/bonding/{{ controller_device }}
-          register: result
-          until: "'110' in result.stdout"
-          changed_when: false
-        - name: "** TEST check IPv4"
-          command: ip -4 a s {{ controller_device }}
-          register: result
-          until: "'192.0.2' in result.stdout"
-          retries: 20
-          delay: 2
-          changed_when: false
-        - name: "** TEST check IPv6"
-          command: ip -6 a s {{ controller_device }}
-          register: result
-          until: "'2001' in result.stdout"
-          retries: 20
-          delay: 2
-          changed_when: false
+
+        - name: Runtime checks for booted systems
+          when: __network_is_booted | bool
+          block:
+            - name: "** TEST check polling interval"
+              command: grep 'Polling Interval'
+                      /proc/net/bonding/{{ controller_device }}
+              register: result
+              until: "'110' in result.stdout"
+              changed_when: false
+            - name: "** TEST check IPv4"
+              command: ip -4 a s {{ controller_device }}
+              register: result
+              until: "'192.0.2' in result.stdout"
+              retries: 20
+              delay: 2
+              changed_when: false
+            - name: "** TEST check IPv6"
+              command: ip -6 a s {{ controller_device }}
+              register: result
+              until: "'2001' in result.stdout"
+              retries: 20
+              delay: 2
+              changed_when: false
+
+        # These are primarily interesting for non-booted systems; but let's
+        # check on booted systems too, to ensure the assertions are valid
+        - name: NM Config file checks
+          when:
+            - network_provider != "initscripts"
+            - ansible_distribution_major_version | int >= 9
+          block:
+            - name: Read controller config
+              slurp:
+                src: "/etc/NetworkManager/system-connections/{{ controller_profile }}.nmconnection"
+              register: controller_config_b64
+
+            - name: Check controller config
+              assert:
+                that:
+                  # [connection]
+                  - "'id=' + controller_profile in controller_config"
+                  - "'type=bond' in controller_config"
+                  - "'interface-name=' + controller_device in controller_config"
+                  # [bond]
+                  - "'mode=active-backup' in controller_config"
+                  - "'miimon=110' in controller_config"
+                  # [ipv4]
+                  - "'method=auto' in controller_config"
+                  - "'route-metric=65535' in controller_config"
+                fail_msg: "{{ controller_profile }} is bad: {{ controller_config }}"
+              vars:
+                controller_config: "{{ controller_config_b64.content | b64decode }}"
+
+            - name: Read port configs
+              loop:
+                - { name: "{{ port1_profile }}", iface_name: "{{ dhcp_interface1 }}" }
+                - { name: "{{ port2_profile }}", iface_name: "{{ dhcp_interface2 }}" }
+              slurp:
+                src: "/etc/NetworkManager/system-connections/{{ item.name }}.nmconnection"
+              register: port1_config_b64
+
+            - name: Check port configs
+              loop: "{{ port1_config_b64.results }}"
+              vars:
+                port_config: "{{ item.content | b64decode }}"
+              assert:
+                that:
+                  # [connection]
+                  - "'id=' + item.item.name  in port_config"
+                  - "'type=ethernet' in port_config"
+                  # that points to UUID of controller, a bit cumbersome to match; but let's assume nmcli DTRT
+                  - "'controller=' in port_config"
+                  - "'interface-name=' + item.item.iface_name in port_config"
+                  - "'port-type=bond' in port_config"
+                  - "'[ipv4]' not in port_config"
+                  - "'[ipv6]' not in port_config"
+                fail_msg: "{{ item.item.name }} is bad: {{ port_config }}"
+
       always:
         - name: Clean up the test devices and the connection profiles
           tags:
@@ -116,6 +175,7 @@
               command: ip link del {{ controller_device }}
               failed_when: false
               changed_when: false
+              when: __network_is_booted | bool
             - name: Import the task 'remove_test_interfaces_with_dhcp.yml'
               import_tasks: tasks/remove_test_interfaces_with_dhcp.yml
             - name: "Restore the /etc/resolv.conf for initscript"
@@ -125,3 +185,4 @@
               changed_when: false
             - name: Verify network state restored to default
               include_tasks: tasks/check_network_dns.yml
+              when: __network_is_booted | bool

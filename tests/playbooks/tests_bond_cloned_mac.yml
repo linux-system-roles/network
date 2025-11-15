@@ -54,54 +54,80 @@
                 interface_name: "{{ dhcp_interface2 }}"
                 controller: "{{ controller_profile }}"
 
-        - name: Verify nmcli cloned-mac-address entry
-          command: >-
-            nmcli -f 802-3-ethernet.cloned-mac-address con show {{ item.name }}
-          register: cloned_mac_address
-          ignore_errors: true
-          changed_when: false
-          loop:
-            - {name: "{{ controller_profile }}", mac: "12:23:34:45:56:60"}
-            - {name: "{{ port1_profile }}", mac: "12:23:34:45:56:61"}
-            - {name: "{{ port2_profile }}", mac: "--"}
+        - name: Verify nm provider
           when: network_provider == 'nm'
+          block:
+            - name: Verify nmcli cloned-mac-address entry
+              command: >-
+                nmcli -f 802-3-ethernet.cloned-mac-address con show {{ item.name }}
+              register: cloned_mac_address
+              ignore_errors: true
+              changed_when: false
+              loop:
+                - {name: "{{ controller_profile }}", mac: "12:23:34:45:56:60"}
+                - {name: "{{ port1_profile }}", mac: "12:23:34:45:56:61"}
+                - {name: "{{ port2_profile }}", mac: "--"}
 
-        - name: >
-            Assert that cloned-mac-address addresses are configured correctly
-          assert:
-            that:
-              - item.stdout.endswith(item.item.mac)
-            msg: cloned-mac-address is configured incorrectly
-          loop: "{{ cloned_mac_address.results }}"
-          when: network_provider == 'nm'
+            - name: >
+                Assert that cloned-mac-address addresses are configured correctly
+              assert:
+                that:
+                  - item.stdout.endswith(item.item.mac)
+                msg: cloned-mac-address is configured incorrectly
+              loop: "{{ cloned_mac_address.results }}"
 
-        - name: Verify the MAC address in {{ controller_profile }}
-          command: >-
-            grep 'MACADDR'
-            /etc/sysconfig/network-scripts/ifcfg-{{ controller_profile }}
-          register: mac_address_controller
-          ignore_errors: true
-          changed_when: false
+        # mostly interesting for offline provider, but let's cross-check with
+        # online NM to ensure the conditions are valid - except that on some
+        # older versions of NM, the connection files are not created, so we
+        # skip this test on those versions.
+        - name: Verify NM config files
+          when:
+            - network_provider.startswith('nm')
+            - ansible_facts['distribution_major_version'] | int >= 9
+          block:
+            - name: Read profile config files
+              slurp:
+                src: "/etc/NetworkManager/system-connections/{{ item }}.nmconnection"
+              register: config_b64
+              loop:
+                - "{{ controller_profile }}"
+                - "{{ port1_profile }}"
+                - "{{ port2_profile }}"
+
+            - name: Check profile config files
+              assert:
+                that:
+                  - "'cloned-mac-address=12:23:34:45:56:60' in config_b64.results[0].content | b64decode"
+                  - "'cloned-mac-address=12:23:34:45:56:61' in config_b64.results[1].content | b64decode"
+                  - "'cloned-mac-adress=' not in config_b64.results[2].content | b64decode"
+
+        - name: Verify initscripts provider
           when: network_provider == 'initscripts'
+          block:
+            - name: Verify the MAC address in {{ controller_profile }}
+              command: >-
+                grep 'MACADDR'
+                /etc/sysconfig/network-scripts/ifcfg-{{ controller_profile }}
+              register: mac_address_controller
+              ignore_errors: true
+              changed_when: false
 
-        - name: Verify the MAC address in {{ port1_profile }}
-          command: >-
-            grep 'MACADDR'
-            /etc/sysconfig/network-scripts/ifcfg-{{ port1_profile }}
-          register: mac_address_port1
-          ignore_errors: true
-          changed_when: false
-          when: network_provider == 'initscripts'
+            - name: Verify the MAC address in {{ port1_profile }}
+              command: >-
+                grep 'MACADDR'
+                /etc/sysconfig/network-scripts/ifcfg-{{ port1_profile }}
+              register: mac_address_port1
+              ignore_errors: true
+              changed_when: false
 
-        - name: Assert that MAC addresses are configured correctly for bonding
-            interface
-          assert:
-            that:
-              - mac_address_controller.stdout is search("12:23:34:45:56:60")
-              - mac_address_port1.stdout is search("12:23:34:45:56:61")
-            msg: the MAC addresses are configured incorrectly for bonding
-              interface
-          when: network_provider == 'initscripts'
+            - name: Assert that MAC addresses are configured correctly for bonding
+                interface
+              assert:
+                that:
+                  - mac_address_controller.stdout is search("12:23:34:45:56:60")
+                  - mac_address_port1.stdout is search("12:23:34:45:56:61")
+                msg: the MAC addresses are configured incorrectly for bonding
+                  interface
 
       always:
         - name: Clean up the test devices and the connection profiles
@@ -127,8 +153,10 @@
               command: ip link del {{ controller_device }}
               failed_when: false
               changed_when: false
+              when: __network_is_booted | bool
             - name: Import the task 'remove_test_interfaces_with_dhcp.yml'
               import_tasks: tasks/remove_test_interfaces_with_dhcp.yml
+              when: __network_is_booted | bool
             - name: Restore the /etc/resolv.conf for initscript
               command: mv -vf /etc/resolv.conf.bak /etc/resolv.conf
               when:

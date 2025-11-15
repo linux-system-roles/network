@@ -71,6 +71,7 @@ import subprocess
 import time
 import traceback
 import logging
+import stat
 
 # pylint: disable=import-error, no-name-in-module
 from ansible.module_utils.basic import AnsibleModule
@@ -1712,7 +1713,7 @@ class RunEnvironment(object):
         self._check_mode = None
 
     @property
-    def ifcfg_header(self):
+    def managed_file_header(self):
         return None
 
     def log(
@@ -1728,7 +1729,7 @@ class RunEnvironment(object):
     ):
         raise NotImplementedError()
 
-    def run_command(self, argv, encoding=None):
+    def run_command(self, argv, encoding=None, check_rc=False):
         raise NotImplementedError()
 
     def _check_mode_changed(self, old_check_mode, new_check_mode, connections):
@@ -1780,11 +1781,11 @@ class RunEnvironmentAnsible(RunEnvironment):
         self.module = module
 
     @property
-    def ifcfg_header(self):
+    def managed_file_header(self):
         return self.module.params["__header"]
 
-    def run_command(self, argv, encoding=None):
-        return self.module.run_command(argv, encoding=encoding)
+    def run_command(self, argv, encoding=None, check_rc=False):
+        return self.module.run_command(argv, encoding=encoding, check_rc=check_rc)
 
     def _run_results_push(self, n_connections):
         c = []
@@ -1935,8 +1936,8 @@ class Cmd(object):
         self._is_changed_modified_system = False
         self._debug_flags = debug_flags
 
-    def run_command(self, argv, encoding=None):
-        return self.run_env.run_command(argv, encoding=encoding)
+    def run_command(self, argv, encoding=None, check_rc=False):
+        return self.run_env.run_command(argv, encoding=encoding, check_rc=check_rc)
 
     @property
     def is_changed_modified_system(self):
@@ -2030,6 +2031,8 @@ class Cmd(object):
     def create(provider, **kwargs):
         if provider == "nm":
             return Cmd_nm(**kwargs)
+        if provider == "nm_offline":
+            return Cmd_nm_offline(**kwargs)
         elif provider == "initscripts":
             return Cmd_initscripts(**kwargs)
         raise MyError("unsupported provider %s" % (provider))
@@ -2639,6 +2642,519 @@ class Cmd_nm(Cmd):
 ###############################################################################
 
 
+class Cmd_nm_offline(Cmd):
+    def __init__(self, **kwargs):
+        Cmd.__init__(self, **kwargs)
+        self.validate_one_type = ArgValidator_ListConnections.VALIDATE_ONE_MODE_NM
+        self._checkpoint = None
+
+    def profile_path(self, name):
+        return os.path.join(
+            "/etc/NetworkManager/system-connections", name + ".nmconnection"
+        )
+
+    def run_prepare(self):
+        # we can't check any hardware or runtime status, we can just trust the input
+        pass
+
+    # mirror Cmd_nm.connection_create()
+    def connection_create(self, connections, idx):
+        connection = connections[idx]
+        # global/type independent arguments
+        if "nm.uuid" not in connection:
+            connection["nm.uuid"] = Util.create_uuid()
+        if "nm.exists" not in connection:
+            connection["nm.exists"] = True
+        argv = [
+            "nmcli",
+            "--offline",
+            "connection",
+            "add",
+            "ifname",
+            connection["interface_name"],
+            "con-name",
+            connection["name"],
+            "type",
+            connection["type"],
+            "autoconnect",
+            "yes" if connection["autoconnect"] else "no",
+            "connection.autoconnect-retries",
+            str(connection["autoconnect_retries"]),
+            "connection.uuid",
+            connection["nm.uuid"],
+        ]
+
+        if connection["cloned_mac"] != "default":
+            argv.extend(["cloned-mac", connection["cloned_mac"]])
+
+        # composite devices
+        if connection["controller"] is not None:
+            if connection["port_type"] is None:
+                self.log_error(
+                    idx,
+                    "connection.port-type must be specified when connection.controller is set",
+                )
+            # must use uuid instead of name for controller here
+            controller_uuid = ArgUtil.connection_find_controller_uuid(
+                connection["controller"], connections
+            )
+
+            argv.extend(
+                [
+                    "connection.controller",
+                    controller_uuid,
+                    "connection.port-type",
+                    connection["port_type"],
+                ]
+            )
+
+            # skip IP and other config for composites
+            return argv
+
+        c_ip = connection["ip"]
+        ip4_addrs = []
+        ip6_addrs = []
+        for address in c_ip["address"]:
+            addr = "{0}/{1}".format(address["address"], address["prefix"])
+            if address["family"] == socket.AF_INET:
+                ip4_addrs.append(addr)
+            elif address["family"] == socket.AF_INET6:
+                ip6_addrs.append(addr)
+            else:
+                self.log_error(idx, "unknown address family %s" % (address["family"]))
+
+        argv.extend(
+            [
+                "ipv4.method",
+                "auto" if c_ip["dhcp4"] else "manual" if ip4_addrs else "disabled",
+                "ipv4.addresses",
+                ", ".join(ip4_addrs),
+                "ipv6.method",
+                (
+                    "disabled"
+                    if c_ip["ipv6_disabled"]
+                    else (
+                        "auto"
+                        if c_ip["auto6"]
+                        else (
+                            "manual"
+                            if ip6_addrs
+                            else
+                            # online backend uses legacy "ignore", DTRT for this new backend
+                            "ignore"
+                        )
+                    )
+                ),  # "link-local",
+                "ipv6.addresses",
+                ", ".join(ip6_addrs),
+            ]
+        )
+
+        # gateway
+        if c_ip["gateway4"]:
+            argv.extend(["ipv4.gateway", c_ip["gateway4"]])
+        if c_ip["gateway6"]:
+            argv.extend(["ipv6.gateway", c_ip["gateway6"]])
+
+        # dns*
+        dns4_addrs = []
+        dns6_addrs = []
+        for dns in c_ip["dns"]:
+            if dns["family"] == socket.AF_INET:
+                dns4_addrs.append(dns["address"])
+            elif dns["family"] == socket.AF_INET6:
+                dns6_addrs.append(dns["address"])
+            else:
+                self.log_error(idx, "unknown DNS address family %s" % (dns["family"]))
+        if dns4_addrs:
+            argv.extend(["ipv4.dns", ",".join(dns4_addrs)])
+        if dns6_addrs:
+            argv.extend(["ipv6.dns", ",".join(dns6_addrs)])
+
+        if c_ip["dns_search"]:
+            # NM only allows to configure ipvN.dns-search when IPvN is enabled
+            if c_ip["dhcp4"] or ip4_addrs:
+                argv.extend(["ipv4.dns-search", " ".join(c_ip["dns_search"])])
+            if c_ip["auto6"] or ip6_addrs:
+                argv.extend(["ipv6.dns-search", " ".join(c_ip["dns_search"])])
+
+        if c_ip["dns_options"]:
+            argv.extend(
+                [
+                    "ipv4.dns-options",
+                    ",".join(c_ip["dns_options"]),
+                    "ipv6.dns-options",
+                    ",".join(c_ip["dns_options"]),
+                ]
+            )
+
+        if c_ip["dns_priority"] != 0:
+            argv.extend(
+                [
+                    "ipv4.dns-priority",
+                    str(c_ip["dns_priority"]),
+                    "ipv6.dns-priority",
+                    str(c_ip["dns_priority"]),
+                ]
+            )
+
+        if c_ip["ipv4_ignore_auto_dns"] is not None:
+            argv.extend(
+                [
+                    "ipv4.ignore-auto-dns",
+                    "yes" if c_ip["ipv4_ignore_auto_dns"] else "no",
+                ]
+            )
+        if c_ip["ipv6_ignore_auto_dns"] is not None:
+            argv.extend(
+                [
+                    "ipv6.ignore-auto-dns",
+                    "yes" if c_ip["ipv6_ignore_auto_dns"] else "no",
+                ]
+            )
+
+        # route
+        if c_ip["route_metric4"] is not None:
+            argv.extend(["ipv4.route-metric", str(c_ip["route_metric4"])])
+        if c_ip["route_metric6"] is not None:
+            argv.extend(["ipv6.route-metric", str(c_ip["route_metric6"])])
+
+        # routes
+        if c_ip.get("route"):
+            ipv4_routes = []
+            ipv6_routes = []
+            for route in c_ip["route"]:
+                route_str = route["network"]
+                if route.get("prefix"):
+                    route_str += "/" + str(route["prefix"])
+                if route.get("gateway"):
+                    route_str += " " + route["gateway"]
+                if route.get("metric"):
+                    route_str += " " + str(route["metric"])
+                if route.get("type"):
+                    route_str += " type=" + route["type"]
+                if route.get("table"):
+                    route_str += " table=" + str(route["table"])
+                if route.get("src"):
+                    route_str += " src=" + route["src"]
+
+                if route["family"] == socket.AF_INET:
+                    ipv4_routes.append(route_str)
+                elif route["family"] == socket.AF_INET6:
+                    ipv6_routes.append(route_str)
+
+            if ipv4_routes:
+                argv.extend(["ipv4.routes", ",".join(ipv4_routes)])
+            if ipv6_routes:
+                argv.extend(["ipv6.routes", ",".join(ipv6_routes)])
+
+        # routing rules
+        if c_ip.get("routing_rule"):
+            ipv4_rules = []
+            ipv6_rules = []
+            for rule in c_ip["routing_rule"]:
+                rule_parts = []
+                if rule.get("priority"):
+                    rule_parts.append("priority " + rule["priority"])
+                if rule.get("from"):
+                    rule_parts.append("from " + rule["from"])
+                if rule.get("to"):
+                    rule_parts.append("to " + rule["to"])
+                if rule.get("table"):
+                    rule_parts.append("table " + rule["table"])
+
+                if rule_parts:
+                    rule_str = " ".join(rule_parts)
+                    if rule["family"] == socket.AF_INET:
+                        ipv4_rules.append(rule_str)
+                    elif rule["family"] == socket.AF_INET6:
+                        ipv6_rules.append(rule_str)
+
+            if ipv4_rules:
+                argv.extend(["ipv4.routing-rules", " ".join(ipv4_rules)])
+            if ipv6_rules:
+                argv.extend(["ipv6.routing-rules", " ".join(ipv6_rules)])
+
+        # DHCP options
+        if c_ip.get("dhcp4_send_hostname") is not None:
+            argv.extend(
+                [
+                    "ipv4.dhcp-send-hostname",
+                    "yes" if c_ip["dhcp4_send_hostname"] else "no",
+                ]
+            )
+        if c_ip.get("dhcp6_send_hostname") is not None:
+            argv.extend(
+                [
+                    "ipv6.dhcp-send-hostname",
+                    "yes" if c_ip["dhcp6_send_hostname"] else "no",
+                ]
+            )
+
+        # zone
+        if connection.get("zone"):
+            argv.extend(["connection.zone", connection["zone"]])
+
+        # mac address
+        if connection.get("mac") and connection["mac"] != "default":
+            if connection["type"] == "wireless":
+                argv.extend(["802-11-wireless.mac-address", connection["mac"]])
+            else:
+                argv.extend(["802-3-ethernet.mac-address", connection["mac"]])
+
+        # mtu
+        if connection.get("mtu"):
+            if connection["type"] == "wireless":
+                argv.extend(["802-11-wireless.mtu", str(connection["mtu"])])
+            else:
+                argv.extend(["802-3-ethernet.mtu", str(connection["mtu"])])
+
+        # ethernet settings
+        if connection.get("ethernet"):
+            eth = connection["ethernet"]
+            if eth.get("autoneg") is not None:
+                argv.extend(
+                    ["802-3-ethernet.auto-negotiate", "yes" if eth["autoneg"] else "no"]
+                )
+                if eth.get("speed"):
+                    argv.extend(["802-3-ethernet.speed", str(eth["speed"])])
+                if eth.get("duplex"):
+                    argv.extend(["802-3-ethernet.duplex", eth["duplex"]])
+
+        # type-specific configurations
+        # bond options[mode, miimon, downdelay, updelay, arp_interval, arp_ip_target, arp_validate, balance-slb, primary,
+        # primary_reselect, fail_over_mac, use_carrier, ad_select, xmit_hash_policy, resend_igmp, lacp_rate, active_slave, ad_actor_sys_prio,
+        # ad_actor_system, ad_user_port_key, all_slaves_active, arp_all_targets, min_links, num_grat_arp, num_unsol_na, packets_per_slave,
+        # tlb_dynamic_lb, lp_interval, peer_notif_delay, arp_missed_max, lacp_active, ns_ip6_target].,
+        if connection["type"] == "bond":
+            opts = []
+            for key, value in connection["bond"].items():
+                if value is not None:
+                    if key in ["all_ports_active", "use_carrier", "tlb_dynamic_lb"]:
+                        value = int(value)
+                    if key in ["all_ports_active", "packets_per_port"]:
+                        # wokeignore:rule=slave
+                        key = key.replace("port", "slave")
+                    opts.append("{0}={1}".format(key, str(value)))
+            if opts:
+                argv.extend(["bond.options", ",".join(opts)])
+
+        elif connection["type"] == "bridge":
+            if connection.get("bridge"):
+                bridge = connection["bridge"]
+                if bridge.get("stp") is not None:
+                    argv.extend(["bridge.stp", "yes" if bridge["stp"] else "no"])
+                if bridge.get("priority") is not None:
+                    argv.extend(["bridge.priority", str(bridge["priority"])])
+                if bridge.get("forward_delay") is not None:
+                    argv.extend(["bridge.forward-delay", str(bridge["forward_delay"])])
+                if bridge.get("hello_time") is not None:
+                    argv.extend(["bridge.hello-time", str(bridge["hello_time"])])
+                if bridge.get("max_age") is not None:
+                    argv.extend(["bridge.max-age", str(bridge["max_age"])])
+                if bridge.get("ageing_time") is not None:
+                    argv.extend(["bridge.ageing-time", str(bridge["ageing_time"])])
+
+        elif connection["type"] == "vlan":
+            if connection.get("vlan") and connection["vlan"].get("id") is not None:
+                argv.extend(["vlan.id", str(connection["vlan"]["id"])])
+            if connection.get("parent"):
+                argv.extend(["vlan.parent", connection["parent"]])
+
+        elif connection["type"] == "macvlan":
+            if connection.get("macvlan"):
+                macvlan = connection["macvlan"]
+                if macvlan.get("mode"):
+                    argv.extend(["macvlan.mode", macvlan["mode"]])
+                if macvlan.get("promiscuous") is not None:
+                    argv.extend(
+                        [
+                            "macvlan.promiscuous",
+                            "yes" if macvlan["promiscuous"] else "no",
+                        ]
+                    )
+                if macvlan.get("tap") is not None:
+                    argv.extend(["macvlan.tap", "yes" if macvlan["tap"] else "no"])
+            if connection.get("parent"):
+                argv.extend(["macvlan.parent", connection["parent"]])
+
+        elif connection["type"] == "infiniband":
+            if connection.get("infiniband"):
+                ib = connection["infiniband"]
+                if ib.get("transport_mode"):
+                    argv.extend(["infiniband.transport-mode", ib["transport_mode"]])
+                if ib.get("p_key") is not None:
+                    argv.extend(["infiniband.p-key", str(ib["p_key"])])
+            if connection.get("parent"):
+                argv.extend(["infiniband.parent", connection["parent"]])
+
+        elif connection["type"] == "wireless":
+            if connection.get("wireless"):
+                wifi = connection["wireless"]
+                if wifi.get("ssid"):
+                    argv.extend(["802-11-wireless.ssid", wifi["ssid"]])
+                if wifi.get("key_mgmt"):
+                    argv.extend(["802-11-wireless-security.key-mgmt", wifi["key_mgmt"]])
+                if wifi.get("password") and wifi["key_mgmt"] in ["wpa-psk", "sae"]:
+                    argv.extend(["802-11-wireless-security.psk", wifi["password"]])
+
+        elif connection["type"] == "team":
+            if connection.get("team") and connection["team"].get("config"):
+                # Team config is typically JSON, pass as-is
+                argv.extend(["team.config", connection["team"]["config"]])
+
+        # ethtool settings
+        if connection.get("ethtool"):
+            ethtool = connection["ethtool"]
+
+            # ethtool features
+            if ethtool.get("features"):
+                for feature, value in ethtool["features"].items():
+                    if value is not None:
+                        feature_name = feature.replace("_", "-")
+                        if value:
+                            value = "on"
+                        else:
+                            value = "off"
+                        argv.extend(["ethtool.feature-" + feature_name, value])
+
+            # ethtool coalesce settings
+            if ethtool.get("coalesce"):
+                for param, value in ethtool["coalesce"].items():
+                    if value is not None:
+                        param_name = param.replace("_", "-")
+                        argv.extend(["ethtool.coalesce-" + param_name, str(value)])
+
+            # ethtool ring settings
+            if ethtool.get("ring"):
+                for param, value in ethtool["ring"].items():
+                    if value is not None:
+                        param_name = param.replace("_", "-")
+                        argv.extend(["ethtool.ring-" + param_name, str(value)])
+
+        # ieee802_1x settings
+        if connection.get("ieee802_1x"):
+            ieee = connection["ieee802_1x"]
+            if ieee.get("eap"):
+                argv.extend(
+                    [
+                        "802-1x.eap",
+                        (
+                            ",".join(ieee["eap"])
+                            if isinstance(ieee["eap"], list)
+                            else ieee["eap"]
+                        ),
+                    ]
+                )
+            if ieee.get("identity"):
+                argv.extend(["802-1x.identity", ieee["identity"]])
+            if ieee.get("password"):
+                argv.extend(["802-1x.password", ieee["password"]])
+            if ieee.get("ca_cert"):
+                argv.extend(["802-1x.ca-cert", ieee["ca_cert"]])
+            if ieee.get("client_cert"):
+                argv.extend(["802-1x.client-cert", ieee["client_cert"]])
+            if ieee.get("private_key"):
+                argv.extend(["802-1x.private-key", ieee["private_key"]])
+            if ieee.get("private_key_password"):
+                argv.extend(
+                    ["802-1x.private-key-password", ieee["private_key_password"]]
+                )
+
+        # match settings
+        if connection.get("match"):
+            match = connection["match"]
+            if match.get("path"):
+                match_paths = (
+                    match["path"]
+                    if isinstance(match["path"], list)
+                    else [match["path"]]
+                )
+                argv.extend(["match.path", ",".join(match_paths)])
+            if match.get("driver"):
+                match_drivers = (
+                    match["driver"]
+                    if isinstance(match["driver"], list)
+                    else [match["driver"]]
+                )
+                argv.extend(["match.driver", ",".join(match_drivers)])
+            if match.get("interface_name"):
+                match_names = (
+                    match["interface_name"]
+                    if isinstance(match["interface_name"], list)
+                    else [match["interface_name"]]
+                )
+                argv.extend(["match.interface-name", ",".join(match_names)])
+
+        return argv
+
+    def run_action_present(self, idx):
+        connection = self.connections[idx]
+
+        if not connection.get("type"):
+            # this is mostly test teardown, nobody uses that in container builds
+            if connection["state"] == "down":
+                self.log_info(idx, "nm_offline ignoring 'state: down'")
+                return
+
+            self.log_error(idx, "Connection 'type' not specified")
+            return
+
+        # DEBUG, drop for final commit
+        self.log_info(
+            idx, "XXX nm_offline provider action_present connection: %r" % connection
+        )
+
+        # create the profile
+        (rc, out, err) = self.run_command(
+            self.connection_create(self.connections, idx), check_rc=True
+        )
+        # Should Not Happen™, but make sure
+        if not out.strip():
+            self.log_error(
+                idx, "nmcli --offline returned no output (rc %d); err: %s" % (rc, err)
+            )
+            return
+
+        path = self.profile_path(connection["name"])
+        if self.check_mode == CheckMode.REAL_RUN:
+            with open(path, "w") as f:
+                f.write(self.run_env.managed_file_header)
+                f.write(out.decode("UTF-8"))
+            os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
+            os.chown(path, 0, 0)
+
+        # nmcli always generates a new UUID, so comparing with existing file is moot
+        # always treat as changed, good enough for container builds
+        self.connections_data_set_changed(idx)
+
+    def run_action_absent(self, idx):
+        connection = self.connections[idx]
+        # DEBUG, drop for final commit
+        self.log_info(
+            idx, "XXX nm_offline provider action_absent connection: %r" % connection
+        )
+
+        try:
+            os.unlink(self.profile_path(connection["name"]))
+            self.connections_data_set_changed(idx)
+        except FileNotFoundError:
+            self.log_debug(
+                idx, "nm_offline: profile '%s' already absent" % connection["name"]
+            )
+
+    def run_action_up(self, idx):
+        # no runtime ops in offline provider
+        pass
+
+    def run_action_down(self, idx):
+        # no runtime ops in offline provider
+        pass
+
+
+###############################################################################
+
+
 class Cmd_initscripts(Cmd):
     def __init__(self, **kwargs):
         Cmd.__init__(self, **kwargs)
@@ -2763,7 +3279,7 @@ class Cmd_initscripts(Cmd):
         )
 
         new_content = IfcfgUtil.content_from_dict(
-            ifcfg_all, header=self.run_env.ifcfg_header
+            ifcfg_all, header=self.run_env.managed_file_header
         )
 
         if old_content == new_content:

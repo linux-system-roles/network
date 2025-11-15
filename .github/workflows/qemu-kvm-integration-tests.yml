@@ -8,8 +8,6 @@ on:  # yamllint disable-line rule:truthy
     types:
       - checks_requested
   push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -35,13 +33,6 @@ jobs:
           # container
           - { image: "centos-9", env: "container-ansible-core-2.16" }
           - { image: "centos-9-bootc", env: "container-ansible-core-2.16" }
-          # broken on non-running dbus
-          # - { image: "centos-10", env: "container-ansible-core-2.17" }
-          - { image: "centos-10-bootc", env: "container-ansible-core-2.17" }
-          - { image: "fedora-41", env: "container-ansible-core-2.17" }
-          - { image: "fedora-42", env: "container-ansible-core-2.17" }
-          - { image: "fedora-41-bootc", env: "container-ansible-core-2.17" }
-          - { image: "fedora-42-bootc", env: "container-ansible-core-2.17" }
 
     env:
       TOX_ARGS: "--skip-tags tests::infiniband,tests::nvme,tests::scsi"

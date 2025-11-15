@@ -2,7 +2,7 @@
 ---
 - name: Retrieve perm_hwaddr using ethtool
   # wokeignore:rule=slave
-  command: cat /sys/class/net/{{ interface }}/bonding_slave/perm_hwaddr
+  command: cat /sys/class/net/{{ lsr_interface | d(interface) }}/bonding_slave/perm_hwaddr
   register: mac_address_result
   changed_when: false
   failed_when: mac_address_result.rc != 0
@@ -11,7 +11,7 @@
     mac: "{{ mac_address_result.stdout_lines[-1].split(' ')[-1] }}"
 - name: Display the retrieved MAC address
   debug:
-    msg: "Retrieved MAC address for {{ interface }}: {{ mac }}"
+    msg: "Retrieved MAC address for {{ lsr_interface | d(interface) }}: {{ mac }}"
 - name: Test matching the port device based on the perm_hwaddr
   import_role:
     name: linux-system-roles.network
@@ -20,6 +20,6 @@
       - name: "{{ profile }}"
         state: up
         type: ethernet
-        interface_name: "{{ interface }}"
+        interface_name: "{{ lsr_interface | d(interface) }}"
         mac: "{{ mac }}"
 ...

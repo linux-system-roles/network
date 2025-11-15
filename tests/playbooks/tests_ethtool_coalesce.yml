@@ -12,153 +12,117 @@
       tags:
         - always
 
-    - name: "INIT: Ethtool coalesce tests"
-      debug:
-        msg: "##################################################"
-    - name: Include the task 'show_interfaces.yml'
-      include_tasks: tasks/show_interfaces.yml
-    - name: Include the task 'manage_test_interface.yml'
-      include_tasks: tasks/manage_test_interface.yml
-      vars:
-        state: present
-    - name: Include the task 'assert_device_present.yml'
-      include_tasks: tasks/assert_device_present.yml
-    - name: Install ethtool (test dependency)
-      package:
-        name: ethtool
-        state: present
-        use: "{{ (__network_is_ostree | d(false)) |
-          ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
+    - name: Include network role vars used by tests
+      include_role:
+        name: linux-system-roles.network
+        tasks_from: set_facts.yml
+        public: true
 
-    - name: Test ethtool coalesce settings
+    - name: Run tests
       block:
-        - name: >-
-            TEST: I can create a profile without any coalescing option.
-          debug:
-            msg: "##################################################"
-        - name: Import network role
-          import_role:
-            name: linux-system-roles.network
+        - name: Test creating profile without changing ethtool coalesce settings
+          when:
+            - __network_is_booted
+            - not __bootc_validation | d(false)
+          include_tasks: tasks/run_test.yml
           vars:
-            network_connections:
-              - name: "{{ interface }}"
-                type: ethernet
-                state: up
-                ip:
-                  dhcp4: false
-                  auto6: false
+            lsr_description: Test creating profile without changing ethtool coalesce
+            lsr_setup:
+              - tasks/show_interfaces.yml
+              - what: tasks/manage_test_interface.yml
+                state: present
+              - tasks/assert_device_present.yml
+            lsr_test:
+              - network_connections:
+                  - name: "{{ interface }}"
+                    type: ethernet
+                    state: up
+                    ip:
+                      dhcp4: false
+                      auto6: false
+            lsr_assert:  # NOTE: Cleanup is done in always at very end of file
+              - what: tasks/assert_command_output.yml
+                condition: "{{ network_provider == 'nm' }}"
+                lsr_command: nmcli -g ethtool.coalesce-rx-frames c show {{ interface | quote }}
+                lsr_not_stdout: coalesce
+              - what: tasks/assert_command_output.yml
+                condition: "{{ network_provider == 'initscripts' }}"
+                lsr_command: cat /etc/sysconfig/network-scripts/ifcfg-{{ interface | quote }}
+                lsr_not_stdout: ETHTOOL
+            lsr_cleanup: []
 
-        - name: Get profile's coalescing options
-          command: nmcli -g ethtool.coalesce-rx-frames c show {{ interface }}
-          register: no_coalesce_nm
-          when:
-            - network_provider == "nm"
-          changed_when: false
-        - name: "ASSERT: The profile does not contain coalescing options"
-          assert:
-            that: no_coalesce_nm.stdout | length == 0
-          when:
-            - network_provider == "nm"
-        - name: Get profile's coalescing options
-          command:
-            grep ETHTOOL /etc/sysconfig/network-scripts/ifcfg-{{ interface }}
-          register: no_coalesce_initscripts
-          ignore_errors: true
-          when:
-            - network_provider == "initscripts"
-          changed_when: false
-        - name: "ASSERT: The profile does not contain coalescing options"
-          assert:
-            that: no_coalesce_initscripts.stdout | length == 0
-          when:
-            - network_provider == "initscripts"
-
-        - name: >-
-            TEST: I can set rx-frames.
-          debug:
-            msg: "##################################################"
-        - name: Import network role
-          import_role:
-            name: linux-system-roles.network
+        - name: "TEST: I can set rx-frames."
+          include_tasks: tasks/run_test.yml
           vars:
-            network_connections:
-              - name: "{{ interface }}"
-                type: ethernet
-                state: up
-                ip:
-                  dhcp4: false
-                  auto6: false
-                ethtool:
-                  coalesce:
-                    rx_frames: 128
-        - name: Get profile's coalescing options
-          command: nmcli -g ethtool.coalesce-rx-frames c show {{ interface }}
-          register: with_coalesce_nm
-          when:
-            - network_provider == "nm"
-          changed_when: false
-        - name: Assert coalesce options set in profile
-          assert:
-            that: with_coalesce_nm.stdout == '128'
-          when:
-            - network_provider == "nm"
+            lsr_description: Test setting coalesce option
+            lsr_setup:
+              - tasks/show_interfaces.yml
+              - what: tasks/manage_test_interface.yml
+                state: present
+              - tasks/assert_device_present.yml
+            lsr_test:
+              - network_connections:
+                  - name: "{{ interface }}"
+                    type: ethernet
+                    state: up
+                    ip:
+                      dhcp4: false
+                      auto6: false
+                    ethtool:
+                      coalesce:
+                        rx_frames: 128
+            lsr_assert:
+              - what: tasks/assert_connection_settings.yml
+                condition: "{{ network_provider == 'nm' }}"
+                lsr_connection_name: "{{ interface }}"
+                lsr_connection_settings:
+                  - section: ethtool
+                    option: coalesce-rx-frames
+                    value: "128"
+              - what: tasks/assert_command_output.yml
+                condition: "{{ network_provider == 'nm' }}"
+                lsr_command: nmcli -g ethtool.coalesce-rx-frames c show {{ interface | quote }}
+                lsr_stdout: "128"
+              - what: tasks/assert_command_output.yml
+                condition: "{{ network_provider == 'initscripts' }}"
+                lsr_command: grep ETHTOOL /etc/sysconfig/network-scripts/ifcfg-{{ interface | quote }}
+                lsr_stdout: rx-frames 128
+            lsr_cleanup: []
 
-        - name: Get profile's coalescing options
-          command:
-            grep ETHTOOL /etc/sysconfig/network-scripts/ifcfg-{{ interface }}
-          register: with_coalesce_initscripts
-          ignore_errors: true
+        - name: Test clearing ethtool coalesce settings
           when:
-            - network_provider == "initscripts"
-          changed_when: false
-        - name: Assert coalesce options set in profile
-          assert:
-            that: '"rx-frames 128" in with_coalesce_initscripts.stdout'
-          when:
-            - network_provider == "initscripts"
-
-        - name: "TEST: I can clear coalescing options"
-          debug:
-            msg: "##################################################"
-        - name: Import network role
-          import_role:
-            name: linux-system-roles.network
+            - __network_is_booted
+            - not __bootc_validation | d(false)
+          include_tasks: tasks/run_test.yml
           vars:
-            network_connections:
-              - name: "{{ interface }}"
-                type: ethernet
-                state: up
-                ip:
-                  dhcp4: false
-                  auto6: false
-
-        - name: Get profile's coalescing options
-          command: nmcli -g ethtool.coalesce-rx-frames c show {{ interface }}
-          when:
-            - network_provider == "nm"
-          register: clear_coalesce_nm
-          changed_when: false
-        - name: "ASSERT: The profile does reset coalescing options"
-          assert:
-            that: clear_coalesce_nm.stdout | length == 0
-          when:
-            - network_provider == "nm"
-        - name: Get profile's coalescing options
-          command:
-            grep ETHTOOL /etc/sysconfig/network-scripts/ifcfg-{{ interface }}
-          register: clear_coalesce_initscripts
-          ignore_errors: true
-          when:
-            - network_provider == "initscripts"
-          changed_when: false
-        - name: "ASSERT: The profile does reset coalescing options"
-          assert:
-            that: clear_coalesce_initscripts.stdout | length == 0
-          when:
-            - network_provider == "initscripts"
+            lsr_description: Test creating profile without changing ethtool features
+            lsr_setup:
+              - tasks/show_interfaces.yml
+              - what: tasks/manage_test_interface.yml
+                state: present
+              - tasks/assert_device_present.yml
+            lsr_test:
+              - network_connections:
+                  - name: "{{ interface }}"
+                    type: ethernet
+                    state: up
+                    ip:
+                      dhcp4: false
+                      auto6: false
+            lsr_assert:  # NOTE: Cleanup is done in always at very end of file
+              - what: tasks/assert_command_output.yml
+                condition: "{{ network_provider == 'nm' }}"
+                lsr_command: nmcli -g ethtool.coalesce-rx-frames c show {{ interface | quote }}
+                lsr_not_stdout: coalesce
+              - what: tasks/assert_command_output.yml
+                condition: "{{ network_provider == 'initscripts' }}"
+                lsr_command: cat /etc/sysconfig/network-scripts/ifcfg-{{ interface | quote }}
+                lsr_not_stdout: ETHTOOL
+            lsr_cleanup: []
 
       always:
         - name: Clean up the test device and the connection profile
+          when: ansible_connection != "buildah"
           tags:
             - "tests::cleanup"
           block:
