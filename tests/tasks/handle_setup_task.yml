@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Handle setup task file
+  include_tasks: "{{ lsr_setup_item }}"
+  when: lsr_setup_item is string
+
+- name: Handle setup task with condition and variables
+  include_tasks: "{{ lsr_setup_item['what'] }}"
+  when:
+    - lsr_setup_item is mapping
+    - lsr_setup_item.get("condition", true)
+  vars:
+    state: "{{ lsr_setup_item.get('state', 'present') }}"
+    lsr_interface: "{{ lsr_setup_item.get('lsr_interface', interface | d('')) }}"
+    lsr_packages: "{{ lsr_setup_item.get('lsr_packages', []) }}"
+    lsr_command: "{{ lsr_setup_item.get('lsr_command', '') }}"
+    lsr_shell: "{{ lsr_setup_item.get('lsr_shell', '') }}"
+    lsr_stdout: "{{ lsr_setup_item.get('lsr_stdout', '') }}"
+    lsr_stdout_lines: "{{ lsr_setup_item.get('lsr_stdout_lines', []) }}"
+    lsr_stdout_regex_list: "{{ lsr_setup_item.get('lsr_stdout_regex_list', []) }}"
+    lsr_stderr: "{{ lsr_setup_item.get('lsr_stderr', '') }}"
+    lsr_not_stdout: "{{ lsr_setup_item.get('lsr_not_stdout', '') }}"
+    lsr_not_stderr: "{{ lsr_setup_item.get('lsr_not_stderr', '') }}"

@@ -10,106 +10,79 @@
       debug:
         msg: Inside ethernet tests
 
-    - name: Show network_provider
-      debug:
-        var: network_provider
-
-    - name: Include the task 'show_interfaces.yml'
-      include_tasks: tasks/show_interfaces.yml
-
-    - name: Include the task 'manage_test_interface.yml'
-      include_tasks: tasks/manage_test_interface.yml
-      vars:
-        state: present
-
-    - name: Include the task 'assert_device_present.yml'
-      include_tasks: tasks/assert_device_present.yml
-
-    - name: Test static interface up
-      include_role:
-        name: linux-system-roles.network
-      vars:
-        network_connections:
-          - name: "{{ interface }}"
-            interface_name: "{{ interface }}"
-            state: up
-            type: ethernet
-            autoconnect: true
-            ip:
-              address: 192.0.2.1/24
-
-    - name: Include the task 'assert_output_in_stderr_without_warnings.yml'
-      include_tasks: tasks/assert_output_in_stderr_without_warnings.yml
-
-    - name: Show network_provider after running role
-      debug:
-        var: network_provider
-
-    - name: Get NM connection file
-      slurp:
-        src: "/etc/NetworkManager/system-connections/{{ interface }}.nmconnection"
-      register: nm_connection_file
-      when:
-        - network_provider == 'nm'
-        # RHEL up to 8 uses initscripts backend
-        - ansible_distribution_major_version | int >= 9
-
-    - name: Assert settings in NM connection file
-      assert:
-        that:
-          - "('interface-name=' + interface) in nm_connection_file.content | b64decode"
-          - "'type=ethernet' in nm_connection_file.content | b64decode"
-          - "'address1=192.0.2.1/24' in nm_connection_file.content | b64decode"
-          - "'method=manual' in nm_connection_file.content | b64decode"
-      when:
-        - network_provider == 'nm'
-        # RHEL up to 8 uses initscripts backend
-        - ansible_distribution_major_version | int >= 9
-
-    - name: Get NM connection status
-      command: "nmcli connection show {{ interface }}"
-      changed_when: false
-      register: nm_connection_status
-      when: network_provider == 'nm'
-
-    - name: Assert NM connection status
-      assert:
-        that:
-          - nm_connection_status.stdout is search("ipv4.addresses:\s+192.0.2.1/24")
-      when: network_provider == 'nm'
-
-    - name: Get initscripts connection file
-      slurp:
-        src: "/etc/sysconfig/network-scripts/ifcfg-{{ interface }}"
-      register: initscripts_connection_file
-      when: network_provider == 'initscripts' or ansible_distribution_major_version | int < 9
-
-    - name: Assert settings in initscripts connection file
-      assert:
-        that:
-          - "'TYPE=Ethernet' in initscripts_connection_file.content | b64decode"
-          - "'DEVICE={{ interface }}' in initscripts_connection_file.content | b64decode"
-          - "'IPADDR=192.0.2.1' in initscripts_connection_file.content | b64decode"
-          - "'PREFIX=24' in initscripts_connection_file.content | b64decode"
-      when: network_provider == 'initscripts' or ansible_distribution_major_version | int < 9
-
-    - name: Include the tasks 'down_profile+delete_interface.yml'
-      include_tasks: tasks/down_profile+delete_interface.yml
-      vars:
-        profile: "{{ interface }}"
-
-    # FIXME: assert profile/device down
-    - name: Include the task 'remove_profile.yml'
-      include_tasks: tasks/remove_profile.yml
-      vars:
-        profile: "{{ interface }}"
-
-    - name: Include the task 'assert_profile_absent.yml'
-      include_tasks: tasks/assert_profile_absent.yml
-      vars:
-        profile: "{{ interface }}"
-    - name: Include the task 'assert_device_absent.yml'
-      include_tasks: tasks/assert_device_absent.yml
-
-    - name: Verify network state restored to default
-      include_tasks: tasks/check_network_dns.yml
+    - name: Test creating the bridge connection
+      tags:
+        - tests::states:create
+      block:
+        - name: Include the task 'run_test.yml'
+          include_tasks: tasks/run_test.yml
+          vars:
+            lsr_description: I can create a profile
+            lsr_setup:
+              - what: tasks/delete_interface.yml
+                condition: "{{ not __bootc_validation | default(false) }}"
+              - what: tasks/assert_device_absent.yml
+                condition: "{{ not __bootc_validation | default(false) }}"
+              - what: tasks/manage_test_interface.yml
+                state: present
+              - tasks/assert_device_present.yml
+            lsr_test:
+              - network_connections:
+                  - name: "{{ interface }}"
+                    interface_name: "{{ interface }}"
+                    state: up
+                    type: ethernet
+                    autoconnect: true
+                    ip:
+                      address: 192.0.2.1/24
+            lsr_assert:
+              - tasks/assert_output_in_stderr_without_warnings.yml
+              - tasks/assert_device_present.yml
+              # Device should be present because of autoconnect: true by
+              # default for NM (this might be considered a bug)
+              - what: tasks/assert_connection_settings.yml
+                condition: "{{ network_provider == 'nm' }}"
+                lsr_connection_name: "{{ interface }}"
+                lsr_connection_settings:
+                  - section: connection
+                    option: interface-name
+                    value: "{{ interface }}"
+                  - section: connection
+                    option: type
+                    value: ethernet
+                    nmvalue: 802-3-ethernet
+                  - section: ipv4
+                    option: address1
+                    value: 192.0.2.1/24
+                    nmvalue: false
+                  - section: ipv4
+                    option: addresses
+                    nmvalue: 192.0.2.1/24
+                  - section: ipv4
+                    option: method
+                    value: manual
+              - what: tasks/assert_connection_settings.yml
+                condition: "{{ network_provider == 'initscripts' or ansible_distribution_major_version | int < 9 }}"
+                lsr_connection_name: "{{ interface }}"
+                lsr_connection_settings:
+                  - TYPE=Ethernet
+                  - DEVICE={{ interface }}
+                  - IPADDR=192.0.2.1
+                  - PREFIX=24
+              - what: tasks/assert_nm_connection_status.yml
+                condition: "{{ network_provider == 'nm' and __network_is_booted }}"
+                lsr_connection_name: "{{ interface }}"
+                lsr_connection_output: 'ipv4.addresses:\s+192.0.2.1/24'
+            lsr_cleanup:
+              - what: tasks/down_profile+delete_interface.yml
+                condition: "{{ __network_is_booted }}"
+                profile: "{{ interface }}"
+                lsr_persistent_state: absent
+              - what: tasks/remove_profile.yml
+                profile: "{{ interface }}"
+              - what: tasks/assert_profile_absent.yml
+                condition: "{{ __network_is_booted }}"
+                profile: "{{ interface }}"
+              - what: tasks/assert_device_absent.yml
+                profile: "{{ interface }}"
+              - tasks/check_network_dns.yml

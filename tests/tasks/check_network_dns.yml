@@ -20,6 +20,7 @@
       ls -alrtF /etc/resolv.* || :
     fi
   changed_when: false
+  when: __network_is_booted | d(true) | bool
 
 - name: Verify DNS and network connectivity
   shell: |
@@ -35,5 +36,7 @@
         exit 1
       fi
     done
-  when: ansible_facts["distribution"] == "CentOS"
   changed_when: false
+  when:
+    - ansible_facts["distribution"] == "CentOS"
+    - __network_is_booted | d(true) | bool

@@ -5,7 +5,7 @@
     name: linux-system-roles.network
   vars:
     network_connections:
-      - name: "{{ interface }}"
+      - name: "{{ lsr_interface | d(interface) }}"
         persistent_state: present
         type: bridge
         ip:
