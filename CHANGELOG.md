@@ -1,6 +1,21 @@
 Changelog
 =========
 
+[1.17.7] - 2025-11-17
+--------------------
+
+### Bug Fixes
+
+- fix: cannot use community-general version 12 - no py27 and py36 support (#824)
+
+### Other Changes
+
+- ci: bump actions/upload-artifact from 4 to 5 (#819)
+- ci: bump github/codeql-action from 3 to 4 (#820)
+- ci: use versioned upload-artifact instead of master; bump codeql-action to v4; bump upload-artifact to v5 (#821)
+- ci: bump tox-lsr to 3.13.0 (#822)
+- ci: bump tox-lsr to 3.14.0 - this moves standard-inventory-qcow2 to tox-lsr (#823)
+
 [1.17.6] - 2025-10-21
 --------------------
 
