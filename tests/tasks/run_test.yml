@@ -6,9 +6,16 @@
       debug:
         msg: "########## {{ lsr_description }} ##########"
 
+    - name: Include network role vars used by tests
+      include_role:
+        name: linux-system-roles.network
+        tasks_from: set_facts.yml
+        public: true
+      when: __network_is_booted is not defined
+
     - name: Show item
       debug:
-        var: "{{ item }}"
+        msg: item {{ item | default("UNDEFINED") | to_nice_json }}
       loop:
         - lsr_description
         - lsr_setup
@@ -22,27 +29,50 @@
       include_tasks: tasks/show_interfaces.yml
 
     - name: Setup
-      include_tasks: "{{ item }}"
+      include_tasks: tasks/handle_setup_task.yml
       loop: "{{ lsr_setup }}"
+      loop_control:
+        loop_var: lsr_setup_item
       tags:
         - "tests::setup"
 
     - name: Test
-      include_tasks: "{{ item }}"
+      include_tasks: tasks/handle_test_task.yml
       loop: "{{ lsr_test }}"
+      loop_control:
+        loop_var: lsr_test_item
+      when: not __bootc_validation | default(false)
       tags:
         - "tests::test"
 
-    - name: Asserts
-      include_tasks: "{{ item }}"
-      loop: "{{ lsr_assert }}"
-      tags:
-        - "tests::assert"
+    # When validation is enabled, we need to load the role variables
+    # and set the result because we aren't running the role to set
+    # the network connections - that was already done at build time
+    - name: Handle case where validation is enabled
+      when: __bootc_validation | default(false)
+      block:
+        - name: Load role variables
+          include_role:
+            name: linux-system-roles.network
+            tasks_from: set_facts.yml
+            public: true
 
-    - name: Conditional asserts
-      include_tasks: "{{ item['what'] }}"
-      when: item['condition']
-      loop: "{{ lsr_assert_when | default([]) }}"
+        - name: Set result
+          set_fact:
+            __network_connections_result:
+              failed: false
+              stderr: ""
+              stdout: ""
+              changed: true
+              stdout_lines: []
+              stderr_lines: []
+
+    # You can use either lsr_assert or lsr_assert_when - but not both
+    - name: Asserts
+      include_tasks: tasks/handle_assert_task.yml
+      loop: "{{ (lsr_assert | default([])) + (lsr_assert_when | default([])) }}"
+      loop_control:
+        loop_var: lsr_assert_item
 
     - name: "Success in test '{{ lsr_description }}'"
       debug:
@@ -55,7 +85,7 @@
 
     - name: Show item that failed
       debug:
-        var: "{{ item }}"
+        var: "{{ item | d('UNDEFINED') }}"
       loop: "{{ lsr_fail_debug | default([]) }}"
 
     - name: Issue failed message
@@ -63,9 +93,19 @@
         msg: "!!!!! Failure in test '{{ lsr_description }}' !!!!!"
 
   always:
+    - name: Create QEMU deployment during bootc end-to-end test
+      delegate_to: localhost
+      command: "{{ lsr_scriptdir | quote }}/bootc-buildah-qcow.sh {{ ansible_host | quote }}"
+      changed_when: true
+      when: ansible_connection == "buildah"
+
+    # skip cleanup if building with buildah
     - name: Cleanup
-      include_tasks: "{{ item }}"
+      include_tasks: tasks/handle_cleanup_task.yml
       loop: "{{ lsr_cleanup }}"
+      loop_control:
+        loop_var: lsr_cleanup_item
+      when: ansible_connection != "buildah"
       tags:
         - "tests::cleanup"
 ...

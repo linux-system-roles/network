@@ -21,13 +21,23 @@
                     - 192.0.2.1/24
                 state: up
         - name: Get DNS search entry for IPv4
-          command: nmcli -f ipv4.dns-search connection show br-example
+          command: >-
+            {{
+              "nmcli -f ipv4.dns-search connection show br-example"
+              if __network_is_booted else
+              "sed -n '/^\[ipv4\]/,/^$/ {/dns-search=/p}' /etc/NetworkManager/system-connections/br-example.nmconnection"
+            }}
           register: ipv4_dns_search
           ignore_errors: true
           changed_when: false
 
         - name: Get DNS search entry for IPv6
-          command: nmcli -f ipv6.dns-search connection show br-example
+          command: >-
+            {{
+              "nmcli -f ipv6.dns-search connection show br-example"
+              if __network_is_booted else
+              "sed -n '/^\[ipv6\]/,/^$/ {/dns-search=/p}' /etc/NetworkManager/system-connections/br-example.nmconnection"
+            }}
           register: ipv6_dns_search
           ignore_errors: true
           changed_when: false
@@ -67,7 +77,12 @@
                 state: up
 
         - name: Get DNS search entry for IPv6
-          command: nmcli -f ipv6.dns-search connection show br-example
+          command: >-
+            {{
+              "nmcli -f ipv6.dns-search connection show br-example"
+              if __network_is_booted else
+              "sed -n '/^\[ipv6\]/,/^$/ {/dns-search=/p}' /etc/NetworkManager/system-connections/br-example.nmconnection"
+            }}
           register: ipv6_dns_search_static
           ignore_errors: true
           changed_when: false
@@ -99,7 +114,12 @@
                 state: up
 
         - name: Get DNS search entry for IPv6
-          command: nmcli -f ipv6.dns-search connection show br-example
+          command: >-
+            {{
+              "nmcli -f ipv6.dns-search connection show br-example"
+              if __network_is_booted else
+              "sed -n '/^\[ipv6\]/,/^$/ {/dns-search=/p}' /etc/NetworkManager/system-connections/br-example.nmconnection"
+            }}
           register: ipv6_dns_search_static_only
           ignore_errors: true
           changed_when: false

@@ -7,3 +7,4 @@
     network_connections:
       - name: "{{ profile }}"
         state: down
+        persistent_state: "{{ lsr_persistent_state | d('present') }}"

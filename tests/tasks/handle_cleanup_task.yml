@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Handle cleanup task file
+  include_tasks: "{{ lsr_cleanup_item }}"
+  when: lsr_cleanup_item is string
+
+- name: Handle cleanup task with condition and variables
+  include_tasks: "{{ lsr_cleanup_item['what'] }}"
+  when:
+    - lsr_cleanup_item is mapping
+    - lsr_cleanup_item.get("condition", true)
+  vars:
+    profile: "{{ lsr_cleanup_item.get('profile', interface | d('')) }}"
+    state: "{{ lsr_cleanup_item.get('state', 'present') }}"
+    lsr_persistent_state: "{{ lsr_cleanup_item.get('lsr_persistent_state', '') }}"

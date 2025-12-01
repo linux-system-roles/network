@@ -9,13 +9,18 @@
   loop_control:
     loop_var: bond_opt
   changed_when: false
+  when: __network_is_booted | bool
+
 - name: Include the task 'assert_IPv4_present.yml'
   include_tasks: assert_IPv4_present.yml
   vars:
-    interface: "{{ controller_device }}"
+    lsr_interface: "{{ controller_device }}"
     address: '192.0.2'
+  when: __network_is_booted | bool
+
 - name: Include the task 'assert_IPv6_present.yml'
   include_tasks: assert_IPv6_present.yml
   vars:
-    interface: "{{ controller_device }}"
+    lsr_interface: "{{ controller_device }}"
     address: '2001'
+  when: __network_is_booted | bool

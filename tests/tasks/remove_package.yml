@@ -4,3 +4,4 @@
   package:
     name: "{{ package }}"
     state: absent
+  when: not __network_is_ostree | d(false)

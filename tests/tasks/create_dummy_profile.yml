@@ -5,7 +5,7 @@
     name: linux-system-roles.network
   vars:
     network_connections:
-      - name: "{{ interface }}"
+      - name: "{{ lsr_interface | d(interface) }}"
         autoconnect_retries: "{{ autocon_retries }}"
         state: up
         type: dummy

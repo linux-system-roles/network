@@ -22,8 +22,15 @@
 # When certain profile is marked as absent but still up, the `nmcli connection`
 # still show it with FILENAME starting with /run. Only consider profile exists
 # when its FILENAME is in /etc folder
+# in the non-booted case, we can predict the profile path from nm_offline backend
 - name: Get NM profile info
-  shell: nmcli -f NAME,FILENAME connection show |grep {{ profile }} | grep /etc
+  vars:
+    nm_profile_cmd: >-
+      {{ "nmcli -f NAME,FILENAME connection show | grep " ~ profile ~ " | grep /etc"
+         if __network_is_booted
+         else "test -s /etc/NetworkManager/system-connections/" ~ profile ~ ".nmconnection" }}
+  # noqa command-instead-of-shell
+  shell: "{{ nm_profile_cmd }}"
   register: nm_profile_exists
   ignore_errors: true
   changed_when: false

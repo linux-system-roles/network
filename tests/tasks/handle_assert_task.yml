@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Handle assert task file
+  include_tasks: "{{ lsr_assert_item }}"
+  when: lsr_assert_item is string
+
+- name: Handle assert task with condition and variables
+  include_tasks: "{{ lsr_assert_item['what'] }}"
+  when:
+    - lsr_assert_item is mapping
+    - lsr_assert_item.get("condition", true)
+  vars:
+    lsr_connection_name: "{{ lsr_assert_item.get('lsr_connection_name', '') }}"
+    lsr_connection_settings: "{{ lsr_assert_item.get('lsr_connection_settings', []) }}"
+    lsr_connection_output: "{{ lsr_assert_item.get('lsr_connection_output', '') }}"
+    lsr_packages: "{{ lsr_assert_item.get('lsr_packages', []) }}"
+    lsr_command: "{{ lsr_assert_item.get('lsr_command', '') }}"
+    lsr_shell: "{{ lsr_assert_item.get('lsr_shell', '') }}"
+    lsr_stdout: "{{ lsr_assert_item.get('lsr_stdout', '') }}"
+    lsr_stdout_lines: "{{ lsr_assert_item.get('lsr_stdout_lines', []) }}"
+    lsr_stdout_regex_list: "{{ lsr_assert_item.get('lsr_stdout_regex_list', []) }}"
+    lsr_stderr: "{{ lsr_assert_item.get('lsr_stderr', '') }}"
+    lsr_not_stdout: "{{ lsr_assert_item.get('lsr_not_stdout', '') }}"
+    lsr_not_stderr: "{{ lsr_assert_item.get('lsr_not_stderr', '') }}"
+    profile: "{{ lsr_assert_item.get('profile', '') }}"

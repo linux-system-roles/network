@@ -2,6 +2,9 @@
 ---
 - name: Play for configuring network using network state variable
   hosts: all
+  tags:
+    # this is runtime configuration and checks
+    - tests::booted
   vars:
     type: veth
     interface0: ethtest0
