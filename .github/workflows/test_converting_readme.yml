@@ -26,7 +26,7 @@ jobs:
           sudo apt install -y git
 
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Remove badges from README.md prior to converting to HTML
         run: sed -i '1,8 {/^\[\!.*actions\/workflows/d}' README.md
