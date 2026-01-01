@@ -40,7 +40,7 @@ jobs:
             --output README.html README.md
 
       - name: Upload README.html as an artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: README.html
           path: README.html
