@@ -20,7 +20,7 @@
         ip netns exec ns1 ip link set peer{{ interface }} up
       when:
         # netns not available on RHEL/CentOS 6
-        - ansible_distribution_major_version != '6'
+        - ansible_facts['distribution_major_version'] != '6'
       changed_when: false
     - name: Test IPv6 config
       block:
@@ -87,7 +87,7 @@
         - name: Test gateway can be pinged
           command: ping6 -c1 2001:db8::1
           when:
-            - ansible_distribution_major_version != '6'
+            - ansible_facts['distribution_major_version'] != '6'
           changed_when: false
       always:
         - name: "TEARDOWN: remove profiles."
@@ -109,7 +109,7 @@
         - name: Clean up namespace
           command: ip netns delete ns1
           when:
-            - ansible_distribution_major_version != '6'
+            - ansible_facts['distribution_major_version'] != '6'
           changed_when: false
         - name: Verify network state restored to default
           include_tasks: tasks/check_network_dns.yml

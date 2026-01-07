@@ -16,7 +16,7 @@
 
     - name: Install NetworkManager and get NetworkManager version
       when:
-        - ansible_distribution_major_version != '6'
+        - ansible_facts['distribution_major_version'] != '6'
       tags:
         - always
       block:
@@ -40,6 +40,6 @@
 - name: Import the playbook 'playbooks/tests_mac_address_match.yml'
   import_playbook: playbooks/tests_mac_address_match.yml
   when:
-    - ansible_distribution_major_version != '6'
+    - ansible_facts['distribution_major_version'] != '6'
 
     - networkmanager_version is version('1.18.0', '>=')

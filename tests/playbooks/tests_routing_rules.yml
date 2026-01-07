@@ -141,7 +141,7 @@
                 until NM 1.20")
             msg: The routing rule attribute 'suppress_prefixlength' validation
               failure is not raised when the distro's major version is 7
-          when: ansible_distribution_major_version == "7"
+          when: ansible_facts['distribution_major_version'] == "7"
 
         - name: Clear errors
           meta: clear_host_errors
@@ -161,28 +161,28 @@
       register: route_rule_table_30200
       ignore_errors: true
       changed_when: false
-      when: ansible_distribution_major_version != "7"
+      when: ansible_facts['distribution_major_version'] != "7"
 
     - name: Get the routing rule for looking up the table 30400
       command: ip rule list table 30400
       register: route_rule_table_30400
       ignore_errors: true
       changed_when: false
-      when: ansible_distribution_major_version != "7"
+      when: ansible_facts['distribution_major_version'] != "7"
 
     - name: Get the routing rule for looking up the table 30600
       command: ip -6 rule list table 30600
       register: route_rule_table_30600
       ignore_errors: true
       changed_when: false
-      when: ansible_distribution_major_version != "7"
+      when: ansible_facts['distribution_major_version'] != "7"
 
     - name: Get the routing rule for looking up the table 'custom'
       command: ip rule list table custom
       register: route_rule_table_custom
       ignore_errors: true
       changed_when: false
-      when: ansible_distribution_major_version != "7"
+      when: ansible_facts['distribution_major_version'] != "7"
 
     - name: Get the IPv4 routing rule for the connection "{{ interface }}"
       command: nmcli -f ipv4.routing-rules c show "{{ interface }}"
@@ -216,7 +216,7 @@
             30200 suppress_prefixlength 8")
         msg: "the routing rule with table lookup 30200 does not match the
           specified rule"
-      when: ansible_distribution_major_version != "7"
+      when: ansible_facts['distribution_major_version'] != "7"
 
     - name: Assert that the routing rule with table lookup 30400 matches the
         specified rule
@@ -230,7 +230,7 @@
             oiftest \[detached\] lookup 30400")
         msg: "the routing rule with table lookup 30400 does not match the
           specified rule"
-      when: ansible_distribution_major_version != "7"
+      when: ansible_facts['distribution_major_version'] != "7"
 
     - name: Assert that the routing rule with table lookup 30600 matches the
         specified rule
@@ -246,7 +246,7 @@
             lookup 30600 suppress_prefixlength 24")
         msg: "the routing rule with table lookup 30600 does not match the
           specified rule"
-      when: ansible_distribution_major_version != "7"
+      when: ansible_facts['distribution_major_version'] != "7"
 
     - name: Assert that the routing rule with 'custom' table lookup matches the
         specified rule
@@ -256,7 +256,7 @@
             198.51.100.56/26 lookup custom")
         msg: "the routing rule with 'custom' table lookup does not match the
           specified rule"
-      when: ansible_distribution_major_version != "7"
+      when: ansible_facts['distribution_major_version'] != "7"
 
     - name: Assert that the specified IPv4 routing rule was configured in the
         connection "{{ interface }}"

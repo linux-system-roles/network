@@ -23,18 +23,18 @@
       supported since RHEL-8
   when:
     - network_state != {}
-    - ansible_distribution_major_version | int < 8
+    - ansible_facts["distribution_major_version"] | int < 8
 
 - name: Abort applying teaming configuration if the system version
     of the managed host is EL10 or later
   fail:
     msg: >-
       Teaming is not supported in
-      {{ ansible_distribution }}-{{ ansible_distribution_major_version }} -
+      {{ ansible_facts["distribution"] }}-{{ ansible_facts["distribution_major_version"] }} -
       use bonding instead
   when:
-    - ansible_distribution_major_version | int > 9
-    - ansible_distribution in __network_rh_distros
+    - ansible_facts["distribution_major_version"] | int > 9
+    - ansible_facts["distribution"] in __network_rh_distros
     - network_connections | selectattr("type", "defined") |
       selectattr("type", "match", "^team$") | list | length > 0 or
       network_state.get("interfaces", []) | selectattr("type", "defined") |
@@ -49,8 +49,8 @@
   register: dnf_package_update_info
   check_mode: true
   when:
-    - ansible_distribution == 'Fedora' or
-      ansible_distribution_major_version | int > 7
+    - ansible_facts["distribution"] == 'Fedora' or
+      ansible_facts["distribution_major_version"] | int > 7
     - __network_wireless_connections_defined
       or __network_team_connections_defined
     - not __network_is_ostree
@@ -64,7 +64,7 @@
   register: yum_package_update_info
   check_mode: true
   when:
-    - ansible_distribution_major_version | int < 8
+    - ansible_facts["distribution_major_version"] | int < 8
     - __network_wireless_connections_defined
       or __network_team_connections_defined
     - not __network_is_ostree
@@ -112,10 +112,10 @@
       ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
   when:
     - network_state != {}
-    - ansible_distribution == 'Fedora' and
-      ansible_distribution_major_version | int > 27 or
-      ansible_distribution != 'Fedora' and
-      ansible_distribution_major_version | int > 7
+    - ansible_facts["distribution"] == 'Fedora' and
+      ansible_facts["distribution_major_version"] | int > 27 or
+      ansible_facts["distribution"] != 'Fedora' and
+      ansible_facts["distribution_major_version"] | int > 7
 
 - name: Install python3-libnmstate when using network_state variable
   package:
@@ -126,10 +126,10 @@
       ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
   when:
     - network_state != {}
-    - ansible_distribution == 'Fedora' and
-      ansible_distribution_major_version | int > 34 or
-      ansible_distribution != 'Fedora' and
-      ansible_distribution_major_version | int > 8
+    - ansible_facts["distribution"] == 'Fedora' and
+      ansible_facts["distribution_major_version"] | int > 34 or
+      ansible_facts["distribution"] != 'Fedora' and
+      ansible_facts["distribution_major_version"] | int > 8
 
 # If network packages changed and wireless or team connections are specified,
 # NetworkManager must be restarted, and the user needs to explicitly consent

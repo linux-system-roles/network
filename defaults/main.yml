@@ -19,16 +19,16 @@ __network_rh_distros:
 __network_rh_distros_fedora: "{{ __network_rh_distros + ['Fedora'] }}"
 
 # Use this in conditionals to check if distro is Red Hat or clone
-__network_is_rh_distro: "{{ ansible_distribution in __network_rh_distros }}"
+__network_is_rh_distro: "{{ ansible_facts['distribution'] in __network_rh_distros }}"
 
 # Use this in conditionals to check if distro is Red Hat or clone, or Fedora
-__network_is_rh_distro_fedora: "{{ ansible_distribution in __network_rh_distros_fedora }}"
+__network_is_rh_distro_fedora: "{{ ansible_facts['distribution'] in __network_rh_distros_fedora }}"
 # END - DO NOT EDIT THIS BLOCK - rh distros variables
 
 # Use initscripts for RHEL/CentOS < 7, nm otherwise
 network_provider_os_default: "{{
-    'initscripts' if ansible_distribution in __network_rh_distros and
-        ansible_distribution_major_version is version('7', '<')
+    'initscripts' if ansible_facts['distribution'] in __network_rh_distros and
+        ansible_facts['distribution_major_version'] is version('7', '<')
         else 'nm' }}"
 # If NetworkManager.service is running, assume that 'nm' is currently in-use,
 # otherwise initscripts
@@ -76,7 +76,7 @@ __network_packages_default_wpa_supplicant: ["{%
 # - python-gobject-base on RHEL7 (no python2-gobject-base :-/)
 # - python3-gobject-base on Fedora 28+
 __network_packages_default_gobject_packages: ["python{{
-      ansible_python['version']['major'] | replace('2', '') }}-gobject-base"]
+      ansible_facts['python']['version']['major'] | replace('2', '') }}-gobject-base"]
 
 __network_service_name_default_nm: NetworkManager
 __network_packages_default_nm: "{{ ['NetworkManager']
@@ -92,18 +92,18 @@ __network_service_name_default_initscripts: network
 __network_packages_default_initscripts_bridge: ["{%
 if network_connections | selectattr('type', 'defined') |
    selectattr('type', 'match', '^bridge$') | list | count > 0 and
-   ansible_distribution in __network_rh_distros and
-   ansible_distribution_major_version is version('7', '<=')
+   ansible_facts['distribution'] in __network_rh_distros and
+   ansible_facts['distribution_major_version'] is version('7', '<=')
 %}bridge-utils{% endif %}"]
 __network_packages_default_initscripts_network_scripts: ["{%
-if ansible_distribution in __network_rh_distros and
-    ansible_distribution_major_version is version('7', '<=')
+if ansible_facts['distribution'] in __network_rh_distros and
+    ansible_facts['distribution_major_version'] is version('7', '<=')
 %}initscripts{% else %}network-scripts{% endif %}"]
 # Initscripts provider requires `/sbin/dhclient` to obtain DHCP address,
 # which is provided by the dhcp client package
 __network_packages_default_initscripts_dhcp_client: ["{%
-if ansible_distribution in __network_rh_distros and
-    ansible_distribution_major_version is version('7', '<=')
+if ansible_facts['distribution'] in __network_rh_distros and
+    ansible_facts['distribution_major_version'] is version('7', '<=')
 %}dhclient{% else %}dhcp-client{% endif %}"]
 # convert _network_packages_default_initscripts_bridge to an empty list if it
 # contains only the empty string and add it to the default package list

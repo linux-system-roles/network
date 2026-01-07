@@ -20,4 +20,4 @@
 - name: Import the playbook 'playbooks/tests_routing_rules.yml'
   import_playbook: playbooks/tests_routing_rules.yml
   when:
-    - ansible_distribution_major_version != '6'
+    - ansible_facts['distribution_major_version'] != '6'

@@ -126,14 +126,14 @@
                 state: up
           ignore_errors: true  # noqa ignore-errors
           changed_when: false
-          when: ansible_distribution_major_version | int > 7
+          when: ansible_facts["distribution_major_version"] | int > 7
 
         - name: Assert that reconfiguring network connection is failed
           assert:
             that:
               - __network_connections_result.failed
             msg: reconfiguring network connection is not failed
-          when: ansible_distribution_major_version | int > 7
+          when: ansible_facts["distribution_major_version"] | int > 7
 
         - name: Assert that configuring DNS search setting is not allowed when
             both IPv4 and IPv6 are disabled
@@ -145,7 +145,7 @@
             msg: Reconfiguring network connection is not failed with the error
               "Setting 'dns_search', 'dns_options', and 'dns_priority' are not
               allowed when both IPv4 and IPv6 are disabled."
-          when: ansible_distribution_major_version | int > 7
+          when: ansible_facts["distribution_major_version"] | int > 7
 
       always:
         - name: Clean up the test device and the connection profile

@@ -134,7 +134,7 @@
           environment:
             PYTHONPATH: "{{ _lsr_python_path }}"
           when: >
-            python2_available is succeeded and ansible_distribution != 'Fedora'
+            python2_available is succeeded and ansible_facts['distribution'] != 'Fedora'
           register: python2_result
           changed_when: false
 

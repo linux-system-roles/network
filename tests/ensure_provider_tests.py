@@ -12,7 +12,7 @@ import sys
 GET_NM_VERSION = """
     - name: Install NetworkManager and get NetworkManager version
       when:
-        - ansible_distribution_major_version != '6'
+        - ansible_facts['distribution_major_version'] != '6'
       tags:
         - always
       block:
@@ -58,7 +58,7 @@ RUN_PLAYBOOK_WITH_NM = """# SPDX-License-Identifier: BSD-3-Clause
 {comment}- name: Import the playbook '{test_playbook}'
   import_playbook: {test_playbook}
   when:
-    - ansible_distribution_major_version != '6'
+    - ansible_facts['distribution_major_version'] != '6'
 {minimum_nm_version_check}{extra_run_condition}"""
 
 MINIMUM_VERSION = "minimum_version"
@@ -66,16 +66,16 @@ EXTRA_RUN_CONDITION = "extra_run_condition"
 NM_ONLY_TESTS = {
     "playbooks/tests_802_1x_updated.yml": {
         EXTRA_RUN_CONDITION: (
-            "(ansible_distribution != 'RedHat' and\n"
-            "       ansible_distribution_major_version | int > 7) or\n"
-            "      ansible_distribution_major_version | int == 8"
+            "(ansible_facts['distribution'] != 'RedHat' and\n"
+            "       ansible_facts['distribution_major_version'] | int > 7) or\n"
+            "      ansible_facts['distribution_major_version'] | int == 8"
         ),
     },
     "playbooks/tests_802_1x.yml": {
         EXTRA_RUN_CONDITION: (
-            "(ansible_distribution != 'RedHat' and\n"
-            "       ansible_distribution_major_version | int > 7) or\n"
-            "      ansible_distribution_major_version | int == 8"
+            "(ansible_facts['distribution'] != 'RedHat' and\n"
+            "       ansible_facts['distribution_major_version'] | int > 7) or\n"
+            "      ansible_facts['distribution_major_version'] | int == 8"
         ),
     },
     "playbooks/tests_ignore_auto_dns.yml": {},
@@ -94,10 +94,10 @@ NM_ONLY_TESTS = {
         MINIMUM_VERSION: "'1.20.0'",
         "comment": "# NetworKmanager 1.20.0 added support for forgetting profiles",
         EXTRA_RUN_CONDITION: (
-            "(ansible_distribution == 'Fedora'\n"
-            "       and ansible_distribution_major_version | int < 41)\n"
-            "      or ansible_distribution not in ['RedHat', 'CentOS', 'Fedora']\n"
-            "      or ansible_distribution_major_version | int < 9"
+            "(ansible_facts['distribution'] == 'Fedora'\n"
+            "       and ansible_facts['distribution_major_version'] | int < 41)\n"
+            "      or ansible_facts['distribution'] not in ['RedHat', 'CentOS', 'Fedora']\n"
+            "      or ansible_facts['distribution_major_version'] | int < 9"
         ),
     },
     "playbooks/tests_eth_pci_address_match.yml": {
@@ -105,7 +105,7 @@ NM_ONLY_TESTS = {
         "comment": "# NetworkManager 1.26.0 added support for match.path setting",
     },
     "playbooks/tests_network_state.yml": {
-        EXTRA_RUN_CONDITION: "ansible_distribution_major_version | int > 7",
+        EXTRA_RUN_CONDITION: "ansible_facts['distribution_major_version'] | int > 7",
     },
     "playbooks/tests_reapply.yml": {},
     "playbooks/tests_route_table.yml": {},
@@ -117,32 +117,30 @@ blackhole, prohibit and unreachable",
     "playbooks/tests_routing_rules.yml": {},
     # teaming support dropped in EL10
     "playbooks/tests_team.yml": {
-        EXTRA_RUN_CONDITION: "ansible_distribution not in ['RedHat', 'CentOS'] or\n      ansible_distr\
-ibution_major_version | int < 10",
+        EXTRA_RUN_CONDITION: "ansible_facts['distribution'] not in ['RedHat', 'CentOS'] or\n      ansible_facts['distribution_major_version'] | int < 10",
     },
     "playbooks/tests_team_plugin_installation.yml": {
-        EXTRA_RUN_CONDITION: "ansible_distribution not in ['RedHat', 'CentOS'] or\n      ansible_distr\
-ibution_major_version | int < 10",
+        EXTRA_RUN_CONDITION: "ansible_facts['distribution'] not in ['RedHat', 'CentOS'] or\n      ansible_facts['distribution_major_version'] | int < 10",
     },
     # mac80211_hwsim (used for tests_wireless) only seems to be available
     # and working on RHEL/CentOS 7
     "playbooks/tests_wireless.yml": {
-        EXTRA_RUN_CONDITION: "ansible_distribution_major_version == '7'",
+        EXTRA_RUN_CONDITION: "ansible_facts['distribution_major_version'] == '7'",
     },
     "playbooks/tests_wireless_and_network_restart.yml": {},
     "playbooks/tests_wireless_plugin_installation.yml": {},
     "playbooks/tests_wireless_wpa3_owe.yml": {
         "comment": "# OWE has not been supported by NetworkManager 1.18.8 on \
 RHEL 7(dist-tag). Failed in setting up mock wifi on RHEL 8",
-        EXTRA_RUN_CONDITION: "ansible_distribution_major_version > '7' and \
-ansible_distribution == 'CentOS' or\n     ansible_distribution_major_version > '32' \
-and ansible_distribution == 'Fedora'",
+        EXTRA_RUN_CONDITION: "ansible_facts['distribution_major_version'] > '7' and \
+ansible_facts['distribution'] == 'CentOS' or\n     ansible_facts['distribution_major_version'] > '32' \
+and ansible_facts['distribution'] == 'Fedora'",
     },
     "playbooks/tests_wireless_wpa3_sae.yml": {
         "comment": "# SAE has not been supported by NetworkManager 1.18.8 on \
 RHEL 7. Failed in setting up mock wifi on RHEL 8",
-        EXTRA_RUN_CONDITION: "ansible_distribution_major_version != '7' and \
-ansible_distribution != 'RedHat'",
+        EXTRA_RUN_CONDITION: "ansible_facts['distribution_major_version'] != '7' and \
+ansible_facts['distribution'] != 'RedHat'",
     },
 }
 # NM_CONDITIONAL_TESTS is used to store the test playbooks which are demanding for NM
@@ -187,8 +185,8 @@ RUN_PLAYBOOK_WITH_INITSCRIPTS = """# SPDX-License-Identifier: BSD-3-Clause
 
 - name: Import the playbook '{test_playbook}'
   import_playbook: {test_playbook}
-  when: (ansible_distribution in ['CentOS','RedHat'] and\n    \
-ansible_distribution_major_version | int < 9)
+  when: (ansible_facts['distribution'] in ['CentOS','RedHat'] and\n    \
+ansible_facts['distribution_major_version'] | int < 9)
 """
 
 

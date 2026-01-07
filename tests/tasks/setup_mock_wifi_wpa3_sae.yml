@@ -14,7 +14,7 @@
   delay: 10
 
 - name: Configure CentOS system for testing, if possible
-  when: ansible_distribution == 'CentOS'
+  when: ansible_facts['distribution'] == 'CentOS'
   block:
     # It is currently too difficult to install the required kernel
     # if using rpm ostree - so just skip this test
@@ -49,7 +49,7 @@
       - hostapd
     state: present
   when:
-    - ansible_distribution == 'Fedora'
+    - ansible_facts['distribution'] == 'Fedora'
   register: __install_status
   until: __install_status is success
   retries: 6
@@ -64,7 +64,7 @@
     koji download-build --arch=$(uname -m) kernel-modules-internal-$(uname -r)
     dnf -y install kernel-modules*.rpm
   when:
-    - ansible_distribution == 'Fedora'
+    - ansible_facts['distribution'] == 'Fedora'
   changed_when: false
 
 - name: Create hostapd config
