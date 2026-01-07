@@ -14,7 +14,7 @@
   delay: 10
 
 - name: Check if can test on CentOS and setup if possible
-  when: ansible_distribution == 'CentOS'
+  when: ansible_facts['distribution'] == 'CentOS'
   block:
     # It is currently too difficult to install the required kernel
     # if using rpm ostree - so just skip this test
@@ -48,7 +48,7 @@
     dnf -y copr enable liangwen12year/hostapd-owe
     dnf -y install hostapd
   when:
-    - ansible_distribution == 'Fedora'
+    - ansible_facts['distribution'] == 'Fedora'
   changed_when: false
 
 - name: Install mac80211_hwsim kernel modules in Fedora
@@ -57,7 +57,7 @@
     koji download-build --arch=$(uname -m) kernel-modules-internal-$(uname -r)
     dnf -y install kernel-modules*.rpm
   when:
-    - ansible_distribution == 'Fedora'
+    - ansible_facts['distribution'] == 'Fedora'
   changed_when: false
 
 - name: Create hostapd config

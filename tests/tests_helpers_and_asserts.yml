@@ -25,7 +25,7 @@
 #      vars:
 #        - type: tap
 #        - interface: tap1298
-#      when: ansible_distribution_major_version > 6
+#      when: ansible_facts['distribution_major_version'] > 6
 #      # ip tuntap does not exist on RHEL6
 #      # FIXME: Maybe use some other tool to manage devices, openvpn can do
 #      # this, but it is in EPEL

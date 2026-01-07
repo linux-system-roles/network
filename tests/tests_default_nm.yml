@@ -14,4 +14,4 @@
 - name: Import the playbook 'tests_default.yml'
   import_playbook: tests_default.yml
   when:
-    - ansible_distribution_major_version != '6'
+    - ansible_facts['distribution_major_version'] != '6'

@@ -32,10 +32,10 @@
 - name: Import the playbook 'playbooks/tests_checkpoint_cleanup.yml'
   import_playbook: playbooks/tests_checkpoint_cleanup.yml
   when:
-    - ansible_distribution_major_version != '6'
+    - ansible_facts['distribution_major_version'] != '6'
     # The test depends on behavior that is only visible with newer NM
     - networkmanager_version is version('1.22.0', '>=')
-    - ansible_distribution not in ['RedHat', 'CentOS', 'Fedora'] or
-      (ansible_distribution == 'Fedora' and
-       ansible_distribution_major_version | int < 41) or
-      ansible_distribution_major_version | int < 9
+    - ansible_facts['distribution'] not in ['RedHat', 'CentOS', 'Fedora'] or
+      (ansible_facts['distribution'] == 'Fedora' and
+       ansible_facts['distribution_major_version'] | int < 41) or
+      ansible_facts['distribution_major_version'] | int < 9

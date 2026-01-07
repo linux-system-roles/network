@@ -20,7 +20,7 @@
 - name: Import the playbook 'playbooks/tests_802_1x_updated.yml'
   import_playbook: playbooks/tests_802_1x_updated.yml
   when:
-    - ansible_distribution_major_version != '6'
-    - (ansible_distribution != 'RedHat' and
-       ansible_distribution_major_version | int > 7) or
-      ansible_distribution_major_version | int == 8
+    - ansible_facts['distribution_major_version'] != '6'
+    - (ansible_facts['distribution'] != 'RedHat' and
+       ansible_facts['distribution_major_version'] | int > 7) or
+      ansible_facts['distribution_major_version'] | int == 8

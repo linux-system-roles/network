@@ -52,7 +52,7 @@
       when:
         - network_provider == 'nm'
         # RHEL up to 8 uses initscripts backend
-        - ansible_distribution_major_version | int >= 9
+        - ansible_facts["distribution_major_version"] | int >= 9
 
     - name: Assert settings in NM connection file
       assert:
@@ -64,7 +64,7 @@
       when:
         - network_provider == 'nm'
         # RHEL up to 8 uses initscripts backend
-        - ansible_distribution_major_version | int >= 9
+        - ansible_facts["distribution_major_version"] | int >= 9
 
     - name: Get NM connection status
       command: "nmcli connection show {{ interface }}"
@@ -82,7 +82,7 @@
       slurp:
         src: "/etc/sysconfig/network-scripts/ifcfg-{{ interface }}"
       register: initscripts_connection_file
-      when: network_provider == 'initscripts' or ansible_distribution_major_version | int < 9
+      when: network_provider == 'initscripts' or ansible_facts["distribution_major_version"] | int < 9
 
     - name: Assert settings in initscripts connection file
       assert:
@@ -91,7 +91,7 @@
           - "'DEVICE={{ interface }}' in initscripts_connection_file.content | b64decode"
           - "'IPADDR=192.0.2.1' in initscripts_connection_file.content | b64decode"
           - "'PREFIX=24' in initscripts_connection_file.content | b64decode"
-      when: network_provider == 'initscripts' or ansible_distribution_major_version | int < 9
+      when: network_provider == 'initscripts' or ansible_facts["distribution_major_version"] | int < 9
 
     - name: Include the tasks 'down_profile+delete_interface.yml'
       include_tasks: tasks/down_profile+delete_interface.yml

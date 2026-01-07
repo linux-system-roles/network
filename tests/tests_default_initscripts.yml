@@ -11,5 +11,5 @@
 
 - name: Import the playbook 'tests_default.yml'
   import_playbook: tests_default.yml
-  when: (ansible_distribution in ['CentOS','RedHat'] and
-    ansible_distribution_major_version | int < 9)
+  when: (ansible_facts['distribution'] in ['CentOS','RedHat'] and
+    ansible_facts['distribution_major_version'] | int < 9)

@@ -21,5 +21,5 @@
 - name: Import the playbook 'playbooks/tests_wireless_wpa3_sae.yml'
   import_playbook: playbooks/tests_wireless_wpa3_sae.yml
   when:
-    - ansible_distribution_major_version != '6'
-    - ansible_distribution_major_version != '7' and ansible_distribution != 'RedHat'
+    - ansible_facts['distribution_major_version'] != '6'
+    - ansible_facts['distribution_major_version'] != '7' and ansible_facts['distribution'] != 'RedHat'

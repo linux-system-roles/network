@@ -7,7 +7,7 @@
   tasks:
     - name: "INIT: wireless tests"
       include_tasks: tasks/setup_mock_wifi_wpa3_sae.yml
-      when: ansible_distribution in ['CentOS', 'Fedora']
+      when: ansible_facts['distribution'] in ['CentOS', 'Fedora']
 
     - name: Test wireless connection with WPA3 Personal
       block:
@@ -20,7 +20,7 @@
               - name: "{{ interface }}"
                 # set `state: down` on RHEL 8 since we failed in setting up mock
                 # wifi on RHEL 8
-                state: "{{ 'down' if ansible_distribution == 'RedHat' else 'up' }}"
+                state: "{{ 'down' if ansible_facts['distribution'] == 'RedHat' else 'up' }}"
                 type: wireless
                 ip:
                   address:
