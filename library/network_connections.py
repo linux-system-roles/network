@@ -1851,7 +1851,7 @@ class RunEnvironmentAnsible(RunEnvironment):
             )
 
     def _complete_kwargs(self, connections, kwargs, traceback_msg=None, fail=False):
-        warning_logs = kwargs.get("warnings", [])
+        warning_logs = kwargs.pop("warnings", [])
         debug_logs = []
         loglines = []
         for res in self._run_results:
@@ -1866,7 +1866,12 @@ class RunEnvironmentAnsible(RunEnvironment):
                 warning_logs.append(log_line)
         if traceback_msg is not None:
             warning_logs.append(traceback_msg)
-        kwargs["warnings"] = warning_logs
+        # see if the module object has the "warn" function
+        if callable(getattr(self.module, "warn", None)):
+            for msg in warning_logs:
+                self.module.warn(msg)
+        else:
+            kwargs["warnings"] = warning_logs
         stderr = "\n".join(debug_logs) + "\n"
         kwargs["stderr"] = stderr
         kwargs["_invocation"] = {"module_args": self.module.params}
