@@ -168,6 +168,7 @@ jobs:
             SR_ARTIFACTS_DIR=${{ steps.set_vars.outputs.ARTIFACTS_DIR }};\
             SR_TEST_LOCAL_CHANGES=false;\
             SR_LSR_USER=${{ vars.SR_LSR_USER }};\
+            SR_ANSIBLE_INJECT_FACT_VARS=false;\
             SR_ARTIFACTS_URL=${{ steps.set_vars.outputs.ARTIFACTS_URL }}"
           # Note that LINUXSYSTEMROLES_SSH_KEY must be single-line, TF doesn't read multi-line variables fine.
           secrets: "SR_LSR_DOMAIN=${{ secrets.SR_LSR_DOMAIN }};\
