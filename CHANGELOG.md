@@ -1,6 +1,15 @@
 Changelog
 =========
 
+[1.17.9] - 2026-01-13
+--------------------
+
+### Other Changes
+
+- style: Use conscious language for profile list (#834)
+- refactor: use the warn module method on newer Ansible (#835)
+- ci: use ANSIBLE_INJECT_FACT_VARS=false by default for testing (#836)
+
 [1.17.8] - 2026-01-07
 --------------------
 
