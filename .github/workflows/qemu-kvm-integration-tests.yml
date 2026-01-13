@@ -44,6 +44,7 @@ jobs:
 
     env:
       TOX_ARGS: "--skip-tags tests::infiniband,tests::nvme,tests::scsi"
+      ANSIBLE_INJECT_FACT_VARS: "false"
 
     steps:
       - name: Checkout repo

@@ -20,8 +20,8 @@ Usage:
 .ostree/get_ostree_data.sh packages runtime DISTRO-VERSION FORMAT
 ```
 
-`DISTRO-VERSION` is in the format that Ansible uses for `ansible_distribution`
-and `ansible_distribution_version` - for example, `Fedora-38`, `CentOS-8`,
+`DISTRO-VERSION` is in the format that Ansible uses for `ansible_facts["distribution"]`
+and `ansible_facts["distribution_version"]` - for example, `Fedora-38`, `CentOS-8`,
 `RedHat-9.4`
 
 `FORMAT` is one of `toml`, `json`, `yaml`, `raw`
