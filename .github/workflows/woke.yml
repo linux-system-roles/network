@@ -6,8 +6,7 @@ on:  # yamllint disable-line rule:truthy
 jobs:
   woke:
     if: |
-      !((github.event_name == 'pull_request' && contains(github.event.pull_request.title, '[citest_skip]')) ||
-        (github.event_name == 'push' && contains(github.event.head_commit.message, '[citest_skip]')))
+      !(github.event_name == 'pull_request' && contains(github.event.pull_request.title, '[citest_skip]'))
     name: Detect non-inclusive language
     runs-on: ubuntu-latest
     steps:
