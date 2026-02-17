@@ -48,9 +48,10 @@ provision:
         - type: eth
         - type: eth
 environment:
-  SR_ANSIBLE_VER: 2.17
+  # ensure versions are strings!
+  SR_ANSIBLE_VER: "2.17"
   SR_REPO_NAME: network
-  SR_PYTHON_VERSION: 3.12
+  SR_PYTHON_VERSION: "3.12"
   SR_ONLY_TESTS: ""  # tests_default.yml
   SR_TEST_LOCAL_CHANGES: true
   SR_PR_NUM: ""
