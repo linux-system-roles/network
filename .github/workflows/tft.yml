@@ -98,21 +98,22 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Ensure ansible version is a string!
           - platform: Fedora-42
-            ansible_version: 2.19
+            ansible_version: "2.19"
           - platform: Fedora-43
-            ansible_version: 2.20
+            ansible_version: "2.20"
           - platform: CentOS-7-latest
-            ansible_version: 2.9
+            ansible_version: "2.9"
           - platform: CentOS-Stream-8
-            ansible_version: 2.9
+            ansible_version: "2.9"
           # On CentOS-Stream-8, latest supported Ansible is 2.16
           - platform: CentOS-Stream-8
-            ansible_version: 2.16
+            ansible_version: "2.16"
           - platform: CentOS-Stream-9
-            ansible_version: 2.17
+            ansible_version: "2.17"
           - platform: CentOS-Stream-10
-            ansible_version: 2.17
+            ansible_version: "2.17"
     runs-on: ubuntu-latest
     env:
       ARTIFACTS_DIR_NAME: "tf_${{ github.event.repository.name }}-${{ github.event.issue.number }}_\
