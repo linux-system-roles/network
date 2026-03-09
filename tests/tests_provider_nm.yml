@@ -13,10 +13,20 @@
         network_provider: nm
       tags:
         - always
+    - name: Include distro variables
+      include_vars: vars/rh_distros_vars.yml
+    - name: Set platform facts
+      set_fact:
+        __network_distro_major_version: "{{ ansible_facts['distribution_major_version'] }}"
+        __network_is_rhel: "{{ ansible_facts['distribution'] == 'RedHat' }}"
+        __network_is_fedora: "{{ ansible_facts['distribution'] == 'Fedora' }}"
+        __network_is_centos: "{{ ansible_facts['distribution'] == 'CentOS' }}"
+        __network_is_os_family_rhel: "{{ ansible_facts['os_family'] == 'RedHat' }}"
+        __is_rh_distro: "{{ __network_is_rh_distro }}"
 
     - name: Install NetworkManager and get NetworkManager version
       when:
-        - ansible_facts['distribution_major_version'] != '6'
+        - __network_distro_major_version != '6'
       tags:
         - always
       block:
@@ -36,14 +46,13 @@
 
 # The test requires or should run with NetworkManager, therefore it cannot run
 # on RHEL/CentOS 6
-# NetworKmanager 1.20.0 added support for forgetting profiles
+# NetworkManager 1.20.0 added support for forgetting profiles
 - name: Import the playbook 'playbooks/tests_provider.yml'
   import_playbook: playbooks/tests_provider.yml
   when:
-    - ansible_facts['distribution_major_version'] != '6'
-
+    - __network_distro_major_version != '6'
     - networkmanager_version is version('1.20.0', '>=')
-    - (ansible_facts['distribution'] == 'Fedora'
-       and ansible_facts['distribution_major_version'] | int < 41)
-      or ansible_facts['distribution'] not in ['RedHat', 'CentOS', 'Fedora']
-      or ansible_facts['distribution_major_version'] | int < 9
+    - (__network_is_fedora and
+       __network_distro_major_version | int < 41)
+      or not __network_is_os_family_rhel
+      or __network_distro_major_version | int < 9

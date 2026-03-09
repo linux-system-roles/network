@@ -5,10 +5,20 @@
   tasks:
     - name: Include the task 'el_repo_setup.yml'
       include_tasks: tasks/el_repo_setup.yml
+    - name: Include distro variables
+      include_vars: vars/rh_distros_vars.yml
+    - name: Set platform facts
+      set_fact:
+        __network_distro_major_version: "{{ ansible_facts['distribution_major_version'] }}"
+        __network_is_rhel: "{{ ansible_facts['distribution'] == 'RedHat' }}"
+        __network_is_fedora: "{{ ansible_facts['distribution'] == 'Fedora' }}"
+        __network_is_centos: "{{ ansible_facts['distribution'] == 'CentOS' }}"
+        __network_is_os_family_rhel: "{{ ansible_facts['os_family'] == 'RedHat' }}"
+
 
 - name: Import the playbook 'playbooks/integration_pytest_python3.yml'
   import_playbook: playbooks/integration_pytest_python3.yml
-  when: (ansible_facts["distribution"] in ["CentOS", "RedHat"] and
-        ansible_facts["distribution_major_version"] == "8") or
-        (ansible_facts["distribution"] == "Fedora" and
-        ansible_facts["distribution_major_version"] | int < 39)
+  when: (__network_is_fedora and
+         __network_distro_major_version | int < 39) or
+        (__network_is_os_family_rhel and
+         __network_distro_major_version == "8")

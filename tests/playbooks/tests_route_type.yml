@@ -19,8 +19,7 @@
 
     - name: Configure connection profile and specify the route types in
         static routes
-      include_role:
-        name: linux-system-roles.network
+      include_tasks: tasks/run_role_with_clear_facts.yml
       vars:
         network_connections:
           - name: "{{ interface }}"
@@ -100,8 +99,7 @@
           specified route"
 
     - name: Removing some routes
-      include_role:
-        name: linux-system-roles.network
+      include_tasks: tasks/run_role_with_clear_facts.yml
       vars:
         network_connections:
           - name: "{{ interface }}"

@@ -36,8 +36,7 @@
       block:
         - name: Configure the IP addresses and the route with interface name
             specified
-          import_role:
-            name: linux-system-roles.network
+          include_tasks: tasks/run_role_with_clear_facts.yml
           vars:
             network_connections:
               - name: "{{ interface0 }}"
@@ -111,8 +110,7 @@
           changed_when: false
         - name: Configure the IP addresses and the route with only the MAC
             address specified
-          import_role:
-            name: linux-system-roles.network
+          include_tasks: tasks/run_role_with_clear_facts.yml
           vars:
             network_connections:
               - name: "{{ interface1 }}"
@@ -157,8 +155,7 @@
             - "tests::cleanup"
           block:
             - name: Bring down test devices and profiles
-              include_role:
-                name: linux-system-roles.network
+              include_tasks: tasks/run_role_with_clear_facts.yml
               vars:
                 network_connections:
                   - name: "{{ interface0 }}"

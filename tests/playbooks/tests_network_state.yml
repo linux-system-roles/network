@@ -36,8 +36,7 @@
 
 
     - name: Configure the IP addresses
-      import_role:
-        name: linux-system-roles.network
+      include_tasks: tasks/run_role_with_clear_facts.yml
       vars:
         network_state:
           interfaces:
@@ -102,8 +101,7 @@
           settings
 
     - name: Configure the route
-      import_role:
-        name: linux-system-roles.network
+      include_tasks: tasks/run_role_with_clear_facts.yml
       vars:
         network_state:
           routes:
@@ -131,8 +129,7 @@
         msg: the route configuration does not contain the specified route
 
     - name: Configure the DNS
-      import_role:
-        name: linux-system-roles.network
+      include_tasks: tasks/run_role_with_clear_facts.yml
       vars:
         network_state:
           dns-resolver:
@@ -174,8 +171,7 @@
           contain the specified DNS configuration
 
     - name: Purge the DNS
-      import_role:
-        name: linux-system-roles.network
+      include_tasks: tasks/run_role_with_clear_facts.yml
       vars:
         network_state:
           dns-resolver:

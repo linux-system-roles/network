@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
 - name: Reconfigure the bond options
-  import_role:
-    name: linux-system-roles.network
+  include_tasks: run_role_with_clear_facts.yml
   vars:
     network_connections:
       # Create a bond controller

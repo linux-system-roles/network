@@ -1,0 +1,39 @@
+---
+# Task file: save facts, clear_facts, run linux-system-roles.network, then restore facts.
+# Include this with include_tasks or import_tasks; ensure tests/library is in module search path.
+# Input:
+# - __sr_tasks_from: tasks_from to run - same as tasks_from in include_role
+# - __sr_public: export private vars from role - same as public in include_role
+# - __sr_failed_when: set to false to ignore role errors - same as failed_when in include_role
+# Output:
+# - ansible_facts: merged saved ansible_facts with ansible_facts modified by the role, if any
+- name: Clear facts
+  meta: clear_facts
+
+# note that you can use failed_when with import_role but not with include_role
+# so this simulates the __sr_failed_when false case
+# Q: Why do we need a separate task to run the role normally?  Why not just
+# run the role in the block and rethrow the error in the rescue block?
+# A: Because you cannot rethrow the error in exactly the same way as the role does.
+# It might be possible to exactly reconstruct ansible_failed_result but it's not worth the effort.
+- name: Run the role with __sr_failed_when false
+  when:
+    - __sr_failed_when is defined
+    - not __sr_failed_when
+  block:
+    - name: Run the role
+      include_role:
+        name: linux-system-roles.network
+        tasks_from: "{{ __sr_tasks_from | default('main') }}"
+        public: "{{ __sr_public | default(false) }}"
+  rescue:
+    - name: Ignore the failure when __sr_failed_when is false
+      debug:
+        msg: Ignoring failure when __sr_failed_when is false
+
+- name: Run the role normally
+  include_role:
+    name: linux-system-roles.network
+    tasks_from: "{{ __sr_tasks_from | default('main') }}"
+    public: "{{ __sr_public | default(false) }}"
+  when: __sr_failed_when | d(true)
