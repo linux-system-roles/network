@@ -153,7 +153,7 @@ The latest version of tox-lsr supports qemu testing.
    you can use e.g.
 
    ```bash
-   tox -e qemu-ansible-core-2.14 -- --image-name centos-9 tests/tests_default.yml
+   tox -e qemu-ansible-core-2-20 -- --image-name centos-9 tests/tests_default.yml
    ```
 
 There are many command line options and environment variables which can be used

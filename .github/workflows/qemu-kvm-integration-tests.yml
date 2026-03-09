@@ -28,22 +28,22 @@ jobs:
       matrix:
         scenario:
           # QEMU
-          - { image: "centos-9", env: "qemu-ansible-core-2.16" }
-          - { image: "centos-10", env: "qemu-ansible-core-2.17" }
-          - { image: "fedora-42", env: "qemu-ansible-core-2.19" }
-          - { image: "fedora-43", env: "qemu-ansible-core-2.19" }
-          - { image: "leap-15.6", env: "qemu-ansible-core-2.18" }
+          - { image: "centos-9", env: "qemu-ansible-core-2-16" }
+          - { image: "centos-10", env: "qemu-ansible-core-2-17" }
+          - { image: "fedora-42", env: "qemu-ansible-core-2-19" }
+          - { image: "fedora-43", env: "qemu-ansible-core-2-19" }
+          - { image: "leap-15.6", env: "qemu-ansible-core-2-18" }
 
           # container
-          - { image: "centos-9", env: "container-ansible-core-2.16" }
-          - { image: "centos-9-bootc", env: "container-ansible-core-2.16" }
+          - { image: "centos-9", env: "container-ansible-core-2-16" }
+          - { image: "centos-9-bootc", env: "container-ansible-core-2-16" }
           # broken on non-running dbus
-          # - { image: "centos-10", env: "container-ansible-core-2.17" }
-          - { image: "centos-10-bootc", env: "container-ansible-core-2.17" }
-          - { image: "fedora-42", env: "container-ansible-core-2.17" }
-          - { image: "fedora-43", env: "container-ansible-core-2.19" }
-          - { image: "fedora-42-bootc", env: "container-ansible-core-2.17" }
-          - { image: "fedora-43-bootc", env: "container-ansible-core-2.19" }
+          # - { image: "centos-10", env: "container-ansible-core-2-17" }
+          - { image: "centos-10-bootc", env: "container-ansible-core-2-17" }
+          - { image: "fedora-42", env: "container-ansible-core-2-17" }
+          - { image: "fedora-43", env: "container-ansible-core-2-19" }
+          - { image: "fedora-42-bootc", env: "container-ansible-core-2-17" }
+          - { image: "fedora-43-bootc", env: "container-ansible-core-2-19" }
 
     env:
       TOX_ARGS: "--skip-tags tests::infiniband,tests::nvme,tests::scsi"
@@ -110,7 +110,7 @@ jobs:
           python3 -m pip install --upgrade pip
           sudo apt update
           sudo apt install -y --no-install-recommends git ansible-core genisoimage qemu-system-x86
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.15.0"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.16.0"
 
       # HACK: Drop this when moving this workflow to 26.04 LTS
       - name: Update podman to 5.x for compatibility with bootc-image-builder's podman 5
