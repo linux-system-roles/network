@@ -7,8 +7,7 @@
     cloned_mac: "12:23:34:45:56:70"
   tasks:
     - name: Add test bridge
-      include_role:
-        name: linux-system-roles.network
+      include_tasks: tasks/run_role_with_clear_facts.yml
       vars:
         network_connections:
           - name: "{{ interface }}"

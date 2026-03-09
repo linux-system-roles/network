@@ -24,8 +24,7 @@
         msg: "NetworkManager-wifi is not removed before wirelss configuration"
 
     - name: "Wireless configuration"
-      include_role:
-        name: linux-system-roles.network
+      include_tasks: tasks/run_role_with_clear_facts.yml
       vars:
         network_allow_restart: true
         network_connections:

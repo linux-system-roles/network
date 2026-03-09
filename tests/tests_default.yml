@@ -2,12 +2,12 @@
 ---
 - name: Test executing the role with default parameters
   hosts: all
-  gather_facts: false
-  roles:
-    - linux-system-roles.network
   tasks:
     - name: Include the task 'el_repo_setup.yml'
       include_tasks: tasks/el_repo_setup.yml
+
+    - name: Run role with clear facts
+      include_tasks: tasks/run_role_with_clear_facts.yml
 
     # module_warning - see https://github.com/ansible/ansible/issues/85394
     - name: Test warning and info logs

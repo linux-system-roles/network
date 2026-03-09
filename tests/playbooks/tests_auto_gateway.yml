@@ -19,8 +19,7 @@
       debug:
         msg: "##################################################"
     - name: Import network role
-      import_role:
-        name: linux-system-roles.network
+      include_tasks: tasks/run_role_with_clear_facts.yml
       vars:
         network_connections:
           - name: "{{ interface }}"
@@ -68,8 +67,7 @@
       debug:
         msg: "##################################################"
     - name: Import network role to remove interface
-      import_role:
-        name: linux-system-roles.network
+      include_tasks: tasks/run_role_with_clear_facts.yml
       vars:
         network_connections:
           - name: "{{ interface }}"
@@ -89,8 +87,7 @@
       vars:
         state: present
     - name: Import network role to disable auto_gateway
-      import_role:
-        name: linux-system-roles.network
+      include_tasks: tasks/run_role_with_clear_facts.yml
       vars:
         network_connections:
           - name: "{{ interface }}"
@@ -134,8 +131,7 @@
       debug:
         msg: "##################################################"
     - name: Import network role to remove interface again
-      import_role:
-        name: linux-system-roles.network
+      include_tasks: tasks/run_role_with_clear_facts.yml
       vars:
         network_connections:
           - name: "{{ interface }}"

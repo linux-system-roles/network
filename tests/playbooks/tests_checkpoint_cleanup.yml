@@ -18,9 +18,9 @@
       include_tasks: tasks/show_interfaces.yml
     - name: Include the task 'assert_device_absent.yml'
       include_tasks: tasks/assert_device_absent.yml
-  roles:
-    - linux-system-roles.network
   tasks:
+    - name: Run role with clear facts
+      include_tasks: tasks/run_role_with_clear_facts.yml
     - name: Test checkpoint cleanup
       block:
         # Workaround for https://bugzilla.redhat.com/show_bug.cgi?id=1832897
@@ -32,8 +32,7 @@
               ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
         # create test profile
         - name: Include network role
-          include_role:
-            name: linux-system-roles.network
+          include_tasks: tasks/run_role_with_clear_facts.yml
           vars:
             network_provider: initscripts
             network_connections:

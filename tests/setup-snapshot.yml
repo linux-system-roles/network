@@ -3,10 +3,10 @@
   hosts: all
   tasks:
     - name: Set facts used by role
-      include_role:
-        name: linux-system-roles.network
-        tasks_from: set_facts.yml
-        public: true
+      include_tasks: tasks/run_role_with_clear_facts.yml
+      vars:
+        __sr_tasks_from: set_facts.yml
+        __sr_public: true
 
     - name: Install test packages
       package:
