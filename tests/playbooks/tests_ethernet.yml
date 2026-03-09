@@ -26,8 +26,7 @@
       include_tasks: tasks/assert_device_present.yml
 
     - name: Test static interface up
-      include_role:
-        name: linux-system-roles.network
+      include_tasks: tasks/run_role_with_clear_facts.yml
       vars:
         network_connections:
           - name: "{{ interface }}"

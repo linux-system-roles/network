@@ -60,8 +60,7 @@
   failed_when: connection_name is failed or connection_name.stdout | length == 0
 
 - name: Bring down and delete the connection profile for '{{ interface }}'
-  include_role:
-    name: linux-system-roles.network
+  include_tasks: run_role_with_clear_facts.yml
   vars:
     network_connections:
       - name: "{{ connection_name.stdout }}"

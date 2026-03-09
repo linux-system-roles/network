@@ -34,8 +34,7 @@
           register: original_ethtool_coalesce
           changed_when: false
         - name: Import network role
-          import_role:
-            name: linux-system-roles.network
+          include_tasks: tasks/run_role_with_clear_facts.yml
           vars:
             network_connections:
               - name: "{{ interface }}"
@@ -57,8 +56,7 @@
           debug:
             msg: "##################################################"
         - name: Import network role
-          import_role:
-            name: linux-system-roles.network
+          include_tasks: tasks/run_role_with_clear_facts.yml
           vars:
             network_connections:
               - name: "{{ interface }}"
@@ -91,8 +89,7 @@
           debug:
             msg: "##################################################"
         - name: Import network role
-          import_role:
-            name: linux-system-roles.network
+          include_tasks: tasks/run_role_with_clear_facts.yml
           vars:
             network_connections:
               - name: "{{ interface }}"
@@ -118,14 +115,13 @@
             - "tests::cleanup"
           block:
             - name: Deactivate the connection and remove the connection profile
-              import_role:
-                name: linux-system-roles.network
+              include_tasks: tasks/run_role_with_clear_facts.yml
               vars:
                 network_connections:
                   - name: "{{ interface }}"
                     persistent_state: absent
                     state: down
-              failed_when: false
+                __sr_failed_when: false
             - name: Include the task 'manage_test_interface.yml'
               include_tasks: tasks/manage_test_interface.yml
               vars:

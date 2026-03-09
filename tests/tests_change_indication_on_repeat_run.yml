@@ -37,15 +37,13 @@
                     - 192.0.2.2/24
           block:
             - name: Include the network role
-              include_role:
-                name: linux-system-roles.network
+              include_tasks: tasks/run_role_with_clear_facts.yml
               register: __network_connections_result
             - name: Assert change:true
               assert:
                 that: __network_connections_result is changed
             - name: Include the network role
-              include_role:
-                name: linux-system-roles.network
+              include_tasks: tasks/run_role_with_clear_facts.yml
               register: __network_connections_result
             - name: Assert change:false
               assert:
@@ -61,15 +59,13 @@
                   auto6: "no"
           block:
             - name: Include the network role
-              include_role:
-                name: linux-system-roles.network
+              include_tasks: tasks/run_role_with_clear_facts.yml
               register: __network_connections_result
             - name: Assert change:true
               assert:
                 that: __network_connections_result is changed
             - name: Include the network role
-              include_role:
-                name: linux-system-roles.network
+              include_tasks: tasks/run_role_with_clear_facts.yml
               register: __network_connections_result
             - name: Assert change:false
               assert:
@@ -80,8 +76,7 @@
             - "tests::cleanup"
           block:
             - name: Include the network role
-              include_role:
-                name: linux-system-roles.network
+              include_tasks: tasks/run_role_with_clear_facts.yml
               vars:
                 network_connections:
                   - name: "{{ interface }}"

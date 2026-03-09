@@ -33,8 +33,7 @@
       block:
         - name: Configure connection profile and specify the numeric table in
             static routes
-          include_role:
-            name: linux-system-roles.network
+          include_tasks: tasks/run_role_with_clear_facts.yml
           vars:
             network_connections:
               - name: "{{ interface }}"

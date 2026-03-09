@@ -13,6 +13,16 @@
         network_provider: nm
       tags:
         - always
+    - name: Include distro variables
+      include_vars: vars/rh_distros_vars.yml
+    - name: Set platform facts
+      set_fact:
+        __network_distro_major_version: "{{ ansible_facts['distribution_major_version'] }}"
+        __network_is_rhel: "{{ ansible_facts['distribution'] == 'RedHat' }}"
+        __network_is_fedora: "{{ ansible_facts['distribution'] == 'Fedora' }}"
+        __network_is_centos: "{{ ansible_facts['distribution'] == 'CentOS' }}"
+        __network_is_os_family_rhel: "{{ ansible_facts['os_family'] == 'RedHat' }}"
+        __is_rh_distro: "{{ __network_is_rh_distro }}"
 
 
 # The test requires or should run with NetworkManager, therefore it cannot run
@@ -20,4 +30,4 @@
 - name: Import the playbook 'playbooks/tests_bond_options.yml'
   import_playbook: playbooks/tests_bond_options.yml
   when:
-    - ansible_facts['distribution_major_version'] != '6'
+    - __network_distro_major_version != '6'
