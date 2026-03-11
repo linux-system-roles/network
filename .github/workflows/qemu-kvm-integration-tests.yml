@@ -31,7 +31,7 @@ jobs:
           - { image: "centos-9", env: "qemu-ansible-core-2-16" }
           - { image: "centos-10", env: "qemu-ansible-core-2-17" }
           - { image: "fedora-42", env: "qemu-ansible-core-2-19" }
-          - { image: "fedora-43", env: "qemu-ansible-core-2-19" }
+          - { image: "fedora-43", env: "qemu-ansible-core-2-20" }
           - { image: "leap-15.6", env: "qemu-ansible-core-2-18" }
 
           # container
@@ -41,9 +41,9 @@ jobs:
           # - { image: "centos-10", env: "container-ansible-core-2-17" }
           - { image: "centos-10-bootc", env: "container-ansible-core-2-17" }
           - { image: "fedora-42", env: "container-ansible-core-2-17" }
-          - { image: "fedora-43", env: "container-ansible-core-2-19" }
+          - { image: "fedora-43", env: "container-ansible-core-2-20" }
           - { image: "fedora-42-bootc", env: "container-ansible-core-2-17" }
-          - { image: "fedora-43-bootc", env: "container-ansible-core-2-19" }
+          - { image: "fedora-43-bootc", env: "container-ansible-core-2-20" }
 
     env:
       TOX_ARGS: "--skip-tags tests::infiniband,tests::nvme,tests::scsi"
@@ -110,7 +110,7 @@ jobs:
           python3 -m pip install --upgrade pip
           sudo apt update
           sudo apt install -y --no-install-recommends git ansible-core genisoimage qemu-system-x86
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.16.0"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.17.0"
 
       # HACK: Drop this when moving this workflow to 26.04 LTS
       - name: Update podman to 5.x for compatibility with bootc-image-builder's podman 5
@@ -175,10 +175,10 @@ jobs:
         if: steps.check_platform.outputs.supported && startsWith(matrix.scenario.env, 'container')
         run: |
           set -euo pipefail
-          # HACK: debug.py/profile.py setup is broken
-          export LSR_CONTAINER_PROFILE=false
-          export LSR_CONTAINER_PRETTY=false
           rc=0
+          # we cannot skip these on the first test
+          export SKIP_REQUIREMENTS=false
+          export SKIP_CALLBACK_PLUGINS=false
           for t in tests/tests_*.yml; do
               if tox -e ${{ matrix.scenario.env }} -- --image-name ${{ matrix.scenario.image }} $t > ${t}.log 2>&1; then
                   echo "PASS: $(basename $t)"
@@ -188,6 +188,9 @@ jobs:
                   mv "${t}.log" "${t}-FAIL.log"
                   rc=1
               fi
+              # we can skip these on subsequent runs
+              export SKIP_REQUIREMENTS=true
+              export SKIP_CALLBACK_PLUGINS=true
           done
           exit $rc
 
