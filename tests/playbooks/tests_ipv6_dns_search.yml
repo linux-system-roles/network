@@ -6,8 +6,7 @@
       block:
         - name: Configure the static IPv4 address and not configure the IPv6
             address
-          import_role:
-            name: linux-system-roles.network
+          include_tasks: tasks/run_role_with_clear_facts.yml
           vars:
             network_connections:
               - name: br-example
@@ -48,8 +47,7 @@
 
         - name: Reconfigure the static IPv4 and IPv6 address, reconfigure DNS
             and DNS search setting for IPv4 and IPv6
-          import_role:
-            name: linux-system-roles.network
+          include_tasks: tasks/run_role_with_clear_facts.yml
           vars:
             network_connections:
               - name: br-example
@@ -82,8 +80,7 @@
 
         - name: Reconfigure connection profile and only configure the static
             IPv6 address
-          import_role:
-            name: linux-system-roles.network
+          include_tasks: tasks/run_role_with_clear_facts.yml
           vars:
             network_connections:
               - name: br-example
@@ -112,40 +109,37 @@
             msg: DNS search setting for IPv6 is not configured when only the
               static IPv6 address is configured
 
-        - name: Reconfigure connection profile, disable both IPv4 and IPv6
-          import_role:
-            name: linux-system-roles.network
-          vars:
-            network_connections:
-              - name: br-example
-                type: bridge
-                ip:
-                  dhcp4: false
-                  ipv6_disabled: true
-                  dns_search: example.com
-                state: up
-          ignore_errors: true  # noqa ignore-errors
-          changed_when: false
-          when: ansible_facts["distribution_major_version"] | int > 7
+        - name: Check for errors when both IPv4 and IPv6 are disabled
+          when: __network_distro_major_version | int > 7
+          block:
+            - name: Reconfigure connection profile, disable both IPv4 and IPv6
+              include_tasks: tasks/run_role_with_clear_facts.yml
+              vars:
+                network_connections:
+                  - name: br-example
+                    type: bridge
+                    ip:
+                      dhcp4: false
+                      ipv6_disabled: true
+                      dns_search: example.com
+                    state: up
+          rescue:
+            - name: Assert that reconfiguring network connection is failed
+              assert:
+                that:
+                  - __network_connections_result.failed
+                msg: reconfiguring network connection is not failed
 
-        - name: Assert that reconfiguring network connection is failed
-          assert:
-            that:
-              - __network_connections_result.failed
-            msg: reconfiguring network connection is not failed
-          when: ansible_facts["distribution_major_version"] | int > 7
-
-        - name: Assert that configuring DNS search setting is not allowed when
-            both IPv4 and IPv6 are disabled
-          assert:
-            that:
-              - __network_connections_result.stderr is search("Setting
-                'dns_search', 'dns_options' and 'dns_priority' are not allowed
-                when both IPv4 and IPv6 are disabled.")
-            msg: Reconfiguring network connection is not failed with the error
-              "Setting 'dns_search', 'dns_options', and 'dns_priority' are not
-              allowed when both IPv4 and IPv6 are disabled."
-          when: ansible_facts["distribution_major_version"] | int > 7
+            - name: Assert that configuring DNS search setting is not allowed when
+                both IPv4 and IPv6 are disabled
+              assert:
+                that:
+                  - __network_connections_result.stderr is search("Setting
+                    'dns_search', 'dns_options' and 'dns_priority' are not allowed
+                    when both IPv4 and IPv6 are disabled.")
+                msg: Reconfiguring network connection is not failed with the error
+                  "Setting 'dns_search', 'dns_options', and 'dns_priority' are not
+                  allowed when both IPv4 and IPv6 are disabled."
 
       always:
         - name: Clean up the test device and the connection profile
@@ -153,13 +147,12 @@
             - "tests::cleanup"
           block:
             - name: Deactivate the connection and remove the connection profile
-              import_role:
-                name: linux-system-roles.network
+              include_tasks: tasks/run_role_with_clear_facts.yml
               vars:
                 network_connections:
                   - name: br-example
                     persistent_state: absent
                     state: down
-              failed_when: false
+                __sr_failed_when: false
             - name: Verify network state restored to default
               include_tasks: tasks/check_network_dns.yml

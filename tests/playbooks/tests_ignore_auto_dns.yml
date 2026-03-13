@@ -21,8 +21,7 @@
       block:
         - name: Configure an interface with ipv4_ignore_auto_dns disabled and
             ipv6_ignore_auto_dns enabled
-          import_role:
-            name: linux-system-roles.network
+          include_tasks: tasks/run_role_with_clear_facts.yml
           vars:
             network_connections:
               - name: "{{ interface }}"
@@ -64,8 +63,7 @@
             - "tests::cleanup"
           block:
             - name: Bring down test devices and profiles
-              include_role:
-                name: linux-system-roles.network
+              include_tasks: tasks/run_role_with_clear_facts.yml
               vars:
                 network_connections:
                   - name: "{{ interface }}"

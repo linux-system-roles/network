@@ -13,6 +13,15 @@
         network_provider: nm
       tags:
         - always
+    - name: Include distro variables
+      include_vars: vars/rh_distros_vars.yml
+    - name: Set platform facts
+      set_fact:
+        __network_distro_major_version: "{{ ansible_facts['distribution_major_version'] }}"
+        __network_is_rhel: "{{ ansible_facts['distribution'] == 'RedHat' }}"
+        __network_is_fedora: "{{ ansible_facts['distribution'] == 'Fedora' }}"
+        __network_is_centos: "{{ ansible_facts['distribution'] == 'CentOS' }}"
+        __network_is_os_family_rhel: "{{ ansible_facts['os_family'] == 'RedHat' }}"
 
 
 # The test requires or should run with NetworkManager, therefore it cannot run
@@ -21,6 +30,6 @@
 - name: Import the playbook 'playbooks/tests_wireless_wpa3_owe.yml'
   import_playbook: playbooks/tests_wireless_wpa3_owe.yml
   when:
-    - ansible_facts['distribution_major_version'] != '6'
-    - ansible_facts['distribution_major_version'] > '7' and ansible_facts['distribution'] == 'CentOS' or
-     ansible_facts['distribution_major_version'] > '32' and ansible_facts['distribution'] == 'Fedora'
+    - __network_distro_major_version != '6'
+    - __network_distro_major_version | int > 7 and __network_is_centos or
+     __network_distro_major_version | int > 32 and __network_is_fedora

@@ -12,8 +12,7 @@
       include_tasks: tasks/assert_device_absent.yml
 
     - name: Add test bridge
-      include_role:
-        name: linux-system-roles.network
+      include_tasks: tasks/run_role_with_clear_facts.yml
       vars:
         network_connections:
           - name: "{{ interface }}"

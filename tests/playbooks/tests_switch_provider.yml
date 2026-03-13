@@ -10,8 +10,7 @@
   tasks:
     - name: "Through the initscripts provider, create test bridge
         {{ interface }}"
-      include_role:
-        name: linux-system-roles.network
+      include_tasks: tasks/run_role_with_clear_facts.yml
       vars:
         network_connections:
           - name: "{{ interface }}"
@@ -40,8 +39,7 @@
         - always
 
     - name: "Through the nm provider, create test bridge {{ interface }}"
-      include_role:
-        name: linux-system-roles.network
+      include_tasks: tasks/run_role_with_clear_facts.yml
       vars:
         network_connections:
           - name: "{{ interface }}"

@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
 - name: Include network role
-  include_role:
-    name: linux-system-roles.network
+  include_tasks: ../run_role_with_clear_facts.yml
   vars:
     network_connections:
       - name: "{{ interface }}"

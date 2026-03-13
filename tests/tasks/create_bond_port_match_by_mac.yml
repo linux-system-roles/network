@@ -13,8 +13,7 @@
   debug:
     msg: "Retrieved MAC address for {{ interface }}: {{ mac }}"
 - name: Test matching the port device based on the perm_hwaddr
-  import_role:
-    name: linux-system-roles.network
+  include_tasks: run_role_with_clear_facts.yml
   vars:
     network_connections:
       - name: "{{ profile }}"
