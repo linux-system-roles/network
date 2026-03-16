@@ -632,7 +632,21 @@ The IP configuration supports the following options:
   source IP address for a route. `table` supports both the numeric table and named
   table. In order to specify the named table, the users have to ensure the named table
   is properly defined in `/etc/iproute2/rt_tables` or
-  `/etc/iproute2/rt_tables.d/*.conf`. The optional `type` key supports the values
+  `/etc/iproute2/rt_tables.d/*.conf`.The network role does not create these routing table entries automatically.
+  You can use the `ansible.builtin.lineinfile` module in your playbook to
+  define the named tables before applying the network role:
+  ```yaml
+  - name: Ensure custom routing tables are defined
+    ansible.builtin.lineinfile:
+      path: /etc/iproute2/rt_tables
+      regexp: '^{{ item.table_id }}\s'
+      line: "{{ item.table_id }}\t{{ item.name }}"
+    loop:
+      - { table_id: 100, name: mytable1 }
+      - { table_id: 101, name: mytable2 }
+    become: true
+  ```
+  The optional `type` key supports the values
   `blackhole`, `prohibit`, and `unreachable`.
   See [man 8 ip-route](https://man7.org/linux/man-pages/man8/ip-route.8.html#DESCRIPTION)
   for their definition. Routes with these types do not support a gateway. If the type
@@ -685,6 +699,20 @@ The IP configuration supports the following options:
       numeric table and named table. In order to specify the named table, the users
       have to ensure the named table is properly defined in `/etc/iproute2/rt_tables`
       or `/etc/iproute2/rt_tables.d/*.conf`.
+      The network role does not create these routing table entries automatically.
+      You can use the `ansible.builtin.lineinfile` module in your playbook to
+      define the named tables before applying the network role:
+      ```yaml
+      - name: Ensure custom routing tables are defined
+        ansible.builtin.lineinfile:
+          path: /etc/iproute2/rt_tables
+          regexp: '^{{ item.table_id }}\s'
+          line: "{{ item.table_id }}\t{{ item.name }}"
+        loop:
+          - { table_id: 100, name: mytable1 }
+          - { table_id: 101, name: mytable2 }
+        become: true
+      ```
   - `to` -
       The destination address of the packet to match (e.g. `192.168.100.58/24`).
   - `tos` -
@@ -1503,6 +1531,12 @@ play in a pre-configure step, and a second step to activate the new configuratio
 In general, to successfully run the play, determine which configuration is
 active in the first place, and then carefully configure a sequence of steps to change to
 the new configuration. The actual solution depends strongly on your environment.
+
+Routing rules and named routing tables are not supported when using the
+`initscripts` provider. If `network_provider: initscripts` is set, any
+`routing_rule` entries and named `table` references in `route` will be
+silently ignored. Use `network_provider: nm` (NetworkManager) for routing
+rule support.
 
 ### Handling potential problems
 
