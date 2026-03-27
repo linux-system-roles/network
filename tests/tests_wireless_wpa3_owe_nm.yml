@@ -24,7 +24,6 @@
         __network_is_os_family_rhel: "{{ ansible_facts['os_family'] == 'RedHat' }}"
         __is_rh_distro: "{{ __network_is_rh_distro }}"
 
-
 # The test requires or should run with NetworkManager, therefore it cannot run
 # on RHEL/CentOS 6
 # OWE has not been supported by NetworkManager 1.18.8 on RHEL 7(dist-tag). Failed in setting up mock wifi on RHEL 8
@@ -33,4 +32,5 @@
   when:
     - __network_distro_major_version != '6'
     - __network_distro_major_version | int > 7 and __network_is_centos or
-     __network_distro_major_version | int > 32 and __network_is_fedora
+      __network_distro_major_version | int > 7 and __network_is_rhel or
+      __network_distro_major_version | int > 32 and __network_is_fedora
