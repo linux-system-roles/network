@@ -50,3 +50,16 @@
   when:
     - ansible_facts['distribution'] == 'CentOS'
     - ansible_facts['distribution_major_version'] == '6'
+
+- name: Setup epel on EL 7
+  when:
+    - ansible_facts['distribution'] == 'CentOS'
+    - ansible_facts['distribution_major_version'] == '7'
+  yum_repository:
+    name: epel
+    description: Extra Packages for Enterprise Linux 7
+    baseurl: https://archives.fedoraproject.org/pub/archive/epel/{{ ansible_facts['distribution_major_version'] }}/{{ ansible_facts['architecture'] }}/
+    gpgcheck: 0
+    enabled: 1
+    skip_if_unavailable: 1
+    state: present
