@@ -70,6 +70,9 @@ prepare:
       if grep -q 'CentOS Linux release 7.9' /etc/redhat-release; then
         sed -i '/^mirror/d;s/#\?\(baseurl=http:\/\/\)mirror/\1vault/' /etc/yum.repos.d/*.repo
       fi
+  - name: Ensure use of devel site for yum repos
+    script: |
+      sed -i -e 's|\.lab\.bos\.|.devel.|g' -e 's|\.eng\.bos\.|.devel.|g' /etc/yum.repos.d/*.repo
 discover:
   - name: Prepare managed node
     how: fmf
