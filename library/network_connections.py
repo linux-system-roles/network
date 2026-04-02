@@ -67,7 +67,6 @@ import os
 import re
 import shlex
 import socket
-import subprocess
 import time
 import traceback
 import logging
@@ -2684,7 +2683,8 @@ class Cmd_initscripts(Cmd):
         present and did not save any state about the corresponding interface.
         """
         try:
-            subprocess.call(
+            # run_command returns rc, stdout, and stderr but we don't need them
+            _rc, _stdout, _stderr = self.run_env.run_command(
                 [
                     "busctl",
                     "--system",
@@ -2696,7 +2696,8 @@ class Cmd_initscripts(Cmd):
                     "as",
                     "1",
                     path,
-                ]
+                ],
+                handle_exceptions=False,
             )
         except Exception:
             pass
