@@ -22,6 +22,15 @@ jobs:
       !((github.event_name == 'pull_request' && contains(github.event.pull_request.title, '[citest_skip]')) ||
         (github.event_name == 'push' && contains(github.event.head_commit.message, '[citest_skip]')))
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # There should be one version which is the one used by the Automation Hub gating, and
+        # one for the latest version.
+        # https://github.com/ansible-collections/partner-certification-checker/blob/main/.github/workflows/certification-reusable.yml#L108
+        versions:
+          - { ansible_lint: "24.*", ansible: "2.16.*", python: "3.12" }
+          - { ansible_lint: "26.*", ansible: "2.20.*", python: "3.13" }
     steps:
       - name: Update pip, git
         run: |
@@ -35,53 +44,17 @@ jobs:
       - name: Install tox, tox-lsr
         run: |
           set -euxo pipefail
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.17.1"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.18.0"
 
-      - name: Convert role to collection format
-        id: collection
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.versions.python }}
+
+      - name: Convert role to collection format and run ansible-lint
         run: |
           set -euxo pipefail
-          TOXENV=collection lsr_ci_runtox
-          coll_dir=".tox/ansible_collections/$LSR_ROLE2COLL_NAMESPACE/$LSR_ROLE2COLL_NAME"
-          # cleanup after collection conversion
-          rm -rf "$coll_dir/.ansible" .tox/ansible-plugin-scan "$coll_dir/.collection"
-          # ansible-lint action requires a .git directory???
-          # https://github.com/ansible/ansible-lint/blob/main/action.yml#L45
-          mkdir -p "$coll_dir/.git"
-          meta_req_file="${{ github.workspace }}/meta/collection-requirements.yml"
-          test_req_file="${{ github.workspace }}/tests/collection-requirements.yml"
-          if [ -f "$meta_req_file" ] && [ -f "$test_req_file" ]; then
-            coll_req_file="${{ github.workspace }}/req.yml"
-            python -c 'import sys; import yaml
-          hsh1 = yaml.safe_load(open(sys.argv[1]))
-          hsh2 = yaml.safe_load(open(sys.argv[2]))
-          coll = {}
-          for item in hsh1["collections"] + hsh2["collections"]:
-            if isinstance(item, dict):
-              name = item["name"]
-              rec = item
-            else:
-              name = item  # assume string
-              rec = {"name": name}
-            if name not in coll:
-              coll[name] = rec
-          hsh1["collections"] = list(coll.values())
-          yaml.safe_dump(hsh1, open(sys.argv[3], "w"))' "$meta_req_file" "$test_req_file" "$coll_req_file"
-            echo merged "$coll_req_file"
-            cat "$coll_req_file"
-          elif [ -f "$meta_req_file" ]; then
-            coll_req_file="$meta_req_file"
-          elif [ -f "$test_req_file" ]; then
-            coll_req_file="$test_req_file"
-          else
-            coll_req_file=""
-          fi
-          echo "coll_req_file=$coll_req_file" >> $GITHUB_OUTPUT
-
-      - name: Run ansible-lint
-        uses: ansible/ansible-lint@v26
-        with:
-          working_directory: ${{ github.workspace }}/.tox/ansible_collections/${{ env.LSR_ROLE2COLL_NAMESPACE }}/${{ env.LSR_ROLE2COLL_NAME }}
-          requirements_file: ${{ steps.collection.outputs.coll_req_file }}
-        env:
-          ANSIBLE_COLLECTIONS_PATH: ${{ github.workspace }}/.tox
+          LSR_ANSIBLE_LINT_DEP="ansible-lint==${{ matrix.versions.ansible_lint }}" \
+          LSR_ANSIBLE_LINT_ANSIBLE_DEP="ansible-core==${{ matrix.versions.ansible }}" \
+          tox -x testenv:ansible-lint-collection.basepython="python${{ matrix.versions.python }}" \
+          -e collection,ansible-lint-collection
