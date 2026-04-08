@@ -23,6 +23,7 @@ exclude_paths:
   - .github/
   - .markdownlint.yaml
   - examples/roles/
+  - .collection/
 mock_roles:
   - linux-system-roles.network
 supported_ansible_also:

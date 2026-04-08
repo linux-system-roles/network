@@ -22,6 +22,17 @@ jobs:
       !((github.event_name == 'pull_request' && contains(github.event.pull_request.title, '[citest_skip]')) ||
         (github.event_name == 'push' && contains(github.event.head_commit.message, '[citest_skip]')))
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false  # get all results, not just the first failure
+      matrix:
+        versions:
+          - { ansible: "2-14", python: "3.9" }
+          - { ansible: "2-16", python: "3.11" }
+          - { ansible: "2-17", python: "3.12" }
+          - { ansible: "2-18", python: "3.12" }
+          - { ansible: "2-19", python: "3.13" }
+          - { ansible: "2-20", python: "3.13" }
+          - { ansible: "milestone", python: "3.13" }
     steps:
       - name: Update pip, git
         run: |
@@ -36,16 +47,15 @@ jobs:
       - name: Install tox, tox-lsr
         run: |
           set -euxo pipefail
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.17.1"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.18.0"
 
-      - name: Convert role to collection format
-        run: |
-          set -euxo pipefail
-          TOXENV=collection lsr_ci_runtox
-
-      - name: Run ansible-test
-        uses: ansible-community/ansible-test-gh-action@release/v1
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
-          testing-type: sanity  # wokeignore:rule=sanity
-          ansible-core-version: stable-2.17
-          collection-src-directory: ${{ github.workspace }}/.tox/ansible_collections/${{ env.LSR_ROLE2COLL_NAMESPACE }}/${{ env.LSR_ROLE2COLL_NAME }}
+          python-version: ${{ matrix.versions.python }}
+
+      - name: Convert role to collection format and run ansible-test
+        run: |
+          tox \
+            -x testenv:ansible-test-${{ matrix.versions.ansible }}.basepython="python${{ matrix.versions.python }}" \
+            -e collection,ansible-test-${{ matrix.versions.ansible }}
