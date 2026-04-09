@@ -44,17 +44,20 @@ jobs:
       - name: Install tox, tox-lsr
         run: |
           set -euxo pipefail
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.18.0"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.18.1"
 
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.versions.python }}
 
-      - name: Convert role to collection format and run ansible-lint
+      - name: Convert role to collection format
+        run: tox -e collection
+
+      - name: Run ansible-lint
         run: |
           set -euxo pipefail
           LSR_ANSIBLE_LINT_DEP="ansible-lint==${{ matrix.versions.ansible_lint }}" \
           LSR_ANSIBLE_LINT_ANSIBLE_DEP="ansible-core==${{ matrix.versions.ansible }}" \
           tox -x testenv:ansible-lint-collection.basepython="python${{ matrix.versions.python }}" \
-          -e collection,ansible-lint-collection
+          -e ansible-lint-collection
