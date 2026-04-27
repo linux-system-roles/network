@@ -3,11 +3,36 @@
 - name: Test executing the role with default parameters
   hosts: all
   tasks:
+    - name: See if /dev/log exists for the fingerprint check
+      ansible.builtin.stat:
+        path: /dev/log
+      register: __register_dev_log
+
+    - name: Set the start time for the journal search
+      ansible.builtin.set_fact:
+        __journal_start_time: "{{ ansible_facts['date_time']['date'] ~ ' ' ~ ansible_facts['date_time']['time'] }}"
+      when: __register_dev_log.stat.exists
+
     - name: Include the task 'el_repo_setup.yml'
       include_tasks: tasks/el_repo_setup.yml
 
     - name: Run role with clear facts
       include_tasks: tasks/run_role_with_clear_facts.yml
+
+    # look for the exact module invocation, not some other message that might contain the string
+    - name: Check system journal contains role fingerprints
+      ansible.builtin.shell:
+        executable: /bin/bash
+        cmd: >-
+          set -eo pipefail;
+          journalctl --since "{{ __journal_start_time }}" --no-pager |
+          grep -v " Invoked with" | grep "sr_fingerprint.*begin system_role:network" ||
+          { echo ERROR: BEGIN fingerprint not found; exit 1; };
+          journalctl --since "{{ __journal_start_time }}" --no-pager |
+          grep -v " Invoked with" | grep "sr_fingerprint.*success system_role:network" ||
+          { echo ERROR: SUCCESS fingerprint not found; exit 1; }
+      changed_when: false
+      when: __register_dev_log.stat.exists
 
     # module_warning - see https://github.com/ansible/ansible/issues/85394
     - name: Test warning and info logs
