@@ -2697,9 +2697,17 @@ class Cmd_initscripts(Cmd):
                     "1",
                     path,
                 ],
-                handle_exceptions=False,
+            )
+            self.log_info(
+                0,
+                "forget_nm_connection: rc=%d, stdout='%s', stderr='%s'"
+                % (_rc, _stdout, _stderr),
             )
         except Exception:
+            self.log_error(
+                0,
+                "forget_nm_connection: exception: %s" % (traceback.format_exc()),
+            )
             pass
 
     def run_action_absent(self, idx):
