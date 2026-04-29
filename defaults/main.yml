@@ -75,15 +75,19 @@ __network_packages_default_wpa_supplicant: ["{%
 # distribution:
 # - python-gobject-base on RHEL7 (no python2-gobject-base :-/)
 # - python3-gobject-base on Fedora 28+
+# - python3-gobject on SUSE 16+ (no -base suffix)
 __network_packages_default_gobject_packages: ["python{{
-      ansible_facts['python']['version']['major'] | replace('2', '') }}-gobject-base"]
+      ansible_facts['python']['version']['major'] | replace('2', '') }}-gobject{{
+      '' if ansible_facts['os_family'] | d('') == 'Suse' else '-base' }}"]
 
 __network_service_name_default_nm: NetworkManager
 __network_packages_default_nm: "{{ ['NetworkManager']
       + __network_packages_default_gobject_packages | select() | list()
       + __network_packages_default_wpa_supplicant | select() | list()
       + __network_packages_default_wireless | select() | list()
-      + __network_packages_default_team | select() | list() }}"
+      + __network_packages_default_team | select() | list()
+      + (['typelib-1_0-NM-1_0']
+         if ansible_facts['os_family'] | d('') == 'Suse' else []) }}"
 
 __network_service_name_default_initscripts: network
 

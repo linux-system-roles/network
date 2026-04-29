@@ -26,15 +26,17 @@
     - ansible_facts["distribution_major_version"] | int < 8
 
 - name: Abort applying teaming configuration if the system version
-    of the managed host is EL10 or later
+    of the managed host is EL10 or later, or SUSE 16 or later
   fail:
     msg: >-
       Teaming is not supported in
       {{ ansible_facts["distribution"] }}-{{ ansible_facts["distribution_major_version"] }} -
       use bonding instead
   when:
-    - ansible_facts["distribution_major_version"] | int > 9
-    - ansible_facts["distribution"] in __network_rh_distros
+    - (ansible_facts["distribution_major_version"] | int > 9 and
+       ansible_facts["distribution"] in __network_rh_distros) or
+      (ansible_facts["distribution_major_version"] | int >= 16 and
+       ansible_facts["os_family"] == "Suse")
     - network_connections | selectattr("type", "defined") |
       selectattr("type", "match", "^team$") | list | length > 0 or
       network_state.get("interfaces", []) | selectattr("type", "defined") |
