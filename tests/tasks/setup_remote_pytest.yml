@@ -1,0 +1,221 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# outputs:
+# - _rundir - directory on remote machine
+# - temptar - tempfile for tar
+# - _lsr_python_path - python path to use for pytest
+---
+- name: Create tempdir for code to test
+  tempfile:
+    state: directory
+    prefix: lsrtest_
+  register: _rundir
+
+- name: Get tempfile for tar
+  tempfile:
+    prefix: lsrtest_
+    suffix: ".tar"
+  register: temptar
+  delegate_to: localhost
+
+# The starting assumption is that we are running this from the control node
+# in the directory containing the test playbook.
+# This is complicated because we have to handle so many different cases:
+# - local role from git clone which may not be in a "normal" directory structure
+# - git clone in a pull request in legacy format
+# - collection format converted by tox -e collection or similar
+# - legacy and collection format as built by RPM or from collection build
+# - test harness that copies the tests outside of the role/collection to a tempdir
+# The output is a list of paths to tar, each path is a list of:
+# - path to parent directory to chdir to in order to use tar
+# - relative path or filenames under parent directory to tar
+# e.g. for the local role case
+# - /some/path/to/library
+# - network_*.py
+# - /some/path/to/module_utils
+# - network_lsr
+# would translate to tar -C /some/path/to/library network_*.py -C /some/path/to/module_utils network_lsr
+# for the collection case
+# - /home/user/.tox/ansible_collections/fedora/linux_system_roles/tests/network/plugins/modules
+# - network_*.py
+# - /home/user/.tox
+# - ansible_collections/fedora/linux_system_roles/tests/network/plugins/module_utils/network_lsr/network_lsr
+# would translate to tar -C /home/user/.tox/ansible_collections/fedora/linux_system_roles/tests/network/plugins/modules network_*.py \
+#   -C /home/user/.tox ansible_collections/fedora/linux_system_roles/tests/network/plugins/module_utils/network_lsr
+# because we have to preserve the entire directory structure for the module_utils for the collection case
+- name: Get paths to tar
+  delegate_to: localhost
+  changed_when: false
+  shell:
+    executable: /bin/bash  # ensure pipefail setting
+    cmd: |
+      set -euo pipefail
+      # This assumes we are in the directory where the test playbook is located
+      test_playbook_dir="$(pwd)"
+      if [[ "$test_playbook_dir" =~ /playbooks$ ]]; then
+        test_playbook_dir="$(dirname "$test_playbook_dir")"
+      fi
+      # full path to parent and subdir for unit tests
+      echo "$test_playbook_dir"
+      echo "unit"
+      # full path to parent and subdir for integration tests
+      echo "$test_playbook_dir"
+      echo "integration"
+      if [[ "$test_playbook_dir" =~ /tests/network$ ]]; then
+        is_coll=true
+      else
+        is_coll=false
+      fi
+      # right now we only test network_connections.py, but we may want to test other modules in the future
+      modules_to_test=(network_connections.py)
+      if [[ "$test_playbook_dir" =~ (/.*)/(ansible_collections/[a-z0-9_]+/[a-z0-9_]+)/tests/network ]] && \
+         [ -d "${BASH_REMATCH[1]}/${BASH_REMATCH[2]}/plugins/modules" ] && \
+         [ -d "${BASH_REMATCH[1]}/${BASH_REMATCH[2]}/plugins/module_utils/network_lsr" ]; then
+        # we don't need the directory for the modules, we just need the filenames
+        # otherwise we have to have logic in the destination directory to handle library vs plugins/modules
+        echo "${BASH_REMATCH[1]}/${BASH_REMATCH[2]}/plugins/modules"
+        echo "${modules_to_test[@]}"
+        # we do need the entire directory structure for the module_utils due to
+        # the way Ansible loads module_utils
+        echo "${BASH_REMATCH[1]}"
+        echo "${BASH_REMATCH[2]}/plugins/module_utils/network_lsr"
+      elif [[ "$test_playbook_dir" =~ (/.*)/([a-z]+-system-roles[.]network)/tests ]] && \
+           [ -d "${BASH_REMATCH[1]}/${BASH_REMATCH[2]}/library" ] && \
+           [ -d "${BASH_REMATCH[1]}/${BASH_REMATCH[2]}/module_utils/network_lsr" ]; then
+        echo "${BASH_REMATCH[1]}/${BASH_REMATCH[2]}/library"
+        echo "${modules_to_test[@]}"
+        echo "${BASH_REMATCH[1]}/${BASH_REMATCH[2]}"
+        echo module_utils/network_lsr
+      elif [ "$is_coll" = true ]; then
+        # search collection paths for modules and module_utils
+        for dir in {{ collection_paths | join(" ") }}; do
+          for collections_dir in "$dir/ansible_collections/*/*"; do
+            if [ -d "$collections_dir/plugins/modules" ] && [ -d "$collections_dir/plugins/module_utils/network_lsr" ]; then
+              readlink -f "$collections_dir/plugins/modules"
+              echo "${modules_to_test[@]}"
+              readlink -f "$dir"
+              echo "${collections_dir#$dir/}/plugins/module_utils/network_lsr"
+              break 2
+            fi
+          done
+        done
+      else
+        # look for modules in modules search path
+        for dir in {{ modules_search_path | join(" ") }}; do
+          if [ -f "$dir/${modules_to_test[0]}" ] && [ ! -L "$dir/${modules_to_test[0]}" ]; then
+            readlink -f "$dir"
+            echo "${modules_to_test[@]}"
+            break
+          fi
+        done
+        # look for module_utils in module_utils search path
+        for dir in {{ module_utils_search_path | join(" ") }}; do
+          if [ -d "$dir/network_lsr" ]; then
+            echo "$(dirname "$(readlink -f "$dir")")"
+            echo module_utils/network_lsr
+            break
+          fi
+        done
+      fi
+  register: __network_tar_paths
+  vars:
+    collection_paths: |
+      {{
+        (lookup("env","ANSIBLE_COLLECTIONS_PATH").split(":") +
+        lookup("env","ANSIBLE_COLLECTIONS_PATHS").split(":") +
+        lookup("config", "COLLECTIONS_PATHS")) |
+        select | unique | list
+      }}
+    modules_search_path: |
+        {{
+          (lookup("env", "ANSIBLE_LIBRARY").split(":") +
+          ["../../library", "../library"] +
+          lookup("config", "DEFAULT_MODULE_PATH")) |
+          select | unique | list
+        }}
+    module_utils_search_path: |
+        {{
+          (lookup("env", "ANSIBLE_MODULE_UTILS").split(":") +
+          ["../../module_utils", "../module_utils"] +
+          lookup("config", "DEFAULT_MODULE_UTILS_PATH")) |
+          select | unique | list
+        }}
+
+- name: Create Tar file
+  command: >
+    tar -cvf {{ temptar.path }} --exclude "*.pyc"
+        --exclude "__pycache__"
+        -C {{ __network_tar_paths.stdout_lines[0] }}
+        {{ __network_tar_paths.stdout_lines[1] }}
+        -C {{ __network_tar_paths.stdout_lines[2] }}
+        {{ __network_tar_paths.stdout_lines[3] }}
+        -C {{ __network_tar_paths.stdout_lines[4] }}
+        {{ __network_tar_paths.stdout_lines[5] }}
+        -C {{ __network_tar_paths.stdout_lines[6] }}
+        {{ __network_tar_paths.stdout_lines[7] }}
+  # noqa command-instead-of-module
+  delegate_to: localhost
+  changed_when: false
+
+- name: Copy testrepo.tar to the remote system
+  copy:
+    src: "{{ temptar.path }}"
+    dest: "{{ _rundir.path }}"
+    mode: preserve
+
+- name: Untar testrepo.tar
+  unarchive:
+    src: "{{ _rundir.path }}/{{ temptar.path | basename }}"
+    dest: "{{ _rundir.path }}"
+    remote_src: true
+
+# only needed for legacy role - ignored for collection case
+- name: Create subdirectory './ansible' under '{{ _rundir.path }}'
+  file:
+    state: directory
+    path: "{{ _rundir.path }}/ansible"
+    mode: "0755"
+
+# only needed for legacy role - ignored for collection case
+- name: Move module_utils to ansible directory
+  shell:
+    executable: /bin/bash
+    cmd: |
+      set -euo pipefail
+      if [ -d {{ _rundir.path }}/module_utils ]; then
+        mv {{ _rundir.path }}/module_utils {{ _rundir.path }}/ansible
+      elif [ ! -d {{ _rundir.path }}/ansible/module_utils ]; then
+        mkdir -p {{ _rundir.path }}/ansible/module_utils
+      fi
+  changed_when: false
+
+- name: Fake out python module directories, primarily for python2
+  shell:
+    executable: /bin/bash
+    cmd: |
+      set -euo pipefail
+      for dir in $(find {{ _rundir.path }} -type d -print); do
+        if [ ! -f "$dir/__init__.py" ]; then
+          touch "$dir/__init__.py"
+        fi
+      done
+  changed_when: false
+
+- name: Set _lsr_python_path
+  set_fact:
+    _lsr_python_path: "{{ __paths | unique | join(':') }}"
+  vars:
+    __module_utils_path: "{{ __network_tar_paths.stdout_lines[7] | dirname }}"
+    __plugins_path: "{{ __module_utils_path | dirname }}"
+    __paths:
+      - "{{ _rundir.path ~ '/' ~ __plugins_path ~ '/modules' }}"
+      - "{{ _rundir.path ~ '/ansible/' ~ __module_utils_path }}"
+      - "{{ _rundir.path ~ '/' ~ __module_utils_path }}"
+      - "{{ _rundir.path }}"
+
+- name: Show _lsr_python_path
+  debug:
+    msg: path {{ _lsr_python_path }}
+
+- name: List the files in {{ _rundir.path }}
+  command: ls -alrtFR {{ _rundir.path }}
+  changed_when: false
