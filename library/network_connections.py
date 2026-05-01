@@ -1822,6 +1822,8 @@ class RunEnvironmentAnsible(RunEnvironment):
             raise AssertionError("idx {0} is less than -1".format(idx))
         self._log_idx += 1
         self.run_results[idx]["log"].append((severity, msg, self._log_idx))
+        if "log-to-syslog" in self.module.params["__debug_flags"]:
+            self.module.log("%s: %s: %s" % (LogLevel.fmt(severity), idx, msg))
         if severity == LogLevel.ERROR:
             if force_fail or not ignore_errors:
                 self.fail_json(
@@ -2019,13 +2021,17 @@ class Cmd(object):
         )
 
     def log(self, idx, severity, msg, warn_traceback=False, force_fail=False):
+        if len(self.connections) > idx:
+            ignore_errors = self.connection_ignore_errors(self.connections[idx])
+        else:
+            ignore_errors = self._ignore_errors
         self.run_env.log(
             self.connections,
             idx,
             severity,
             msg,
             is_changed=self.is_changed_modified_system,
-            ignore_errors=self.connection_ignore_errors(self.connections[idx]),
+            ignore_errors=ignore_errors,
             warn_traceback=warn_traceback,
             force_fail=force_fail,
         )
@@ -2125,7 +2131,9 @@ class Cmd(object):
         self.run_prepare()
         while self.check_mode_next() != CheckMode.DONE:
             if self.check_mode == CheckMode.REAL_RUN:
+                self.log(0, LogLevel.INFO, "Starting transaction")
                 self.start_transaction()
+                self.log(0, LogLevel.INFO, "Started transaction")
 
             # Reasoning for this order:
             # For down/up profiles might need to be present, so do this first
@@ -2146,11 +2154,15 @@ class Cmd(object):
                                 self.run_action_down(idx)
                     except Exception as error:
                         if self.check_mode == CheckMode.REAL_RUN:
+                            self.log(idx, LogLevel.INFO, "Rolling back transaction")
                             self.rollback_transaction(idx, action, error)
+                            self.log(0, LogLevel.INFO, "Rolled back transaction")
                         raise
 
             if self.check_mode == CheckMode.REAL_RUN:
+                self.log(0, LogLevel.INFO, "Finishing transaction")
                 self.finish_transaction()
+                self.log(0, LogLevel.INFO, "Finished transaction")
 
     def run_prepare(self):
         for idx, connection in enumerate(self.connections):
@@ -2912,6 +2924,7 @@ def main():
             changed=(cmd is not None and cmd.is_changed_modified_system),
             warn_traceback=not isinstance(e, MyError),
         )
+    cmd.log(0, LogLevel.INFO, "Exiting")
     run_env_ansible.exit_json(
         connections, changed=(cmd is not None and cmd.is_changed_modified_system)
     )
