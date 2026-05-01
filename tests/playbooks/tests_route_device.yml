@@ -131,8 +131,8 @@
             the output device is logged for initscripts provider
           assert:
             that:
-              - __network_connections_result.stderr is search("\[003\]
-                <warn>  .0, state.None persistent_state.present,
+              - __network_connections_result.stderr is search("<warn>  .0,
+                state.None persistent_state.present,
                 '{{ interface1 }}'. The connection {{ interface1 }} does not
                 specify an interface name. Therefore, the route to
                 198.58.10.64/26 will be configured without the output device
