@@ -157,7 +157,7 @@
     enabled: true
   when:
     - network_provider == "nm" or network_state != {}
-  no_log: true
+  no_log: "{{ ansible_verbosity < 3 }}"
 
 # If any 802.1x connections are used, the wpa_supplicant
 # service is required to be running
@@ -176,7 +176,7 @@
     enabled: true
   when:
     - network_provider == "initscripts"
-  no_log: true
+  no_log: "{{ ansible_verbosity < 3 }}"
 
 - name: Ensure initscripts network file dependency is present
   copy:

@@ -5,7 +5,7 @@
     gather_subset: "{{ __network_required_facts_subsets }}"
   when: __network_required_facts |
     difference(ansible_facts.keys() | list) | length > 0
-  no_log: true
+  no_log: "{{ ansible_verbosity < 3 }}"
 
 - name: Record role begin fingerprint
   sr_fingerprint:
@@ -27,9 +27,9 @@
 
 - name: Check which services are running
   service_facts:
-  no_log: true
+  no_log: "{{ ansible_verbosity < 3 }}"
 
 # needed for ansible_facts.packages
 - name: Check which packages are installed
   package_facts:
-  no_log: true
+  no_log: "{{ ansible_verbosity < 3 }}"
