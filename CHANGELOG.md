@@ -1,6 +1,23 @@
 Changelog
 =========
 
+[1.19.0] - 2026-05-07
+--------------------
+
+### New Features
+
+- feat: add initial support for sle16+ (#863)
+
+### Bug Fixes
+
+- fix: handle_exceptions is not a valid parameter (#864)
+
+### Other Changes
+
+- test: ensure integration pytest works in collection mode (#865)
+- ci: bump actions/github-script from 8 to 9 (#866)
+- refactor: log-to-syslog in debug_flags will log internal trace msgs to syslog [citest_skip] (#867)
+
 [1.18.0] - 2026-04-28
 --------------------
 
