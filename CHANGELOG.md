@@ -1,6 +1,13 @@
 Changelog
 =========
 
+[1.20.0] - 2026-05-12
+--------------------
+
+### New Features
+
+- feat: Use verbosity-based logging in network role (#868)
+
 [1.19.0] - 2026-05-07
 --------------------
 
