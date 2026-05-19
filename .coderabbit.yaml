@@ -1,0 +1,232 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit configuration for linux-system-roles
+# Based on conventions from https://linux-system-roles.github.io/contribute.html
+# This file is managed from https://github.com/linux-system-roles/.github,
+# any manual edits will be overwritten.
+
+chat:
+  art: false
+
+reviews:
+  # Disable fun features
+  poem: false
+  in_progress_fortune: false
+
+  # Disable auto-features
+  auto_apply_labels: false
+  auto_assign_reviewers: false
+  request_changes_workflow: false
+
+  # Disable additional review features
+  sequence_diagrams: false
+  estimate_code_review_effort: false
+  suggested_labels: false
+  high_level_summary_in_walkthrough: false
+
+  # Disable finishing touches
+  finishing_touches:
+    unit_tests:
+      enabled: false
+
+  # Enforce PR title and description requirements
+  pre_merge_checks:
+    title:
+      mode: "warning"
+      requirements: |
+        PR title MUST follow Conventional Commits format:
+        - Format: <type>: <description> or <type>!: <description> for breaking changes
+        - Valid types: Refer to the 'type-enum' rule in .commitlintrc.js file for the complete list of allowed types
+        - Examples:
+          - "feat: Add backup functionality"
+          - "fix: Correct OSTree package installation"
+          - "fix!: Remove deprecated variable (breaking change)"
+
+    custom_checks:
+      - mode: "warning"
+        name: "Description Format"
+        instructions: |
+          PR description MUST follow the template structure from .github/pull_request_template.md:
+          - Must contain "Enhancement:" or "Feature:" section describing what changed
+          - Must contain "Reason:" section explaining why the change was needed
+          - Must contain "Result:" section describing the outcome or impact
+          - Can contain optional "Issue Tracker Tickets (Jira or BZ if any):" section
+
+          Example:
+          ```
+          Feature: Introduce the network_secure_logging variable
+
+          Reason: Currently, all sensitive tasks use hard-coded no_log: true, which makes debugging difficult.
+
+          Result: Users can now set network_secure_logging: false for debugging while maintaining secure defaults.
+
+          Issue Tracker Tickets (Jira or BZ if any): RHEL-12345
+          ```
+
+  path_instructions:
+    # ========================================
+    # Ansible Tasks - Core role logic
+    # ========================================
+    - path: "tasks/**/*.yml"
+      instructions: |
+        **no_log patterns:**
+        - For sensitive data (credentials, secrets, passwords, keys):
+          ```yaml
+          - name: Task with sensitive data
+            ansible.builtin.command: sensitive command
+            no_log: "{{ network_secure_logging }}"
+          ```
+          Ensure `network_secure_logging: true` is defined in defaults/main.yml
+
+        - For facts modules (package_facts, service_facts):
+          ```yaml
+          - name: Gather package facts
+            ansible.builtin.package_facts:
+            no_log: "{{ ansible_verbosity < 3 }}"
+          ```
+          This hides verbose facts output unless running with -vvv or higher verbosity
+
+        - NEVER use hardcoded `no_log: true` - always parametrize
+
+        **Package installation (OSTree compatibility):**
+        - ALWAYS use `ansible.builtin.package` module (NEVER yum, dnf, or apt)
+        - For Red Hat family systems: MUST include `use:` parameter for OSTree compatibility
+        - For other systems (apt, etc.): OSTree `use:` parameter NOT needed
+
+        **Red Hat family pattern (rpm/dnf/yum based):**
+        ```yaml
+        - name: Install packages
+          ansible.builtin.package:
+            name: "{{ __network_packages }}"
+            state: present
+            use: "{{ (__network_is_ostree | d(false)) | ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
+        ```
+
+        **Non-Red Hat systems (apt based) - no OSTree handling needed:**
+        ```yaml
+        - name: Install packages
+          ansible.builtin.package:
+            name: "{{ __network_packages }}"
+            state: present
+          when: ansible_facts["pkg_mgr"] == 'apt'
+        ```
+
+        **Pattern explanation:**
+        - `__network_is_ostree` detects OSTree/rpm-ostree systems (RHEL/CentOS/Fedora variants)
+        - This variable should already exist in vars/main.yml - do NOT suggest adding it
+        - `| d(false)` provides safe default if variable undefined
+        - `ternary()` selects `ansible.posix.rhel_rpm_ostree` for OSTree, `omit` otherwise
+        - `omit` removes the parameter entirely on non-OSTree Red Hat systems
+
+        **Third-party collections:**
+        - Avoid using third-party collections (community.general, community.crypto, etc.)
+        - Use ansible.builtin modules or command module instead
+
+        **Referencing other system roles:**
+        - Use FQCN: `fedora.linux_system_roles.network`
+
+        **Idempotency:**
+        - Tasks must be idempotent - safe to run multiple times without unintended changes
+        - Use proper state parameters (present/absent, started/stopped, etc.)
+        - Command/shell tasks should use creates/removes or changed_when to avoid false changes
+        - Example:
+          ```yaml
+          - name: Initialize database
+            ansible.builtin.command: /usr/bin/initialize-db
+            args:
+              creates: /var/lib/db/initialized.flag
+          ```
+
+        **Check mode support:**
+        - Critical tasks should support check mode (--check flag)
+        - Use check_mode: false only when absolutely necessary (e.g., fact gathering)
+        - Test that role works with --check --diff
+
+        **Test coverage requirement:**
+        - When adding new tasks to tasks/main.yml or creating new task files, verify that corresponding test coverage exists in tests/
+        - New functionality MUST include test files (tests/tests_*.yml) that exercise the new code paths
+        - Tests should verify both success scenarios and failure/edge cases
+        - If this PR adds new tasks but does not include new or updated tests, flag it and request test coverage
+
+    # ========================================
+    # Handlers
+    # ========================================
+    - path: "handlers/**/*.yml"
+      instructions: |
+        - Handlers with sensitive data must use `no_log: "{{ network_secure_logging }}"`
+
+    # ========================================
+    # Test Playbooks
+    # ========================================
+    - path: "tests/tests_*.yml"
+      instructions: |
+        **CRITICAL: Role invocation pattern:**
+        - NEVER use `ansible.builtin.include_role` directly
+        - NEVER use `ansible.builtin.import_role` directly
+        - NEVER use `roles:` keyword
+        - ALWAYS use the centrally managed wrapper:
+          ```yaml
+          - name: Run role
+            ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+            vars:
+              network_<parameter>: <value>
+          ```
+
+        **Test quality requirements:**
+        - Tests should verify both success and failure scenarios
+        - Use assert module to verify expected state after role execution
+        - Include cleanup tasks to ensure tests are rerunnable
+        - Tests should be idempotent - running twice should not cause failures
+        - Example verification:
+          ```yaml
+          - name: Verify service is running
+            ansible.builtin.assert:
+              that:
+                - ansible_facts.services['mssql-server.service'].state == 'running'
+              fail_msg: "SQL Server service is not running"
+          ```
+
+    # ========================================
+    # Templates
+    # ========================================
+    - path: "templates/**/*.j2"
+      instructions: |
+        **Required headers (in this order):**
+        1. ansible_managed header: `{{ ansible_managed | comment }}`
+        2. Role fingerprint: `{{ "system_role:network" | comment(prefix="", postfix="") }}`
+
+    # ========================================
+    # Variable Definitions - defaults/
+    # ========================================
+    - path: "defaults/**/*.yml"
+      instructions: |
+        - All variables MUST be prefixed with `network_`
+        - All variables MUST be stored in the file defaults/main.yml, Ansible
+          doesn't include variables from other files.
+        - These are user-facing API variables
+        - For every new variable introduced in this file, verify that it is
+          documented in README.md with a description and a usage example.
+          If it is missing from README.md, flag it and request that it be added.
+
+    # ========================================
+    # Variable Definitions - vars/
+    # ========================================
+    - path: "vars/**/*.yml"
+      instructions: |
+        - Internal variables MUST be prefixed with `__network_`
+        - User-facing variables belong in defaults/main.yml, not here
+
+    # ========================================
+    # Python Code
+    # ========================================
+    - path: "**/*.py"
+      instructions: |
+        - Must follow PEP 8 and be formatted with Python Black
+        - Run `tox -e black,flake8` before committing
+
+    # ========================================
+    # Documentation
+    # ========================================
+    - path: "README.md"
+      instructions: |
+        - Document all new user-facing variables
+        - Include usage examples for new functionality
