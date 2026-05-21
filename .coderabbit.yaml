@@ -8,6 +8,11 @@ chat:
   art: false
 
 reviews:
+  # Skip reviews for PRs with [citest_skip] in the title
+  auto_review:
+    ignore_title_keywords:
+      - "[citest_skip]"
+
   # Disable fun features
   poem: false
   in_progress_fortune: false
