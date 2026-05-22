@@ -235,7 +235,7 @@ class SysUtil:
                             "cannot read stable link-infos. They keep changing"
                         )
                 except Exception:
-                    if try_count < 50:
+                    if try_count >= 50:
                         raise
                     continue
                 break
