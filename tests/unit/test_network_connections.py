@@ -5591,11 +5591,70 @@ class TestValidatorDictInfiniband(Python26CompatTestCase):
         )
 
 
-class TestSysUtils(unittest.TestCase):
+class TestSysUtils(Python26CompatTestCase):
+    def setUp(self):
+        if hasattr(SysUtil, "_link_infos"):
+            del SysUtil._link_infos
+
     def test_link_read_permaddress(self):
         self.assertEqual(SysUtil._link_read_permaddress("lo"), "00:00:00:00:00:00")
         self.assertEqual(SysUtil._link_read_permaddress("fakeiface"), None)
         self.assertEqual(SysUtil._link_read_permaddress("morethansixteenchars"), None)
+
+    def test_link_infos_retries_when_fetch_results_differ(self):
+        """Simulate unstable /sys reads; link_infos must retry, not fail once."""
+        stable = {
+            "eth0": {
+                "ifindex": 2,
+                "ifname": "eth0",
+                "address": "52:54:00:00:00:01",
+                "perm-address": None,
+                "bond-port-perm-hwaddr": None,
+            }
+        }
+        unstable = {
+            "eth1": {
+                "ifindex": 3,
+                "ifname": "eth1",
+                "address": "52:54:00:00:00:02",
+                "perm-address": None,
+                "bond-port-perm-hwaddr": None,
+            }
+        }
+        fetch_mock = mock.Mock(side_effect=[unstable, stable, stable])
+        with mock.patch.object(SysUtil, "_link_infos_fetch", fetch_mock):
+            result = SysUtil.link_infos(refresh=True)
+        self.assertEqual(result, stable)
+        self.assertEqual(fetch_mock.call_count, 3)
+
+    def test_link_infos_raises_after_max_retries(self):
+        """Unstable reads must eventually fail after 50 attempts."""
+        counter = itertools.count()
+
+        def unstable_fetch():
+            n = next(counter)
+            return {
+                "eth{n}".format(n=n): {
+                    "ifindex": n,
+                    "ifname": "eth{n}".format(n=n),
+                    "address": "52:54:00:00:00:{0:02x}".format(n % 256),
+                    "perm-address": None,
+                    "bond-port-perm-hwaddr": None,
+                }
+            }
+
+        # Use Mock(side_effect=...) so Py2.7 does not treat the replacement as an
+        # unbound method (plain functions patched onto @staticmethod fail there).
+        fetch_mock = mock.Mock(side_effect=unstable_fetch)
+        with mock.patch.object(SysUtil, "_link_infos_fetch", fetch_mock):
+            self.assertRaisesRegex(
+                Exception,
+                "stable link-infos",
+                SysUtil.link_infos,
+                refresh=True,
+            )
+        # 50 attempts: 2 fetches on first try, then 1 per retry (2 + 49 = 51).
+        self.assertEqual(fetch_mock.call_count, 51)
 
 
 if __name__ == "__main__":
