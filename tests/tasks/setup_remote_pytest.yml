@@ -88,7 +88,7 @@
       elif [ "$is_coll" = true ]; then
         # search collection paths for modules and module_utils
         for dir in {{ collection_paths | join(" ") }}; do
-          for collections_dir in "$dir/ansible_collections/*/*"; do
+          for collections_dir in "$dir/ansible_collections"/*/*; do
             if [ -d "$collections_dir/plugins/modules" ] && [ -d "$collections_dir/plugins/module_utils/network_lsr" ]; then
               readlink -f "$collections_dir/plugins/modules"
               echo "${modules_to_test[@]}"
