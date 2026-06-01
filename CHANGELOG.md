@@ -1,6 +1,19 @@
 Changelog
 =========
 
+[1.20.1] - 2026-06-01
+--------------------
+
+### Bug Fixes
+
+- fix: correctly retry device read when device is unstable (#874)
+
+### Other Changes
+
+- refactor: use ansible.posix 2.1.X for EL7 compatibility [citest_skip] (#871)
+- ci: Add config file for CodeRabbit with custom rules (#872)
+- ci: Skip reviews for PRs with [citest_skip] in the title (#873)
+
 [1.20.0] - 2026-05-12
 --------------------
 
