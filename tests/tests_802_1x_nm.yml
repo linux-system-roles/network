@@ -31,6 +31,4 @@
   import_playbook: playbooks/tests_802_1x.yml
   when:
     - __network_distro_major_version != '6'
-    - (not __network_is_rhel and
-       __network_distro_major_version | int > 7) or
-      __network_distro_major_version | int == 8
+    - not __network_is_rhel or __network_distro_major_version | int > 7

@@ -8,8 +8,10 @@
     - name: "INIT: 802.1x tests"
       debug:
         msg: "##################################################"
-    - name: Include the task 'setup_802.1x.yml'
-      include_tasks: tasks/setup_802.1x.yml
+    - name: Include the task 'setup_mock_wifi.yml'
+      include_tasks: tasks/setup_mock_wifi.yml
+      vars:
+        __mock_wifi_mode: 802_1x
     - name: Test configuring 802.1x authentication
       block:
         - name: "TEST: 802.1x profile with private key password and ca cert"
@@ -127,17 +129,8 @@
                     persistent_state: absent
                     state: down
                 __sr_failed_when: false
-            - name: Include the task 'cleanup_802_1x_server.yml'
-              include_tasks: tasks/cleanup_802_1x_server.yml
-            - name: Remove test certificates
-              file:
-                state: absent
-                path: "/etc/pki/tls/{{ item }}"
-              with_items:
-                - client.key
-                - client.key.nocrypt
-                - client.pem
-                - cacert.pem
+            - name: Include the task 'cleanup_mock_wifi.yml'
+              include_tasks: tasks/cleanup_mock_wifi.yml
             - name: Remove test CA
               file:
                 state: absent

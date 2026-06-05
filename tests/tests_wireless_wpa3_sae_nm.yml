@@ -27,9 +27,9 @@
 
 # The test requires or should run with NetworkManager, therefore it cannot run
 # on RHEL/CentOS 6
-# SAE has not been supported by NetworkManager 1.18.8 on RHEL 7. Failed in setting up mock wifi on RHEL 8
+# SAE has not been supported by NetworkManager 1.18.8 on EL 7.
 - name: Import the playbook 'playbooks/tests_wireless_wpa3_sae.yml'
   import_playbook: playbooks/tests_wireless_wpa3_sae.yml
   when:
     - __network_distro_major_version != '6'
-    - __network_distro_major_version != '7' and not __network_is_rhel
+    - not __is_rh_distro or __network_distro_major_version | int > 7

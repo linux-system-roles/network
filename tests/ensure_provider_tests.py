@@ -107,18 +107,10 @@ MINIMUM_VERSION = "minimum_version"
 EXTRA_RUN_CONDITION = "extra_run_condition"
 NM_ONLY_TESTS = {
     "playbooks/tests_802_1x_updated.yml": {
-        EXTRA_RUN_CONDITION: (
-            "(not __network_is_rhel and\n"
-            "       __network_distro_major_version | int > 7) or\n"
-            "      __network_distro_major_version | int == 8"
-        ),
+        EXTRA_RUN_CONDITION: "not __network_is_rhel or __network_distro_major_version | int > 7",
     },
     "playbooks/tests_802_1x.yml": {
-        EXTRA_RUN_CONDITION: (
-            "(not __network_is_rhel and\n"
-            "       __network_distro_major_version | int > 7) or\n"
-            "      __network_distro_major_version | int == 8"
-        ),
+        EXTRA_RUN_CONDITION: "not __network_is_rhel or __network_distro_major_version | int > 7",
     },
     "playbooks/tests_ignore_auto_dns.yml": {},
     "playbooks/tests_bond_options.yml": {},
@@ -164,25 +156,19 @@ blackhole, prohibit and unreachable",
     "playbooks/tests_team_plugin_installation.yml": {
         EXTRA_RUN_CONDITION: "not __is_rh_distro or\n      __network_distro_major_version | int < 10",
     },
-    # mac80211_hwsim (used for tests_wireless) only seems to be available
-    # and working on RHEL/CentOS 7
+    # hostapd is not available on RHEL7, so tests_wireless cannot be run on RHEL7
     "playbooks/tests_wireless.yml": {
-        EXTRA_RUN_CONDITION: "__network_distro_major_version == '7'",
+        EXTRA_RUN_CONDITION: "not __network_is_rhel or __network_distro_major_version | int > 7",
     },
     "playbooks/tests_wireless_and_network_restart.yml": {},
     "playbooks/tests_wireless_plugin_installation.yml": {},
     "playbooks/tests_wireless_wpa3_owe.yml": {
-        "comment": "# OWE has not been supported by NetworkManager 1.18.8 on \
-RHEL 7(dist-tag). Failed in setting up mock wifi on RHEL 8",
-        EXTRA_RUN_CONDITION: "__network_distro_major_version | int > 7 and \
-__network_is_centos or\n     __network_distro_major_version | int > 32 \
-and __network_is_fedora",
+        "comment": "# OWE has not been supported by NetworkManager 1.18.8 on EL 7.",
+        EXTRA_RUN_CONDITION: "not __is_rh_distro or __network_distro_major_version | int > 7",
     },
     "playbooks/tests_wireless_wpa3_sae.yml": {
-        "comment": "# SAE has not been supported by NetworkManager 1.18.8 on \
-RHEL 7. Failed in setting up mock wifi on RHEL 8",
-        EXTRA_RUN_CONDITION: "__network_distro_major_version != '7' and \
-not __network_is_rhel",
+        "comment": "# SAE has not been supported by NetworkManager 1.18.8 on EL 7.",
+        EXTRA_RUN_CONDITION: "not __is_rh_distro or __network_distro_major_version | int > 7",
     },
 }
 # NM_CONDITIONAL_TESTS is used to store the test playbooks which are demanding for NM

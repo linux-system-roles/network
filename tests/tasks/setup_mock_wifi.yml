@@ -1,9 +1,17 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
+- name: Set mock wifi mode
+  set_fact:
+    __mock_wifi_mode: "{{ __mock_wifi_mode | default('default') }}"
+
+- name: Set server certificate directory
+  set_fact:
+    __mock_wifi_server_cert_dir: "{{ '/etc/pki/tls/hostapd_test'
+      if __mock_wifi_mode == '802_1x' else '/etc/pki/tls' }}"
+
 - name: Install packages required to set up mock wifi network
   package:
     name:
-      - hostapd
       - NetworkManager
       - wpa_supplicant
     state: present
@@ -13,24 +21,121 @@
   until: __install_status is success
   retries: 6
   delay: 10
+  when: __mock_wifi_mode != '802_1x'
+
+- name: Install hostapd
+  package:
+    name: hostapd
+    state: present
+    use: "{{ (__network_is_ostree | d(false)) |
+      ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
+  register: __install_status
+  until: __install_status is success
+  retries: 6
+  delay: 10
+
+# NOTE: CentOS 7 kernel package includes the mac80211_hwsim kernel module
+- name: Check if can test on RedHat or CentOS and install module if possible
+  when:
+    - ansible_facts['distribution'] in ['CentOS', 'RedHat']
+    - ansible_facts['distribution_major_version'] | int > 7
+  vars:
+    __centos_base_url: https://kojihub.stream.centos.org/kojifiles/packages/kernel
+    __rhel_base_url: "{{ lookup('env', 'RHEL_KERNEL_BASE_URL') }}"
+    __kernel_base_url: "{{ (ansible_facts['distribution'] == 'CentOS') |
+      ternary(__centos_base_url, __rhel_base_url) }}"
+  block:
+    # It is currently too difficult to install the required kernel
+    # if using rpm ostree - so just skip this test
+    - name: >-
+        This is an rpm-ostree system. This test cannot be run on such a system.
+        The test wants to install the mac80211_hwsim kernel module.
+        These operations are currently not supported on rpm-ostree systems.
+      meta: end_host
+      when: __network_is_ostree | d(false)
+
+    - name: Install mac80211_hwsim kernel module
+      shell:
+        executable: /bin/bash
+        cmd: |
+          set -xo pipefail
+          exec 1>&2
+
+          release=$(uname -r)
+          tmp="${release/-//}"
+          tmp="${tmp/.x//x}"
+          baseurl="{{ __kernel_base_url | quote }}"
+          if [ -z "$baseurl" ]; then
+            echo "Error: baseurl is not set"
+            exit 1
+          fi
+          {{ ansible_facts["pkg_mgr"] | quote }} --setopt=sslverify=0 -y install "$baseurl/$tmp/kernel-core-$release.rpm"
+          {{ ansible_facts["pkg_mgr"] | quote }} --setopt=sslverify=0 -y install "$baseurl/$tmp/kernel-modules-$release.rpm"
+          {{ ansible_facts["pkg_mgr"] | quote }} --setopt=sslverify=0 -y install "$baseurl/$tmp/kernel-modules-internal-$release.rpm"
+      changed_when: false
+
+- name: Install mac80211_hwsim kernel module in Fedora
+  shell:
+    executable: /bin/bash
+    cmd: |
+      set -xo pipefail
+      exec 1>&2
+
+      {{ ansible_facts["pkg_mgr"] | quote }} -y install koji
+      koji download-build --arch=$(uname -m) kernel-modules-internal-$(uname -r)
+      {{ ansible_facts["pkg_mgr"] | quote }} -y install kernel-modules*.rpm
+  when: ansible_facts['distribution'] == 'Fedora'
+  changed_when: false
 
 - name: Ensure NetworkManager is running
   service:
     name: NetworkManager
     state: started
+  when: __mock_wifi_mode != '802_1x'
+
+- name: Create directory for server certificates
+  file:
+    state: directory
+    path: "{{ __mock_wifi_server_cert_dir }}"
+    mode: "0755"
+  when: __mock_wifi_mode == '802_1x'
 
 - name: Copy server certificates
   copy:
     src: "{{ item }}"
-    dest: "/etc/pki/tls/{{ item }}"
+    dest: "{{ __mock_wifi_server_cert_dir }}/{{ item }}"
     mode: "0644"
   with_items:
     - server.key
     - dh.pem
     - server.pem
     - cacert.pem
+  when: __mock_wifi_mode in ['default', '802_1x']
 
-- name: Create hostapd config
+- name: Copy client certificates
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/pki/tls/{{ item }}"
+    mode: "0644"
+  with_items:
+    - client.key
+    - client.pem
+    - cacert.pem
+  when: __mock_wifi_mode == 'default'
+
+- name: Copy client certificates for wired 802.1x tests
+  copy:
+    src: "{{ item }}"
+    dest: "/etc/pki/tls/{{ item }}"
+    mode: "0644"
+  with_items:
+    - client.key
+    - client.key.nocrypt
+    - client.pem
+    - cacert.pem
+  when: __mock_wifi_mode == '802_1x'
+
+- name: Create hostapd config for default mock wifi mode
   copy:
     content: |
       interface=wlan1
@@ -51,15 +156,70 @@
       eap_server=1
       use_pae_group_addr=1
       eap_user_file=/etc/hostapd/hostapd.eap_user
-      ca_cert=/etc/pki/tls/cacert.pem
-      dh_file=/etc/pki/tls/dh.pem
-      server_cert=/etc/pki/tls/server.pem
-      private_key=/etc/pki/tls/server.key
+      ca_cert={{ __mock_wifi_server_cert_dir }}/cacert.pem
+      dh_file={{ __mock_wifi_server_cert_dir }}/dh.pem
+      server_cert={{ __mock_wifi_server_cert_dir }}/server.pem
+      private_key={{ __mock_wifi_server_cert_dir }}/server.key
       private_key_passwd=test
       logger_syslog=-1
       logger_syslog_level=0
     dest: /etc/hostapd/wireless.conf
     mode: "0644"
+  when: __mock_wifi_mode == 'default'
+
+- name: Create hostapd config for OWE mock wifi mode
+  copy:
+    content: |
+      interface=wlan1
+      ssid=hostapd-owe
+      hw_mode=g
+      channel=6
+      wpa=2
+      wpa_key_mgmt=OWE
+      rsn_pairwise=CCMP
+      ieee80211w=2
+      nas_identifier=ap.example.com
+    dest: /etc/hostapd/wireless.conf
+    mode: "0644"
+  when: __mock_wifi_mode == 'owe'
+
+- name: Create hostapd config for SAE mock wifi mode
+  copy:
+    content: |
+      interface=wlan1
+      ssid=hostapd-sae
+      hw_mode=g
+      channel=6
+      wpa=2
+      wpa_passphrase=p@55w0rD
+      wpa_key_mgmt=SAE
+      rsn_pairwise=CCMP
+      ieee80211w=2
+    dest: /etc/hostapd/wireless.conf
+    mode: "0644"
+  when: __mock_wifi_mode == 'sae'
+
+- name: Create hostapd config for wired 802.1x tests
+  copy:
+    content: |
+      interface=veth1
+      driver=wired
+      debug=2
+      ieee8021x=1
+      eap_reauth_period=3600
+      eap_server=1
+      use_pae_group_addr=1
+      eap_user_file=/etc/hostapd/hostapd.eap_user
+      ca_cert={{ __mock_wifi_server_cert_dir }}/cacert.pem
+      dh_file={{ __mock_wifi_server_cert_dir }}/dh.pem
+      server_cert={{ __mock_wifi_server_cert_dir }}/server.pem
+      private_key={{ __mock_wifi_server_cert_dir }}/server.key
+      private_key_passwd=test
+      logger_syslog=-1
+      logger_syslog_level=0
+    dest: /etc/hostapd/wired.conf
+    mode: "0644"
+  when: __mock_wifi_mode == '802_1x'
 
 - name: Create eap_user_file config
   copy:
@@ -67,28 +227,84 @@
       * TLS
     dest: /etc/hostapd/hostapd.eap_user
     mode: "0644"
+  when: __mock_wifi_mode in ['default', '802_1x']
 
-- name: Load mac80211_hwsim kernel module to mock a wifi network
-  shell: modprobe mac80211_hwsim && sleep 5
-  changed_when: false
+- name: Create test interfaces and start hostapd for wired 802.1x tests
+  when: __mock_wifi_mode == '802_1x'
+  block:
+    - name: Create test interfaces for wired 802.1x tests
+      shell:
+        executable: /bin/bash
+        cmd: |
+          set -xo pipefail
+          exec 1>&2
 
-- name: Restart NetworkManager and wpa_supplicant
-  service:
-    name: "{{ item }}"
-    state: restarted
-  with_items:
-    - NetworkManager
-    - wpa_supplicant
+          ip link add veth1 type veth peer name veth1-br
+          ip link add veth2 type veth peer name veth2-br
 
-- name: Configure wlan0 and wlan1 (mock wifi interfaces)
-  shell: |
-    ip link set up wlan0
-    ip link set up wlan1
-    nmcli device set wlan1 managed off
-    ip add add 203.0.113.1/24 dev wlan1
-    sleep 5
-  changed_when: false
+          ip link add br1 type bridge
+          ip link set br1 up
 
-- name: Start hostapd
-  shell: hostapd -B /etc/hostapd/wireless.conf && sleep 5
-  changed_when: false
+          ip netns add ns1
+
+          ip link set veth1 netns ns1
+
+          ip netns exec ns1 ip addr add 203.0.113.1/24 dev veth1
+
+          ip link set veth1-br up
+          ip link set veth2-br up
+
+          ip link set veth1-br master br1
+          ip link set veth2-br master br1
+
+          ip netns exec ns1 ip link set veth1 up
+          ip link set veth2 up
+
+          # Enable forwarding of EAP 802.1x messages through software bridge "br1".
+          echo 8 > /sys/class/net/br1/bridge/group_fwd_mask
+      changed_when: false
+
+    - name: Run hostapd in namespace for wired 802.1x tests
+      shell: ip netns exec ns1 hostapd -B /etc/hostapd/wired.conf && sleep 5
+      changed_when: false
+
+- name: Load mac80211_hwsim kernel module, create devices, and start hostapd for mock wifi
+  when: __mock_wifi_mode != '802_1x'
+  block:
+    - name: Load mac80211_hwsim kernel module to mock a wifi network
+      shell: modprobe mac80211_hwsim {{ __hwsim_radio }} && sleep 5
+      changed_when: false
+      vars:
+        __hwsim_radio: "{{ 'radios=2' if __mock_wifi_mode in ['owe', 'sae'] else '' }}"
+
+    - name: Restart NetworkManager and wpa_supplicant
+      service:
+        name: "{{ item }}"
+        state: restarted
+      with_items:
+        - NetworkManager
+        - wpa_supplicant
+
+    - name: Configure wlan0 and wlan1 (mock wifi interfaces)
+      shell:
+        executable: /bin/bash
+        cmd: |
+          set -xo pipefail
+          exec 1>&2
+
+          ip link set up wlan0
+          ip link set up wlan1
+          nmcli device set wlan1 managed off
+          ip addr add 203.0.113.1/24 dev wlan1
+          sleep 5
+      changed_when: false
+
+    - name: Start hostapd for mock wifi
+      shell:
+        executable: /bin/bash
+        cmd: |
+          set -xo pipefail
+          exec 1>&2
+
+          hostapd -B /etc/hostapd/wireless.conf && sleep 5
+      changed_when: false

@@ -31,4 +31,4 @@
   import_playbook: playbooks/tests_wireless.yml
   when:
     - __network_distro_major_version != '6'
-    - __network_distro_major_version == '7'
+    - not __network_is_rhel or __network_distro_major_version | int > 7

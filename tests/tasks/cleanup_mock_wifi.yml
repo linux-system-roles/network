@@ -1,9 +1,49 @@
 # SPDX-License-Identifier: BSD-3-Clause
 ---
+- name: Remove wired 802.1x test interfaces
+  shell: |
+    set -uxo pipefail
+    exec 1>&2
+    ip netns delete ns1
+    ip link delete veth1-br
+    ip link delete veth2-br
+    ip link delete br1
+  changed_when: false
+  failed_when: false
+
 - name: Unload mac80211_hwsim module
   command: modprobe -r mac80211_hwsim
   changed_when: false
+  failed_when: false
 
 - name: Kill hostapd process
   command: pkill hostapd
   changed_when: false
+  failed_when: false
+
+- name: Remove hostapd config files
+  file:
+    state: absent
+    path: "{{ item }}"
+  with_items:
+    - /etc/hostapd/wireless.conf
+    - /etc/hostapd/wired.conf
+    - /etc/hostapd/hostapd.eap_user
+
+- name: Remove server certificate directory for wired 802.1x tests
+  file:
+    state: absent
+    path: /etc/pki/tls/hostapd_test
+
+- name: Remove test certificates
+  file:
+    state: absent
+    path: "/etc/pki/tls/{{ item }}"
+  with_items:
+    - server.key
+    - dh.pem
+    - server.pem
+    - cacert.pem
+    - client.key
+    - client.key.nocrypt
+    - client.pem
