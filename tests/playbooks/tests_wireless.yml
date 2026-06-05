@@ -10,15 +10,6 @@
         msg: "##################################################"
     - name: Include the task 'setup_mock_wifi.yml'
       include_tasks: tasks/setup_mock_wifi.yml
-    - name: Copy client certs
-      copy:
-        src: "{{ item }}"
-        dest: "/etc/pki/tls/{{ item }}"
-        mode: "0644"
-      with_items:
-        - client.key
-        - client.pem
-        - cacert.pem
     - name: Test wireless connection with WPA-PSK
       block:
         - name: "TEST: wireless connection with WPA-PSK"

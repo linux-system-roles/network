@@ -8,8 +8,10 @@
     - name: "INIT: wireless tests"
       debug:
         msg: "##################################################"
-    - name: Include the task 'setup_mock_wifi_wpa3_owe.yml'
-      include_tasks: tasks/setup_mock_wifi_wpa3_owe.yml
+    - name: Include the task 'setup_mock_wifi.yml'
+      include_tasks: tasks/setup_mock_wifi.yml
+      vars:
+        __mock_wifi_mode: owe
     - name: Test wireless connection with OWE
       block:
         - name: "TEST: wireless connection with OWE"
