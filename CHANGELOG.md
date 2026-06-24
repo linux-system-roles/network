@@ -1,6 +1,15 @@
 Changelog
 =========
 
+[1.20.2] - 2026-06-24
+--------------------
+
+### Other Changes
+
+- test: fix unit test module lookup paths (#876)
+- test: refactor wireless tests into single setup and cleanup (#877)
+- test: remove unused files, py26 tests (#878)
+
 [1.20.1] - 2026-06-01
 --------------------
 
