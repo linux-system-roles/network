@@ -6,5 +6,4 @@
 # If you need mock then uncomment the following line:
 mock ; python_version < "3.0"
 # ansible and dependencies for all supported platforms
-ansible ; python_version > "2.6"
-idna<2.8 ; python_version < "2.7"
+ansible-core ; python_version > "2.6"

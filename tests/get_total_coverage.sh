@@ -16,7 +16,7 @@ rm -f remote-coveragedata* "${coverage_data}"
 
 
 # collect pytest coverage
-tox -e py26,py27,py36,py37 -- --cov-append
+tox -e py27,py36,py37 -- --cov-append
 
 for test_playbook in tests_*.yml
 do
