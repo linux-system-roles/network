@@ -1,6 +1,13 @@
 Changelog
 =========
 
+[1.20.3] - 2026-06-25
+--------------------
+
+### Other Changes
+
+- test: fix kernel url path for the mac80211_hwsim kernel module (#880)
+
 [1.20.2] - 2026-06-24
 --------------------
 
