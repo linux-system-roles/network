@@ -9,31 +9,6 @@
     __mock_wifi_server_cert_dir: "{{ '/etc/pki/tls/hostapd_test'
       if __mock_wifi_mode == '802_1x' else '/etc/pki/tls' }}"
 
-- name: Install packages required to set up mock wifi network
-  package:
-    name:
-      - NetworkManager
-      - wpa_supplicant
-    state: present
-    use: "{{ (__network_is_ostree | d(false)) |
-      ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
-  register: __install_status
-  until: __install_status is success
-  retries: 6
-  delay: 10
-  when: __mock_wifi_mode != '802_1x'
-
-- name: Install hostapd
-  package:
-    name: hostapd
-    state: present
-    use: "{{ (__network_is_ostree | d(false)) |
-      ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
-  register: __install_status
-  until: __install_status is success
-  retries: 6
-  delay: 10
-
 # NOTE: CentOS 7 kernel package includes the mac80211_hwsim kernel module
 - name: Check if can test on RedHat or CentOS and install module if possible
   when:
@@ -59,20 +34,41 @@
         executable: /bin/bash
         cmd: |
           set -xo pipefail
-          exec 1>&2
 
-          release=$(uname -r)
-          tmp="${release/-//}"
-          tmp="${tmp/.x//x}"
-          baseurl="{{ __kernel_base_url | quote }}"
+          release="$(uname -r)"
+          if [[ "$release" =~ ^([^-]+)-(.+)[.]([^.]+)$ ]]; then
+            nvr_path="${BASH_REMATCH[1]}/${BASH_REMATCH[2]}/${BASH_REMATCH[3]}"
+          else
+            echo "Error: release is not in the expected format: $release"
+            exit 1
+          fi
+          baseurl={{ __kernel_base_url | quote }}
           if [ -z "$baseurl" ]; then
             echo "Error: baseurl is not set"
             exit 1
           fi
-          {{ ansible_facts["pkg_mgr"] | quote }} --setopt=sslverify=0 -y install "$baseurl/$tmp/kernel-core-$release.rpm"
-          {{ ansible_facts["pkg_mgr"] | quote }} --setopt=sslverify=0 -y install "$baseurl/$tmp/kernel-modules-$release.rpm"
-          {{ ansible_facts["pkg_mgr"] | quote }} --setopt=sslverify=0 -y install "$baseurl/$tmp/kernel-modules-internal-$release.rpm"
+          if [ {{ __kernel_base_url | quote }} = {{ __rhel_base_url | quote }} ]; then
+            sslverify=0
+          else
+            sslverify=1
+          fi
+          {{ ansible_facts["pkg_mgr"] | quote }} --setopt=sslverify="$sslverify" -y install \
+            "$baseurl/$nvr_path/kernel-core-$release.rpm" \
+            "$baseurl/$nvr_path/kernel-modules-$release.rpm" \
+            "$baseurl/$nvr_path/kernel-modules-internal-$release.rpm"
+          rpm -ql kernel-modules-internal
       changed_when: false
+      register: __install_status
+
+    # NOTE: Some architectures may not have the mac80211_hwsim kernel module available.
+    - name: Report test will be skipped because mac80211_hwsim kernel module not found
+      when: __install_status.stdout is not search("mac80211_hwsim")
+      debug:
+        msg: Test will be skipped because mac80211_hwsim kernel module not found
+
+    - name: End test if mac80211_hwsim kernel module not found
+      when: __install_status.stdout is not search("mac80211_hwsim")
+      meta: end_host
 
 - name: Install mac80211_hwsim kernel module in Fedora
   shell:
@@ -86,6 +82,31 @@
       {{ ansible_facts["pkg_mgr"] | quote }} -y install kernel-modules*.rpm
   when: ansible_facts['distribution'] == 'Fedora'
   changed_when: false
+
+- name: Install packages required to set up mock wifi network
+  package:
+    name:
+      - NetworkManager
+      - wpa_supplicant
+    state: present
+    use: "{{ (__network_is_ostree | d(false)) |
+      ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
+  register: __install_status
+  until: __install_status is success
+  retries: 6
+  delay: 10
+  when: __mock_wifi_mode != '802_1x'
+
+- name: Install hostapd
+  package:
+    name: hostapd
+    state: present
+    use: "{{ (__network_is_ostree | d(false)) |
+      ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
+  register: __install_status
+  until: __install_status is success
+  retries: 6
+  delay: 10
 
 - name: Ensure NetworkManager is running
   service:
