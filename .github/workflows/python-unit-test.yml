@@ -43,7 +43,7 @@ jobs:
           sudo apt install -y git
 
       - name: checkout PR
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python 2.7
         if: ${{ matrix.pyver_os.ver == '2.7' }}
@@ -92,4 +92,4 @@ jobs:
           TOXENV="$toxenvs" lsr_ci_runtox
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
