@@ -39,12 +39,14 @@ reviews:
       mode: "warning"
       requirements: |
         PR title MUST follow Conventional Commits format:
-        - Format: <type>: <description> or <type>!: <description> for breaking changes
-        - Valid types: Refer to the 'type-enum' rule in .commitlintrc.js file for the complete list of allowed types
+        - Format: <required type><optional (scope)><optional !>: <required description>
+        - Valid types: Refer to https://github.com/linux-system-roles/auto-maintenance/blob/main/pr_title_lint.py#L23
         - Examples:
           - "feat: Add backup functionality"
           - "fix: Correct OSTree package installation"
           - "fix!: Remove deprecated variable (breaking change)"
+          - "chore(formatting): Fix indentation in my_module.py"
+          - "refactor(python)!: Use new python library thispy which has breaking api changes"
 
     custom_checks:
       - mode: "warning"
@@ -55,6 +57,8 @@ reviews:
           - Must contain "Reason:" section explaining why the change was needed
           - Must contain "Result:" section describing the outcome or impact
           - Can contain optional "Issue Tracker Tickets (Jira or BZ if any):" section
+          - Must contain "Signed-off-by:" section with your name and email address - use git commit -s
+          - Can contain optional "Assisted-by:" section with name of the AI coding assistant and models used
 
           Example:
           ```
@@ -65,6 +69,34 @@ reviews:
           Result: Users can now set network_secure_logging: false for debugging while maintaining secure defaults.
 
           Issue Tracker Tickets (Jira or BZ if any): RHEL-12345
+
+          Signed-off-by: John Doe john.doe@example.com
+
+          Assisted-by: Fish 4.3 using model Swim 6.2
+          ```
+
+          For PRs that are bug fixes, you can use the following template:
+          - Must contain "Cause:" section explaining the root cause of the bug
+          - Must contain "Consequences:" section explaining the impact of the bug and how it appears to users
+          - Must contain "Fix:" section explaining the fix for the bug and how it fixes the bug
+          - Must contain "Result:" section describing the outcome or impact of the fix
+          - Can contain optional "Issue Tracker Tickets (Jira or BZ if any):" section
+          - Must contain "Signed-off-by:" section with your name and email address - use git commit -s
+          - Can contain optional "Assisted-by:" section with name of the AI coding assistant and models used
+
+          Example:
+          ```
+          Cause: The variable rolename_user_name was being checked for a `none` value but was not being checked for string length greater than 0 if a string.
+
+          Consequences: The role allowed empty user names to be configured which caused the daemon to report "User not found".
+
+          Fix: The variable rolename_user_name is now checked for string length if not `none`, and will report an error in that case if the length is 0.
+
+          Result: The role will not allow the user to provide an empty user name and will report an error if the rolename_user_name length is 0.
+
+          Signed-off-by: John Doe john.doe@example.com
+
+          Assisted-by: Fish 4.3 using model Swim 6.2
           ```
 
   path_instructions:
@@ -180,6 +212,8 @@ reviews:
         - Tests should verify both success and failure scenarios
         - Use assert module to verify expected state after role execution
         - Include cleanup tasks to ensure tests are rerunnable
+        - Tests should be run in a block with an always section that runs the test cleanup to ensure that the cleanup is always run.
+        - The cleanup tasks should be tagged with `tests::cleanup` so that the cleanup can be skipped for debug purposes.
         - Tests should be idempotent - running twice should not cause failures
         - Example verification:
           ```yaml

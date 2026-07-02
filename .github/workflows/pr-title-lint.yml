@@ -22,11 +22,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install conventional-commit linter
-        run: npm install @commitlint/config-conventional @commitlint/cli
+      - name: Install pr_title_lint.py
+        run: curl -o pr_title_lint.py https://raw.githubusercontent.com/linux-system-roles/auto-maintenance/main/pr_title_lint.py
 
-      - name: Run commitlint on PR title
+      - name: Run pr_title_lint.py on PR title
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         # Echo from env variable to avoid bash errors with extra characters
-        run: echo "$PR_TITLE" | npx commitlint --verbose
+        run: python3 pr_title_lint.py "${PR_TITLE}"
