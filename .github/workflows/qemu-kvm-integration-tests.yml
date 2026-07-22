@@ -30,8 +30,8 @@ jobs:
           # QEMU
           - { image: "centos-9", env: "qemu-ansible-core-2-16" }
           - { image: "centos-10", env: "qemu-ansible-core-2-17" }
-          - { image: "fedora-42", env: "qemu-ansible-core-2-19" }
           - { image: "fedora-43", env: "qemu-ansible-core-2-20" }
+          - { image: "fedora-44", env: "qemu-ansible-core-2-21" }
           - { image: "leap-15.6", env: "qemu-ansible-core-2-18" }
 
           # container
@@ -40,10 +40,11 @@ jobs:
           # broken on non-running dbus
           # - { image: "centos-10", env: "container-ansible-core-2-17" }
           - { image: "centos-10-bootc", env: "container-ansible-core-2-17" }
-          - { image: "fedora-42", env: "container-ansible-core-2-17" }
           - { image: "fedora-43", env: "container-ansible-core-2-20" }
-          - { image: "fedora-42-bootc", env: "container-ansible-core-2-17" }
+          - { image: "fedora-44", env: "container-ansible-core-2-21" }
           - { image: "fedora-43-bootc", env: "container-ansible-core-2-20" }
+          # ansible-core 2.21 cannot enable services using service module in bootc images
+          - { image: "fedora-44-bootc", env: "container-ansible-core-2-20" }
 
     env:
       TOX_ARGS: "--skip-tags tests::infiniband,tests::nvme,tests::scsi"
@@ -110,29 +111,24 @@ jobs:
           python3 -m pip install --upgrade pip
           sudo apt update
           sudo apt install -y --no-install-recommends git ansible-core genisoimage qemu-system-x86
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.20.0"
+          pip3 install "git+https://github.com/richm/tox-lsr@3.20.1"
 
-      # HACK: Drop this when moving this workflow to 26.04 LTS
-      - name: Update podman to 5.x for compatibility with bootc-image-builder's podman 5
-        if: steps.check_platform.outputs.supported && endsWith(matrix.scenario.image, '-bootc')
+      - name: Check for podman version 5 or higher
+        id: check_podman_version
+        if: steps.check_platform.outputs.supported
         run: |
-          sed 's/noble/plucky/g' /etc/apt/sources.list.d/ubuntu.sources | sudo tee /etc/apt/sources.list.d/plucky.sources >/dev/null
-          cat <<EOF | sudo tee /etc/apt/preferences.d/podman.pref >/dev/null
-          Package: podman buildah golang-github-containers-common crun libgpgme11t64 libgpg-error0 golang-github-containers-image catatonit conmon containers-storage
-          Pin: release n=plucky
-          Pin-Priority: 991
+          podman_version=$(podman version -f '{{.Client.Version}}')
+          podman_major_version="${podman_version%%.*}"
+          echo "Podman version: $podman_version"
+          if [ "$podman_major_version" -lt 5 ]; then
+            echo "need_podman_update=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "need_podman_update=0" >> "$GITHUB_OUTPUT"
+          fi
 
-          Package: libsubid4 netavark passt aardvark-dns containernetworking-plugins libslirp0 slirp4netns
-          Pin: release n=plucky
-          Pin-Priority: 991
-
-          Package: *
-          Pin: release n=plucky
-          Pin-Priority: 400
-          EOF
-
-          sudo apt update
-          sudo apt install -y podman crun conmon containers-storage
+      - name: Ensure use of podman 5
+        if: steps.check_platform.outputs.supported && steps.check_podman_version.outputs.need_podman_update == 1
+        uses: redhat-actions/podman-install@main
 
       - name: Configure tox-lsr
         if: steps.check_platform.outputs.supported
