@@ -44,7 +44,7 @@ jobs:
       - name: Install tox, tox-lsr
         run: |
           set -euxo pipefail
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.20.0"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.20.1"
 
       - name: Set up Python
         uses: actions/setup-python@v6
