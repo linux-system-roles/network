@@ -6,4 +6,4 @@ updates:
     schedule:
       interval: monthly
     commit-message:
-      prefix: ci
+      prefix: "ci: [citest_skip] "
