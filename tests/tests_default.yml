@@ -18,21 +18,50 @@
 
     - name: Run role with clear facts
       include_tasks: tasks/run_role_with_clear_facts.yml
+      vars:
+        __network_write_log_file: true
 
-    # look for the exact module invocation, not some other message that might contain the string
-    - name: Check system journal contains role fingerprints
+    - name: Get fingerprint entries from journal
       ansible.builtin.shell:
         executable: /bin/bash
         cmd: >-
           set -eo pipefail;
           journalctl --since "{{ __journal_start_time }}" --no-pager |
-          grep -v " Invoked with" | grep "sr_fingerprint.*begin system_role:network" ||
-          { echo ERROR: BEGIN fingerprint not found; exit 1; };
-          journalctl --since "{{ __journal_start_time }}" --no-pager |
-          grep -v " Invoked with" | grep "sr_fingerprint.*success system_role:network" ||
-          { echo ERROR: SUCCESS fingerprint not found; exit 1; }
+          grep -v " Invoked with" |
+          grep "sr_fingerprint.*role_name=network"
+      register: __register_journal_fingerprints
       changed_when: false
       when: __register_dev_log.stat.exists
+
+    - name: Check that the log file was written
+      ansible.builtin.slurp:
+        path: /var/log/sysroles.jsonl
+      register: __register_log_file
+
+    - name: Verify log file and journal fingerprints
+      when: __register_dev_log.stat.exists
+      vars:
+        __journal_lines: "{{ __register_journal_fingerprints.stdout_lines }}"
+        __journal_begin: "{{ __journal_lines | select('search', 'status=begin') | list }}"
+        __journal_success: "{{ __journal_lines | select('search', 'status=success') | list }}"
+        __begin_date: "{{ (__journal_begin[0] | regex_search('date=([^ ]+)', '\\1'))[0] }}"
+        __success_date: "{{ (__journal_success[0] | regex_search('date=([^ ]+)', '\\1'))[0] }}"
+        __file_content: "{{ __register_log_file.content | b64decode }}"
+      block:
+        - name: Print contents of logs
+          debug:
+            var: item
+          loop:
+            - "{{ __file_content }}"
+            - "{{ __journal_lines }}"
+
+        - name: Assert content is correct
+          ansible.builtin.assert:
+            that:
+              - __journal_begin | length > 0
+              - __journal_success | length > 0
+              - __begin_date in __file_content
+              - __success_date in __file_content
 
     # module_warning - see https://github.com/ansible/ansible/issues/85394
     - name: Test warning and info logs
