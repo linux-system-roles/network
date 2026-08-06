@@ -6,6 +6,8 @@ network_state: {}
 
 network_allow_restart: false
 
+__network_write_log_file: false
+
 # BEGIN - DO NOT EDIT THIS BLOCK - rh distros variables
 # Ansible distribution identifiers that the role treats like RHEL
 __network_rh_distros:
