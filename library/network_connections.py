@@ -301,7 +301,26 @@ class IfcfgUtil:
 
     @classmethod
     def ValueEscape(cls, value):
+        """Quote a value for an ifcfg file, which is shell syntax.
 
+        Two quoting styles are produced, matching the Bash Reference
+        Manual:
+
+        ANSI-C quoting, $'...', used when the value contains a
+        character below 0x20 (Bash Reference Manual 3.1.2.4).
+        Backslash escapes are decoded per the ANSI C standard, so
+        \\nnn is the eight-bit character whose value is the *octal*
+        value nnn, one to three octal digits. Escapes are emitted at
+        a fixed three digits so they cannot absorb a following digit.
+        Backslash and single quote are escaped with a preceding
+        backslash. NUL cannot be represented; bash truncates the
+        string at it.
+
+        Double quoting, "...", used otherwise (Bash Reference Manual
+        3.1.2.3). Within double quotes the characters $, `, \\ and "
+        retain their special meaning and are escaped with a preceding
+        backslash.
+        """
         r = getattr(cls, "_re_ValueEscape", None)
         if r is None:
             r = re.compile("^[a-zA-Z_0-9-.]*$")
@@ -314,8 +333,8 @@ class IfcfgUtil:
             # needs ansic escaping due to ANSI control characters (newline)
             s = "$'"
             for c in value:
-                if ord(c) < ord(c):
-                    s += "\\" + str(ord(c))
+                if ord(c) < ord(" "):
+                    s += "\\%03o" % ord(c)
                 elif c == "\\" or c == "'":
                     s += "\\" + c
                 else:

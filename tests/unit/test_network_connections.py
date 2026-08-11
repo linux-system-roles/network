@@ -5657,5 +5657,22 @@ class TestSysUtils(Python26CompatTestCase):
         self.assertEqual(fetch_mock.call_count, 51)
 
 
+class TestIfcfgUtilValueEscape(unittest.TestCase):
+    def test_plain_value_is_not_quoted(self):
+        self.assertEqual(IfcfgUtil.ValueEscape("eth0"), "eth0")
+
+    def test_control_char_escaped_as_octal(self):
+        self.assertEqual(IfcfgUtil.ValueEscape("line1\nline2"), "$'line1\\012line2'")
+
+    def test_control_char_with_quote_and_backslash(self):
+        self.assertEqual(IfcfgUtil.ValueEscape("a\n'b\\c"), "$'a\\012\\'b\\\\c'")
+
+    def test_double_quoting_path_is_unchanged(self):
+        self.assertEqual(IfcfgUtil.ValueEscape('a "b" $c'), '"a \\"b\\" \\$c"')
+
+    def test_octal_escape_is_not_ambiguous_with_following_digit(self):
+        self.assertEqual(IfcfgUtil.ValueEscape("\x01" + "1"), "$'\\0011'")
+
+
 if __name__ == "__main__":
     unittest.main()
