@@ -32,7 +32,7 @@ jobs:
       - name: Checkout latest code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          persist-credentials: false
+          persist-credentials: true  # needed for commit and push
           fetch-depth: 0
       - name: Create or rebase commit, add dump_packages callback
         run: |
