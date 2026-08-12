@@ -30,11 +30,13 @@ jobs:
           sudo apt install -y git
 
       - name: Checkout repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
 
       - name: Run ShellCheck
         id: shellcheck_id
-        uses: ludeeus/action-shellcheck@master
+        uses: ludeeus/action-shellcheck@00b27aa7cb85167568cb48a3838b75f4265f2bca  # master
 
       - name: Show file paths scanned
         run: |

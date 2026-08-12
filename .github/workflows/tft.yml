@@ -36,7 +36,9 @@ jobs:
           GITHUB_CONTEXT: ${{ toJson(github) }}
 
       - name: Checkout repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
 
       - name: Get head sha of the PR
         id: head_sha
@@ -49,8 +51,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout PR
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
+          persist-credentials: false
           ref: ${{ steps.head_sha.outputs.head_sha }}
 
       - name: Get memory
@@ -136,7 +139,7 @@ jobs:
 
       - name: Set commit status as pending
         if: contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)
-        uses: myrotvorets/set-commit-status-action@master
+        uses: myrotvorets/set-commit-status-action@2774e1f040c82ed70a76b4b5cd53bb11ffaedd0a  # master
         with:
           sha: ${{ needs.prepare_vars.outputs.head_sha }}
           status: pending
@@ -146,7 +149,7 @@ jobs:
 
       - name: Set commit status as success with a description that platform is skipped
         if: "!contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)"
-        uses: myrotvorets/set-commit-status-action@master
+        uses: myrotvorets/set-commit-status-action@2774e1f040c82ed70a76b4b5cd53bb11ffaedd0a  # master
         with:
           sha: ${{ needs.prepare_vars.outputs.head_sha }}
           status: success
@@ -155,7 +158,7 @@ jobs:
           targetUrl: ""
 
       - name: Run test in testing farm
-        uses: sclorg/testing-farm-as-github-action@v4
+        uses: sclorg/testing-farm-as-github-action@230555baceb860aa468d216f1822974836b965d1  # v4
         if: contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)
         with:
           git_ref: main
@@ -184,7 +187,7 @@ jobs:
           tmt_plan_filter: "tag:playbooks_parallel,network"
 
       - name: Set final commit status
-        uses: myrotvorets/set-commit-status-action@master
+        uses: myrotvorets/set-commit-status-action@2774e1f040c82ed70a76b4b5cd53bb11ffaedd0a  # master
         if: always() && contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)
         with:
           sha: ${{ needs.prepare_vars.outputs.head_sha }}

@@ -52,7 +52,9 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
 
       - name: Check if platform is supported
         id: check_platform
@@ -111,7 +113,7 @@ jobs:
           python3 -m pip install --upgrade pip
           sudo apt update
           sudo apt install -y --no-install-recommends git ansible-core genisoimage qemu-system-x86
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@3.20.1"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@d594be24ed56e586a5796720d51c261e40c20496"
 
       - name: Check for podman version 5 or higher
         id: check_podman_version
@@ -128,7 +130,7 @@ jobs:
 
       - name: Ensure use of podman 5
         if: steps.check_platform.outputs.supported && steps.check_podman_version.outputs.need_podman_update == 1
-        uses: redhat-actions/podman-install@main
+        uses: redhat-actions/podman-install@3b6c60c447c93960c0b76faa0c66c6694bc71350  # main
 
       - name: Configure tox-lsr
         if: steps.check_platform.outputs.supported
@@ -212,7 +214,7 @@ jobs:
 
       - name: Upload test logs on failure
         if: failure()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
         with:
           name: "logs-${{ matrix.scenario.image }}-${{ matrix.scenario.env }}"
           path: |
@@ -238,7 +240,7 @@ jobs:
 
       - name: Set commit status as success with a description that platform is skipped
         if: ${{ steps.check_platform.outputs.supported == '' }}
-        uses: myrotvorets/set-commit-status-action@master
+        uses: myrotvorets/set-commit-status-action@2774e1f040c82ed70a76b4b5cd53bb11ffaedd0a  # master
         with:
           status: success
           context: "${{ github.workflow }} / scenario (${{ matrix.scenario.image }}, ${{ matrix.scenario.env }}) (pull_request)"
