@@ -30,8 +30,9 @@ jobs:
           sudo apt install -y git
 
       - name: Checkout latest code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
+          persist-credentials: true  # needed for commit and push
           fetch-depth: 0
       - name: Create or rebase commit, add dump_packages callback
         run: |
@@ -50,7 +51,7 @@ jobs:
           git push -f --set-upstream origin ${{ env.BRANCH_NAME }}
 
       - name: Create and comment pull request
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9
         with:
           github-token: ${{ secrets.GH_PUSH_TOKEN }}
           script: |

@@ -28,7 +28,9 @@ jobs:
           sudo apt install -y git
 
       - name: Check out code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
 
       # CHANGELOG.md is generated automatically from PR titles and descriptions
       # It might have issues but they are not critical

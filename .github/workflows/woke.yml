@@ -11,11 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
 
       - name: Run lsr-woke-action
         # Originally, uses: get-woke/woke-action@v0
-        uses: linux-system-roles/lsr-woke-action@main
+        uses: linux-system-roles/lsr-woke-action@33e72e28c826f05aaee08d0b70c7d2cd9e0a39a7  # main
         with:
           woke-args: "-c https://raw.githubusercontent.com/linux-system-roles/tox-lsr/main/src/tox_lsr/config_files/woke.yml --count-only-error-for-failure"
           # Cause the check to fail on any broke rules
