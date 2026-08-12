@@ -43,7 +43,9 @@ jobs:
           sudo apt install -y git
 
       - name: checkout PR
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
 
       - name: Set up Python 2.7
         if: ${{ matrix.pyver_os.ver == '2.7' }}
@@ -53,7 +55,7 @@ jobs:
 
       - name: Set up Python 3
         if: ${{ matrix.pyver_os.ver != '2.7' }}
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7
         with:
           python-version: ${{ matrix.pyver_os.ver }}
 
@@ -70,7 +72,7 @@ jobs:
             tox=tox
             virtualenv=virtualenv
           fi
-          pip install "$tox" "$virtualenv" "git+https://github.com/linux-system-roles/tox-lsr@3.20.1"
+          pip install "$tox" "$virtualenv" "git+https://github.com/linux-system-roles/tox-lsr@d594be24ed56e586a5796720d51c261e40c20496"
           # If you have additional OS dependency packages e.g. libcairo2-dev
           # then put them in .github/config/ubuntu-requirements.txt, one
           # package per line.
@@ -92,4 +94,4 @@ jobs:
           TOXENV="$toxenvs" lsr_ci_runtox
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f  # v7

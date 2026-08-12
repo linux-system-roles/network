@@ -22,7 +22,9 @@ jobs:
           sudo apt install -y git
 
       - name: checkout PR
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
 
       - name: Get tag and message from the latest CHANGELOG.md commit
         id: tag
@@ -69,7 +71,7 @@ jobs:
           echo "tagname=$_tagname" >> "$GITHUB_OUTPUT"
           echo "branch=$_branch" >> "$GITHUB_OUTPUT"
       - name: Create tag
-        uses: mathieudutour/github-tag-action@v6.2
+        uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b  # v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           custom_tag: ${{ steps.tag.outputs.tagname }}
@@ -77,7 +79,7 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: ncipollo/release-action@v1
+        uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd  # v1
         with:
           tag: ${{ steps.tag.outputs.tagname }}
           name: Version ${{ steps.tag.outputs.tagname }}
@@ -85,7 +87,7 @@ jobs:
           makeLatest: true
 
       - name: Publish role to Galaxy
-        uses: robertdebock/galaxy-action@1.2.1
+        uses: robertdebock/galaxy-action@7d89099e09f4385ec4b53eb58c0d120f1ad806dd  # 1.2.1
         with:
           galaxy_api_key: ${{ secrets.galaxy_api_key }}
           git_branch: ${{ steps.tag.outputs.branch }}
