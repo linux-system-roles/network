@@ -22,7 +22,7 @@ jobs:
       github.event.issue.pull_request
       && contains(github.event.comment.body, '[citest]')
       && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
-      || contains('systemroller', github.event.comment.user.login))
+      || github.event.comment.user.login == 'systemroller')
     runs-on: ubuntu-latest
     outputs:
       supported_platforms: ${{ steps.supported_platforms.outputs.supported_platforms }}
