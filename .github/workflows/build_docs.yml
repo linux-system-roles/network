@@ -13,7 +13,60 @@ on:  # yamllint disable-line rule:truthy
 permissions:
   contents: read
 jobs:
+  # Pandoc runs in an isolated read-only job so a compromised container cannot
+  # use a runner-mounted contents: write credential to push.
   build_docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out README and Pandoc template
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            README.md
+            .pandoc_template.html5
+          sparse-checkout-cone-mode: false
+      - name: Set RELEASE_VERSION based on whether run on release or on push
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euxo pipefail
+          if [ ${{ github.event_name }} = release ]; then
+            tag_name="$RELEASE_TAG"
+            if [[ "$tag_name" =~ ^[0-9]+[.][0-9]+[.][0-9]+$ ]]; then
+              echo "RELEASE_VERSION=$tag_name" >> $GITHUB_ENV
+            else
+              echo "RELEASE_VERSION=${{ github.event.release.id }}" >> $GITHUB_ENV
+            fi
+          elif [ ${{ github.event_name }} = push ]; then
+            echo "RELEASE_VERSION=latest" >> $GITHUB_ENV
+          else
+            echo Unsupported event
+            exit 1
+          fi
+
+      - name: Ensure that version directory exists
+        run: mkdir -p ${{ env.RELEASE_VERSION }}
+
+      - name: Remove badges from README.md prior to converting to HTML
+        run: sed -i '1,8 {/^\[\!.*actions\/workflows/d}' README.md
+
+      - name: Convert README.md to HTML and save to the version directory
+        uses: docker://pandoc/core:8d7467e8ee40b0365a344c3d41067d6d2349da52e9961e4229f331094806fb14
+        with:
+          args: >-
+            --from gfm --to html5 --toc --shift-heading-level-by=-1
+            --template .pandoc_template.html5
+            --output ${{ env.RELEASE_VERSION }}/README.html README.md
+
+      - name: Upload docs HTML artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
+        with:
+          name: docs-html
+          path: ${{ env.RELEASE_VERSION }}/README.html
+
+  publish_docs:
+    needs: build_docs
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -27,6 +80,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
+          persist-credentials: true  # needed for docs branch initialization push
           fetch-depth: 0
       - name: Ensure the docs branch
         run: |
@@ -51,20 +105,19 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: docs
-
-      - name: Fetch README.md and .pandoc_template.html5 template from the workflow branch
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          sparse-checkout: |
-            README.md
-            .pandoc_template.html5
-          sparse-checkout-cone-mode: false
-          path: ref_branch
+          persist-credentials: true  # needed for commit and push
       - name: Set RELEASE_VERSION based on whether run on release or on push
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           set -euxo pipefail
           if [ ${{ github.event_name }} = release ]; then
-            echo "RELEASE_VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+            tag_name="$RELEASE_TAG"
+            if [[ "$tag_name" =~ ^[0-9]+[.][0-9]+[.][0-9]+$ ]]; then
+              echo "RELEASE_VERSION=$tag_name" >> $GITHUB_ENV
+            else
+              echo "RELEASE_VERSION=${{ github.event.release.id }}" >> $GITHUB_ENV
+            fi
           elif [ ${{ github.event_name }} = push ]; then
             echo "RELEASE_VERSION=latest" >> $GITHUB_ENV
           else
@@ -72,29 +125,17 @@ jobs:
             exit 1
           fi
 
-      - name: Ensure that version and docs directories exist
-        run: mkdir -p ${{ env.RELEASE_VERSION }} docs
-
-      - name: Remove badges from README.md prior to converting to HTML
-        run: sed -i '1,8 {/^\[\!.*actions\/workflows/d}' ref_branch/README.md
-
-      - name: Convert README.md to HTML and save to the version directory
-        uses: docker://pandoc/core:latest
+      - name: Download docs HTML artifact
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7
         with:
-          args: >-
-            --from gfm --to html5 --toc --shift-heading-level-by=-1
-            --template ref_branch/.pandoc_template.html5
-            --output ${{ env.RELEASE_VERSION }}/README.html ref_branch/README.md
+          name: docs-html
+          path: ${{ env.RELEASE_VERSION }}
 
       - name: Copy latest README.html to docs/index.html for GitHub pages
         if: env.RELEASE_VERSION == 'latest'
-        run: cp ${{ env.RELEASE_VERSION }}/README.html docs/index.html
-
-      - name: Upload README.html as an artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: README.html
-          path: ${{ env.RELEASE_VERSION }}/README.html
+        run: |
+          mkdir -p docs
+          cp ${{ env.RELEASE_VERSION }}/README.html docs/index.html
 
       - name: Commit changes
         run: |
@@ -104,7 +145,7 @@ jobs:
           git commit -m "Update README.html for ${{ env.RELEASE_VERSION }}"
 
       - name: Push changes
-        uses: ad-m/github-push-action@master
+        uses: ad-m/github-push-action@881a6320fdb16eb5318c5054f31c218aec2b324c  # master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: docs
