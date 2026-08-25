@@ -635,6 +635,7 @@ The IP configuration supports the following options:
   `/etc/iproute2/rt_tables.d/*.conf`. The network role does not create these routing table entries automatically.
   You can use the `ansible.builtin.copy` module in your playbook to
   define the named tables before applying the network role:
+
   ```yaml
   - name: Ensure custom routing tables are defined
     ansible.builtin.copy:
@@ -645,6 +646,7 @@ The IP configuration supports the following options:
       - { table_id: 101, name: mytable2 }
     become: true
   ```
+
   The optional `type` key supports the values
   `blackhole`, `prohibit`, and `unreachable`.
   See [man 8 ip-route](https://man7.org/linux/man-pages/man8/ip-route.8.html#DESCRIPTION)
@@ -701,6 +703,7 @@ The IP configuration supports the following options:
       The network role does not create these routing table entries automatically.
       You can use the `ansible.builtin.copy` module in your playbook to
       define the named tables before applying the network role:
+
       ```yaml
       - name: Ensure custom routing tables are defined
         ansible.builtin.copy:
@@ -711,6 +714,7 @@ The IP configuration supports the following options:
           - { table_id: 101, name: mytable2 }
         become: true
       ```
+
   - `to` -
       The destination address of the packet to match (e.g. `192.168.100.58/24`).
   - `tos` -
