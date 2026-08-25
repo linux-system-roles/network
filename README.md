@@ -633,7 +633,7 @@ The IP configuration supports the following options:
   table. In order to specify the named table, the users have to ensure the named table
   is properly defined in `/etc/iproute2/rt_tables` or
   `/etc/iproute2/rt_tables.d/*.conf` .The network role does not create these routing table entries automatically.
-  You can use the `ansible.builtin.lineinfile` module in your playbook to
+  You can use the `ansible.builtin.copy` module in your playbook to
   define the named tables before applying the network role:
   ```yaml
   - name: Ensure custom routing tables are defined
