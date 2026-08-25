@@ -637,13 +637,13 @@ The IP configuration supports the following options:
   define the named tables before applying the network role:
   ```yaml
   - name: Ensure custom routing tables are defined
-  ansible.builtin.copy:
-    dest: /etc/iproute2/rt_tables.d/{{ item.name }}.conf
-    content: "{{ item.table_id }}\t{{ item.name }}\n"
-  loop:
-    - { table_id: 100, name: mytable1 }
-    - { table_id: 101, name: mytable2 }
-  become: true
+    ansible.builtin.copy:
+      dest: /etc/iproute2/rt_tables.d/{{ item.name }}.conf
+      content: "{{ item.table_id }}\t{{ item.name }}\n"
+    loop:
+      - { table_id: 100, name: mytable1 }
+      - { table_id: 101, name: mytable2 }
+    become: true
   ```
   The optional `type` key supports the values
   `blackhole`, `prohibit`, and `unreachable`.
