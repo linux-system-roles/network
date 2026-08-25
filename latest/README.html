@@ -872,9 +872,22 @@ address for a route. <code>table</code> supports both the numeric table
 and named table. In order to specify the named table, the users have to
 ensure the named table is properly defined in
 <code>/etc/iproute2/rt_tables</code> or
-<code>/etc/iproute2/rt_tables.d/*.conf</code>. The optional
-<code>type</code> key supports the values <code>blackhole</code>,
-<code>prohibit</code>, and <code>unreachable</code>. See <a
+<code>/etc/iproute2/rt_tables.d/*.conf</code>. The network role does not
+create these routing table entries automatically. You can use the
+<code>ansible.builtin.copy</code> module in your playbook to define the
+named tables before applying the network role:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Ensure custom routing tables are defined</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">ansible.builtin.copy</span><span class="kw">:</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> /etc/iproute2/rt_tables.d/{{ item.name }}.conf</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">content</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ item.table_id }}</span><span class="sc">\t</span><span class="st">{{ item.name }}</span><span class="sc">\n</span><span class="st">&quot;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">loop</span><span class="kw">:</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="kw">{</span><span class="at"> </span><span class="fu">table_id</span><span class="kw">:</span><span class="at"> </span><span class="dv">100</span><span class="kw">,</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> mytable1 </span><span class="kw">}</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="kw">{</span><span class="at"> </span><span class="fu">table_id</span><span class="kw">:</span><span class="at"> </span><span class="dv">101</span><span class="kw">,</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> mytable2 </span><span class="kw">}</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">become</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span></code></pre></div>
+<p>The optional <code>type</code> key supports the values
+<code>blackhole</code>, <code>prohibit</code>, and
+<code>unreachable</code>. See <a
 href="https://man7.org/linux/man-pages/man8/ip-route.8.html#DESCRIPTION">man
 8 ip-route</a> for their definition. Routes with these types do not
 support a gateway. If the type is not specified, the route is considered
@@ -888,49 +901,66 @@ on other packet fields except for destination address. The default value
 is a an empty list. Each rule is a dictionary with the following
 entries:</p>
 <ul>
-<li><code>priority</code> - The priority of the rule. A valid priority
-ranges from 0 to 4294967295. Higher number means lower priority.</li>
-<li><code>action</code> - The action of the rule. The possible values
+<li><p><code>priority</code> - The priority of the rule. A valid
+priority ranges from 0 to 4294967295. Higher number means lower
+priority.</p></li>
+<li><p><code>action</code> - The action of the rule. The possible values
 are <code>to-table</code> (default), <code>blackhole</code>,
-<code>prohibit</code>, <code>unreachable</code>.</li>
-<li><code>dport</code>- The range of the destination port (e.g.
+<code>prohibit</code>, <code>unreachable</code>.</p></li>
+<li><p><code>dport</code>- The range of the destination port (e.g.
 <code>1000 - 2000</code>). A valid dport value for both start and end
 ranges from 0 to 65534. And the start cannot be greater than the
-end.</li>
-<li><code>family</code> - The IP family of the rule. The possible values
-are <code>ipv4</code> and <code>ipv6</code>.</li>
-<li><code>from</code> - The source address of the packet to match (e.g.
-<code>192.168.100.58/24</code>).</li>
-<li><code>fwmark</code> - The fwmark value of the packet to match.</li>
-<li><code>fwmask</code> - The fwmask value of the packet to match.</li>
-<li><code>iif</code> - Select the incoming interface name to match.</li>
-<li><code>invert</code> - Invert the selected match of the rule. The
+end.</p></li>
+<li><p><code>family</code> - The IP family of the rule. The possible
+values are <code>ipv4</code> and <code>ipv6</code>.</p></li>
+<li><p><code>from</code> - The source address of the packet to match
+(e.g. <code>192.168.100.58/24</code>).</p></li>
+<li><p><code>fwmark</code> - The fwmark value of the packet to
+match.</p></li>
+<li><p><code>fwmask</code> - The fwmask value of the packet to
+match.</p></li>
+<li><p><code>iif</code> - Select the incoming interface name to
+match.</p></li>
+<li><p><code>invert</code> - Invert the selected match of the rule. The
 possible values are boolean values <code>true</code> and
 <code>false</code> (default). If the value is <code>true</code>, this is
 equivalent to match any packet that not satisfying selected match of the
-rule.</li>
-<li><code>ipproto</code> - Select the IP protocol value to match, the
-valid value ranges from 1 to 255.</li>
-<li><code>oif</code> - Select the outgoing interface name to match.</li>
-<li><code>sport</code> - The range of the source port (e.g.
+rule.</p></li>
+<li><p><code>ipproto</code> - Select the IP protocol value to match, the
+valid value ranges from 1 to 255.</p></li>
+<li><p><code>oif</code> - Select the outgoing interface name to
+match.</p></li>
+<li><p><code>sport</code> - The range of the source port (e.g.
 <code>1000 - 2000</code>). A valid sport value for both start and end
 ranges from 0 to 65534. And the start cannot be greater than the
-end.</li>
-<li><code>suppress_prefixlength</code> - Reject routing decisions that
-have a prefix length of the specified or less.</li>
-<li><code>table</code> - The route table to look up for the
+end.</p></li>
+<li><p><code>suppress_prefixlength</code> - Reject routing decisions
+that have a prefix length of the specified or less.</p></li>
+<li><p><code>table</code> - The route table to look up for the
 <code>to-table</code> action. <code>table</code> supports both the
 numeric table and named table. In order to specify the named table, the
 users have to ensure the named table is properly defined in
 <code>/etc/iproute2/rt_tables</code> or
-<code>/etc/iproute2/rt_tables.d/*.conf</code>.</li>
-<li><code>to</code> - The destination address of the packet to match
-(e.g. <code>192.168.100.58/24</code>).</li>
-<li><code>tos</code> - Select the tos value to match.</li>
-<li><code>uid</code> - The range of the uid to match (e.g.
+<code>/etc/iproute2/rt_tables.d/*.conf</code>. The network role does not
+create these routing table entries automatically. You can use the
+<code>ansible.builtin.copy</code> module in your playbook to define the
+named tables before applying the network role:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Ensure custom routing tables are defined</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">ansible.builtin.copy</span><span class="kw">:</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> /etc/iproute2/rt_tables.d/{{ item.name }}.conf</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">content</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ item.table_id }}</span><span class="sc">\t</span><span class="st">{{ item.name }}</span><span class="sc">\n</span><span class="st">&quot;</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">loop</span><span class="kw">:</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="kw">{</span><span class="at"> </span><span class="fu">table_id</span><span class="kw">:</span><span class="at"> </span><span class="dv">100</span><span class="kw">,</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> mytable1 </span><span class="kw">}</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="kw">{</span><span class="at"> </span><span class="fu">table_id</span><span class="kw">:</span><span class="at"> </span><span class="dv">101</span><span class="kw">,</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> mytable2 </span><span class="kw">}</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">become</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span></code></pre></div></li>
+<li><p><code>to</code> - The destination address of the packet to match
+(e.g. <code>192.168.100.58/24</code>).</p></li>
+<li><p><code>tos</code> - Select the tos value to match.</p></li>
+<li><p><code>uid</code> - The range of the uid to match (e.g.
 <code>1000 - 2000</code>). A valid uid value for both start and end
 ranges from 0 to 4294967295. And the start cannot be greater than the
-end.</li>
+end.</p></li>
 </ul></li>
 <li><p><code>route_append_only</code></p>
 <p>The <code>route_append_only</code> option allows only to add new
@@ -973,89 +1003,89 @@ Mini ring.</li>
 ring.</li>
 </ul></li>
 </ul>
-<div class="sourceCode" id="cb6"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">ethtool</span><span class="kw">:</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">features</span><span class="kw">:</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">esp_hw_offload</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">esp_tx_csum_hw_offload</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">fcoe_mtu</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">gro</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">gso</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">highdma</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">hw_tc_offload</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">l2_fwd_offload</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">loopback</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">lro</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ntuple</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_all</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_fcs</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_gro_hw</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_udp_tunnel_port_offload</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_vlan_filter</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_vlan_stag_filter</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_vlan_stag_hw_parse</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rxhash</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rxvlan</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">sg</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tls_hw_record</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tls_hw_tx_offload</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tso</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_checksum_fcoe_crc</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_checksum_ip_generic</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_checksum_ipv4</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_checksum_ipv6</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_checksum_sctp</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_esp_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_fcoe_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_gre_csum_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_gre_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_gso_partial</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_gso_robust</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_ipxip4_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_ipxip6_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_nocache_copy</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_scatter_gather</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_scatter_gather_fraglist</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_sctp_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_tcp_ecn_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_tcp_mangleid_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_tcp_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_tcp6_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_udp_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_udp_tnl_csum_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_udp_tnl_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_vlan_stag_hw_insert</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">txvlan</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">coalesce</span><span class="kw">:</span></span>
-<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">adaptive_rx</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">adaptive_tx</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
-<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">pkt_rate_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">pkt_rate_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-60"><a href="#cb6-60" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-61"><a href="#cb6-61" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-62"><a href="#cb6-62" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-63"><a href="#cb6-63" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-64"><a href="#cb6-64" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-65"><a href="#cb6-65" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-66"><a href="#cb6-66" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-67"><a href="#cb6-67" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-68"><a href="#cb6-68" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">sample_interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-69"><a href="#cb6-69" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">stats_block_usecs</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-70"><a href="#cb6-70" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-71"><a href="#cb6-71" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-72"><a href="#cb6-72" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-73"><a href="#cb6-73" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-74"><a href="#cb6-74" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-75"><a href="#cb6-75" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-76"><a href="#cb6-76" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-77"><a href="#cb6-77" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-78"><a href="#cb6-78" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ring</span><span class="kw">:</span></span>
-<span id="cb6-79"><a href="#cb6-79" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-80"><a href="#cb6-80" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_jumbo</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-81"><a href="#cb6-81" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_mini</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
-<span id="cb6-82"><a href="#cb6-82" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">ethtool</span><span class="kw">:</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">features</span><span class="kw">:</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">esp_hw_offload</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">esp_tx_csum_hw_offload</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">fcoe_mtu</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">gro</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">gso</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">highdma</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">hw_tc_offload</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">l2_fwd_offload</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">loopback</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">lro</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ntuple</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_all</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_fcs</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_gro_hw</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_udp_tunnel_port_offload</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_vlan_filter</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_vlan_stag_filter</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_vlan_stag_hw_parse</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rxhash</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rxvlan</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">sg</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tls_hw_record</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tls_hw_tx_offload</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tso</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_checksum_fcoe_crc</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_checksum_ip_generic</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_checksum_ipv4</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_checksum_ipv6</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_checksum_sctp</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_esp_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_fcoe_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_gre_csum_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_gre_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_gso_partial</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_gso_robust</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_ipxip4_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_ipxip6_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_nocache_copy</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_scatter_gather</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_scatter_gather_fraglist</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_sctp_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_tcp_ecn_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_tcp_mangleid_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_tcp_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_tcp6_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_udp_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_udp_tnl_csum_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_udp_tnl_segmentation</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_vlan_stag_hw_insert</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">txvlan</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">coalesce</span><span class="kw">:</span></span>
+<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">adaptive_rx</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">adaptive_tx</span><span class="kw">:</span><span class="at"> true|false</span><span class="co">  # optional</span></span>
+<span id="cb8-58"><a href="#cb8-58" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">pkt_rate_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-59"><a href="#cb8-59" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">pkt_rate_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-60"><a href="#cb8-60" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-61"><a href="#cb8-61" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-62"><a href="#cb8-62" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-63"><a href="#cb8-63" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_frames_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-64"><a href="#cb8-64" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-65"><a href="#cb8-65" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-66"><a href="#cb8-66" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-67"><a href="#cb8-67" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_usecs_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-68"><a href="#cb8-68" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">sample_interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-69"><a href="#cb8-69" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">stats_block_usecs</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-70"><a href="#cb8-70" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-71"><a href="#cb8-71" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-72"><a href="#cb8-72" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-73"><a href="#cb8-73" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_frames_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-74"><a href="#cb8-74" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-75"><a href="#cb8-75" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs_high</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-76"><a href="#cb8-76" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs_irq</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-77"><a href="#cb8-77" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx_usecs_low</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-78"><a href="#cb8-78" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ring</span><span class="kw">:</span></span>
+<span id="cb8-79"><a href="#cb8-79" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-80"><a href="#cb8-80" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_jumbo</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-81"><a href="#cb8-81" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rx_mini</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span>
+<span id="cb8-82"><a href="#cb8-82" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tx</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span><span class="co">  # optional minimum=0 maximum=0xffffffff</span></span></code></pre></div>
 <h2 id="ieee802_1x"><code>ieee802_1x</code></h2>
 <p>Configures 802.1x authentication for an interface.</p>
 <p>Currently, NetworkManager is the only supported provider and EAP-TLS
@@ -1220,335 +1250,335 @@ selection, the possible values are: <code>layer2</code>,
 </ul>
 <h1 id="examples-of-options">Examples of Options</h1>
 <p>Setting the same connection profile multiple times:</p>
-<div class="sourceCode" id="cb7"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Wired0</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interface_name</span><span class="kw">:</span><span class="at"> eth0</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dhcp4</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Wired0</span></span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> up</span></span></code></pre></div>
-<p>Activating a preexisting connection profile:</p>
-<div class="sourceCode" id="cb8"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> up</span></span></code></pre></div>
-<p>Deactivating a preexisting connection profile:</p>
 <div class="sourceCode" id="cb9"><pre
 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> down</span></span></code></pre></div>
-<p>Creating a persistent connection profile:</p>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Wired0</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interface_name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dhcp4</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Wired0</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> up</span></span></code></pre></div>
+<p>Activating a preexisting connection profile:</p>
 <div class="sourceCode" id="cb10"><pre
 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">    #persistent_state: present  # default</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">autoconnect</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">mac</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;00:00:5e:00:53:5d&quot;</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dhcp4</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span></code></pre></div>
-<p>Specifying a connecting profile for an ethernet device with the
-<code>ID_PATH</code>:</p>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> up</span></span></code></pre></div>
+<p>Deactivating a preexisting connection profile:</p>
 <div class="sourceCode" id="cb11"><pre
 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co">    # For PCI devices, the path has the form &quot;pci-$domain:$bus:$device.$function&quot;</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="co">    # The profile will only match the interface at the PCI address pci-0000:00:03.0</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">match</span><span class="kw">:</span></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">path</span><span class="kw">:</span></span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> pci-0000:00:03.0</span></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">address</span><span class="kw">:</span></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 192.0.2.3/24</span></span></code></pre></div>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> down</span></span></code></pre></div>
+<p>Creating a persistent connection profile:</p>
 <div class="sourceCode" id="cb12"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co">    # Specifying a connecting profile for an ethernet device only with the PCI address</span></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co">    # pci-0000:00:01.0 or pci-0000:00:03.0</span></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">match</span><span class="kw">:</span></span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">path</span><span class="kw">:</span></span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> pci-0000:00:0[1-3].0</span></span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="ot">&amp;!pci-0000:00:02.0</span></span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">address</span><span class="kw">:</span></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 192.0.2.3/24</span></span></code></pre></div>
-<p>Deleting a connection profile named <code>eth0</code> (if it
-exists):</p>
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co">    #persistent_state: present  # default</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">autoconnect</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">mac</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;00:00:5e:00:53:5d&quot;</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dhcp4</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span></code></pre></div>
+<p>Specifying a connecting profile for an ethernet device with the
+<code>ID_PATH</code>:</p>
 <div class="sourceCode" id="cb13"><pre
 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">persistent_state</span><span class="kw">:</span><span class="at"> absent</span></span></code></pre></div>
-<p>Configuring the Ethernet link settings:</p>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co">    # For PCI devices, the path has the form &quot;pci-$domain:$bus:$device.$function&quot;</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co">    # The profile will only match the interface at the PCI address pci-0000:00:03.0</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">match</span><span class="kw">:</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">path</span><span class="kw">:</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> pci-0000:00:03.0</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 192.0.2.3/24</span></span></code></pre></div>
 <div class="sourceCode" id="cb14"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ethernet</span><span class="kw">:</span></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">autoneg</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">speed</span><span class="kw">:</span><span class="at"> </span><span class="dv">1000</span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">duplex</span><span class="kw">:</span><span class="at"> full</span></span></code></pre></div>
-<p>Creating a bridge connection:</p>
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co">    # Specifying a connecting profile for an ethernet device only with the PCI address</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co">    # pci-0000:00:01.0 or pci-0000:00:03.0</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">match</span><span class="kw">:</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">path</span><span class="kw">:</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> pci-0000:00:0[1-3].0</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="ot">&amp;!pci-0000:00:02.0</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 192.0.2.3/24</span></span></code></pre></div>
+<p>Deleting a connection profile named <code>eth0</code> (if it
+exists):</p>
 <div class="sourceCode" id="cb15"><pre
 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> br0</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> bridge</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co">    #interface_name: br0  # defaults to the connection name</span></span></code></pre></div>
-<p>Configuring a bridge connection:</p>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">persistent_state</span><span class="kw">:</span><span class="at"> absent</span></span></code></pre></div>
+<p>Configuring the Ethernet link settings:</p>
 <div class="sourceCode" id="cb16"><pre
 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> internal-br0</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interface_name</span><span class="kw">:</span><span class="at"> br0</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> bridge</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dhcp4</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">auto6</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span></code></pre></div>
-<p>Setting <code>controller</code> and <code>port_type</code>:</p>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ethernet</span><span class="kw">:</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">autoneg</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">speed</span><span class="kw">:</span><span class="at"> </span><span class="dv">1000</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">duplex</span><span class="kw">:</span><span class="at"> full</span></span></code></pre></div>
+<p>Creating a bridge connection:</p>
 <div class="sourceCode" id="cb17"><pre
 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> br0-bond0</span></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> bond</span></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interface_name</span><span class="kw">:</span><span class="at"> bond0</span></span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">controller</span><span class="kw">:</span><span class="at"> internal-br0</span></span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">port_type</span><span class="kw">:</span><span class="at"> bridge</span></span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> br0-bond0-eth1</span></span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interface_name</span><span class="kw">:</span><span class="at"> eth1</span></span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">controller</span><span class="kw">:</span><span class="at"> br0-bond0</span></span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">port_type</span><span class="kw">:</span><span class="at"> bond</span></span></code></pre></div>
-<p>Configuring VLANs:</p>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> br0</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> bridge</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co">    #interface_name: br0  # defaults to the connection name</span></span></code></pre></div>
+<p>Configuring a bridge connection:</p>
 <div class="sourceCode" id="cb18"><pre
 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth1-profile</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">autoconnect</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interface_name</span><span class="kw">:</span><span class="at"> eth1</span></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dhcp4</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">auto6</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth1.6</span></span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">autoconnect</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> vlan</span></span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">parent</span><span class="kw">:</span><span class="at"> eth1-profile</span></span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">vlan</span><span class="kw">:</span></span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">id</span><span class="kw">:</span><span class="at"> </span><span class="dv">6</span></span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">address</span><span class="kw">:</span></span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 192.0.2.5/24</span></span>
-<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">auto6</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span></code></pre></div>
-<p>Configuring MACVLAN:</p>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> internal-br0</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interface_name</span><span class="kw">:</span><span class="at"> br0</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> bridge</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dhcp4</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">auto6</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span></code></pre></div>
+<p>Setting <code>controller</code> and <code>port_type</code>:</p>
 <div class="sourceCode" id="cb19"><pre
 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0-profile</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interface_name</span><span class="kw">:</span><span class="at"> eth0</span></span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">address</span><span class="kw">:</span></span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 192.168.0.1/24</span></span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> veth0</span></span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> macvlan</span></span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">parent</span><span class="kw">:</span><span class="at"> eth0-profile</span></span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">macvlan</span><span class="kw">:</span></span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">mode</span><span class="kw">:</span><span class="at"> bridge</span></span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">promiscuous</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tap</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
-<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">address</span><span class="kw">:</span></span>
-<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 192.168.1.1/24</span></span></code></pre></div>
-<p>Configuring a wireless connection:</p>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> br0-bond0</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> bond</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interface_name</span><span class="kw">:</span><span class="at"> bond0</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">controller</span><span class="kw">:</span><span class="at"> internal-br0</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">port_type</span><span class="kw">:</span><span class="at"> bridge</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> br0-bond0-eth1</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interface_name</span><span class="kw">:</span><span class="at"> eth1</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">controller</span><span class="kw">:</span><span class="at"> br0-bond0</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">port_type</span><span class="kw">:</span><span class="at"> bond</span></span></code></pre></div>
+<p>Configuring VLANs:</p>
 <div class="sourceCode" id="cb20"><pre
 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> wlan0</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> wireless</span></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">wireless</span><span class="kw">:</span></span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ssid</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;My WPA2-PSK Network&quot;</span></span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">key_mgmt</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;wpa-psk&quot;</span></span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="co">      # recommend vault encrypting the wireless password</span></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="co">      # see https://docs.ansible.com/ansible/latest/user_guide/vault.html</span></span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">password</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;p@55w0rD&quot;</span></span></code></pre></div>
-<p>Setting the IP configuration:</p>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth1-profile</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">autoconnect</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interface_name</span><span class="kw">:</span><span class="at"> eth1</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dhcp4</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">auto6</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth1.6</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">autoconnect</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> vlan</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">parent</span><span class="kw">:</span><span class="at"> eth1-profile</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">vlan</span><span class="kw">:</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">id</span><span class="kw">:</span><span class="at"> </span><span class="dv">6</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 192.0.2.5/24</span></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">auto6</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span></code></pre></div>
+<p>Configuring MACVLAN:</p>
 <div class="sourceCode" id="cb21"><pre
 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0-profile</span></span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">route_metric4</span><span class="kw">:</span><span class="at"> </span><span class="dv">100</span></span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dhcp4</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="co">      #dhcp4_send_hostname: false</span></span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">gateway4</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.0.2.1</span></span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dns</span><span class="kw">:</span></span>
-<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fl">192.0.2.2</span></span>
-<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fl">198.51.100.5</span></span>
-<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dns_search</span><span class="kw">:</span></span>
-<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> example.com</span></span>
-<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> subdomain.example.com</span></span>
-<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dns_options</span><span class="kw">:</span></span>
-<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> rotate</span></span>
-<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> timeout:1</span></span>
-<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">route_metric6</span><span class="kw">:</span><span class="at"> </span><span class="dv">-1</span></span>
-<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">auto6</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">gateway6</span><span class="kw">:</span><span class="at"> 2001:db8::1</span></span>
-<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">address</span><span class="kw">:</span></span>
-<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 192.0.2.3/24</span></span>
-<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 198.51.100.3/26</span></span>
-<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 2001:db8::80/7</span></span>
-<span id="cb21-28"><a href="#cb21-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-29"><a href="#cb21-29" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">route</span><span class="kw">:</span></span>
-<span id="cb21-30"><a href="#cb21-30" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">network</span><span class="kw">:</span><span class="at"> </span><span class="fl">198.51.100.128</span></span>
-<span id="cb21-31"><a href="#cb21-31" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">prefix</span><span class="kw">:</span><span class="at"> </span><span class="dv">26</span></span>
-<span id="cb21-32"><a href="#cb21-32" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">gateway</span><span class="kw">:</span><span class="at"> </span><span class="fl">198.51.100.1</span></span>
-<span id="cb21-33"><a href="#cb21-33" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">metric</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
-<span id="cb21-34"><a href="#cb21-34" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">network</span><span class="kw">:</span><span class="at"> </span><span class="fl">198.51.100.64</span></span>
-<span id="cb21-35"><a href="#cb21-35" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">prefix</span><span class="kw">:</span><span class="at"> </span><span class="dv">26</span></span>
-<span id="cb21-36"><a href="#cb21-36" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">gateway</span><span class="kw">:</span><span class="at"> </span><span class="fl">198.51.100.6</span></span>
-<span id="cb21-37"><a href="#cb21-37" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">metric</span><span class="kw">:</span><span class="at"> </span><span class="dv">4</span></span>
-<span id="cb21-38"><a href="#cb21-38" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">route_append_only</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb21-39"><a href="#cb21-39" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rule_append_only</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span></code></pre></div>
-<p>Configuring 802.1x:</p>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">interface_name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 192.168.0.1/24</span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> veth0</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> macvlan</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">parent</span><span class="kw">:</span><span class="at"> eth0-profile</span></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">macvlan</span><span class="kw">:</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">mode</span><span class="kw">:</span><span class="at"> bridge</span></span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">promiscuous</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">tap</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 192.168.1.1/24</span></span></code></pre></div>
+<p>Configuring a wireless connection:</p>
 <div class="sourceCode" id="cb22"><pre
 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ieee802_1x</span><span class="kw">:</span></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">identity</span><span class="kw">:</span><span class="at"> myhost</span></span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">eap</span><span class="kw">:</span><span class="at"> tls</span></span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">private_key</span><span class="kw">:</span><span class="at"> /etc/pki/tls/client.key</span></span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="co">      # recommend vault encrypting the private key password</span></span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="co">      # see https://docs.ansible.com/ansible/latest/user_guide/vault.html</span></span>
-<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">private_key_password</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;p@55w0rD&quot;</span></span>
-<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">client_cert</span><span class="kw">:</span><span class="at"> /etc/pki/tls/client.pem</span></span>
-<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ca_cert</span><span class="kw">:</span><span class="at"> /etc/pki/tls/cacert.pem</span></span>
-<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">domain_suffix_match</span><span class="kw">:</span><span class="at"> example.com</span></span></code></pre></div>
-<p>Configuring Enhanced Open(OWE):</p>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> wlan0</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> wireless</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">wireless</span><span class="kw">:</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ssid</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;My WPA2-PSK Network&quot;</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">key_mgmt</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;wpa-psk&quot;</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="co">      # recommend vault encrypting the wireless password</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="co">      # see https://docs.ansible.com/ansible/latest/user_guide/vault.html</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">password</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;p@55w0rD&quot;</span></span></code></pre></div>
+<p>Setting the IP configuration:</p>
 <div class="sourceCode" id="cb23"><pre
 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> wlan0</span></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> wireless</span></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">wireless</span><span class="kw">:</span></span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ssid</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;WIFI_SSID&quot;</span></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">key_mgmt</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;owe&quot;</span></span></code></pre></div>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ip</span><span class="kw">:</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">route_metric4</span><span class="kw">:</span><span class="at"> </span><span class="dv">100</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dhcp4</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="co">      #dhcp4_send_hostname: false</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">gateway4</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.0.2.1</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dns</span><span class="kw">:</span></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fl">192.0.2.2</span></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fl">198.51.100.5</span></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dns_search</span><span class="kw">:</span></span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> example.com</span></span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> subdomain.example.com</span></span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">dns_options</span><span class="kw">:</span></span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> rotate</span></span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> timeout:1</span></span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">route_metric6</span><span class="kw">:</span><span class="at"> </span><span class="dv">-1</span></span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">auto6</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">gateway6</span><span class="kw">:</span><span class="at"> 2001:db8::1</span></span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 192.0.2.3/24</span></span>
+<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 198.51.100.3/26</span></span>
+<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 2001:db8::80/7</span></span>
+<span id="cb23-28"><a href="#cb23-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-29"><a href="#cb23-29" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">route</span><span class="kw">:</span></span>
+<span id="cb23-30"><a href="#cb23-30" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">network</span><span class="kw">:</span><span class="at"> </span><span class="fl">198.51.100.128</span></span>
+<span id="cb23-31"><a href="#cb23-31" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">prefix</span><span class="kw">:</span><span class="at"> </span><span class="dv">26</span></span>
+<span id="cb23-32"><a href="#cb23-32" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">gateway</span><span class="kw">:</span><span class="at"> </span><span class="fl">198.51.100.1</span></span>
+<span id="cb23-33"><a href="#cb23-33" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">metric</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
+<span id="cb23-34"><a href="#cb23-34" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fu">network</span><span class="kw">:</span><span class="at"> </span><span class="fl">198.51.100.64</span></span>
+<span id="cb23-35"><a href="#cb23-35" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">prefix</span><span class="kw">:</span><span class="at"> </span><span class="dv">26</span></span>
+<span id="cb23-36"><a href="#cb23-36" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">gateway</span><span class="kw">:</span><span class="at"> </span><span class="fl">198.51.100.6</span></span>
+<span id="cb23-37"><a href="#cb23-37" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">metric</span><span class="kw">:</span><span class="at"> </span><span class="dv">4</span></span>
+<span id="cb23-38"><a href="#cb23-38" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">route_append_only</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb23-39"><a href="#cb23-39" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">rule_append_only</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span></code></pre></div>
+<p>Configuring 802.1x:</p>
+<div class="sourceCode" id="cb24"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth0</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ieee802_1x</span><span class="kw">:</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">identity</span><span class="kw">:</span><span class="at"> myhost</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">eap</span><span class="kw">:</span><span class="at"> tls</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">private_key</span><span class="kw">:</span><span class="at"> /etc/pki/tls/client.key</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="co">      # recommend vault encrypting the private key password</span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="co">      # see https://docs.ansible.com/ansible/latest/user_guide/vault.html</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">private_key_password</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;p@55w0rD&quot;</span></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">client_cert</span><span class="kw">:</span><span class="at"> /etc/pki/tls/client.pem</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ca_cert</span><span class="kw">:</span><span class="at"> /etc/pki/tls/cacert.pem</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">domain_suffix_match</span><span class="kw">:</span><span class="at"> example.com</span></span></code></pre></div>
+<p>Configuring Enhanced Open(OWE):</p>
+<div class="sourceCode" id="cb25"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_connections</span><span class="kw">:</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> wlan0</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> wireless</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">wireless</span><span class="kw">:</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ssid</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;WIFI_SSID&quot;</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">key_mgmt</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;owe&quot;</span></span></code></pre></div>
 <h1 id="examples-of-applying-the-network-state-configuration">Examples
 of Applying the Network State Configuration</h1>
 <p>Configuring the IP addresses:</p>
-<div class="sourceCode" id="cb24"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_state</span><span class="kw">:</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">interfaces</span><span class="kw">:</span></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> ethtest0</span></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">state</span><span class="kw">:</span><span class="at"> up</span></span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ipv4</span><span class="kw">:</span></span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">address</span><span class="kw">:</span></span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.168.122.250</span></span>
-<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">prefix-length</span><span class="kw">:</span><span class="at"> </span><span class="dv">24</span></span>
-<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dhcp</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ipv6</span><span class="kw">:</span></span>
-<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
-<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">address</span><span class="kw">:</span></span>
-<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> 2001:db8::1:1</span></span>
-<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">prefix-length</span><span class="kw">:</span><span class="at"> </span><span class="dv">64</span></span>
-<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">autoconf</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dhcp</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> ethtest1</span></span>
-<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
-<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">state</span><span class="kw">:</span><span class="at"> up</span></span>
-<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ipv4</span><span class="kw">:</span></span>
-<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
-<span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">address</span><span class="kw">:</span></span>
-<span id="cb24-25"><a href="#cb24-25" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.168.100.192</span></span>
-<span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">prefix-length</span><span class="kw">:</span><span class="at"> </span><span class="dv">24</span></span>
-<span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">auto-dns</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb24-28"><a href="#cb24-28" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dhcp</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb24-29"><a href="#cb24-29" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ipv6</span><span class="kw">:</span></span>
-<span id="cb24-30"><a href="#cb24-30" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
-<span id="cb24-31"><a href="#cb24-31" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">address</span><span class="kw">:</span></span>
-<span id="cb24-32"><a href="#cb24-32" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> 2001:db8::2:1</span></span>
-<span id="cb24-33"><a href="#cb24-33" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">prefix-length</span><span class="kw">:</span><span class="at"> </span><span class="dv">64</span></span>
-<span id="cb24-34"><a href="#cb24-34" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">autoconf</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb24-35"><a href="#cb24-35" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dhcp</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span></code></pre></div>
-<p>Configuring the Linux bridge with custom multicast, stp options,
-along with a port with specific stp settings:</p>
-<div class="sourceCode" id="cb25"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_state</span><span class="kw">:</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">interfaces</span><span class="kw">:</span></span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> br0</span></span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">type</span><span class="kw">:</span><span class="at"> linux-bridge</span></span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">state</span><span class="kw">:</span><span class="at"> up</span></span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">bridge</span><span class="kw">:</span></span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">options</span><span class="kw">:</span></span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">gc-timer</span><span class="kw">:</span><span class="at"> </span><span class="dv">29657</span></span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">group-addr</span><span class="kw">:</span><span class="at"> 01:80:C2:00:00:00</span></span>
-<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">group-forward-mask</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
-<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">group-fwd-mask</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
-<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">hash-max</span><span class="kw">:</span><span class="at"> </span><span class="dv">4096</span></span>
-<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">hello-timer</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
-<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">mac-ageing-time</span><span class="kw">:</span><span class="at"> </span><span class="dv">300</span></span>
-<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-last-member-count</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
-<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-last-member-interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">100</span></span>
-<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-membership-interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">26000</span></span>
-<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-querier</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-querier-interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">25500</span></span>
-<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-query-interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">12500</span></span>
-<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-query-response-interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">1000</span></span>
-<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-query-use-ifaddr</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-router</span><span class="kw">:</span><span class="at"> auto</span></span>
-<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-snooping</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
-<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-startup-query-count</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
-<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-startup-query-interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">3125</span></span>
-<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">stp</span><span class="kw">:</span></span>
-<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">forward-delay</span><span class="kw">:</span><span class="at"> </span><span class="dv">15</span></span>
-<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">hello-time</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
-<span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">max-age</span><span class="kw">:</span><span class="at"> </span><span class="dv">20</span></span>
-<span id="cb25-32"><a href="#cb25-32" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">priority</span><span class="kw">:</span><span class="at"> </span><span class="dv">32768</span></span>
-<span id="cb25-33"><a href="#cb25-33" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">vlan-protocol</span><span class="kw">:</span><span class="at"> 802.1q</span></span>
-<span id="cb25-34"><a href="#cb25-34" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">port</span><span class="kw">:</span></span>
-<span id="cb25-35"><a href="#cb25-35" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth1</span></span>
-<span id="cb25-36"><a href="#cb25-36" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">stp-hairpin-mode</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb25-37"><a href="#cb25-37" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">stp-path-cost</span><span class="kw">:</span><span class="at"> </span><span class="dv">100</span></span>
-<span id="cb25-38"><a href="#cb25-38" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">stp-priority</span><span class="kw">:</span><span class="at"> </span><span class="dv">32</span></span></code></pre></div>
-<p>Configuring the route:</p>
 <div class="sourceCode" id="cb26"><pre
 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_state</span><span class="kw">:</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">interfaces</span><span class="kw">:</span></span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth1</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> ethtest0</span></span>
 <span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
 <span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">state</span><span class="kw">:</span><span class="at"> up</span></span>
 <span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ipv4</span><span class="kw">:</span></span>
 <span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
 <span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">address</span><span class="kw">:</span></span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.0.2.251</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.168.122.250</span></span>
 <span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">prefix-length</span><span class="kw">:</span><span class="at"> </span><span class="dv">24</span></span>
 <span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dhcp</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
-<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">routes</span><span class="kw">:</span></span>
-<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">config</span><span class="kw">:</span></span>
-<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">destination</span><span class="kw">:</span><span class="at"> 198.51.100.0/24</span></span>
-<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">metric</span><span class="kw">:</span><span class="at"> </span><span class="dv">150</span></span>
-<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">next-hop-address</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.0.2.251</span></span>
-<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">next-hop-interface</span><span class="kw">:</span><span class="at"> eth1</span></span>
-<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">table-id</span><span class="kw">:</span><span class="at"> </span><span class="dv">254</span></span></code></pre></div>
-<p>Configuring the DNS search and server:</p>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ipv6</span><span class="kw">:</span></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> 2001:db8::1:1</span></span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">prefix-length</span><span class="kw">:</span><span class="at"> </span><span class="dv">64</span></span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">autoconf</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dhcp</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> ethtest1</span></span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">state</span><span class="kw">:</span><span class="at"> up</span></span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ipv4</span><span class="kw">:</span></span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.168.100.192</span></span>
+<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">prefix-length</span><span class="kw">:</span><span class="at"> </span><span class="dv">24</span></span>
+<span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">auto-dns</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dhcp</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb26-29"><a href="#cb26-29" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ipv6</span><span class="kw">:</span></span>
+<span id="cb26-30"><a href="#cb26-30" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb26-31"><a href="#cb26-31" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb26-32"><a href="#cb26-32" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> 2001:db8::2:1</span></span>
+<span id="cb26-33"><a href="#cb26-33" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">prefix-length</span><span class="kw">:</span><span class="at"> </span><span class="dv">64</span></span>
+<span id="cb26-34"><a href="#cb26-34" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">autoconf</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb26-35"><a href="#cb26-35" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dhcp</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span></code></pre></div>
+<p>Configuring the Linux bridge with custom multicast, stp options,
+along with a port with specific stp settings:</p>
 <div class="sourceCode" id="cb27"><pre
 class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_state</span><span class="kw">:</span></span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">dns-resolver</span><span class="kw">:</span></span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">config</span><span class="kw">:</span></span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">search</span><span class="kw">:</span></span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> example.com</span></span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> example.org</span></span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">server</span><span class="kw">:</span></span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 2001:4860:4860::8888</span></span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fl">8.8.8.8</span></span></code></pre></div>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">interfaces</span><span class="kw">:</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> br0</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">type</span><span class="kw">:</span><span class="at"> linux-bridge</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">state</span><span class="kw">:</span><span class="at"> up</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">bridge</span><span class="kw">:</span></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">options</span><span class="kw">:</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">gc-timer</span><span class="kw">:</span><span class="at"> </span><span class="dv">29657</span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">group-addr</span><span class="kw">:</span><span class="at"> 01:80:C2:00:00:00</span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">group-forward-mask</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">group-fwd-mask</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">hash-max</span><span class="kw">:</span><span class="at"> </span><span class="dv">4096</span></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">hello-timer</span><span class="kw">:</span><span class="at"> </span><span class="dv">0</span></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">mac-ageing-time</span><span class="kw">:</span><span class="at"> </span><span class="dv">300</span></span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-last-member-count</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-last-member-interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">100</span></span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-membership-interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">26000</span></span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-querier</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-querier-interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">25500</span></span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-query-interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">12500</span></span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-query-response-interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">1000</span></span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-query-use-ifaddr</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-router</span><span class="kw">:</span><span class="at"> auto</span></span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-snooping</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-startup-query-count</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
+<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">multicast-startup-query-interval</span><span class="kw">:</span><span class="at"> </span><span class="dv">3125</span></span>
+<span id="cb27-27"><a href="#cb27-27" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">stp</span><span class="kw">:</span></span>
+<span id="cb27-28"><a href="#cb27-28" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb27-29"><a href="#cb27-29" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">forward-delay</span><span class="kw">:</span><span class="at"> </span><span class="dv">15</span></span>
+<span id="cb27-30"><a href="#cb27-30" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">hello-time</span><span class="kw">:</span><span class="at"> </span><span class="dv">2</span></span>
+<span id="cb27-31"><a href="#cb27-31" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">max-age</span><span class="kw">:</span><span class="at"> </span><span class="dv">20</span></span>
+<span id="cb27-32"><a href="#cb27-32" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">priority</span><span class="kw">:</span><span class="at"> </span><span class="dv">32768</span></span>
+<span id="cb27-33"><a href="#cb27-33" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="fu">vlan-protocol</span><span class="kw">:</span><span class="at"> 802.1q</span></span>
+<span id="cb27-34"><a href="#cb27-34" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">port</span><span class="kw">:</span></span>
+<span id="cb27-35"><a href="#cb27-35" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth1</span></span>
+<span id="cb27-36"><a href="#cb27-36" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">stp-hairpin-mode</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb27-37"><a href="#cb27-37" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">stp-path-cost</span><span class="kw">:</span><span class="at"> </span><span class="dv">100</span></span>
+<span id="cb27-38"><a href="#cb27-38" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">stp-priority</span><span class="kw">:</span><span class="at"> </span><span class="dv">32</span></span></code></pre></div>
+<p>Configuring the route:</p>
+<div class="sourceCode" id="cb28"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_state</span><span class="kw">:</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">interfaces</span><span class="kw">:</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> eth1</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">type</span><span class="kw">:</span><span class="at"> ethernet</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">state</span><span class="kw">:</span><span class="at"> up</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ipv4</span><span class="kw">:</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">address</span><span class="kw">:</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a><span class="at">          </span><span class="kw">-</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.0.2.251</span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a><span class="at">            </span><span class="fu">prefix-length</span><span class="kw">:</span><span class="at"> </span><span class="dv">24</span></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">dhcp</span><span class="kw">:</span><span class="at"> </span><span class="ch">false</span></span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">routes</span><span class="kw">:</span></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">config</span><span class="kw">:</span></span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="fu">destination</span><span class="kw">:</span><span class="at"> 198.51.100.0/24</span></span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">metric</span><span class="kw">:</span><span class="at"> </span><span class="dv">150</span></span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">next-hop-address</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.0.2.251</span></span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">next-hop-interface</span><span class="kw">:</span><span class="at"> eth1</span></span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">table-id</span><span class="kw">:</span><span class="at"> </span><span class="dv">254</span></span></code></pre></div>
+<p>Configuring the DNS search and server:</p>
+<div class="sourceCode" id="cb29"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">network_state</span><span class="kw">:</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">dns-resolver</span><span class="kw">:</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">config</span><span class="kw">:</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">search</span><span class="kw">:</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> example.com</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> example.org</span></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">server</span><span class="kw">:</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> 2001:4860:4860::8888</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="kw">-</span><span class="at"> </span><span class="fl">8.8.8.8</span></span></code></pre></div>
 <h2 id="invalid-and-wrong-configuration">Invalid and Wrong
 Configuration</h2>
 <p>The <code>network</code> role rejects invalid configurations. It is
@@ -1632,6 +1662,13 @@ the new configuration.</p>
 configuration is active in the first place, and then carefully configure
 a sequence of steps to change to the new configuration. The actual
 solution depends strongly on your environment.</p>
+<p>Routing rules and named routing tables are not supported when using
+the <code>initscripts</code> provider. If
+<code>network_provider: initscripts</code> is set, any
+<code>routing_rule</code> entries and named <code>table</code>
+references in <code>route</code> will be silently ignored. Use
+<code>network_provider: nm</code> (NetworkManager) for routing rule
+support.</p>
 <h2 id="handling-potential-problems">Handling potential problems</h2>
 <p>When something goes wrong while configuring networking remotely, you
 might need to get physical access to the machine to recover.</p>
