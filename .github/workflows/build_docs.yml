@@ -52,7 +52,7 @@ jobs:
         run: sed -i '1,8 {/^\[\!.*actions\/workflows/d}' README.md
 
       - name: Convert README.md to HTML and save to the version directory
-        uses: docker://pandoc/core:8d7467e8ee40b0365a344c3d41067d6d2349da52e9961e4229f331094806fb14
+        uses: docker://pandoc/core@sha256:c7ae8ec017f748173d102c13e41d3daf91082738bdc6c65567832bf6eedf3f3a
         with:
           args: >-
             --from gfm --to html5 --toc --shift-heading-level-by=-1
