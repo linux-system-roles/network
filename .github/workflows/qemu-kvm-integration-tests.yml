@@ -240,7 +240,7 @@ jobs:
 
       - name: Set commit status as success with a description that platform is skipped
         if: ${{ steps.check_platform.outputs.supported == '' }}
-        uses: myrotvorets/set-commit-status-action@2774e1f040c82ed70a76b4b5cd53bb11ffaedd0a  # master
+        uses: myrotvorets/set-commit-status-action@c0f880c99d91381c6fdb97726f03feb8004409b4  # master
         with:
           status: success
           context: "${{ github.workflow }} / scenario (${{ matrix.scenario.image }}, ${{ matrix.scenario.env }}) (pull_request)"

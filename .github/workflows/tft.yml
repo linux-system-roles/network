@@ -139,7 +139,7 @@ jobs:
 
       - name: Set commit status as pending
         if: contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)
-        uses: myrotvorets/set-commit-status-action@2774e1f040c82ed70a76b4b5cd53bb11ffaedd0a  # master
+        uses: myrotvorets/set-commit-status-action@c0f880c99d91381c6fdb97726f03feb8004409b4  # master
         with:
           sha: ${{ needs.prepare_vars.outputs.head_sha }}
           status: pending
@@ -149,7 +149,7 @@ jobs:
 
       - name: Set commit status as success with a description that platform is skipped
         if: "!contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)"
-        uses: myrotvorets/set-commit-status-action@2774e1f040c82ed70a76b4b5cd53bb11ffaedd0a  # master
+        uses: myrotvorets/set-commit-status-action@c0f880c99d91381c6fdb97726f03feb8004409b4  # master
         with:
           sha: ${{ needs.prepare_vars.outputs.head_sha }}
           status: success
@@ -187,7 +187,7 @@ jobs:
           tmt_plan_filter: "tag:playbooks_parallel,network"
 
       - name: Set final commit status
-        uses: myrotvorets/set-commit-status-action@2774e1f040c82ed70a76b4b5cd53bb11ffaedd0a  # master
+        uses: myrotvorets/set-commit-status-action@c0f880c99d91381c6fdb97726f03feb8004409b4  # master
         if: always() && contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)
         with:
           sha: ${{ needs.prepare_vars.outputs.head_sha }}
