@@ -1,12 +1,12 @@
 ---
 # yamllint disable rule:line-length
-name: Weekly CI trigger
+name: Periodic CI trigger
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
   schedule:
-    - cron: 0 12 * * 6
+    - cron: 0 0 * * 0
 env:
-  BRANCH_NAME: weekly-ci
+  BRANCH_NAME: periodic-ci
   COMMIT_MESSAGE: "ci: This PR is to trigger periodic CI testing"
   BODY_MESSAGE: >-
     This PR is for the purpose of triggering periodic CI testing.
@@ -16,7 +16,9 @@ env:
 permissions:
   contents: read
 jobs:
-  weekly_ci:
+  periodic_ci:
+    # Set repository or organization variable PERIODIC_CI_ENABLED='true' to enable
+    if: vars.PERIODIC_CI_ENABLED == 'true'
     runs-on: ubuntu-latest
     permissions:
       issues: write
