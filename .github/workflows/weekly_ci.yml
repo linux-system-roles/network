@@ -12,7 +12,7 @@ env:
     This PR is for the purpose of triggering periodic CI testing.
     We don't currently have a way to trigger CI without a PR,
     so this PR serves that purpose.
-  COMMENT: "[citest]"
+  COMMENT: "[citest_tft]"
 permissions:
   contents: read
 jobs:

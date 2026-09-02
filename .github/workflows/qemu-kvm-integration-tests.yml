@@ -2,6 +2,13 @@
 name: Test
 on:  # yamllint disable-line rule:truthy
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - labeled
+  issue_comment:
+    types:
+      - created
   merge_group:
     branches:
       - main
@@ -14,13 +21,45 @@ on:  # yamllint disable-line rule:truthy
 
 permissions:
   contents: read
+  pull-requests: read
   # This is required for the ability to create/update the Pull request status
   statuses: write
 jobs:
   scenario:
     if: |
-      !((github.event_name == 'pull_request' && contains(github.event.pull_request.title, '[citest_skip]')) ||
-        (github.event_name == 'push' && contains(github.event.head_commit.message, '[citest_skip]')))
+      (
+        github.event_name == 'issue_comment'
+        && github.event.issue.pull_request
+        && (contains(github.event.comment.body, '[citest_all]')
+            || contains(github.event.comment.body, '[citest_qemu-kvm-integration-tests]'))
+        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
+                     github.event.comment.author_association)
+            || github.event.comment.user.login == 'systemroller')
+      ) || (
+        github.event_name == 'pull_request'
+        && github.event.action == 'opened'
+        && (contains(github.event.pull_request.labels.*.name, 'citest_all')
+            || contains(github.event.pull_request.labels.*.name, 'citest_qemu-kvm-integration-tests'))
+        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
+                     github.event.pull_request.author_association)
+            || github.event.pull_request.user.login == 'systemroller')
+      ) || (
+        github.event_name == 'pull_request'
+        && github.event.action == 'synchronize'
+        && (contains(github.event.pull_request.labels.*.name, 'citest_all')
+            || contains(github.event.pull_request.labels.*.name, 'citest_qemu-kvm-integration-tests'))
+        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
+                     github.event.pull_request.author_association)
+            || github.event.sender.login == 'systemroller')
+      ) || (
+        github.event_name == 'pull_request'
+        && github.event.action == 'labeled'
+        && (github.event.label.name == 'citest_all'
+            || github.event.label.name == 'citest_qemu-kvm-integration-tests')
+        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
+                     github.event.pull_request.author_association)
+            || github.event.sender.login == 'systemroller')
+      )
     runs-on: ubuntu-latest
 
     strategy:
@@ -51,10 +90,23 @@ jobs:
       ANSIBLE_INJECT_FACT_VARS: "false"
 
     steps:
+      - name: Get PR head SHA
+        if: github.event_name == 'issue_comment'
+        id: head_sha
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euxo pipefail
+          head_sha=$(gh api "repos/$REPO/pulls/$PR_NUMBER" --jq '.head.sha')
+          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+
       - name: Checkout repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
+          ref: ${{ steps.head_sha.outputs.head_sha || github.sha }}
 
       - name: Check if platform is supported
         id: check_platform
