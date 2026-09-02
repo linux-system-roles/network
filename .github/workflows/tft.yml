@@ -158,7 +158,7 @@ jobs:
           targetUrl: ""
 
       - name: Run test in testing farm
-        uses: sclorg/testing-farm-as-github-action@230555baceb860aa468d216f1822974836b965d1  # v4
+        uses: sclorg/testing-farm-as-github-action@230555baceb860aa468d216f1822974836b965d1  # v4.3.1
         if: contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)
         with:
           git_ref: main

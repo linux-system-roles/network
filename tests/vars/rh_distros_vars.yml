@@ -19,3 +19,9 @@ __network_is_rh_distro: "{{ ansible_facts['distribution'] in __network_rh_distro
 
 # Use this in conditionals to check if distro is Red Hat or clone, or Fedora
 __network_is_rh_distro_fedora: "{{ ansible_facts['distribution'] in __network_rh_distros_fedora }}"
+
+# Use these in conditionals to check if distro is Red Hat or clone of a specific major version
+__network_is_rh_distro_7: "{{ __network_is_rh_distro and ansible_facts['distribution_major_version'] == '7' }}"
+__network_is_rh_distro_8: "{{ __network_is_rh_distro and ansible_facts['distribution_major_version'] == '8' }}"
+__network_is_rh_distro_9: "{{ __network_is_rh_distro and ansible_facts['distribution_major_version'] == '9' }}"
+__network_is_rh_distro_10: "{{ __network_is_rh_distro and ansible_facts['distribution_major_version'] == '10' }}"
