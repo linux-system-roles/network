@@ -90,23 +90,35 @@ jobs:
       ANSIBLE_INJECT_FACT_VARS: "false"
 
     steps:
-      - name: Get PR head SHA
+      - name: Get PR head SHA and context
         if: github.event_name == 'issue_comment'
-        id: head_sha
+        id: head_sha_context
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.issue.number }}
+          CONTEXT: "${{ github.workflow }} / scenario (${{ matrix.scenario.image }}, ${{ matrix.scenario.env }}) (pull_request)"
         run: |
           set -euxo pipefail
           head_sha=$(gh api "repos/$REPO/pulls/$PR_NUMBER" --jq '.head.sha')
           echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+          echo "context=$CONTEXT" >> "$GITHUB_OUTPUT"
+
+      - name: Set commit status as pending
+        if: github.event_name == 'issue_comment'
+        uses: myrotvorets/set-commit-status-action@c0f880c99d91381c6fdb97726f03feb8004409b4  # master
+        with:
+          sha: ${{ steps.head_sha_context.outputs.head_sha }}
+          status: pending
+          context: ${{ steps.head_sha_context.outputs.context }}
+          description: Test started
+          targetUrl: ""
 
       - name: Checkout repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
-          ref: ${{ steps.head_sha.outputs.head_sha || github.sha }}
+          ref: ${{ steps.head_sha_context.outputs.head_sha || github.sha }}
 
       - name: Check if platform is supported
         id: check_platform
@@ -290,11 +302,22 @@ jobs:
           done
           "${cmdline[@]}"
 
-      - name: Set commit status as success with a description that platform is skipped
-        if: ${{ steps.check_platform.outputs.supported == '' }}
+      - name: Set final commit status
+        if: always() && github.event_name == 'issue_comment' && steps.head_sha_context.outputs.head_sha != '' && (steps.check_platform.outputs.supported || failure())
         uses: myrotvorets/set-commit-status-action@c0f880c99d91381c6fdb97726f03feb8004409b4  # master
         with:
+          sha: ${{ steps.head_sha_context.outputs.head_sha }}
+          status: ${{ job.status }}
+          context: ${{ steps.head_sha_context.outputs.context }}
+          description: Test finished
+          targetUrl: ""
+
+      - name: Set commit status as success with a description that platform is skipped
+        if: ${{ success() && github.event_name == 'issue_comment' && steps.check_platform.outputs.supported == '' }}
+        uses: myrotvorets/set-commit-status-action@c0f880c99d91381c6fdb97726f03feb8004409b4  # master
+        with:
+          sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: success
-          context: "${{ github.workflow }} / scenario (${{ matrix.scenario.image }}, ${{ matrix.scenario.env }}) (pull_request)"
+          context: ${{ steps.head_sha_context.outputs.context }}
           description: The role does not support this platform. Skipping.
           targetUrl: ""

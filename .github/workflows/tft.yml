@@ -19,7 +19,7 @@ jobs:
     name: Get info from role and PR to determine if and how to test
     # The concurrency key is used to prevent multiple workflows from running at the same time
     concurrency:
-      # group name contains reponame-pr_num to allow simualteneous runs in different PRs
+      # group name contains reponame-pr_num to allow simultaneous runs in different PRs
       group: testing-farm-${{ github.event.repository.name }}-${{ github.event.issue.number || github.event.number }}
       cancel-in-progress: true
     # Let's schedule tests only on user request. NOT automatically.
@@ -65,7 +65,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       supported_platforms: ${{ steps.supported_platforms.outputs.supported_platforms }}
-      head_sha: ${{ steps.head_sha.outputs.head_sha }}
+      head_sha: ${{ steps.head_sha.outputs.head_sha || github.sha }}
       memory: ${{ steps.memory.outputs.memory }}
     steps:
       - name: Dump github context
@@ -161,6 +161,28 @@ jobs:
         ${{ needs.prepare_vars.outputs.datetime }}/artifacts"
       ARTIFACT_TARGET_DIR: /srv/pub/alt/${{ vars.SR_LSR_USER }}/logs
     steps:
+      # the head_sha isn't really needed to be set here, we could
+      # just use the prepare_vars output, but this makes the workflow
+      # consistent with the other issue comment workflows.
+      - name: Get PR head SHA and context
+        id: head_sha_context
+        env:
+          HEAD_SHA: ${{ needs.prepare_vars.outputs.head_sha }}
+          CONTEXT: ${{ matrix.platform }}|ansible-${{ matrix.ansible_version }}
+        run: |
+          echo "head_sha=$HEAD_SHA" >> $GITHUB_OUTPUT
+          echo "context=$CONTEXT" >> $GITHUB_OUTPUT
+
+      - name: Set commit status as pending
+        if: contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)
+        uses: myrotvorets/set-commit-status-action@c0f880c99d91381c6fdb97726f03feb8004409b4  # master
+        with:
+          sha: ${{ steps.head_sha_context.outputs.head_sha }}
+          status: pending
+          context: ${{ steps.head_sha_context.outputs.context }}
+          description: Test started
+          targetUrl: ""
+
       - name: Set variables with DATETIME and artifact location
         id: set_vars
         run: |
@@ -174,23 +196,13 @@ jobs:
           echo "ARTIFACTS_DIR=$ARTIFACTS_DIR" >> $GITHUB_OUTPUT
           echo "ARTIFACTS_URL=$ARTIFACTS_URL" >> $GITHUB_OUTPUT
 
-      - name: Set commit status as pending
-        if: contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)
-        uses: myrotvorets/set-commit-status-action@c0f880c99d91381c6fdb97726f03feb8004409b4  # master
-        with:
-          sha: ${{ needs.prepare_vars.outputs.head_sha }}
-          status: pending
-          context: ${{ matrix.platform }}|ansible-${{ matrix.ansible_version }}
-          description: Test started
-          targetUrl: ""
-
       - name: Set commit status as success with a description that platform is skipped
         if: "!contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)"
         uses: myrotvorets/set-commit-status-action@c0f880c99d91381c6fdb97726f03feb8004409b4  # master
         with:
-          sha: ${{ needs.prepare_vars.outputs.head_sha }}
+          sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: success
-          context: ${{ matrix.platform }}|ansible-${{ matrix.ansible_version }}
+          context: ${{ steps.head_sha_context.outputs.context }}
           description: The role does not support this platform. Skipping.
           targetUrl: ""
 
@@ -227,8 +239,8 @@ jobs:
         uses: myrotvorets/set-commit-status-action@c0f880c99d91381c6fdb97726f03feb8004409b4  # master
         if: always() && contains(needs.prepare_vars.outputs.supported_platforms, matrix.platform)
         with:
-          sha: ${{ needs.prepare_vars.outputs.head_sha }}
+          sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: ${{ job.status }}
-          context: ${{ matrix.platform }}|ansible-${{ matrix.ansible_version }}
+          context: ${{ steps.head_sha_context.outputs.context }}
           description: Test finished
           targetUrl: ${{ steps.set_vars.outputs.ARTIFACTS_URL }}
