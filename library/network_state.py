@@ -42,6 +42,9 @@ state:
     returned: always
 """
 
+import glob
+import os
+import re
 import traceback
 
 from ansible.module_utils.basic import AnsibleModule, missing_required_lib
@@ -55,6 +58,33 @@ else:
     NETWORK_HAS_NMSTATE = True
     NETWORK_NMSTATE_IMPORT_ERROR = None
 
+# NetworkManager.conf(5) load order: a later dir shadows a same-named file.
+# D-Bus-set global DNS lives in [.intern.*] groups and must not match.
+NM_CONFIG_FILE = "/etc/NetworkManager/NetworkManager.conf"
+NM_CONFIG_DIRS = [
+    "/usr/lib/NetworkManager/conf.d",
+    "/run/NetworkManager/conf.d",
+    "/etc/NetworkManager/conf.d",
+]
+NM_GLOBAL_DNS_SECTION_RE = re.compile(b"^\\s*\\[global-dns(-domain-[^\\]]*)?\\]")
+
+
+def find_nm_global_dns_config():
+    """Return the NetworkManager config files that define [global-dns*] sections."""
+    snippets = {}
+    for config_dir in NM_CONFIG_DIRS:
+        for path in glob.glob(os.path.join(config_dir, "*.conf")):
+            snippets[os.path.basename(path)] = path
+    found = []
+    for path in [NM_CONFIG_FILE] + [snippets[name] for name in sorted(snippets)]:
+        try:
+            with open(path, "rb") as conf:
+                if any(NM_GLOBAL_DNS_SECTION_RE.match(line) for line in conf):
+                    found.append(path)
+        except (IOError, OSError):
+            continue
+    return found
+
 
 class NetworkState:
     def __init__(self, module, module_name):
@@ -65,7 +95,21 @@ class NetworkState:
         self.previous_state = self.get_state_config()
 
     def run(self):
+        """Apply desired_state through nmstate and exit the module."""
         desired_state = self.params["desired_state"]
+        # NetworkManager rejects nmstate's D-Bus global DNS writes while a config
+        # file defines global DNS, and nmstate reports that as an internal error.
+        if "dns-resolver" in desired_state:
+            global_dns_files = find_nm_global_dns_config()
+            if global_dns_files:
+                self.module.fail_json(
+                    msg="Managing `dns-resolver` with `network_state` is not "
+                    "supported while NetworkManager has a [global-dns] or "
+                    "[global-dns-domain-*] section in its configuration (%s). "
+                    "Remove the section and reload NetworkManager, or set the "
+                    "DNS options on the connection profiles instead."
+                    % ", ".join(global_dns_files)
+                )
         libnmstate.apply(desired_state)
         current_state = self.get_state_config()
         if current_state != self.previous_state:
