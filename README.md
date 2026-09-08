@@ -1540,6 +1540,15 @@ Routing rules and named routing tables are not supported when using the
 silently ignored. Use `network_provider: nm` (NetworkManager) for routing
 rule support.
 
+Configuring `dns-resolver` through `network_state` is not supported when
+NetworkManager has a `[global-dns]` or `[global-dns-domain-*]` section in its
+configuration files (`/etc/NetworkManager/NetworkManager.conf` or a `conf.d`
+snippet). nmstate applies DNS through NetworkManager's D-Bus global DNS API, and
+NetworkManager rejects that while global DNS is set in a configuration file. The
+role fails with an error naming the file. Either remove the section and reload
+NetworkManager, or configure DNS on the connection profiles instead of
+`dns-resolver`.
+
 ### Handling potential problems
 
 When something goes wrong while configuring networking remotely, you might need
