@@ -1669,6 +1669,17 @@ the <code>initscripts</code> provider. If
 references in <code>route</code> will be silently ignored. Use
 <code>network_provider: nm</code> (NetworkManager) for routing rule
 support.</p>
+<p>Configuring <code>dns-resolver</code> through
+<code>network_state</code> is not supported when NetworkManager has a
+<code>[global-dns]</code> or <code>[global-dns-domain-*]</code> section
+in its configuration files
+(<code>/etc/NetworkManager/NetworkManager.conf</code> or a
+<code>conf.d</code> snippet). nmstate applies DNS through
+NetworkManager's D-Bus global DNS API, and NetworkManager rejects that
+while global DNS is set in a configuration file. The role fails with an
+error naming the file. Either remove the section and reload
+NetworkManager, or configure DNS on the connection profiles instead of
+<code>dns-resolver</code>.</p>
 <h2 id="handling-potential-problems">Handling potential problems</h2>
 <p>When something goes wrong while configuring networking remotely, you
 might need to get physical access to the machine to recover.</p>
