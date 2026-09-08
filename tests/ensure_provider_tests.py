@@ -141,6 +141,9 @@ NM_ONLY_TESTS = {
     "playbooks/tests_network_state.yml": {
         EXTRA_RUN_CONDITION: "__network_distro_major_version | int > 7",
     },
+    "playbooks/tests_network_state_global_dns.yml": {
+        EXTRA_RUN_CONDITION: "__network_distro_major_version | int > 7",
+    },
     "playbooks/tests_reapply.yml": {},
     "playbooks/tests_route_table.yml": {},
     "playbooks/tests_route_type.yml": {
