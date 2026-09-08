@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Play for rejecting dns-resolver in network_state when NetworkManager
+    has global-dns configured
+  hosts: all
+  vars:
+    global_dns_conf: /etc/NetworkManager/conf.d/99-lsr-test-global-dns.conf
+  tasks:
+    - name: Test network_state dns-resolver with NetworkManager global-dns
+      block:
+        - name: Configure global-dns in NetworkManager
+          copy:
+            dest: "{{ global_dns_conf }}"
+            content: |
+              [global-dns]
+              options=no-aaaa
+            mode: "0644"
+
+        - name: Reload the NetworkManager configuration
+          command: nmcli general reload conf
+          changed_when: true
+
+        - name: Configure the DNS with dns-resolver
+          include_tasks: tasks/run_role_with_clear_facts.yml
+          vars:
+            __sr_failed_when: false
+            network_state:
+              dns-resolver:
+                config:
+                  server:
+                    - 192.168.122.1
+
+        - name: Assert that the role reports global-dns as unsupported
+          assert:
+            that:
+              - __network_state_result is defined
+              - __network_state_result is failed
+              - __network_state_result.msg is search("global-dns")
+            msg: the role did not report the NetworkManager global-dns
+              configuration as unsupported
+
+      always:
+        - name: Remove global-dns from NetworkManager
+          file:
+            path: "{{ global_dns_conf }}"
+            state: absent
+          tags:
+            - "tests::cleanup"
+
+        - name: Reload the NetworkManager configuration after cleanup
+          command: nmcli general reload conf
+          changed_when: true
+          tags:
+            - "tests::cleanup"
+
+        - name: Verify network state restored to default
+          include_tasks: tasks/check_network_dns.yml
+          tags:
+            - "tests::cleanup"
