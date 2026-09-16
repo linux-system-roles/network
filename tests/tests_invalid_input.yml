@@ -1,0 +1,507 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+# Verify meta/argument_specs.yml and tasks/assert_role_vars.yml reject bad
+# parameters. Each block runs the role expecting failure; rescue records
+# that outcome.
+- name: Verify invalid parameters are rejected
+  hosts: all
+  tasks:
+    - name: Run invalid input tests
+      block:
+        # ====================================================
+        # Section 1: Verify role works with valid defaults
+        # ====================================================
+        - name: Run role with valid defaults
+          ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+
+        # ====================================================
+        # Section 2: argument_specs validation (Ansible 2.11+)
+        # ====================================================
+        - name: Run argument specs validation tests
+          when: ansible_version.full is version("2.11", ">=")
+          block:
+            # --- Test: invalid connection type choice ---
+            - name: Argument specs reject invalid connection type
+              block:
+                - name: Run role with invalid connection type
+                  ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+                  vars:
+                    network_connections:
+                      - name: eth0
+                        type: not_a_real_type
+              rescue:
+                - name: Mark invalid connection type rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_type_choice_failed: true
+
+            - name: Assert invalid connection type was rejected
+              ansible.builtin.assert:
+                that:
+                  - __invalid_input_type_choice_failed | default(false)
+                fail_msg: >-
+                  argument_specs should reject network_connections entries
+                  with an unknown 'type' value
+
+            # --- Test: invalid state choice ---
+            - name: Argument specs reject invalid connection state
+              block:
+                - name: Run role with invalid connection state
+                  ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+                  vars:
+                    network_connections:
+                      - name: eth0
+                        state: not_a_valid_state
+              rescue:
+                - name: Mark invalid connection state rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_state_choice_failed: true
+
+            - name: Assert invalid connection state was rejected
+              ansible.builtin.assert:
+                that:
+                  - __invalid_input_state_choice_failed | default(false)
+                fail_msg: >-
+                  argument_specs should reject network_connections entries
+                  with an unknown 'state' value
+
+            # --- Test: bond invalid mode choice ---
+            - name: Argument specs reject invalid bond mode
+              block:
+                - name: Run role with invalid bond mode
+                  ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+                  vars:
+                    network_connections:
+                      - name: bond0
+                        type: bond
+                        interface_name: bond0
+                        bond:
+                          mode: not_a_real_mode
+              rescue:
+                - name: Mark invalid bond mode rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_bond_mode_choice_failed: true
+
+            - name: Assert invalid bond mode was rejected
+              ansible.builtin.assert:
+                that:
+                  - __invalid_input_bond_mode_choice_failed | default(false)
+                fail_msg: >-
+                  argument_specs should reject network_connections[].bond.mode
+                  values not in the allowed choices list
+
+            # --- Test: wireless invalid key_mgmt choice ---
+            - name: Argument specs reject invalid wireless key_mgmt
+              block:
+                - name: Run role with invalid wireless key_mgmt
+                  ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+                  vars:
+                    network_connections:
+                      - name: wlan0
+                        type: wireless
+                        wireless:
+                          ssid: my-network
+                          key_mgmt: not_a_real_key_mgmt
+              rescue:
+                - name: Mark invalid wireless key_mgmt rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_key_mgmt_choice_failed: true
+
+            - name: Assert invalid wireless key_mgmt was rejected
+              ansible.builtin.assert:
+                that:
+                  - __invalid_input_key_mgmt_choice_failed | default(false)
+                fail_msg: >-
+                  argument_specs should reject network_connections[].wireless.key_mgmt
+                  values not in the allowed choices list
+
+            # --- Test: missing required vlan.id ---
+            - name: Argument specs reject vlan without required id
+              block:
+                - name: Run role with vlan missing id
+                  ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+                  vars:
+                    network_connections:
+                      - name: vlan6
+                        type: vlan
+                        interface_name: vlan6
+                        parent: eth0
+                        vlan: {}
+              rescue:
+                - name: Mark missing vlan.id rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_missing_vlan_id_failed: true
+                  when: >-
+                    'missing required arguments' in
+                    (ansible_failed_result | default({}) | to_json)
+
+            - name: Assert missing vlan.id was rejected
+              ansible.builtin.assert:
+                that:
+                  - __invalid_input_missing_vlan_id_failed | default(false)
+                fail_msg: >-
+                  argument_specs should reject network_connections[].vlan
+                  entries missing the required id field
+
+            # --- Test: missing required wireless.ssid/key_mgmt ---
+            - name: Argument specs reject wireless without required fields
+              block:
+                - name: Run role with wireless missing ssid and key_mgmt
+                  ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+                  vars:
+                    network_connections:
+                      - name: wlan0
+                        type: wireless
+                        wireless: {}
+              rescue:
+                - name: Mark missing wireless fields rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_missing_wireless_failed: true
+                  when: >-
+                    'missing required arguments' in
+                    (ansible_failed_result | default({}) | to_json)
+
+            - name: Assert missing wireless fields was rejected
+              ansible.builtin.assert:
+                that:
+                  - __invalid_input_missing_wireless_failed | default(false)
+                fail_msg: >-
+                  argument_specs should reject network_connections[].wireless
+                  entries missing the required ssid and key_mgmt fields
+
+            # --- Test: missing required ieee802_1x.identity ---
+            - name: Argument specs reject ieee802_1x without required identity
+              block:
+                - name: Run role with ieee802_1x missing identity
+                  ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+                  vars:
+                    network_connections:
+                      - name: eth0
+                        type: ethernet
+                        ieee802_1x:
+                          private_key: /etc/pki/tls/client.key
+                          client_cert: /etc/pki/tls/client.pem
+              rescue:
+                - name: Mark missing ieee802_1x.identity rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_missing_identity_failed: true
+                  when: >-
+                    'missing required arguments' in
+                    (ansible_failed_result | default({}) | to_json)
+
+            - name: Assert missing ieee802_1x.identity was rejected
+              ansible.builtin.assert:
+                that:
+                  - __invalid_input_missing_identity_failed | default(false)
+                fail_msg: >-
+                  argument_specs should reject network_connections[].ieee802_1x
+                  entries missing the required identity field
+
+            # --- Test: invalid network_allow_restart type ---
+            - name: Argument specs reject invalid network_allow_restart type
+              block:
+                - name: Run role with non-boolean network_allow_restart
+                  ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+                  vars:
+                    network_allow_restart: not_a_bool
+              rescue:
+                - name: Mark invalid network_allow_restart rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_allow_restart_type_failed: true
+
+            - name: Assert invalid network_allow_restart type was rejected
+              ansible.builtin.assert:
+                that:
+                  - __invalid_input_allow_restart_type_failed | default(false)
+                fail_msg: >-
+                  argument_specs should reject network_allow_restart values
+                  that are not booleans
+
+            # --- Test: invalid mtu type ---
+            - name: Argument specs reject invalid mtu type
+              block:
+                - name: Run role with non-integer mtu
+                  ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+                  vars:
+                    network_connections:
+                      - name: eth0
+                        type: ethernet
+                        mtu: not_an_int
+              rescue:
+                - name: Mark invalid mtu type rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_mtu_type_failed: true
+
+            - name: Assert invalid mtu type was rejected
+              ansible.builtin.assert:
+                that:
+                  - __invalid_input_mtu_type_failed | default(false)
+                fail_msg: >-
+                  argument_specs should reject network_connections[].mtu
+                  values that are not integers
+
+            # --- Test: unknown key rejected ---
+            - name: Argument specs reject unknown ip key
+              block:
+                - name: Run role with unknown ip key
+                  ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+                  vars:
+                    network_connections:
+                      - name: eth0
+                        type: ethernet
+                        ip:
+                          totally_bogus_key: true
+              rescue:
+                - name: Mark unknown ip key rejected
+                  ansible.builtin.set_fact:
+                    __invalid_input_unknown_ip_key_failed: true
+
+            - name: Assert unknown ip key was rejected
+              ansible.builtin.assert:
+                that:
+                  - __invalid_input_unknown_ip_key_failed | default(false)
+                fail_msg: >-
+                  argument_specs should reject unknown keys nested under
+                  network_connections[].ip
+
+        # ====================================================
+        # Section 3: assert_role_vars validation (all versions)
+        # ====================================================
+
+        # --- Test: ip.address item wrong type ---
+        - name: Assert rejects ip.address item as an integer
+          block:
+            - name: Run role with ip.address item as an integer
+              ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+              vars:
+                network_connections:
+                  - name: eth0
+                    type: ethernet
+                    ip:
+                      address:
+                        - 12345
+          rescue:
+            - name: Mark ip.address integer item rejected
+              ansible.builtin.set_fact:
+                __invalid_input_address_type_failed: true
+              when: >-
+                'ip.address' in
+                (ansible_failed_result | default({}) | to_json)
+
+        - name: Assert ip.address integer item was rejected
+          ansible.builtin.assert:
+            that:
+              - __invalid_input_address_type_failed | default(false)
+            fail_msg: >-
+              assert_role_vars should reject network_connections[].ip.address
+              items that are neither a string nor a dict with an 'address' key
+
+        # --- Test: ip.route.table wrong type ---
+        - name: Assert rejects ip.route.table as a boolean
+          block:
+            - name: Run role with ip.route.table as a boolean
+              ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+              vars:
+                network_connections:
+                  - name: eth0
+                    type: ethernet
+                    ip:
+                      route:
+                        - network: 198.51.100.0
+                          prefix: 24
+                          table: true
+          rescue:
+            - name: Mark ip.route.table boolean rejected
+              ansible.builtin.set_fact:
+                __invalid_input_route_table_type_failed: true
+              when: >-
+                'ip.route' in
+                (ansible_failed_result | default({}) | to_json)
+
+        - name: Assert ip.route.table boolean was rejected
+          ansible.builtin.assert:
+            that:
+              - __invalid_input_route_table_type_failed | default(false)
+            fail_msg: >-
+              assert_role_vars should reject network_connections[].ip.route.table
+              values that are not a string or an integer
+
+        # --- Test: routing_rule.dport wrong type ---
+        - name: Assert rejects routing_rule.dport as a boolean
+          block:
+            - name: Run role with routing_rule.dport as a boolean
+              ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+              vars:
+                network_connections:
+                  - name: eth0
+                    type: ethernet
+                    ip:
+                      routing_rule:
+                        - priority: 100
+                          from: 192.168.100.58/24
+                          table: 254
+                          dport: true
+          rescue:
+            - name: Mark routing_rule.dport boolean rejected
+              ansible.builtin.set_fact:
+                __invalid_input_dport_type_failed: true
+              when: >-
+                'routing_rule' in
+                (ansible_failed_result | default({}) | to_json)
+
+        - name: Assert routing_rule.dport boolean was rejected
+          ansible.builtin.assert:
+            that:
+              - __invalid_input_dport_type_failed | default(false)
+            fail_msg: >-
+              assert_role_vars should reject network_connections[].ip.routing_rule.dport
+              values that are not a string range or an integer
+
+        # --- Test: routing_rule.from wrong type ---
+        - name: Assert rejects routing_rule.from as an integer
+          block:
+            - name: Run role with routing_rule.from as an integer
+              ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+              vars:
+                network_connections:
+                  - name: eth0
+                    type: ethernet
+                    ip:
+                      routing_rule:
+                        - priority: 100
+                          from: 12345
+                          table: 254
+          rescue:
+            - name: Mark routing_rule.from integer rejected
+              ansible.builtin.set_fact:
+                __invalid_input_from_type_failed: true
+              when: >-
+                'routing_rule' in
+                (ansible_failed_result | default({}) | to_json)
+
+        - name: Assert routing_rule.from integer was rejected
+          ansible.builtin.assert:
+            that:
+              - __invalid_input_from_type_failed | default(false)
+            fail_msg: >-
+              assert_role_vars should reject network_connections[].ip.routing_rule.from
+              values that are neither a string nor a dict with an 'address' key
+
+        # ====================================================
+        # Section 4: network_connections module runtime validation
+        # ====================================================
+        # These constraints are enforced deep inside
+        # module_utils/network_lsr/argument_validator.py when the
+        # network_connections module actually runs, not by argument_specs.yml
+        # or assert_role_vars.yml. The role must run far enough to reach the
+        # module task for these to trigger, but it's still worth covering.
+
+        # --- Test: integer passed to a plain str field (mac) ---
+        - name: Assert rejects mac given as an integer
+          block:
+            - name: Run role with mac as an integer
+              ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+              vars:
+                network_connections:
+                  - name: eth0
+                    type: ethernet
+                    mac: 123456
+          rescue:
+            - name: Mark integer mac rejected
+              ansible.builtin.set_fact:
+                __invalid_input_mac_int_type_failed: true
+              when: >-
+                'mac' in
+                (ansible_failed_result | default({}) | to_json)
+
+        - name: Assert integer mac was rejected
+          ansible.builtin.assert:
+            that:
+              - __invalid_input_mac_int_type_failed | default(false)
+            fail_msg: >-
+              network_connections[].mac must ultimately be rejected when
+              given a non-string value; argument_specs.yml coerces it to a
+              string, and the network_connections module then rejects it as
+              an invalid MAC address
+
+        # --- Test: range constraint violation (vlan.id) ---
+        - name: Assert rejects vlan.id outside its valid range
+          block:
+            - name: Run role with vlan.id out of range
+              ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+              vars:
+                network_connections:
+                  - name: eth0
+                    type: ethernet
+                  - name: vlan6
+                    type: vlan
+                    parent: eth0
+                    vlan:
+                      id: 9999
+          rescue:
+            - name: Mark out-of-range vlan.id rejected
+              ansible.builtin.set_fact:
+                __invalid_input_vlan_id_range_failed: true
+              when: >-
+                'vlan' in
+                (ansible_failed_result | default({}) | to_json)
+
+        - name: Assert out-of-range vlan.id was rejected
+          ansible.builtin.assert:
+            that:
+              - __invalid_input_vlan_id_range_failed | default(false)
+            fail_msg: >-
+              the network_connections module should reject
+              network_connections[].vlan.id values outside the valid 0-4094
+              range, a constraint argument_specs.yml cannot express
+
+        # --- Test: cross-field dependency violation (wireless key_mgmt/password) ---
+        - name: Assert rejects wpa-psk wireless without a password
+          block:
+            - name: Run role with wpa-psk key_mgmt and no password
+              ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
+              vars:
+                network_connections:
+                  - name: wlan0
+                    type: wireless
+                    wireless:
+                      ssid: my-network
+                      key_mgmt: wpa-psk
+          rescue:
+            - name: Mark missing wireless password rejected
+              ansible.builtin.set_fact:
+                __invalid_input_wireless_password_dependency_failed: true
+              when: >-
+                'wireless' in
+                (ansible_failed_result | default({}) | to_json)
+
+        - name: Assert missing wireless password was rejected
+          ansible.builtin.assert:
+            that:
+              - __invalid_input_wireless_password_dependency_failed | default(false)
+            fail_msg: >-
+              the network_connections module should reject
+              network_connections[].wireless entries with key_mgmt set to
+              wpa-psk (or sae) but no password, a cross-field dependency
+              argument_specs.yml cannot express
+
+      always:
+        - name: Clear test facts
+          ansible.builtin.set_fact:
+            __invalid_input_type_choice_failed:
+            __invalid_input_state_choice_failed:
+            __invalid_input_bond_mode_choice_failed:
+            __invalid_input_key_mgmt_choice_failed:
+            __invalid_input_missing_vlan_id_failed:
+            __invalid_input_missing_wireless_failed:
+            __invalid_input_missing_identity_failed:
+            __invalid_input_allow_restart_type_failed:
+            __invalid_input_mtu_type_failed:
+            __invalid_input_unknown_ip_key_failed:
+            __invalid_input_address_type_failed:
+            __invalid_input_route_table_type_failed:
+            __invalid_input_dport_type_failed:
+            __invalid_input_from_type_failed:
+            __invalid_input_mac_int_type_failed:
+            __invalid_input_vlan_id_range_failed:
+            __invalid_input_wireless_password_dependency_failed:
+          tags: tests::cleanup

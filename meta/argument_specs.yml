@@ -1,0 +1,1168 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+argument_specs:
+  main:
+    short_description: The network role.
+    description: >
+      The network role allows you to configure Ethernet, bridge, bond,
+      VLAN, MacVLAN, Infiniband, wireless, and dummy network interfaces
+      on the target machines.
+
+      The role supports two providers, `nm` (NetworkManager) and
+      `initscripts`. `nm` is used by default since RHEL 7; `initscripts`
+      is only used by default on RHEL 6. The provider can be selected
+      explicitly with `network_provider`.
+
+      Two mechanisms are available to configure networking. The
+      `network_connections` variable manages connection profiles (one
+      list item per profile) and is supported by both providers. The
+      `network_state` variable applies an
+      [Nmstate](https://nmstate.io) desired state directly to the
+      devices and is only supported by the `nm` provider on RHEL 8 and
+      later.
+
+      Note: `network_provider`, `network_provider_os_default`,
+      `network_packages`, and `network_service_name` are intentionally
+      not listed below, even though they appear in `defaults/main.yml`.
+      Their defaults depend on facts (such as `ansible_facts.services`
+      and `ansible_facts.packages`) that are only gathered by this
+      role's own tasks. Ansible resolves the current value of every
+      declared option when it validates role arguments, and it does so
+      before the role's own tasks (including its fact gathering) run.
+      Declaring those variables here would force their fact-dependent
+      defaults to be evaluated too early and break provider
+      autodetection for the common case where the calling playbook has
+      not already gathered service and package facts.
+
+      `network_ignore_errors` and `network_force_state_change` are not
+      set in `defaults/main.yml` (they are left undefined so the
+      `network_connections` module can apply its own static default),
+      but they are documented, user-facing parameters read directly in
+      `tasks/main.yml` and are listed below.
+    options:
+      network_connections:
+        type: list
+        elements: dict
+        default: []
+        description: >
+          A list of connection profile specifications to create,
+          modify, activate, or remove. Profiles referenced by
+          `controller` or `parent` must appear earlier in the list than
+          the profile referencing them. To remove every profile on the
+          system that is not otherwise listed, add an item with no
+          `name` and `persistent_state` set to `absent`.
+        options:
+          name:
+            type: str
+            description: >
+              The name that identifies the connection profile. This is
+              not necessarily the name of the networking interface,
+              although a profile can be associated with an interface
+              using the same name. For `NetworkManager`, this
+              corresponds to `connection.id`. For `initscripts`, this
+              determines the ifcfg file name
+              `/etc/sysconfig/network-scripts/ifcfg-$NAME` and
+              therefore cannot contain `/`. Required unless
+              `persistent_state` is `absent`, in which case an empty
+              `name` matches and removes every other profile.
+          state:
+            type: str
+            choices:
+              - up
+              - down
+              - present
+              - absent
+            description: >
+              The runtime state of the connection profile. `up`
+              activates the profile (equivalent to `nmcli connection up`
+              or `ifup`) and `down` deactivates it (equivalent to
+              `nmcli connection down` or `ifdown`). `present` and
+              `absent` are accepted as aliases of the `persistent_state`
+              values of the same name, but `state` and
+              `persistent_state` cannot both be set on the same item.
+              If unset, the runtime state is left unchanged.
+          persistent_state:
+            type: str
+            choices:
+              - present
+              - absent
+            description: >
+              Whether the connection profile should be saved on disk.
+              `present` (the default) creates or updates the profile
+              when `type` is also specified. `absent` deletes any
+              profile matching `name`.
+          force_state_change:
+            type: bool
+            description: >
+              Whether to force the runtime state change specified by
+              `state` even when the role does not detect a difference
+              between the requested and current configuration. Only
+              meaningful together with `state`.
+          wait:
+            type: float
+            description: >
+              The number of seconds to wait for the device to finish
+              activating when `state` is `up`. `0` starts the
+              activation without waiting for completion, for example
+              while a DHCP lease is obtained in the background.
+              When unset, a suitable default timeout is used. Only
+              supported by the `nm` provider and only meaningful
+              together with `state`.
+          type:
+            type: str
+            choices:
+              - ethernet
+              - infiniband
+              - bridge
+              - team
+              - bond
+              - vlan
+              - macvlan
+              - wireless
+              - dummy
+            description: >
+              The type of the connection profile. Providing `type`
+              means the profile is completely specified; without it,
+              only the runtime `state` of an existing profile can be
+              changed.
+          autoconnect:
+            type: bool
+            default: true
+            description: >
+              Whether the profile is activated automatically. For
+              `NetworkManager`, this corresponds to
+              `connection.autoconnect`. For `initscripts`, this
+              corresponds to `ONBOOT`.
+          autoconnect_retries:
+            type: int
+            default: -1
+            description: >
+              The number of times to try autoactivating the connection
+              before giving up. `0` means try forever, and `-1` uses
+              the NetworkManager global default (normally 4 tries).
+              `1` tries activation only once before blocking
+              autoconnect until the next attempt to autoconnect.
+              Only supported by the `nm` provider.
+          port_type:
+            type: str
+            choices:
+              - bridge
+              - bond
+              - team
+            description: >
+              The type of the `controller` profile that this profile is
+              a port of. Requires `controller` to be set. If not
+              specified, it is derived from the type of the
+              `controller` profile.
+          slave_type:
+            type: str
+            choices:
+              - bridge
+              - bond
+              - team
+            description: >
+              Deprecated alias for `port_type`. Use `port_type` instead.
+          controller:
+            type: str
+            description: >
+              The `name` of another profile in `network_connections`
+              that this profile is a port of, used for `bridge`,
+              `bond`, and `team` controller devices. This refers to a
+              profile name in the play, not an interface name or
+              NetworkManager connection ID. Ports must not specify `ip`
+              or `zone` settings.
+          master:
+            type: str
+            description: >
+              Deprecated alias for `controller`. Use `controller`
+              instead.
+          interface_name:
+            type: str
+            description: >
+              The name of the networking interface that the profile is
+              restricted to or, for virtual devices, the name of the
+              interface to create. Only allowed for `ethernet` and
+              `infiniband` when `mac` is not set. Set to an empty string
+              (`""`) to leave the profile unrestricted to a specific
+              interface. Defaults to the profile `name` for most types,
+              except that `bond`, `bridge`, `macvlan`, `team`, and
+              `vlan` require an explicit `interface_name`.
+          mac:
+            type: str
+            description: >
+              Restricts the profile to the device with the given
+              hardware address. Only allowed for `type` `ethernet`
+              (6 octets) or `infiniband` (20 octets). Specify the value
+              in hexadecimal notation using colons, for example
+              `"00:00:5e:00:53:5d"`, and quote it to avoid it being
+              parsed as a sexagesimal number.
+          cloned_mac:
+            type: str
+            default: default
+            description: >
+              The MAC address strategy to apply on activation. Accepts
+              a hardware address in the same notation as `mac`, or one
+              of the special values `default` (honor the NetworkManager
+              default), `permanent` (use the device's permanent
+              address), `preserve` (do not change the current address),
+              `random` (generate a new address on every connect), or
+              `stable` (generate a stable, hashed address).
+          mtu:
+            type: int
+            description: >
+              The maximum transmission unit of the profile's device.
+              The maximum allowed value depends on the device; for
+              virtual devices it depends on the underlying device.
+          zone:
+            type: str
+            description: >
+              The firewalld zone to associate with the interface. Ports
+              of `bridge`, `bond`, or `team` devices cannot specify a
+              zone.
+          check_iface_exists:
+            type: bool
+            default: true
+            description: >
+              Whether to check that the target interface exists before
+              activating the connection. Only supported by the `nm`
+              provider.
+          parent:
+            type: str
+            description: >
+              The `name` of another profile in `network_connections`
+              that this profile's device is created on top of. Used for
+              `vlan`, `macvlan`, and `infiniband` (when `infiniband.p_key`
+              is set).
+          ignore_errors:
+            type: bool
+            description: >
+              Whether to ignore errors that occur while applying this
+              specific connection profile and continue applying the
+              remaining profiles instead of failing the play.
+          vlan_id:
+            type: int
+            description: >
+              Deprecated alias for `vlan.id`. Use the `vlan` option
+              instead. Cannot be combined with `vlan`.
+          infiniband_transport_mode:
+            type: str
+            choices:
+              - datagram
+              - connected
+            description: >
+              Deprecated alias for `infiniband.transport_mode`. Use the
+              `infiniband` option instead. Cannot be combined with an
+              `infiniband` dictionary.
+          infiniband_p_key:
+            type: int
+            description: >
+              Deprecated alias for `infiniband.p_key`. Use the
+              `infiniband` option instead. Cannot be combined with an
+              `infiniband` dictionary.
+          match:
+            type: dict
+            description: >
+              Settings used to match the profile against devices or
+              systems, currently only supporting `path`.
+            options:
+              path:
+                type: list
+                elements: str
+                description: >
+                  A list of patterns to match against the `ID_PATH`
+                  udev property of a device, for example
+                  `pci-0000:00:03.0`. Supports the alternative (`|`),
+                  mandatory (`&`), and inverted (`!`) modifiers, as well
+                  as `*`, `?`, and `[...]` shell-style wildcards. Only
+                  supported for `ethernet` or `infiniband` profiles.
+          ip:
+            type: dict
+            description: >
+              The IP configuration of the profile. Ports of `bridge`,
+              `bond`, or `team` devices cannot specify `ip` settings.
+            options:
+              dhcp4:
+                type: bool
+                description: >
+                  Whether to obtain an IPv4 address using DHCP. If
+                  unset, defaults to `true` unless static IPv4
+                  addresses are configured in `address`.
+              dhcp4_send_hostname:
+                type: bool
+                description: >
+                  Whether the DHCPv4 request should include the host's
+                  name. Only valid when `dhcp4` is enabled. Only
+                  supported by the `nm` provider.
+              gateway4:
+                type: str
+                description: >
+                  The default gateway for IPv4 packets, for example
+                  `192.0.2.1`.
+              route_metric4:
+                type: int
+                description: >
+                  The route metric used for DHCP-assigned routes and
+                  the default IPv4 route, which also determines
+                  priority when multiple interfaces are configured. For
+                  `initscripts`, this sets the metric of the default
+                  route.
+              auto6:
+                type: bool
+                description: >
+                  Whether to configure IPv6 addressing using StateLess
+                  Address Auto Configuration (SLAAC). If unset, defaults
+                  to `true` unless static IPv6 addresses are configured
+                  in `address`.
+              ipv4_ignore_auto_dns:
+                type: bool
+                description: >
+                  Whether to ignore IPv4 name servers and search
+                  domains obtained automatically (for example via DHCP)
+                  and only use the servers and domains specified in
+                  `dns` and `dns_search`. Not supported by the
+                  `initscripts` provider.
+              ipv6_ignore_auto_dns:
+                type: bool
+                description: >
+                  Whether to ignore IPv6 name servers and search
+                  domains obtained automatically and only use the
+                  servers and domains specified in `dns` and
+                  `dns_search`. Not supported by the `initscripts`
+                  provider.
+              wait_ip:
+                type: str
+                choices:
+                  - any
+                  - ipv4
+                  - ipv6
+                  - ipv4+ipv6
+                default: any
+                description: >
+                  Which IP stack must be configured before the
+                  connection is considered activated. `any` waits for
+                  either stack, `ipv4` and `ipv6` wait for the
+                  respective stack, and `ipv4+ipv6` waits for both.
+              ipv6_disabled:
+                type: bool
+                description: >
+                  Whether IPv6 should be disabled for the connection.
+                  Mutually exclusive with `auto6` enabled, static IPv6
+                  addresses in `address`, `gateway6`, and
+                  `route_metric6`.
+              gateway6:
+                type: str
+                description: >
+                  The default gateway for IPv6 packets, for example
+                  `2001:db8::1`.
+              route_metric6:
+                type: int
+                description: >
+                  The route metric used for the default IPv6 route.
+                  Not supported by the `initscripts` provider.
+              address:
+                type: list
+                elements: raw
+                description: >
+                  A list of static IP addresses to assign. Each item is
+                  either a string in `<address>/<prefix>` notation, for
+                  example `192.0.2.3/24`, or a dictionary with an
+                  `address` key and an optional `prefix` key.
+              auto_gateway:
+                type: bool
+                description: >
+                  Whether a default route should be configured using
+                  the automatically detected default gateway. Setting
+                  this to `false` is equivalent to `DEFROUTE=no` in
+                  initscripts or `ipv4.never-default`/
+                  `ipv6.never-default` set to `yes` with `nmcli`. If
+                  enabled, at least one of `gateway4`, `gateway6`, or
+                  DHCP/SLAAC must be in use.
+              route:
+                type: list
+                elements: dict
+                description: >
+                  A list of static routes.
+                options:
+                  network:
+                    type: str
+                    required: true
+                    description: >
+                      The destination network address of the route, for
+                      example `198.51.100.128`. Classless inter-domain
+                      routing (CIDR) and network mask notations are not
+                      supported here; use `prefix` instead.
+                  prefix:
+                    type: int
+                    description: >
+                      The prefix length of the destination network in
+                      `network`. Defaults to the address family's full
+                      prefix length when not specified.
+                  gateway:
+                    type: str
+                    description: >
+                      The gateway address for the route. Not allowed
+                      together with `type`.
+                  metric:
+                    type: int
+                    default: -1
+                    description: >
+                      The route metric.
+                  type:
+                    type: str
+                    choices:
+                      - blackhole
+                      - prohibit
+                      - unreachable
+                    description: >
+                      The route type. Routes of these types do not
+                      support a `gateway`. If not specified, the route
+                      is a regular unicast route.
+                  table:
+                    type: raw
+                    description: >
+                      The routing table for the route, as a numeric
+                      table ID or the name of a table defined in
+                      `/etc/iproute2/rt_tables` or
+                      `/etc/iproute2/rt_tables.d/*.conf`. The role does
+                      not create these routing table definitions
+                      automatically. Not supported by the
+                      `initscripts` provider.
+                  src:
+                    type: str
+                    description: >
+                      The source IP address to use for the route.
+              route_append_only:
+                type: bool
+                default: false
+                description: >
+                  Whether to append the routes in `route` to the routes
+                  already present on the system instead of replacing
+                  them. Setting this to `true` without setting `route`
+                  preserves the current static routes.
+              rule_append_only:
+                type: bool
+                default: false
+                description: >
+                  Whether to append the rules in `routing_rule` to the
+                  routing rules already present on the system instead
+                  of replacing them.
+              dns:
+                type: list
+                elements: str
+                description: >
+                  A list of name server IP addresses for manual DNS
+                  configuration, for example `192.0.2.2`.
+              dns_search:
+                type: list
+                elements: str
+                description: >
+                  A list of DNS search domains for manual DNS
+                  configuration, for example `example.com`.
+              dns_options:
+                type: list
+                elements: str
+                description: >
+                  A list of DNS options as described in
+                  `man 5 resolv.conf`, for example `rotate` or
+                  `timeout:1`. Only supported by the `nm` provider.
+              dns_priority:
+                type: int
+                default: 0
+                description: >
+                  The priority of the DNS servers configured on this
+                  connection. A lower numerical value has a higher
+                  priority. A negative value excludes name servers from
+                  connections with a higher (less negative) priority
+                  value when at least one negative priority is present.
+              routing_rule:
+                type: list
+                elements: dict
+                description: >
+                  A list of policy routing rules, allowing packets to
+                  be routed based on fields other than the destination
+                  address.
+                options:
+                  priority:
+                    type: int
+                    required: true
+                    description: >
+                      The priority of the rule. A lower numerical value
+                      means higher priority.
+                  action:
+                    type: str
+                    choices:
+                      - to-table
+                      - blackhole
+                      - prohibit
+                      - unreachable
+                    default: to-table
+                    description: >
+                      The action to take when the rule matches. `table`
+                      is required when `action` is `to-table`.
+                  dport:
+                    type: raw
+                    description: >
+                      The destination port or port range to match, for
+                      example `1000-2000`. Accepts a single port number
+                      or a string in `<start>-<end>` notation, with
+                      valid ports ranging from 0 to 65534.
+                  family:
+                    type: str
+                    choices:
+                      - ipv4
+                      - ipv6
+                    description: >
+                      The IP family of the rule. Derived from `from` or
+                      `to` when not specified.
+                  from:
+                    type: raw
+                    description: >
+                      The source address to match, for example
+                      `192.168.100.58/24`. Accepts a string in
+                      `<address>/<prefix>` notation or a dictionary with
+                      `address` and `prefix` keys.
+                  fwmark:
+                    type: int
+                    description: >
+                      The firewall mark value of the packet to match.
+                      Must be set together with `fwmask`.
+                  fwmask:
+                    type: int
+                    description: >
+                      The firewall mask value of the packet to match.
+                      Must be set together with `fwmark`.
+                  iif:
+                    type: str
+                    description: >
+                      The name of the incoming interface to match.
+                  invert:
+                    type: bool
+                    default: false
+                    description: >
+                      Whether to invert the match of the rule, so the
+                      rule matches any packet that does not satisfy the
+                      selected match.
+                  ipproto:
+                    type: int
+                    description: >
+                      The IP protocol number to match.
+                  oif:
+                    type: str
+                    description: >
+                      The name of the outgoing interface to match.
+                  sport:
+                    type: raw
+                    description: >
+                      The source port or port range to match, in the
+                      same format as `dport`.
+                  suppress_prefixlength:
+                    type: int
+                    description: >
+                      Reject routing decisions with a prefix length
+                      less than or equal to the specified value. Only
+                      allowed with the `to-table` action.
+                  table:
+                    type: raw
+                    description: >
+                      The routing table to look up for the `to-table`
+                      action, in the same format as `route.table`.
+                  to:
+                    type: raw
+                    description: >
+                      The destination address to match, in the same
+                      format as `from`.
+                  tos:
+                    type: int
+                    description: >
+                      The type-of-service value to match.
+                  uid:
+                    type: raw
+                    description: >
+                      The user ID or user ID range to match, in the
+                      same format as `dport`, with valid values ranging
+                      from 0 to 4294967295.
+          ethernet:
+            type: dict
+            description: >
+              Ethernet link settings, corresponding to the `ethtool`
+              utility's link settings. Only allowed for `ethernet`,
+              `vlan`, `bridge`, `bond`, and `team` types.
+            options:
+              autoneg:
+                type: bool
+                description: >
+                  Whether auto-negotiation is enabled. When `speed` or
+                  `duplex` are set, `autoneg` must not be enabled, and
+                  when it is disabled, both `speed` and `duplex` must be
+                  set.
+              speed:
+                type: int
+                default: 0
+                description: >
+                  The link speed in Mbit/s. Required together with
+                  `duplex` when `autoneg` is disabled.
+              duplex:
+                type: str
+                choices:
+                  - half
+                  - full
+                description: >
+                  The link duplex mode. Required together with `speed`
+                  when `autoneg` is disabled.
+          ethtool:
+            type: dict
+            description: >
+              Settings to enable or disable `ethtool` features on the
+              device. Depending on the kernel and device, some settings
+              might not be supported.
+            options:
+              features:
+                type: dict
+                description: >
+                  A dictionary of `ethtool` offload and feature names
+                  mapped to `true` or `false`. Every feature also accepts
+                  a deprecated alias spelled with dashes instead of
+                  underscores (matching `ethtool`'s and `nmcli`'s native
+                  `-`-separated feature names, for example
+                  `tx-tcp-segmentation` for `tx_tcp_segmentation`); use
+                  the underscored name instead.
+                options:
+                  esp_hw_offload: {type: bool}
+                  esp-hw-offload: {type: bool}
+                  esp_tx_csum_hw_offload: {type: bool}
+                  esp-tx-csum-hw-offload: {type: bool}
+                  fcoe_mtu: {type: bool}
+                  fcoe-mtu: {type: bool}
+                  gro: {type: bool}
+                  gso: {type: bool}
+                  highdma: {type: bool}
+                  hw_tc_offload: {type: bool}
+                  hw-tc-offload: {type: bool}
+                  l2_fwd_offload: {type: bool}
+                  l2-fwd-offload: {type: bool}
+                  loopback: {type: bool}
+                  lro: {type: bool}
+                  ntuple: {type: bool}
+                  rx: {type: bool}
+                  rxhash: {type: bool}
+                  rxvlan: {type: bool}
+                  rx_all: {type: bool}
+                  rx-all: {type: bool}
+                  rx_fcs: {type: bool}
+                  rx-fcs: {type: bool}
+                  rx_gro_hw: {type: bool}
+                  rx-gro-hw: {type: bool}
+                  rx_udp_tunnel_port_offload: {type: bool}
+                  rx-udp_tunnel-port-offload: {type: bool}
+                  rx_vlan_filter: {type: bool}
+                  rx-vlan-filter: {type: bool}
+                  rx_vlan_stag_filter: {type: bool}
+                  rx-vlan-stag-filter: {type: bool}
+                  rx_vlan_stag_hw_parse: {type: bool}
+                  rx-vlan-stag-hw-parse: {type: bool}
+                  sg: {type: bool}
+                  tls_hw_record: {type: bool}
+                  tls-hw-record: {type: bool}
+                  tls_hw_tx_offload: {type: bool}
+                  tls-hw-tx-offload: {type: bool}
+                  tso: {type: bool}
+                  tx: {type: bool}
+                  txvlan: {type: bool}
+                  tx_checksum_fcoe_crc: {type: bool}
+                  tx-checksum-fcoe-crc: {type: bool}
+                  tx_checksum_ipv4: {type: bool}
+                  tx-checksum-ipv4: {type: bool}
+                  tx_checksum_ipv6: {type: bool}
+                  tx-checksum-ipv6: {type: bool}
+                  tx_checksum_ip_generic: {type: bool}
+                  tx-checksum-ip-generic: {type: bool}
+                  tx_checksum_sctp: {type: bool}
+                  tx-checksum-sctp: {type: bool}
+                  tx_esp_segmentation: {type: bool}
+                  tx-esp-segmentation: {type: bool}
+                  tx_fcoe_segmentation: {type: bool}
+                  tx-fcoe-segmentation: {type: bool}
+                  tx_gre_csum_segmentation: {type: bool}
+                  tx-gre-csum-segmentation: {type: bool}
+                  tx_gre_segmentation: {type: bool}
+                  tx-gre-segmentation: {type: bool}
+                  tx_gso_partial: {type: bool}
+                  tx-gso-partial: {type: bool}
+                  tx_gso_robust: {type: bool}
+                  tx-gso-robust: {type: bool}
+                  tx_ipxip4_segmentation: {type: bool}
+                  tx-ipxip4-segmentation: {type: bool}
+                  tx_ipxip6_segmentation: {type: bool}
+                  tx-ipxip6-segmentation: {type: bool}
+                  tx_nocache_copy: {type: bool}
+                  tx-nocache-copy: {type: bool}
+                  tx_scatter_gather: {type: bool}
+                  tx-scatter-gather: {type: bool}
+                  tx_scatter_gather_fraglist: {type: bool}
+                  tx-scatter-gather-fraglist: {type: bool}
+                  tx_sctp_segmentation: {type: bool}
+                  tx-sctp-segmentation: {type: bool}
+                  tx_tcp6_segmentation: {type: bool}
+                  tx-tcp6-segmentation: {type: bool}
+                  tx_tcp_ecn_segmentation: {type: bool}
+                  tx-tcp-ecn-segmentation: {type: bool}
+                  tx_tcp_mangleid_segmentation: {type: bool}
+                  tx-tcp-mangleid-segmentation: {type: bool}
+                  tx_tcp_segmentation: {type: bool}
+                  tx-tcp-segmentation: {type: bool}
+                  tx_udp_segmentation: {type: bool}
+                  tx-udp-segmentation: {type: bool}
+                  tx_udp_tnl_csum_segmentation: {type: bool}
+                  tx-udp_tnl-csum-segmentation: {type: bool}
+                  tx_udp_tnl_segmentation: {type: bool}
+                  tx-udp_tnl-segmentation: {type: bool}
+                  tx_vlan_stag_hw_insert: {type: bool}
+                  tx-vlan-stag-hw-insert: {type: bool}
+              coalesce:
+                type: dict
+                description: >
+                  A dictionary of `ethtool` interrupt coalescing
+                  settings.
+                options:
+                  adaptive_rx: {type: bool}
+                  adaptive_tx: {type: bool}
+                  pkt_rate_high: {type: int}
+                  pkt_rate_low: {type: int}
+                  rx_frames: {type: int}
+                  rx_frames_high: {type: int}
+                  rx_frames_irq: {type: int}
+                  rx_frames_low: {type: int}
+                  rx_usecs: {type: int}
+                  rx_usecs_high: {type: int}
+                  rx_usecs_irq: {type: int}
+                  rx_usecs_low: {type: int}
+                  sample_interval: {type: int}
+                  stats_block_usecs: {type: int}
+                  tx_frames: {type: int}
+                  tx_frames_high: {type: int}
+                  tx_frames_irq: {type: int}
+                  tx_frames_low: {type: int}
+                  tx_usecs: {type: int}
+                  tx_usecs_high: {type: int}
+                  tx_usecs_irq: {type: int}
+                  tx_usecs_low: {type: int}
+              ring:
+                type: dict
+                description: >
+                  A dictionary of `ethtool` `rx`/`tx` ring buffer
+                  entry counts.
+                options:
+                  rx:
+                    type: int
+                    description: The number of ring entries for the Rx ring.
+                  rx_jumbo:
+                    type: int
+                    description: >
+                      The number of ring entries for the Rx Jumbo ring.
+                  rx_mini:
+                    type: int
+                    description: The number of ring entries for the Rx Mini ring.
+                  tx:
+                    type: int
+                    description: The number of ring entries for the Tx ring.
+          bond:
+            type: dict
+            description: >
+              The bonding options of a `bond` profile. See the
+              [kernel bonding
+              documentation](https://www.kernel.org/doc/Documentation/networking/bonding.txt)
+              or your distribution's `nmcli` documentation for valid
+              values.
+            options:
+              mode:
+                type: str
+                choices:
+                  - balance-rr
+                  - active-backup
+                  - balance-xor
+                  - broadcast
+                  - 802.3ad
+                  - balance-tlb
+                  - balance-alb
+                default: balance-rr
+                description: >
+                  The bonding mode.
+              ad_actor_sys_prio:
+                type: int
+                description: >
+                  The 802.3ad system priority. Only valid with mode
+                  `802.3ad`.
+              ad_actor_system:
+                type: str
+                description: >
+                  The 802.3ad system MAC address used for the actor in
+                  LACPDU protocol packet exchanges. Only valid with
+                  mode `802.3ad`.
+              ad_select:
+                type: str
+                choices:
+                  - stable
+                  - bandwidth
+                  - count
+                description: >
+                  The 802.3ad aggregation selection logic to use. Only
+                  valid with mode `802.3ad`.
+              ad_user_port_key:
+                type: int
+                description: >
+                  The upper 10 bits of the port key. Only valid with
+                  mode `802.3ad`.
+              all_ports_active:
+                type: bool
+                description: >
+                  Whether duplicate frames received on inactive ports
+                  are delivered (`true`) or dropped (`false`).
+              arp_all_targets:
+                type: str
+                choices:
+                  - any
+                  - all
+                description: >
+                  How many of `arp_ip_target` addresses must be
+                  reachable for the ARP monitor to consider a port up.
+                  Only valid with modes `balance-rr`, `active-backup`,
+                  `balance-xor`, or `broadcast`.
+              arp_interval:
+                type: int
+                description: >
+                  The ARP link monitoring frequency in milliseconds.
+                  `0` disables ARP monitoring. Requires
+                  `arp_ip_target` to be set. Only valid with modes
+                  `balance-rr`, `active-backup`, `balance-xor`, or
+                  `broadcast`.
+              arp_validate:
+                type: str
+                choices:
+                  - none
+                  - active
+                  - backup
+                  - all
+                  - filter
+                  - filter_active
+                  - filter_backup
+                description: >
+                  Whether ARP probes and replies should be validated in
+                  any mode that supports ARP monitoring, or whether
+                  non-ARP traffic should be filtered for link
+                  monitoring purposes. Only valid with modes
+                  `balance-rr`, `active-backup`, `balance-xor`, or
+                  `broadcast`.
+              arp_ip_target:
+                type: str
+                description: >
+                  The IP addresses to use as ARP monitoring peers when
+                  `arp_interval` is enabled. Requires `arp_interval` to
+                  be set.
+              downdelay:
+                type: int
+                description: >
+                  The time to wait, in milliseconds, before disabling a
+                  port after a link failure is detected. Requires
+                  `miimon` to be enabled.
+              fail_over_mac:
+                type: str
+                choices:
+                  - none
+                  - active
+                  - follow
+                description: >
+                  The policy for selecting the MAC address of the bond
+                  interface in `active-backup` mode.
+              lacp_rate:
+                type: str
+                choices:
+                  - slow
+                  - fast
+                description: >
+                  The rate at which link partners are asked to transmit
+                  LACPDU packets. Only valid with mode `802.3ad`.
+              lp_interval:
+                type: int
+                description: >
+                  The number of seconds between instances where the
+                  bonding driver sends learning packets to each port's
+                  peer switch.
+              miimon:
+                type: int
+                description: >
+                  The MII link monitoring interval in milliseconds.
+              min_links:
+                type: int
+                description: >
+                  The minimum number of active links required before
+                  the carrier is asserted.
+              num_grat_arp:
+                type: int
+                description: >
+                  The number of gratuitous ARP peer notifications to
+                  issue after a failover event.
+              packets_per_port:
+                type: int
+                description: >
+                  The number of packets to transmit through a port
+                  before moving to the next one. Only valid with mode
+                  `balance-rr`.
+              peer_notif_delay:
+                type: int
+                description: >
+                  The delay, in milliseconds, between each peer
+                  notification issued after a failover event. Requires
+                  `miimon` to be enabled and must be a multiple of
+                  `miimon`. Not allowed together with `arp_interval`.
+              primary:
+                type: str
+                description: >
+                  The name of the primary port device. Only valid with
+                  modes `active-backup`, `balance-tlb`, or
+                  `balance-alb`.
+              primary_reselect:
+                type: str
+                choices:
+                  - always
+                  - better
+                  - failure
+                description: >
+                  The reselection policy for the primary port.
+              resend_igmp:
+                type: int
+                description: >
+                  The number of IGMP membership reports to issue after
+                  a failover event.
+              tlb_dynamic_lb:
+                type: bool
+                description: >
+                  Whether dynamic shuffling of flows is enabled. Only
+                  valid with modes `balance-tlb` or `balance-alb`.
+              updelay:
+                type: int
+                description: >
+                  The time to wait, in milliseconds, before enabling a
+                  port after a link recovery is detected. Requires
+                  `miimon` to be enabled.
+              use_carrier:
+                type: bool
+                description: >
+                  Whether `netif_carrier_ok()` (`true`) or MII/ETHTOOL
+                  ioctls (`false`) are used to determine link status
+                  for `miimon`.
+              xmit_hash_policy:
+                type: str
+                choices:
+                  - layer2
+                  - layer3+4
+                  - layer2+3
+                  - encap2+3
+                  - encap3+4
+                  - vlan+srcmac
+                description: >
+                  The transmit hash policy used for port selection.
+          infiniband:
+            type: dict
+            description: >
+              Settings for `infiniband` connections. Only supported by
+              the `nm` provider.
+            options:
+              transport_mode:
+                type: str
+                choices:
+                  - datagram
+                  - connected
+                default: datagram
+                description: >
+                  The IP over Infiniband (ipoib) operation mode.
+              p_key:
+                type: int
+                description: >
+                  The Infiniband P_Key to use for the device, a 16-bit
+                  unsigned integer with the high bit set for "full
+                  membership". The values `0x0000` and `0x8000` are
+                  invalid. If set, `mac` or `parent` must also be set,
+                  and `interface_name` must be unset. When unset, the
+                  connection is created on the physical Infiniband
+                  fabric.
+          vlan:
+            type: dict
+            description: >
+              Settings for `vlan` connections.
+            options:
+              id:
+                type: int
+                required: true
+                description: >
+                  The VLAN ID, ranging from 0 to 4094.
+          macvlan:
+            type: dict
+            description: >
+              Settings for `macvlan` connections.
+            options:
+              mode:
+                type: str
+                choices:
+                  - vepa
+                  - bridge
+                  - private
+                  - passthru
+                  - source
+                default: bridge
+                description: >
+                  The MACVLAN mode.
+              promiscuous:
+                type: bool
+                default: true
+                description: >
+                  Whether the underlying device is used in promiscuous
+                  mode. Can only be disabled (`false`) when `mode` is
+                  `passthru`.
+              tap:
+                type: bool
+                default: false
+                description: >
+                  Whether the device should be a MACVTAP device instead
+                  of a regular MACVLAN device.
+          ieee802_1x:
+            type: dict
+            description: >
+              802.1x authentication settings for `ethernet` or
+              `wireless` interfaces. Only supported by the `nm`
+              provider. `tls` is currently the only supported EAP
+              method, and the certificates and keys it references must
+              already be deployed on the host before running the role.
+            options:
+              eap:
+                type: str
+                choices:
+                  - tls
+                default: tls
+                description: >
+                  The EAP method used to authenticate to the network.
+              identity:
+                type: str
+                required: true
+                description: >
+                  The identity string for the EAP authentication
+                  method.
+              private_key:
+                type: path
+                required: true
+                description: >
+                  The absolute path to the client's PEM or PKCS#12
+                  encoded private key.
+              private_key_password:
+                type: str
+                description: >
+                  The password protecting `private_key`.
+              private_key_password_flags:
+                type: list
+                elements: str
+                choices:
+                  - none
+                  - agent-owned
+                  - not-saved
+                  - not-required
+                description: >
+                  Flags controlling how NetworkManager manages the
+                  private key password. See the "Secret flag types"
+                  section of `man 5 nm-settings` for details.
+              client_cert:
+                type: path
+                required: true
+                description: >
+                  The absolute path to the client's PEM encoded
+                  certificate.
+              ca_cert:
+                type: path
+                description: >
+                  The absolute path to the PEM encoded certificate
+                  authority used to verify the EAP server.
+              ca_path:
+                type: path
+                description: >
+                  The absolute path to a directory of additional PEM
+                  encoded CA certificates used to verify the EAP
+                  server. Can be used instead of or in addition to
+                  `ca_cert`. Cannot be used together with
+                  `system_ca_certs`.
+              system_ca_certs:
+                type: bool
+                default: false
+                description: >
+                  Whether NetworkManager should use the system's
+                  trusted CA certificates to verify the EAP server.
+              domain_suffix_match:
+                type: str
+                description: >
+                  A domain name suffix that must match the domain name
+                  in the EAP server's certificate.
+          wireless:
+            type: dict
+            description: >
+              Settings for `wireless` connections, supporting WPA-PSK,
+              WPA-EAP (802.1x), WPA3-Personal SAE, and Enhanced Open
+              (OWE) authentication. Only supported by the `nm`
+              provider.
+            options:
+              ssid:
+                type: str
+                required: true
+                description: >
+                  The SSID of the wireless network.
+              key_mgmt:
+                type: str
+                required: true
+                choices:
+                  - owe
+                  - sae
+                  - wpa-eap
+                  - wpa-psk
+                description: >
+                  The key management method used to authenticate to the
+                  network. When `wpa-eap` is used, 802.1x settings must
+                  also be defined in `ieee802_1x`.
+              password:
+                type: str
+                description: >
+                  The password for the network. Required when
+                  `key_mgmt` is `wpa-psk` or `sae`, and not allowed
+                  otherwise.
+      network_ignore_errors:
+        type: bool
+        description: >
+          Whether to ignore errors encountered while applying a
+          connection profile and continue applying the remaining
+          profiles instead of failing the play. Acts as the default for
+          every item of `network_connections` that does not set its own
+          `ignore_errors`.
+      network_force_state_change:
+        type: bool
+        description: >
+          Whether to force the runtime state change requested by a
+          profile's `state` even when the role does not detect a
+          difference between the requested and current configuration.
+          Acts as the default for every item of `network_connections`
+          that does not set its own `force_state_change`.
+      network_state:
+        type: dict
+        default: {}
+        description: >
+          The desired network state to apply directly to the devices,
+          using the [Nmstate](https://nmstate.io) schema (see the
+          [Nmstate examples](https://nmstate.io/examples.html) and the
+          [nmstate API
+          documentation](https://docs.rs/nmstate/latest/nmstate/index.html)).
+          When left empty, no state is applied. Only supported by the
+          `nm` provider on RHEL 8 and later.
+      network_allow_restart:
+        type: bool
+        default: false
+        description: >
+          Whether the role is allowed to restart NetworkManager when a
+          package installed for a wireless or team interface (such as
+          `NetworkManager-wifi` or `NetworkManager-team`) requires it
+          to be reloaded. A restart can disrupt connectivity, so the
+          role refuses to restart NetworkManager unless this is set to
+          `true`.

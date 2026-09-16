@@ -1,0 +1,138 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+# Included once per item of `network_connections` from assert_role_vars.yml.
+# `__connection` and `__conn_idx` are set by the calling loop.
+#
+# `ip.address`, `ip.route`, and `ip.routing_rule` are validated at runtime by
+# `ArgValidatorList` (see module_utils/network_lsr/argument_validator.py),
+# which conveniently also accepts a single item directly instead of a
+# one-item list -- for example `ip.address: 192.0.2.1/24` is valid, not just
+# `ip.address: [192.0.2.1/24]`. Role argument validation does not rewrite
+# `network_connections` with the normalized value, so a bare item is still
+# what reaches this file. Normalize each of them to a list first so `loop:`
+# does not fail on a non-list value.
+- name: Normalize possibly-scalar ip.address/route/routing_rule to lists
+  ansible.builtin.set_fact:
+    __ip_address_list: >-
+      {{ __ip_address if __ip_address is not string and __ip_address is
+      not mapping else [__ip_address] }}
+    __ip_route_list: >-
+      {{ __ip_route if __ip_route is not string and __ip_route is
+      not mapping else [__ip_route] }}
+    __ip_routing_rule_list: >-
+      {{ __ip_routing_rule if __ip_routing_rule is not string and
+      __ip_routing_rule is not mapping else [__ip_routing_rule] }}
+  vars:
+    __ip_address: "{{ (__connection.ip | d({})).address | d([]) }}"
+    __ip_route: "{{ (__connection.ip | d({})).route | d([]) }}"
+    __ip_routing_rule: "{{ (__connection.ip | d({})).routing_rule | d([]) }}"
+
+- name: Assert ip.address items are a string or a dict with 'address'
+  ansible.builtin.assert:
+    that:
+      - >-
+        item is string
+        or (item is mapping and item.address is defined
+            and item.address is string)
+    fail_msg: >-
+      network_connections[{{ __conn_idx }}].ip.address[{{ ansible_loop.index0 }}]
+      must be a string in '<address>/<prefix>' notation or a dict with an
+      'address' key, got {{ item | type_debug }}
+  loop: "{{ __ip_address_list }}"
+  loop_control:
+    extended: true
+
+- name: Assert ip.route table entries are a string or an integer
+  ansible.builtin.assert:
+    that:
+      - (item.table | type_debug) in ['str', 'int', 'unicode']
+    fail_msg: >-
+      network_connections[{{ __conn_idx }}].ip.route[{{ ansible_loop.index0 }}].table
+      must be a string or integer, got {{ item.table | type_debug }}
+  loop: "{{ __ip_route_list }}"
+  loop_control:
+    extended: true
+  when: item.table is defined
+
+- name: Assert routing_rule.dport is a string range or an integer
+  ansible.builtin.assert:
+    that:
+      - (item.dport | type_debug) in ['str', 'int', 'unicode']
+    fail_msg: >-
+      network_connections[{{ __conn_idx }}].ip.routing_rule[{{ ansible_loop.index0 }}].dport
+      must be a string in '<start>-<end>' notation or an integer,
+      got {{ item.dport | type_debug }}
+  loop: "{{ __ip_routing_rule_list }}"
+  loop_control:
+    extended: true
+  when: item.dport is defined
+
+- name: Assert routing_rule.sport is a string range or an integer
+  ansible.builtin.assert:
+    that:
+      - (item.sport | type_debug) in ['str', 'int', 'unicode']
+    fail_msg: >-
+      network_connections[{{ __conn_idx }}].ip.routing_rule[{{ ansible_loop.index0 }}].sport
+      must be a string in '<start>-<end>' notation or an integer,
+      got {{ item.sport | type_debug }}
+  loop: "{{ __ip_routing_rule_list }}"
+  loop_control:
+    extended: true
+  when: item.sport is defined
+
+- name: Assert routing_rule.uid is a string range or an integer
+  ansible.builtin.assert:
+    that:
+      - (item.uid | type_debug) in ['str', 'int', 'unicode']
+    fail_msg: >-
+      network_connections[{{ __conn_idx }}].ip.routing_rule[{{ ansible_loop.index0 }}].uid
+      must be a string in '<start>-<end>' notation or an integer,
+      got {{ item.uid | type_debug }}
+  loop: "{{ __ip_routing_rule_list }}"
+  loop_control:
+    extended: true
+  when: item.uid is defined
+
+- name: Assert routing_rule.from is a string or a dict with 'address'
+  ansible.builtin.assert:
+    that:
+      - >-
+        item['from'] is string
+        or (item['from'] is mapping and item['from'].address is defined
+            and item['from'].address is string)
+    fail_msg: >-
+      network_connections[{{ __conn_idx }}].ip.routing_rule[{{ ansible_loop.index0 }}].from
+      must be a string in '<address>/<prefix>' notation or a dict with an
+      'address' key, got {{ item['from'] | type_debug }}
+  loop: "{{ __ip_routing_rule_list }}"
+  loop_control:
+    extended: true
+  when: item['from'] is defined
+
+- name: Assert routing_rule.to is a string or a dict with 'address'
+  ansible.builtin.assert:
+    that:
+      - >-
+        item.to is string
+        or (item.to is mapping and item.to.address is defined
+            and item.to.address is string)
+    fail_msg: >-
+      network_connections[{{ __conn_idx }}].ip.routing_rule[{{ ansible_loop.index0 }}].to
+      must be a string in '<address>/<prefix>' notation or a dict with an
+      'address' key, got {{ item.to | type_debug }}
+  loop: "{{ __ip_routing_rule_list }}"
+  loop_control:
+    extended: true
+  when: item.to is defined
+
+- name: Assert routing_rule.table entries are a string or an integer
+  ansible.builtin.assert:
+    that:
+      - (item.table | type_debug) in ['str', 'int', 'unicode']
+    fail_msg: >-
+      network_connections[{{ __conn_idx }}].ip.routing_rule[{{ ansible_loop.index0 }}].table
+      must be a string or integer, got {{ item.table | type_debug }}
+  loop: "{{ __ip_routing_rule_list }}"
+  loop_control:
+    extended: true
+  when: item.table is defined
