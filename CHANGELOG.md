@@ -1,6 +1,32 @@
 Changelog
 =========
 
+[1.21.1] - 2026-09-17
+--------------------
+
+### Bug Fixes
+
+- fix: escape control characters in IfcfgUtil.ValueEscape (#894)
+- fix: reject network_state dns-resolver when NM global-dns is configured (#912)
+
+### Other Changes
+
+- Docs: Added routing table example and Fixes #536 (#849)
+- ci: use commit hash for github action, add persist-credentials false [citest_skip] (#897)
+- ci: refactor build_docs so that pandoc runs in isolated read-only job [citest_skip] (#898)
+- ci: use exact match for systemroller instead of contains [citest_skip] (#899)
+- ci(build_docs): fix pandoc container syntax [citest_skip] (#900)
+- docs: fix markdown codeblock spacing [citest_skip] (#901)
+- ci: [citest_skip] bump codespell-project/actions-codespell from 2.1 to 2.2 (#902)
+- ci: [citest_skip] bump github/codeql-action/init from 4.37.4 to 4.37.9 (#903)
+- ci: [citest_skip] bump myrotvorets/set-commit-status-action from 2774e1f040c82ed70a76b4b5cd53bb11ffaedd0a to c0f880c99d91381c6fdb97726f03feb8004409b4 (#904)
+- ci: [citest_skip] bump github/codeql-action/autobuild from 4.37.4 to 4.37.9 (#905)
+- ci: [citest_skip] bump actions/download-artifact from 7.0.0 to 8.0.1 (#906)
+- refactor: Relax collection constraints, gate vendored modules by python version, update ci versions [citest_skip] (#907)
+- ci: do not run ci tests by default, require citest comment or label [citest_skip] (#908)
+- ci: replace weekly_ci with periodic_ci, stagger schedules [citest_skip] (#909)
+- ci: update status when action triggered by issue comment (#910)
+
 [1.21.0] - 2026-08-06
 --------------------
 
