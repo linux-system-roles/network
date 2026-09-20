@@ -1,14 +1,19 @@
 ---
 name: Run integration tests in Testing Farm
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - labeled
-  issue_comment:
-    types:
-      - created
+  workflow_call:
+    inputs:
+      requested:
+        description: Run this workflow for an authorized /citest command
+        required: true
+        type: boolean
+    secrets:
+      SR_LSR_DOMAIN:
+        required: true
+      SR_LSR_SSH_KEY:
+        required: true
+      TF_API_KEY_RH:
+        required: true
 permissions:
   contents: read
   pull-requests: read
@@ -24,44 +29,7 @@ jobs:
       cancel-in-progress: true
     # Let's schedule tests only on user request. NOT automatically.
     # Only repository owner or member can schedule tests
-    if: |
-      (
-        github.event_name == 'issue_comment'
-        && github.event.issue.pull_request
-        && (contains(github.event.comment.body, '[citest_all]')
-            || contains(github.event.comment.body, '[citest]')
-            || contains(github.event.comment.body, '[citest_tft]'))
-        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
-                     github.event.comment.author_association)
-            || github.event.comment.user.login == 'systemroller')
-      ) || (
-        github.event_name == 'pull_request'
-        && github.event.action == 'opened'
-        && (contains(github.event.pull_request.labels.*.name, 'citest_all')
-            || contains(github.event.pull_request.labels.*.name, 'citest')
-            || contains(github.event.pull_request.labels.*.name, 'citest_tft'))
-        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
-                     github.event.pull_request.author_association)
-            || github.event.pull_request.user.login == 'systemroller')
-      ) || (
-        github.event_name == 'pull_request'
-        && github.event.action == 'synchronize'
-        && (contains(github.event.pull_request.labels.*.name, 'citest_all')
-            || contains(github.event.pull_request.labels.*.name, 'citest')
-            || contains(github.event.pull_request.labels.*.name, 'citest_tft'))
-        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
-                     github.event.pull_request.author_association)
-            || github.event.sender.login == 'systemroller')
-      ) || (
-        github.event_name == 'pull_request'
-        && github.event.action == 'labeled'
-        && (github.event.label.name == 'citest_all'
-            || github.event.label.name == 'citest'
-            || github.event.label.name == 'citest_tft')
-        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
-                     github.event.pull_request.author_association)
-            || github.event.sender.login == 'systemroller')
-      )
+    if: inputs.requested || github.event_name != 'issue_comment'
     runs-on: ubuntu-latest
     outputs:
       supported_platforms: ${{ steps.supported_platforms.outputs.supported_platforms }}
@@ -181,7 +149,7 @@ jobs:
           status: pending
           context: ${{ steps.head_sha_context.outputs.context }}
           description: Test started
-          targetUrl: ""
+          targetUrl: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ job.check_run_id }}
 
       - name: Set variables with DATETIME and artifact location
         id: set_vars
@@ -204,7 +172,7 @@ jobs:
           status: success
           context: ${{ steps.head_sha_context.outputs.context }}
           description: The role does not support this platform. Skipping.
-          targetUrl: ""
+          targetUrl: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ job.check_run_id }}
 
       - name: Run test in testing farm
         uses: sclorg/testing-farm-as-github-action@230555baceb860aa468d216f1822974836b965d1  # v4.3.1

@@ -1,51 +1,22 @@
 ---
 name: PR Title Lint
 on:  # yamllint disable-line rule:truthy
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - labeled
-      - reopened
-      - edited
-  merge_group:
-    branches:
-      - main
-    types:
-      - checks_requested
+  workflow_call:
+    inputs:
+      requested:
+        description: Run this workflow for an authorized /citest command
+        required: true
+        type: boolean
+      pr_title:
+        description: Pull request title to validate
+        required: true
+        type: string
 permissions:
   contents: read
   pull-requests: read
 jobs:
   commit-checks:
-    if: |
-      (
-        github.event_name == 'pull_request'
-        && github.event.action == 'opened'
-        && (contains(github.event.pull_request.labels.*.name, 'citest_all')
-            || contains(github.event.pull_request.labels.*.name, 'citest_pr-title-lint'))
-        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
-                     github.event.pull_request.author_association)
-            || github.event.pull_request.user.login == 'systemroller')
-      ) || (
-        github.event_name == 'pull_request'
-        && (github.event.action == 'synchronize'
-            || github.event.action == 'reopened'
-            || github.event.action == 'edited')
-        && (contains(github.event.pull_request.labels.*.name, 'citest_all')
-            || contains(github.event.pull_request.labels.*.name, 'citest_pr-title-lint'))
-        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
-                     github.event.pull_request.author_association)
-            || github.event.sender.login == 'systemroller')
-      ) || (
-        github.event_name == 'pull_request'
-        && github.event.action == 'labeled'
-        && (github.event.label.name == 'citest_all'
-            || github.event.label.name == 'citest_pr-title-lint')
-        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
-                     github.event.pull_request.author_association)
-            || github.event.sender.login == 'systemroller')
-      )
+    if: inputs.requested || github.event_name != 'issue_comment'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -58,6 +29,6 @@ jobs:
 
       - name: Run pr_title_lint.py on PR title
         env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_TITLE: ${{ inputs.pr_title || github.event.pull_request.title }}
         # Echo from env variable to avoid bash errors with extra characters
         run: python3 pr_title_lint.py "${PR_TITLE}"

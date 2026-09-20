@@ -20,6 +20,62 @@ are likely to be suitable for new contributors!
 **Code** is managed on [Github](https://github.com/linux-system-roles/network), using
 [Pull Requests](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests).
 
+## GitHub CI testing using /citest
+
+GitHub CI tests do not run automatically on pull requests. A role repository
+maintainer must start them by posting a `/citest` slash command as a pull
+request comment.
+
+Run every available CI workflow:
+
+```text
+/citest all
+```
+
+Run the linting and other lightweight checks:
+
+```text
+/citest linters
+```
+
+Run the integration tests (QEMU/container and Testing Farm):
+
+```text
+/citest integration
+```
+
+Run one or more selected workflows by separating their names with spaces:
+
+```text
+/citest ansible-lint
+/citest ansible-lint markdownlint
+```
+
+Post another `/citest` comment at any time to run another selection.
+
+The table below lists each command, the check name shown in the pull request
+checks list, and what the test does. Matrix jobs produce one check per
+combination; those rows show the check name pattern.
+
+| Command | Check name | Description |
+| --- | --- | --- |
+| `/citest all` | All checks listed below | Run every CI test available for this role |
+| `/citest linters` | Lint and lightweight checks | Run ansible-lint, ansible-test, ansible-managed-var-comment, codespell, markdownlint, pr-title-lint, test_converting_readme, and codeql, python-unit-test, and shellcheck when those workflows exist |
+| `/citest integration` | QEMU/container and Testing Farm checks | Run qemu-kvm-integration-tests and tft |
+| `/citest ansible-lint` | `Ansible Lint / ansible_lint (<ansible-lint>, <ansible>, <python>) (pull_request)` | Lint Ansible content after converting the role to collection format |
+| `/citest ansible-managed-var-comment` | `Check for ansible_managed variable use in comments / ansible_managed_var_comment (pull_request)` | Fail if `ansible_managed` is used in comments |
+| `/citest ansible-test` | `Ansible Test / ansible_test (<ansible>, <python>) (pull_request)` | Run ansible-test sanity tests |
+| `/citest codespell` | `Codespell / Check for spelling errors (pull_request)` | Check for spelling errors |
+| `/citest markdownlint` | `Markdown Lint / markdownlint (pull_request)` | Lint Markdown files |
+| `/citest pr-title-lint` | `PR Title Lint / commit-checks` | Check that the pull request title follows the required format |
+| `/citest qemu-kvm-integration-tests` | `Test / scenario (<image>, <env>) (pull_request)` | Run role integration tests in QEMU VMs and containers |
+| `/citest test_converting_readme` | `Test converting README.md to README.html / test_converting_readme (pull_request)` | Convert README.md to HTML |
+| `/citest tft` | `<platform>\|ansible-<version>` | Run integration tests in Testing Farm |
+| `/citest woke` | `Woke / Detect non-inclusive language (pull_request)` | Detect non-inclusive language |
+| `/citest codeql` | `CodeQL / Analyze (python) (pull_request)` | CodeQL security and quality analysis for Python |
+| `/citest python-unit-test` | `Python Unit Tests / python (<python>, <os>) (pull_request)` | Run Python unit tests |
+| `/citest shellcheck` | `ShellCheck / shellcheck (pull_request)` | Lint shell scripts |
+
 ## AI Coding Assistants
 
 The `.coderabbit.yaml` configuration file in the repository root contains coding

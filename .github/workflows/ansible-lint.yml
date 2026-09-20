@@ -1,23 +1,12 @@
 ---
 name: Ansible Lint
 on:  # yamllint disable-line rule:truthy
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - labeled
-  issue_comment:
-    types:
-      - created
-  merge_group:
-    branches:
-      - main
-    types:
-      - checks_requested
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      requested:
+        description: Run this workflow for an authorized /citest command
+        required: true
+        type: boolean
 env:
   LSR_ROLE2COLL_NAMESPACE: fedora
   LSR_ROLE2COLL_NAME: linux_system_roles
@@ -28,40 +17,7 @@ permissions:
   statuses: write
 jobs:
   ansible_lint:
-    if: |
-      (
-        github.event_name == 'issue_comment'
-        && github.event.issue.pull_request
-        && (contains(github.event.comment.body, '[citest_all]')
-            || contains(github.event.comment.body, '[citest_ansible-lint]'))
-        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
-                     github.event.comment.author_association)
-            || github.event.comment.user.login == 'systemroller')
-      ) || (
-        github.event_name == 'pull_request'
-        && github.event.action == 'opened'
-        && (contains(github.event.pull_request.labels.*.name, 'citest_all')
-            || contains(github.event.pull_request.labels.*.name, 'citest_ansible-lint'))
-        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
-                     github.event.pull_request.author_association)
-            || github.event.pull_request.user.login == 'systemroller')
-      ) || (
-        github.event_name == 'pull_request'
-        && github.event.action == 'synchronize'
-        && (contains(github.event.pull_request.labels.*.name, 'citest_all')
-            || contains(github.event.pull_request.labels.*.name, 'citest_ansible-lint'))
-        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
-                     github.event.pull_request.author_association)
-            || github.event.sender.login == 'systemroller')
-      ) || (
-        github.event_name == 'pull_request'
-        && github.event.action == 'labeled'
-        && (github.event.label.name == 'citest_all'
-            || github.event.label.name == 'citest_ansible-lint')
-        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
-                     github.event.pull_request.author_association)
-            || github.event.sender.login == 'systemroller')
-      )
+    if: inputs.requested || github.event_name != 'issue_comment'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -95,7 +51,7 @@ jobs:
           status: pending
           context: ${{ steps.head_sha_context.outputs.context }}
           description: Test started
-          targetUrl: ""
+          targetUrl: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ job.check_run_id }}
 
       - name: Update pip, git
         run: |
@@ -138,4 +94,4 @@ jobs:
           status: ${{ job.status }}
           context: ${{ steps.head_sha_context.outputs.context }}
           description: Test finished
-          targetUrl: ""
+          targetUrl: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ job.check_run_id }}
