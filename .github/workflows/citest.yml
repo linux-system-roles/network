@@ -1,0 +1,245 @@
+---
+name: Run CI tests
+on:  # yamllint disable-line rule:truthy
+  issue_comment:
+    types:
+      - created
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
+  statuses: write
+
+jobs:
+  parse:
+    if: |
+      github.event_name == 'issue_comment'
+      && github.event.issue.pull_request
+      && (github.event.comment.body == '/citest'
+          || startsWith(github.event.comment.body, '/citest '))
+      && (contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'),
+                   github.event.comment.author_association)
+          || github.event.comment.user.login == 'systemroller')
+    runs-on: ubuntu-latest
+    outputs:
+      selected: ${{ steps.command.outputs.selected }}
+    steps:
+      - name: Parse and authorize command
+        id: command
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          COMMENTER: ${{ github.event.comment.user.login }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ "$COMMENTER" != systemroller ]; then
+            permission=$(gh api \
+              "repos/${REPO}/collaborators/${COMMENTER}/permission" \
+              --jq '.permission')
+            case "$permission" in
+              admin|maintain|write) ;;
+              *)
+                echo "@${COMMENTER} does not have permission to run CI tests" >&2
+                exit 1
+                ;;
+            esac
+          fi
+
+          command_line=${COMMENT_BODY%%$'\n'*}
+          command_line=${command_line%$'\r'}
+          read -r -a words <<<"$command_line"
+          if [ "${words[0]-}" != /citest ] || [ -z "${words[1]-}" ]; then
+            echo 'Usage: /citest all | /citest linters | /citest integration | /citest WORKFLOW [WORKFLOW ...]' >&2
+            exit 1
+          fi
+
+          known=(
+            ansible-lint
+            ansible-managed-var-comment
+            ansible-test
+            codespell
+            markdownlint
+            pr-title-lint
+            qemu-kvm-integration-tests
+            test_converting_readme
+            tft
+            woke
+            codeql
+            python-unit-test
+            shellcheck
+          )
+
+          linters=(
+            ansible-lint
+            ansible-managed-var-comment
+            ansible-test
+            codespell
+            markdownlint
+            pr-title-lint
+            test_converting_readme
+            codeql
+            python-unit-test
+            shellcheck
+          )
+
+          integration=(
+            qemu-kvm-integration-tests
+            tft
+          )
+
+          requested=("${words[@]:1}")
+          selected=()
+          unknown=()
+          select_all=false
+          select_linters=false
+          select_integration=false
+          for request in "${requested[@]}"; do
+            if [ "$request" = all ]; then
+              select_all=true
+              continue
+            fi
+            if [ "$request" = linters ]; then
+              select_linters=true
+              continue
+            fi
+            if [ "$request" = integration ]; then
+              select_integration=true
+              continue
+            fi
+            found=false
+            for workflow in "${known[@]}"; do
+              if [ "$request" = "$workflow" ]; then
+                found=true
+                selected+=("$workflow")
+                break
+              fi
+            done
+            if [ "$found" = false ]; then
+              unknown+=("$request")
+            fi
+          done
+
+          if [ -n "${unknown[*]-}" ]; then
+            printf 'Unknown workflow: %s\n' "${unknown[@]}" >&2
+            printf 'Known workflows: %s all linters integration\n' "${known[*]}" >&2
+            exit 1
+          fi
+          if [ "$select_all" = true ]; then
+            selected=("${known[@]}")
+          else
+            if [ "$select_linters" = true ]; then
+              selected+=("${linters[@]}")
+            fi
+            if [ "$select_integration" = true ]; then
+              selected+=("${integration[@]}")
+            fi
+          fi
+
+          selected_json=$(printf '%s\n' "${selected[@]}" \
+            | jq -Rsc 'split("\n") | map(select(length > 0)) | unique')
+          echo "selected=$selected_json" >> "$GITHUB_OUTPUT"
+          echo "Selected workflows: $selected_json"
+
+  ansible_lint:
+    needs: parse
+    if: contains(fromJSON(needs.parse.outputs.selected), 'ansible-lint')
+    uses: ./.github/workflows/ansible-lint.yml
+    with:
+      requested: true
+
+  ansible_managed_var_comment:
+    needs: parse
+    if: contains(fromJSON(needs.parse.outputs.selected), 'ansible-managed-var-comment')
+    uses: ./.github/workflows/ansible-managed-var-comment.yml
+    with:
+      requested: true
+
+  ansible_test:
+    needs: parse
+    if: contains(fromJSON(needs.parse.outputs.selected), 'ansible-test')
+    uses: ./.github/workflows/ansible-test.yml
+    with:
+      requested: true
+
+  codespell:
+    needs: parse
+    if: contains(fromJSON(needs.parse.outputs.selected), 'codespell')
+    uses: ./.github/workflows/codespell.yml
+    with:
+      requested: true
+
+  markdownlint:
+    needs: parse
+    if: contains(fromJSON(needs.parse.outputs.selected), 'markdownlint')
+    uses: ./.github/workflows/markdownlint.yml
+    with:
+      requested: true
+
+  pr_title_lint:
+    needs: parse
+    if: contains(fromJSON(needs.parse.outputs.selected), 'pr-title-lint')
+    uses: ./.github/workflows/pr-title-lint.yml
+    with:
+      requested: true
+      pr_title: ${{ github.event.issue.title }}
+
+  qemu_kvm_integration_tests:
+    needs: parse
+    if: contains(fromJSON(needs.parse.outputs.selected), 'qemu-kvm-integration-tests')
+    uses: ./.github/workflows/qemu-kvm-integration-tests.yml
+    with:
+      requested: true
+
+  test_converting_readme:
+    needs: parse
+    if: contains(fromJSON(needs.parse.outputs.selected), 'test_converting_readme')
+    uses: ./.github/workflows/test_converting_readme.yml
+    with:
+      requested: true
+
+  tft:
+    needs: parse
+    if: contains(fromJSON(needs.parse.outputs.selected), 'tft')
+    uses: ./.github/workflows/tft.yml
+    with:
+      requested: true
+    secrets:
+      SR_LSR_DOMAIN: ${{ secrets.SR_LSR_DOMAIN }}
+      SR_LSR_SSH_KEY: ${{ secrets.SR_LSR_SSH_KEY }}
+      TF_API_KEY_RH: ${{ secrets.TF_API_KEY_RH }}
+
+  woke:
+    needs: parse
+    if: contains(fromJSON(needs.parse.outputs.selected), 'woke')
+    uses: ./.github/workflows/woke.yml
+    with:
+      requested: true
+
+  codeql:
+    needs: parse
+    if: contains(fromJSON(needs.parse.outputs.selected), 'codeql')
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
+      security-events: write
+      statuses: write
+    uses: ./.github/workflows/codeql.yml
+    with:
+      requested: true
+
+  python_unit_test:
+    needs: parse
+    if: contains(fromJSON(needs.parse.outputs.selected), 'python-unit-test')
+    uses: ./.github/workflows/python-unit-test.yml
+    with:
+      requested: true
+
+  shellcheck:
+    needs: parse
+    if: contains(fromJSON(needs.parse.outputs.selected), 'shellcheck')
+    uses: ./.github/workflows/shellcheck.yml
+    with:
+      requested: true

@@ -2,14 +2,12 @@
 # yamllint disable rule:line-length
 name: Woke
 on:  # yamllint disable-line rule:truthy
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - labeled
-  issue_comment:
-    types:
-      - created
+  workflow_call:
+    inputs:
+      requested:
+        description: Run this workflow for an authorized /citest command
+        required: true
+        type: boolean
 permissions:
   contents: read
   pull-requests: read
@@ -17,40 +15,7 @@ permissions:
   statuses: write
 jobs:
   woke:
-    if: |
-      (
-        github.event_name == 'issue_comment'
-        && github.event.issue.pull_request
-        && (contains(github.event.comment.body, '[citest_all]')
-            || contains(github.event.comment.body, '[citest_woke]'))
-        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
-                     github.event.comment.author_association)
-            || github.event.comment.user.login == 'systemroller')
-      ) || (
-        github.event_name == 'pull_request'
-        && github.event.action == 'opened'
-        && (contains(github.event.pull_request.labels.*.name, 'citest_all')
-            || contains(github.event.pull_request.labels.*.name, 'citest_woke'))
-        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
-                     github.event.pull_request.author_association)
-            || github.event.pull_request.user.login == 'systemroller')
-      ) || (
-        github.event_name == 'pull_request'
-        && github.event.action == 'synchronize'
-        && (contains(github.event.pull_request.labels.*.name, 'citest_all')
-            || contains(github.event.pull_request.labels.*.name, 'citest_woke'))
-        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
-                     github.event.pull_request.author_association)
-            || github.event.sender.login == 'systemroller')
-      ) || (
-        github.event_name == 'pull_request'
-        && github.event.action == 'labeled'
-        && (github.event.label.name == 'citest_all'
-            || github.event.label.name == 'citest_woke')
-        && (contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'),
-                     github.event.pull_request.author_association)
-            || github.event.sender.login == 'systemroller')
-      )
+    if: inputs.requested || github.event_name != 'issue_comment'
     name: Detect non-inclusive language
     runs-on: ubuntu-latest
     steps:
@@ -76,7 +41,7 @@ jobs:
           status: pending
           context: ${{ steps.head_sha_context.outputs.context }}
           description: Test started
-          targetUrl: ""
+          targetUrl: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ job.check_run_id }}
 
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -100,4 +65,4 @@ jobs:
           status: ${{ job.status }}
           context: ${{ steps.head_sha_context.outputs.context }}
           description: Test finished
-          targetUrl: ""
+          targetUrl: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ job.check_run_id }}

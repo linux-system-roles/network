@@ -47,6 +47,12 @@ provision:
       network:
         - type: eth
         - type: eth
+  - name: managed-node8
+    role: managed_node
+    hardware:
+      network:
+        - type: eth
+        - type: eth
 environment:
   # ensure versions are strings!
   SR_ANSIBLE_VER: "2.17"
