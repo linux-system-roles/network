@@ -1155,7 +1155,65 @@ argument_specs:
           [nmstate API
           documentation](https://docs.rs/nmstate/latest/nmstate/index.html)).
           When left empty, no state is applied. Only supported by the
-          `nm` provider on RHEL 8 and later.
+          `nm` provider on RHEL 8 and later. Only the top-level keys
+          are listed below; nmstate itself validates everything nested
+          under them, so this role does not re-validate that content.
+        options:
+          description:
+            type: str
+            description: >
+              A human-readable description of the whole desired state.
+              Not persisted or applied by the network backend.
+          hostname:
+            type: dict
+            description: >
+              The desired hostname configuration. See the [Nmstate
+              hostname schema](https://nmstate.io/devel/yaml_api.html)
+              for its exact structure.
+          dns-resolver:
+            type: dict
+            description: >
+              The desired DNS resolver configuration (search domains
+              and servers). See the [Nmstate DNS resolver
+              schema](https://nmstate.io/devel/yaml_api.html) for its
+              exact structure. Cannot be used while NetworkManager has
+              a `[global-dns]` or `[global-dns-domain-*]` section
+              configured.
+          routes:
+            type: dict
+            description: >
+              The desired static routes. See the [Nmstate routes
+              schema](https://nmstate.io/devel/yaml_api.html) for its
+              exact structure.
+          route-rules:
+            type: dict
+            description: >
+              The desired routing rules. See the [Nmstate route rules
+              schema](https://nmstate.io/devel/yaml_api.html) for its
+              exact structure.
+          interfaces:
+            type: list
+            elements: dict
+            description: >
+              The desired per-interface configuration (type, state, IP
+              addressing, and type-specific settings such as bridge,
+              bond, or VLAN options). See the [Nmstate interface
+              schema](https://nmstate.io/devel/yaml_api.html) for its
+              exact structure.
+          ovs-db:
+            type: dict
+            description: >
+              The desired global Open vSwitch database configuration.
+              See the [Nmstate OVS-DB
+              schema](https://nmstate.io/devel/yaml_api.html) for its
+              exact structure.
+          ovn:
+            type: dict
+            description: >
+              The desired OVN (Open Virtual Network) mapping
+              configuration. See the [Nmstate OVN
+              schema](https://nmstate.io/devel/yaml_api.html) for its
+              exact structure.
       network_allow_restart:
         type: bool
         default: false
