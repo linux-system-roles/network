@@ -1472,6 +1472,21 @@ and `initscripts`). That means, you can use the same playbook with NetworkManage
 and initscripts. However, note that not every option is handled exactly the same
 by every provider. Do a test run first with `--check`.
 
+With the `nm` provider, check mode describes the changes to existing connection
+profiles in the role's log output. It lists individual additions and removals for
+list properties such as static routes, IP addresses, and DNS servers, and shows
+old and new values for properties such as MTU. Added and removed settings are
+identified by name. For example:
+
+```text
+[003] <info>  #0, state:up persistent_state:present, 'eth0': change property 802-3-ethernet.mtu from 1500 to 9000
+[004] <info>  #0, state:up persistent_state:present, 'eth0': remove DNS server 192.0.2.53 (ipv4.dns)
+[005] <info>  #0, state:up persistent_state:present, 'eth0': add static route 192.168.100.0/24 via 192.168.1.129 (ipv4.routes)
+```
+
+Secret values, including passwords and private keys, are redacted. The details
+are part of the `ansible-playbook --check` output and do not need `--diff`.
+
 It is not supported to create a configuration for one provider, and expect another
 provider to handle them. For example, creating profiles with the `initscripts` provider,
 and later enabling NetworkManager is not guaranteed to work automatically. Possibly,
