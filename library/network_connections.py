@@ -63,6 +63,7 @@ network_connections:
 
 import errno
 import functools
+import numbers
 import os
 import re
 import shlex
@@ -899,27 +900,220 @@ class NMUtil:
             cons.sort(cmp=_cmp)
         return cons
 
+    @staticmethod
+    def _connection_normalized_clone(con):
+        con = Util.NM().SimpleConnection.new_clone(con)
+        try:
+            con.normalize()
+        except Exception:
+            pass
+        return con
+
     def connection_compare(
         self, con_a, con_b, normalize_a=False, normalize_b=False, compare_flags=None
     ):
-        NM = Util.NM()
-
         if normalize_a:
-            con_a = NM.SimpleConnection.new_clone(con_a)
-            try:
-                con_a.normalize()
-            except Exception:
-                pass
+            con_a = self._connection_normalized_clone(con_a)
         if normalize_b:
-            con_b = NM.SimpleConnection.new_clone(con_b)
-            try:
-                con_b.normalize()
-            except Exception:
-                pass
+            con_b = self._connection_normalized_clone(con_b)
         if compare_flags is None:
-            compare_flags = NM.SettingCompareFlags.IGNORE_TIMESTAMP
+            compare_flags = Util.NM().SettingCompareFlags.IGNORE_TIMESTAMP
 
         return con_a.compare(con_b, compare_flags)
+
+    @staticmethod
+    def _setting_diff_values(setting):
+        NM = Util.NM()
+        values = {}
+
+        def collect(setting, name, value, flags):
+            # NM_SETTING_PARAM_SECRET is 0x400; older typelibs expose it as 4.
+            secret = bool(flags & 0x400)
+            if setting.get_name() == "802-1x":
+                # libnm does not mark embedded keys as secrets. A PKCS#12
+                # client certificate can contain a key, and PKCS#11 URIs a PIN.
+                if name in ("private-key", "phase2-private-key"):
+                    secret = True
+                elif name in (
+                    "ca-cert",
+                    "client-cert",
+                    "phase2-ca-cert",
+                    "phase2-client-cert",
+                ):
+                    get_scheme = getattr(
+                        setting, "get_%s_scheme" % name.replace("-", "_")
+                    )
+                    scheme = get_scheme()
+                    secret = (
+                        secret
+                        or scheme == getattr(NM.Setting8021xCKScheme, "PKCS11", None)
+                        or (
+                            name in ("client-cert", "phase2-client-cert")
+                            and scheme == NM.Setting8021xCKScheme.BLOB
+                        )
+                    )
+            if secret:
+                value = None
+            elif setting.get_name() in ("ipv4", "ipv6") and name == "dns-options":
+                value = (
+                    setting.get_property(name) if setting.has_dns_options() else None
+                )
+            elif setting.get_name() in ("ipv4", "ipv6") and name == "routing-rules":
+                value = [
+                    setting.get_routing_rule(i)
+                    for i in range(setting.get_num_routing_rules())
+                ]
+            elif setting.find_property(name) is not None:
+                # Enumeration loses the element types of boxed arrays. Property
+                # access preserves them; dynamic ethtool options have no pspec.
+                value = setting.get_property(name)
+            values[name] = (value, secret)
+
+        setting.enumerate_values(collect)
+        return values
+
+    @classmethod
+    def _setting_diff_value(cls, value):
+        NM = Util.NM()
+        GLib = Util.GLib()
+        if isinstance(value, GLib.Variant):
+            return cls._setting_diff_value(value.unpack())
+        if isinstance(value, GLib.Bytes):
+            return repr(value.get_data())
+        if isinstance(value, (NM.IPRoute, NM.IPAddress)):
+            if isinstance(value, NM.IPRoute):
+                result = "%s/%s" % (value.get_dest(), value.get_prefix())
+                if value.get_next_hop():
+                    result += " via %s" % value.get_next_hop()
+                if value.get_metric() != -1:
+                    result += " metric %s" % value.get_metric()
+            else:
+                result = "%s/%s" % (value.get_address(), value.get_prefix())
+            for name in sorted(value.get_attribute_names()):
+                result += " %s=%s" % (
+                    name,
+                    cls._setting_diff_value(value.get_attribute(name)),
+                )
+            return result
+        if isinstance(value, getattr(NM, "IPRoutingRule", ())):
+            return value.to_string(NM.IPRoutingRuleAsStringFlags.NONE, None)
+        if isinstance(value, getattr(NM, "BridgeVlan", ())):
+            return value.to_str()
+        if isinstance(value, getattr(NM, "TCQdisc", ())):
+            return NM.utils_tc_qdisc_to_str(value)
+        if isinstance(value, getattr(NM, "TCTfilter", ())):
+            return NM.utils_tc_tfilter_to_str(value)
+        if isinstance(value, getattr(NM, "SriovVF", ())):
+            return NM.utils_sriov_vf_to_str(value, False)
+        if isinstance(value, (list, tuple)):
+            return "[%s]" % ", ".join(cls._setting_diff_value(v) for v in value)
+        if isinstance(value, dict):
+            return "{%s}" % ", ".join(
+                "%s: %s" % (cls._setting_diff_value(k), cls._setting_diff_value(v))
+                for k, v in sorted(value.items())
+            )
+        if isinstance(value, numbers.Integral):
+            return str(value)
+        return repr(value)
+
+    @classmethod
+    def _setting_diff_property(cls, setting_name, name, old, new):
+        property_name = "%s.%s" % (setting_name, name)
+        old_value, old_secret = old
+        new_value, new_secret = new
+        if old_secret or new_secret:
+            yield "change property %s from <redacted> to <redacted>" % property_name
+            return
+
+        if isinstance(old_value, (list, tuple)) or isinstance(new_value, (list, tuple)):
+            label = "value"
+            if setting_name in ("ipv4", "ipv6"):
+                label = {
+                    "routes": "static route",
+                    "addresses": "IP address",
+                    "dns": "DNS server",
+                    "dns-search": "DNS search domain",
+                    "dns-options": "DNS option",
+                    "routing-rules": "routing rule",
+                }.get(name, label)
+
+            def format_item(value):
+                if setting_name in ("ipv4", "ipv6") and name in (
+                    "dns",
+                    "dns-search",
+                    "dns-options",
+                ):
+                    return value.replace("\n", "\\n").replace("\r", "\\r")
+                return cls._setting_diff_value(value)
+
+            old_items = set(format_item(v) for v in (old_value or []))
+            new_items = set(format_item(v) for v in (new_value or []))
+            for value in sorted(old_items - new_items):
+                yield "remove %s %s (%s)" % (label, value, property_name)
+            for value in sorted(new_items - old_items):
+                yield "add %s %s (%s)" % (label, value, property_name)
+            if old_items != new_items:
+                return
+
+        # Equal membership can still differ in order (for example, DNS servers).
+        yield "change property %s from %s to %s" % (
+            property_name,
+            cls._setting_diff_value(old_value),
+            cls._setting_diff_value(new_value),
+        )
+
+    @staticmethod
+    def _connection_settings(con):
+        if hasattr(con, "get_settings"):
+            return dict((s.get_name(), s) for s in (con.get_settings() or []))
+
+        # Before libnm 1.10, settings are only exposed through their values.
+        settings = {}
+
+        def collect(setting, name, value, flags):
+            settings[setting.get_name()] = setting
+
+        con.for_each_setting_value(collect)
+        return settings
+
+    def connection_diff(
+        self, con_a, con_b, normalize_a=False, normalize_b=False, compare_flags=None
+    ):
+        """Describe changes from con_a to con_b without modifying either profile."""
+        if normalize_a:
+            con_a = self._connection_normalized_clone(con_a)
+        if normalize_b:
+            con_b = self._connection_normalized_clone(con_b)
+        if compare_flags is None:
+            compare_flags = Util.NM().SettingCompareFlags.IGNORE_TIMESTAMP
+
+        settings_a = self._connection_settings(con_a)
+        settings_b = self._connection_settings(con_b)
+        for name in sorted(set(settings_a) | set(settings_b)):
+            setting_a = settings_a.get(name)
+            setting_b = settings_b.get(name)
+            # Introspection does not allow None as the other setting in diff().
+            if setting_a is None:
+                yield "add setting %s" % name
+                setting_a = type(setting_b)()
+            elif setting_b is None:
+                yield "remove setting %s" % name
+                setting_b = type(setting_a)()
+            _same, differences = setting_a.diff(setting_b, compare_flags, False, {})
+            if not differences:
+                continue
+            values_a = self._setting_diff_values(setting_a)
+            values_b = self._setting_diff_values(setting_b)
+            for property_name in sorted(differences):
+                # Python 2 does not support yield from.
+                # pylint: disable=unknown-option-value,use-yield-from
+                for message in self._setting_diff_property(
+                    name,
+                    property_name,
+                    values_a.get(property_name, (None, False)),
+                    values_b.get(property_name, (None, False)),
+                ):
+                    yield message
 
     def connection_is_active(self, con):
         NM = Util.NM()
@@ -2505,7 +2699,15 @@ class Cmd_nm(Cmd):
                 idx, "update connection %s, %s" % (con_cur.get_id(), con_cur.get_uuid())
             )
             self.connections_data_set_changed(idx)
-            if self.check_mode == CheckMode.REAL_RUN:
+            if self.check_mode == CheckMode.DRY_RUN:
+                try:
+                    for message in self.nmutil.connection_diff(
+                        con_cur, con_new, normalize_a=True
+                    ):
+                        self.log_info(idx, message)
+                except Exception as e:
+                    self.log_warn(idx, "cannot describe connection changes: %s" % (e))
+            elif self.check_mode == CheckMode.REAL_RUN:
                 try:
                     self.nmutil.connection_update(con_cur, con_new)
                 except MyError as e:
