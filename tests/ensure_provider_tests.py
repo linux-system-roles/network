@@ -114,6 +114,9 @@ NM_ONLY_TESTS = {
     },
     "playbooks/tests_ignore_auto_dns.yml": {},
     "playbooks/tests_bond_options.yml": {},
+    "playbooks/tests_check_mode_diff.yml": {
+        MINIMUM_VERSION: "'1.8.0'",
+    },
     "playbooks/tests_bond_port_match_by_mac.yml": {},
     "playbooks/tests_eth_dns_support.yml": {},
     "playbooks/tests_dummy.yml": {},  # wokeignore:rule=dummy

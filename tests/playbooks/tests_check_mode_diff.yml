@@ -1,0 +1,198 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Test NetworkManager check mode diffs
+  hosts: all
+  vars:
+    network_provider: nm
+    interface: lsrchkdiff0
+    profile: "{{ interface }}"
+    baseline_connections:
+      - name: "{{ interface }}"
+        type: dummy
+        state: up
+        autoconnect: false
+        mtu: 1500
+        ip:
+          dhcp4: false
+          auto6: false
+          auto_gateway: false
+          address:
+            - 192.0.2.10/24
+            - 2001:db8::10/64
+          dns:
+            - 192.0.2.53
+            - 2001:db8::53
+          route:
+            - network: 203.0.113.0
+              prefix: 24
+              gateway: 192.0.2.1
+              metric: 100
+    proposed_connections:
+      - name: "{{ interface }}"
+        type: dummy
+        state: up
+        autoconnect: false
+        mtu: 9000
+        ip:
+          dhcp4: false
+          auto6: false
+          auto_gateway: false
+          address:
+            - 192.0.2.20/24
+            - 2001:db8::20/64
+          dns:
+            - 192.0.2.54
+            - 2001:db8::54
+          route:
+            - network: 203.0.113.128
+              prefix: 25
+              gateway: 192.0.2.2
+              metric: 200
+  tasks:
+    - name: Initialize the network role
+      include_tasks: tasks/run_role_with_clear_facts.yml
+      vars:
+        network_connections: []
+
+    - name: Check that the test interface is absent
+      include_tasks: tasks/assert_device_absent.yml
+
+    - name: List existing profiles
+      command: nmcli -g NAME connection show
+      changed_when: false
+      register: existing_profiles
+
+    - name: Check that the test profile name is available
+      assert:
+        that: interface not in existing_profiles.stdout_lines
+
+    - name: Test a managed connection in check mode
+      block:
+        - name: Create the baseline connection
+          include_tasks: tasks/run_role_with_clear_facts.yml
+          vars:
+            network_connections: "{{ baseline_connections }}"
+
+        - name: Read the baseline profile
+          command: >-
+            nmcli -t -f connection,802-3-ethernet,ipv4,ipv6
+            connection show {{ interface }}
+          changed_when: false
+          register: profile_before
+
+        - name: Read the baseline addresses
+          command: ip -o address show dev {{ interface }}
+          changed_when: false
+          register: addresses_before
+
+        - name: Preview the proposed connection changes
+          check_mode: true
+          block:
+            - name: Run the role in check mode
+              include_tasks: tasks/run_role_with_clear_facts.yml
+              vars:
+                network_connections: "{{ proposed_connections }}"
+
+        - name: Verify the preview reports individual changes
+          assert:
+            that:
+              - __network_connections_result is changed
+              - item in __network_connections_result.stderr
+            fail_msg: "Missing change in check-mode output: {{ item }}"
+          loop:
+            - 'change property 802-3-ethernet.mtu from 1500 to 9000'
+            - 'remove IP address 192.0.2.10/24'
+            - 'add IP address 192.0.2.20/24'
+            - 'remove IP address 2001:db8::10/64'
+            - 'add IP address 2001:db8::20/64'
+            - 'remove DNS server 192.0.2.53'
+            - 'add DNS server 192.0.2.54'
+            - 'remove DNS server 2001:db8::53'
+            - 'add DNS server 2001:db8::54'
+            - 'remove static route 203.0.113.0/24 via 192.0.2.1 metric 100'
+            - 'add static route 203.0.113.128/25 via 192.0.2.2 metric 200'
+
+        - name: Verify the preview uses numbered info log lines
+          assert:
+            that:
+              - >-
+                __network_connections_result.stderr_lines |
+                select('search', 'change property|add static route|remove static route|add IP address|remove IP address|add DNS server|remove DNS server') |
+                reject('match', '^\[[0-9]+\] <info>\s+#0,') | list | length == 0
+
+        - name: Read the profile after check mode
+          command: >-
+            nmcli -t -f connection,802-3-ethernet,ipv4,ipv6
+            connection show {{ interface }}
+          changed_when: false
+          register: profile_after
+
+        - name: Read the addresses after check mode
+          command: ip -o address show dev {{ interface }}
+          changed_when: false
+          register: addresses_after
+
+        - name: Verify check mode did not change the connection
+          vars:
+            before_addresses: >-
+              {{ addresses_before.stdout |
+                 regex_findall('inet6? +([^ ]+)') | sort }}
+            after_addresses: >-
+              {{ addresses_after.stdout |
+                 regex_findall('inet6? +([^ ]+)') | sort }}
+          assert:
+            that:
+              - profile_before.stdout == profile_after.stdout
+              - "'192.0.2.10/24' in before_addresses"
+              - "'2001:db8::10/64' in before_addresses"
+              - before_addresses == after_addresses
+
+        - name: Preview the unchanged baseline connection
+          check_mode: true
+          block:
+            - name: Run the role with the baseline connection in check mode
+              include_tasks: tasks/run_role_with_clear_facts.yml
+              vars:
+                network_connections: "{{ baseline_connections }}"
+
+        - name: Verify the baseline is unchanged
+          assert:
+            that:
+              - __network_connections_result is not changed
+              - "'change property' not in __network_connections_result.stderr"
+
+        - name: Apply the proposed connection changes
+          include_tasks: tasks/run_role_with_clear_facts.yml
+          vars:
+            network_connections: "{{ proposed_connections }}"
+
+        - name: Preview the applied connection
+          check_mode: true
+          block:
+            - name: Run the role with the applied connection in check mode
+              include_tasks: tasks/run_role_with_clear_facts.yml
+              vars:
+                network_connections: "{{ proposed_connections }}"
+
+        - name: Verify the applied connection is unchanged
+          assert:
+            that:
+              - __network_connections_result is not changed
+              - "'change property' not in __network_connections_result.stderr"
+      always:
+        - name: Remove the test connection
+          tags: tests::cleanup
+          include_tasks: tasks/run_role_with_clear_facts.yml
+          vars:
+            network_connections:
+              - name: "{{ interface }}"
+                state: down
+                persistent_state: absent
+
+        - name: Verify the test profile was removed
+          tags: tests::cleanup
+          include_tasks: tasks/assert_profile_absent.yml
+
+        - name: Verify the test interface was removed
+          tags: tests::cleanup
+          include_tasks: tasks/assert_device_absent.yml
