@@ -22,7 +22,15 @@ sys.modules["ansible.module_utils.basic"] = mock.Mock()
 
 import network_lsr
 import network_lsr.argument_validator
-from network_connections import IfcfgUtil, NMUtil, SysUtil, Util
+from network_connections import (
+    CheckMode,
+    Cmd_nm,
+    IfcfgUtil,
+    NMUtil,
+    RunEnvironmentAnsible,
+    SysUtil,
+    Util,
+)
 from network_lsr.argument_validator import ValidationError
 
 try:
@@ -4682,6 +4690,646 @@ class TestNM(unittest.TestCase):
         result = Util.path_to_glib_bytes("/my/test/path")
         self.assertIsInstance(result, Util.GLib().Bytes)
         self.assertEqual(result.get_data(), b"file:///my/test/path\x00")
+
+
+class TestNMConnectionDiff(unittest.TestCase):
+    def setUp(self):
+        try:
+            self.nm = Util.NM()
+        except (ImportError, ValueError):
+            self.skipTest("no support for NM (libnm via pygobject)")
+        self.nmutil = NMUtil(nmclient=mock.Mock())
+
+    def connection(self):
+        con = self.nm.SimpleConnection.new()
+        setting = self.nm.SettingConnection.new()
+        setting.set_property("id", "diff-test")
+        setting.set_property("uuid", "deed76f5-97c5-4733-85f0-10922b0ed08b")
+        setting.set_property("type", "802-3-ethernet")
+        con.add_setting(setting)
+        wired = self.nm.SettingWired.new()
+        wired.set_property("mtu", 1500)
+        con.add_setting(wired)
+        for setting_type, family, address, dns in (
+            (self.nm.SettingIP4Config, socket.AF_INET, "192.0.2.10", "192.0.2.53"),
+            (self.nm.SettingIP6Config, socket.AF_INET6, "2001:db8::10", "2001:db8::53"),
+        ):
+            setting = setting_type.new()
+            setting.set_property("method", "manual")
+            prefix = 24 if family == socket.AF_INET else 64
+            setting.add_address(self.nm.IPAddress.new(family, address, prefix))
+            setting.add_dns(dns)
+            con.add_setting(setting)
+        return con
+
+    def route(self, metric=-1, table=None, route_type=None, src=None):
+        route = self.nm.IPRoute.new(
+            socket.AF_INET, "192.168.100.0", 24, "192.168.1.129", metric
+        )
+        for name, variant_type, value in (
+            ("table", "u", table),
+            ("type", "s", route_type),
+            ("src", "s", src),
+        ):
+            if value is not None:
+                route.set_attribute(name, Util.GLib().Variant(variant_type, value))
+        return route
+
+    def test_populated_settings_report_scalar_and_list_changes(self):
+        current = self.connection()
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        proposed.get_setting_wired().set_property("mtu", 9000)
+        ip4 = proposed.get_setting_ip4_config()
+        ip4.add_route(self.route())
+        ip4.remove_address(0)
+        ip4.add_address(self.nm.IPAddress.new(socket.AF_INET, "192.0.2.1", 24))
+        ip4.remove_dns(0)
+        ip4.add_dns("192.0.2.54")
+
+        lines = list(self.nmutil.connection_diff(current, proposed))
+
+        for line in (
+            "change property 802-3-ethernet.mtu from 1500 to 9000",
+            "add static route 192.168.100.0/24 via 192.168.1.129 (ipv4.routes)",
+            "remove IP address 192.0.2.10/24 (ipv4.addresses)",
+            "add IP address 192.0.2.1/24 (ipv4.addresses)",
+            "remove DNS server 192.0.2.53 (ipv4.dns)",
+            "add DNS server 192.0.2.54 (ipv4.dns)",
+        ):
+            self.assertIn(line, lines)
+        self.assertFalse(any("setting " in line for line in lines))
+        self.assertFalse(any("ipv6" in line for line in lines))
+
+    def test_route_metric_and_attributes_are_part_of_identity(self):
+        for original, replacement, old_detail, new_detail in (
+            (self.route(10), self.route(20), "metric 10", "metric 20"),
+            (self.route(table=100), self.route(table=200), "table=100", "table=200"),
+            (
+                self.route(route_type="unicast"),
+                self.route(route_type="blackhole"),
+                "type='unicast'",
+                "type='blackhole'",
+            ),
+            (
+                self.route(src="192.0.2.1"),
+                self.route(src="192.0.2.2"),
+                "src='192.0.2.1'",
+                "src='192.0.2.2'",
+            ),
+        ):
+            current = self.connection()
+            proposed = self.nm.SimpleConnection.new_clone(current)
+            current.get_setting_ip4_config().add_route(original)
+            proposed.get_setting_ip4_config().add_route(replacement)
+
+            lines = list(self.nmutil.connection_diff(current, proposed))
+
+            self.assertIn(
+                "remove static route 192.168.100.0/24 "
+                "via 192.168.1.129 %s (ipv4.routes)" % old_detail,
+                lines,
+            )
+            self.assertIn(
+                "add static route 192.168.100.0/24 via 192.168.1.129 %s (ipv4.routes)"
+                % new_detail,
+                lines,
+            )
+
+    def test_ipv6_and_direct_route_changes(self):
+        current = self.connection()
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        current.get_setting_ip6_config().add_route(
+            self.nm.IPRoute.new(socket.AF_INET6, "2001:db8:1::", 64, None, -1)
+        )
+        ip6 = proposed.get_setting_ip6_config()
+        ip6.add_route(
+            self.nm.IPRoute.new(socket.AF_INET6, "2001:db8:2::", 64, "2001:db8::1", 20)
+        )
+        ip6.remove_address(0)
+        ip6.remove_dns(0)
+
+        lines = list(self.nmutil.connection_diff(current, proposed))
+
+        for line in (
+            "remove static route 2001:db8:1::/64 (ipv6.routes)",
+            "add static route 2001:db8:2::/64 via 2001:db8::1 metric 20 (ipv6.routes)",
+            "remove IP address 2001:db8::10/64 (ipv6.addresses)",
+            "remove DNS server 2001:db8::53 (ipv6.dns)",
+        ):
+            self.assertIn(line, lines)
+
+    def test_identical_boxed_values_do_not_produce_changes(self):
+        current = self.connection()
+        current.get_setting_ip4_config().add_route(self.route(10, table=100))
+        proposed = self.nm.SimpleConnection.new_clone(current)
+
+        self.assertEqual(list(self.nmutil.connection_diff(current, proposed)), [])
+
+    def test_bridge_vlan_changes_preserve_unchanged_entries(self):
+        if not hasattr(self.nm, "BridgeVlan"):
+            self.skipTest("bridge VLANs are unavailable")
+        current = self.connection()
+        bridge = self.nm.SettingBridge.new()
+        bridge.add_vlan(self.nm.BridgeVlan.new(100, 100))
+        vlan = self.nm.BridgeVlan.new(200, 200)
+        vlan.set_pvid(True)
+        vlan.set_untagged(True)
+        bridge.add_vlan(vlan)
+        current.add_setting(bridge)
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        proposed.get_setting_bridge().remove_vlan(1)
+        proposed.get_setting_bridge().add_vlan(self.nm.BridgeVlan.new(300, 310))
+
+        self.assertEqual(
+            list(self.nmutil.connection_diff(current, proposed)),
+            [
+                "remove value 200 pvid untagged (bridge.vlans)",
+                "add value 300-310 (bridge.vlans)",
+            ],
+        )
+
+    def test_tc_changes_preserve_unchanged_entries(self):
+        if not hasattr(self.nm, "SettingTCConfig"):
+            self.skipTest("traffic control settings are unavailable")
+        current = self.connection()
+        tc = self.nm.SettingTCConfig.new()
+        for description in ("parent 1: handle 2: sfq", "root handle 1: fq_codel"):
+            tc.add_qdisc(self.nm.utils_tc_qdisc_from_str(description))
+        tc.add_tfilter(
+            self.nm.utils_tc_tfilter_from_str(
+                "parent ffff: matchall action simple sdata hello"
+            )
+        )
+        current.add_setting(tc)
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        proposed_tc = proposed.get_setting(self.nm.SettingTCConfig)
+        proposed_tc.remove_qdisc(1)
+        proposed_tc.add_qdisc(self.nm.utils_tc_qdisc_from_str("root handle 1: fq"))
+        proposed_tc.remove_tfilter(0)
+
+        self.assertEqual(
+            list(self.nmutil.connection_diff(current, proposed)),
+            [
+                "remove value root handle 1: fq_codel (tc.qdiscs)",
+                "add value root handle 1: fq (tc.qdiscs)",
+                "remove value parent ffff: matchall action simple sdata hello "
+                "(tc.tfilters)",
+            ],
+        )
+
+    def test_sriov_changes_preserve_unchanged_entries(self):
+        if not hasattr(self.nm, "SettingSriov"):
+            self.skipTest("SR-IOV settings are unavailable")
+        current = self.connection()
+        sriov = self.nm.SettingSriov.new()
+        sriov.add_vf(self.nm.SriovVF.new(0))
+        vf = self.nm.SriovVF.new(1)
+        vf.set_attribute("mac", Util.GLib().Variant("s", "02:00:00:00:00:01"))
+        sriov.add_vf(vf)
+        current.add_setting(sriov)
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        proposed.get_setting(self.nm.SettingSriov).remove_vf(1)
+
+        self.assertEqual(
+            list(self.nmutil.connection_diff(current, proposed)),
+            ["remove value 1 mac=02:00:00:00:00:01 (sriov.vfs)"],
+        )
+
+    def test_empty_dns_options_differ_from_unset(self):
+        current = self.connection()
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        proposed.get_setting_ip4_config().set_property("dns-options", [])
+        proposed.get_setting_ip6_config().set_property("dns-options", [])
+
+        self.assertEqual(
+            list(self.nmutil.connection_diff(current, proposed)),
+            [
+                "change property ipv4.dns-options from None to []",
+                "change property ipv6.dns-options from None to []",
+            ],
+        )
+        self.assertEqual(
+            list(self.nmutil.connection_diff(proposed, current)),
+            [
+                "change property ipv4.dns-options from [] to None",
+                "change property ipv6.dns-options from [] to None",
+            ],
+        )
+
+    def test_settings_without_get_settings_api(self):
+        class LegacyConnection(object):
+            def __init__(self, connection):
+                self.for_each_setting_value = connection.for_each_setting_value
+
+        current = self.connection()
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        proposed.get_setting_wired().set_property("mtu", 9000)
+        proposed.add_setting(self.nm.SettingBridge.new())
+
+        self.assertEqual(
+            list(
+                self.nmutil.connection_diff(
+                    LegacyConnection(current), LegacyConnection(proposed)
+                )
+            ),
+            [
+                "change property 802-3-ethernet.mtu from 1500 to 9000",
+                "add setting bridge",
+            ],
+        )
+
+    def test_list_order_changes_are_visible(self):
+        current = self.connection()
+        current.get_setting_ip4_config().add_dns("192.0.2.54")
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        proposed.get_setting_ip4_config().clear_dns()
+        proposed.get_setting_ip4_config().add_dns("192.0.2.54")
+        proposed.get_setting_ip4_config().add_dns("192.0.2.53")
+
+        lines = list(self.nmutil.connection_diff(current, proposed))
+
+        self.assertTrue(any("ipv4.dns" in line for line in lines))
+        self.assertFalse(any("add DNS server" in line for line in lines))
+        self.assertFalse(any("remove DNS server" in line for line in lines))
+
+    def test_settings_added_and_removed_with_details(self):
+        current = self.connection()
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        current.remove_setting(self.nm.SettingIP4Config)
+        proposed.remove_setting(self.nm.SettingIP6Config)
+
+        lines = list(self.nmutil.connection_diff(current, proposed))
+
+        for line in (
+            "add setting ipv4",
+            "remove setting ipv6",
+            "add IP address 192.0.2.10/24 (ipv4.addresses)",
+            "remove IP address 2001:db8::10/64 (ipv6.addresses)",
+            "add DNS server 192.0.2.53 (ipv4.dns)",
+            "remove DNS server 2001:db8::53 (ipv6.dns)",
+        ):
+            self.assertIn(line, lines)
+
+    def test_default_only_setting_is_reported(self):
+        setting_types = [self.nm.SettingWired]
+        if hasattr(self.nm, "SettingEthtool"):
+            setting_types.append(self.nm.SettingEthtool)
+        for setting_type in setting_types:
+            current = self.nm.SimpleConnection.new()
+            proposed = self.nm.SimpleConnection.new()
+            setting = setting_type.new()
+            proposed.add_setting(setting)
+
+            self.assertIn(
+                "add setting %s" % setting.get_name(),
+                list(self.nmutil.connection_diff(current, proposed)),
+            )
+            self.assertIn(
+                "remove setting %s" % setting.get_name(),
+                list(self.nmutil.connection_diff(proposed, current)),
+            )
+
+    def test_scalar_strings_boolean_and_unset(self):
+        current = self.connection()
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        proposed.get_setting_connection().set_property("id", "renamed")
+        proposed.get_setting_connection().set_property("autoconnect", False)
+        proposed.get_setting_ip4_config().set_property("gateway", "192.0.2.1")
+
+        lines = list(self.nmutil.connection_diff(current, proposed))
+
+        self.assertIn(
+            "change property connection.id from 'diff-test' to 'renamed'", lines
+        )
+        self.assertIn(
+            "change property connection.autoconnect from True to False", lines
+        )
+        self.assertTrue(
+            any("ipv4.gateway" in line and "'192.0.2.1'" in line for line in lines)
+        )
+
+    def test_normalization_and_timestamp_comparison_match(self):
+        current = self.connection()
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        proposed.normalize()
+        proposed.get_setting_connection().set_property("timestamp", 2**64 - 1)
+
+        self.assertTrue(
+            self.nmutil.connection_compare(current, proposed, normalize_a=True)
+        )
+        self.assertEqual(
+            list(self.nmutil.connection_diff(current, proposed, normalize_a=True)), []
+        )
+        self.assertIn(
+            "change property connection.timestamp from 0 to 18446744073709551615",
+            list(
+                self.nmutil.connection_diff(
+                    current,
+                    proposed,
+                    normalize_a=True,
+                    compare_flags=self.nm.SettingCompareFlags.EXACT,
+                )
+            ),
+        )
+        self.assertEqual(current.get_setting_connection().get_timestamp(), 0)
+
+    def test_secret_flag_from_legacy_introspection(self):
+        current = self.connection()
+        security = self.nm.SettingWirelessSecurity.new()
+        security.set_property("psk", "old-test-secret")
+        current.add_setting(security)
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        proposed.get_setting_wired().set_property("mtu", 9000)
+        proposed.get_setting_wireless_security().set_property("psk", "new-test-secret")
+
+        with mock.patch.object(self.nm, "SETTING_PARAM_SECRET", 4):
+            lines = list(self.nmutil.connection_diff(current, proposed))
+
+        self.assertIn("change property 802-3-ethernet.mtu from 1500 to 9000", lines)
+        self.assertIn(
+            "change property 802-11-wireless-security.psk "
+            "from <redacted> to <redacted>",
+            lines,
+        )
+        self.assertNotIn("old-test-secret", "\n".join(lines))
+        self.assertNotIn("new-test-secret", "\n".join(lines))
+
+    def test_secret_and_private_key_values_are_redacted(self):
+        current = self.connection()
+        security = self.nm.SettingWirelessSecurity.new()
+        security.set_property("psk", "old-test-secret")
+        current.add_setting(security)
+        authentication = self.nm.Setting8021x.new()
+        authentication.set_property("password", "old-eap-secret")
+        authentication.set_property(
+            "private-key", Util.GLib().Bytes.new(b"old-private-key-material")
+        )
+        for property_name in ("client-cert", "phase2-client-cert"):
+            authentication.set_property(
+                property_name, Util.GLib().Bytes.new(b"old-pkcs12-private-key-material")
+            )
+        current.add_setting(authentication)
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        proposed.get_setting_wireless_security().set_property("psk", "new-test-secret")
+        proposed.get_setting_802_1x().set_property("password", "new-eap-secret")
+        proposed.get_setting_802_1x().set_property(
+            "private-key", Util.GLib().Bytes.new(b"new-private-key-material")
+        )
+        for property_name in ("client-cert", "phase2-client-cert"):
+            proposed.get_setting_802_1x().set_property(
+                property_name, Util.GLib().Bytes.new(b"new-pkcs12-private-key-material")
+            )
+
+        lines = list(self.nmutil.connection_diff(current, proposed))
+        output = "\n".join(lines)
+
+        for property_name in (
+            "802-11-wireless-security.psk",
+            "802-1x.password",
+            "802-1x.private-key",
+            "802-1x.client-cert",
+            "802-1x.phase2-client-cert",
+        ):
+            self.assertTrue(
+                any(property_name in line and "<redacted>" in line for line in lines)
+            )
+        for secret in (
+            "old-test-secret",
+            "new-test-secret",
+            "old-eap-secret",
+            "new-eap-secret",
+            "old-private-key-material",
+            "new-private-key-material",
+            "old-pkcs12-private-key-material",
+            "new-pkcs12-private-key-material",
+        ):
+            self.assertNotIn(secret, output)
+
+    def test_certificate_file_paths_remain_visible(self):
+        current = self.connection()
+        authentication = self.nm.Setting8021x.new()
+        properties = ("ca-cert", "client-cert", "phase2-ca-cert", "phase2-client-cert")
+        for property_name in properties:
+            authentication.set_property(
+                property_name, Util.path_to_glib_bytes("/old-client-cert.pem")
+            )
+        current.add_setting(authentication)
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        for property_name in properties:
+            proposed.get_setting_802_1x().set_property(
+                property_name, Util.path_to_glib_bytes("/new-client-cert.pem")
+            )
+
+        lines = list(self.nmutil.connection_diff(current, proposed))
+
+        for property_name in properties:
+            self.assertTrue(
+                any(
+                    "802-1x.%s" % property_name in line
+                    and "/old-client-cert.pem" in line
+                    and "/new-client-cert.pem" in line
+                    for line in lines
+                )
+            )
+        self.assertNotIn("<redacted>", "\n".join(lines))
+
+    def test_pkcs11_certificate_pins_are_redacted_in_check_mode(self):
+        if not hasattr(self.nm.Setting8021xCKScheme, "PKCS11"):
+            self.skipTest("PKCS#11 certificate URIs are unavailable")
+        current = self.connection()
+        authentication = self.nm.Setting8021x.new()
+        authentication.set_property("eap", ["tls"])
+        authentication.set_property("identity", "diff-test")
+        authentication.set_property(
+            "private-key", Util.path_to_glib_bytes("/private-key.pem")
+        )
+        current.add_setting(authentication)
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        properties = ("ca-cert", "client-cert", "phase2-ca-cert", "phase2-client-cert")
+        for connection, pin in (
+            (current, "old-uri-secret"),
+            (proposed, "new-uri-secret"),
+        ):
+            for property_name in properties:
+                uri = (
+                    "pkcs11:token=diff-test;object=cert;type=cert?pin-value=%s\x00"
+                    % pin
+                )
+                connection.get_setting_802_1x().set_property(
+                    property_name, Util.GLib().Bytes.new(uri.encode("utf-8"))
+                )
+            connection.normalize()
+        cmd = self.command(current, proposed, CheckMode.DRY_RUN)
+
+        cmd.run_action_present(0)
+
+        stderr = cmd.run_env._complete_kwargs(cmd.connections, {})["stderr"]
+        for property_name in properties:
+            self.assertIn(
+                "change property 802-1x.%s from <redacted> to <redacted>"
+                % property_name,
+                stderr,
+            )
+        self.assertNotIn("old-uri-secret", stderr)
+        self.assertNotIn("new-uri-secret", stderr)
+        self.assertNotIn("pin-value", stderr)
+        self.assertEqual(cmd._nmutil.connection_update.call_count, 0)
+
+    def test_dynamic_ethtool_option(self):
+        if not hasattr(self.nm, "SettingEthtool"):
+            self.skipTest("ethtool settings require NetworkManager 1.14")
+        current = self.connection()
+        ethtool = self.nm.SettingEthtool.new()
+        if not hasattr(ethtool, "option_set"):
+            self.skipTest("generic ethtool option API is unavailable")
+        ethtool.option_set("feature-gro", Util.GLib().Variant("b", True))
+        current.add_setting(ethtool)
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        proposed.get_setting(self.nm.SettingEthtool).option_set(
+            "feature-gro", Util.GLib().Variant("b", False)
+        )
+
+        self.assertIn(
+            "change property ethtool.feature-gro from True to False",
+            list(self.nmutil.connection_diff(current, proposed)),
+        )
+
+    def test_routing_rules_use_readable_values(self):
+        if not hasattr(self.nm, "IPRoutingRule"):
+            self.skipTest("routing rules are unavailable")
+        current = self.connection()
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        for connection, priority in ((current, 100), (proposed, 200)):
+            rule = self.nm.IPRoutingRule.new(socket.AF_INET)
+            rule.set_priority(priority)
+            rule.set_from("192.0.2.0", 24)
+            rule.set_table(100)
+            connection.get_setting_ip4_config().add_routing_rule(rule)
+
+        lines = list(self.nmutil.connection_diff(current, proposed))
+
+        self.assertTrue(
+            any(
+                line.startswith("remove routing rule priority 100 ")
+                and "192.0.2.0/24" in line
+                and line.endswith("(ipv4.routing-rules)")
+                for line in lines
+            )
+        )
+        self.assertTrue(
+            any(
+                line.startswith("add routing rule priority 200 ")
+                and "192.0.2.0/24" in line
+                and line.endswith("(ipv4.routing-rules)")
+                for line in lines
+            )
+        )
+        self.assertNotIn("PtrArray", "\n".join(lines))
+
+    def test_added_secret_setting_is_redacted(self):
+        current = self.connection()
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        security = self.nm.SettingWirelessSecurity.new()
+        security.set_property("psk", "new-test-secret")
+        proposed.add_setting(security)
+
+        lines = list(self.nmutil.connection_diff(current, proposed))
+
+        self.assertIn("add setting 802-11-wireless-security", lines)
+        self.assertTrue(any("psk" in line and "<redacted>" in line for line in lines))
+        self.assertNotIn("new-test-secret", "\n".join(lines))
+
+    def command(self, current, proposed, check_mode):
+        run_env = RunEnvironmentAnsible()
+        run_env.module.params = {"__debug_flags": ""}
+        run_env._run_results_push(1)
+        cmd = Cmd_nm(
+            run_env=run_env,
+            connections_unvalidated=[],
+            connection_validator=mock.Mock(),
+        )
+        cmd._check_mode = check_mode
+        cmd._connections = [
+            {
+                "name": "diff-test",
+                "nm.uuid": current.get_uuid(),
+                "type": "ethernet",
+                "state": "up",
+                "persistent_state": "present",
+                "ignore_errors": None,
+                "ieee802_1x": None,
+            }
+        ]
+        cmd._nmutil = NMUtil(nmclient=mock.Mock())
+        cmd._nmutil.connection_list = mock.Mock(return_value=[current])
+        cmd._nmutil.connection_create = mock.Mock(return_value=proposed)
+        cmd._nmutil.connection_update = mock.Mock()
+        cmd._nm_provider = mock.Mock()
+        cmd._nm_provider.get_connections.return_value = []
+        return cmd
+
+    def test_unchanged_check_mode_does_not_report_diff(self):
+        current = self.connection()
+        current.normalize()
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        cmd = self.command(current, proposed, CheckMode.DRY_RUN)
+        with mock.patch.object(cmd._nmutil, "connection_diff") as diff:
+            cmd.run_action_present(0)
+
+        self.assertEqual(diff.call_count, 0)
+        self.assertEqual(cmd._nmutil.connection_update.call_count, 0)
+        self.assertFalse(cmd.is_changed_modified_system)
+
+    def test_check_mode_diff_failure_only_warns(self):
+        current = self.connection()
+        current.normalize()
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        proposed.get_setting_wired().set_property("mtu", 9000)
+        cmd = self.command(current, proposed, CheckMode.DRY_RUN)
+
+        with mock.patch.object(
+            cmd._nmutil, "connection_diff", side_effect=RuntimeError("boom")
+        ):
+            cmd.run_action_present(0)
+
+        stderr = cmd.run_env._complete_kwargs(cmd.connections, {})["stderr"]
+        self.assertIn("<warn>", stderr)
+
+    def test_check_mode_logs_details_without_updating(self):
+        current = self.connection()
+        current.normalize()
+        proposed = self.nm.SimpleConnection.new_clone(current)
+        proposed.get_setting_wired().set_property("mtu", 9000)
+        for check_mode in (CheckMode.DRY_RUN, CheckMode.PRE_RUN, CheckMode.REAL_RUN):
+            cmd = self.command(current, proposed, check_mode)
+
+            with mock.patch.object(
+                cmd._nmutil, "connection_diff", wraps=cmd._nmutil.connection_diff
+            ) as diff:
+                cmd.run_action_present(0)
+
+            stderr = cmd.run_env._complete_kwargs(cmd.connections, {})["stderr"]
+            if check_mode == CheckMode.DRY_RUN:
+                self.assertEqual(diff.call_count, 1)
+                self.assertIn(
+                    "change property 802-3-ethernet.mtu from 1500 to 9000", stderr
+                )
+                self.assertTrue(
+                    any(
+                        line.startswith("[002] <info>")
+                        and "#0, state:up persistent_state:present, 'diff-test':"
+                        in line
+                        for line in stderr.splitlines()
+                    )
+                )
+                self.assertTrue(cmd.is_changed_modified_system)
+            else:
+                self.assertEqual(diff.call_count, 0)
+                self.assertNotIn("change property", stderr)
+            self.assertEqual(
+                cmd._nmutil.connection_update.call_count,
+                1 if check_mode == CheckMode.REAL_RUN else 0,
+            )
 
 
 class TestValidatorMatch(Python26CompatTestCase):
