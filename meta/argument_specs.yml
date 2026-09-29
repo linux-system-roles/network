@@ -154,7 +154,7 @@ argument_specs:
               a port of. Requires `controller` to be set. If not
               specified, it is derived from the type of the
               `controller` profile.
-          slave_type:
+          slave_type:  # wokeignore:rule=slave
             type: str
             choices:
               - bridge
