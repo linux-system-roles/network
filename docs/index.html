@@ -1599,6 +1599,18 @@ means, you can use the same playbook with NetworkManager and
 initscripts. However, note that not every option is handled exactly the
 same by every provider. Do a test run first with
 <code>--check</code>.</p>
+<p>With the <code>nm</code> provider, check mode describes the changes
+to existing connection profiles in the role's log output. It lists
+individual additions and removals for list properties such as static
+routes, IP addresses, and DNS servers, and shows old and new values for
+properties such as MTU. Added and removed settings are identified by
+name. For example:</p>
+<pre class="text"><code>[003] &lt;info&gt;  #0, state:up persistent_state:present, &#39;eth0&#39;: change property 802-3-ethernet.mtu from 1500 to 9000
+[004] &lt;info&gt;  #0, state:up persistent_state:present, &#39;eth0&#39;: remove DNS server 192.0.2.53 (ipv4.dns)
+[005] &lt;info&gt;  #0, state:up persistent_state:present, &#39;eth0&#39;: add static route 192.168.100.0/24 via 192.168.1.129 (ipv4.routes)</code></pre>
+<p>Secret values, including passwords and private keys, are redacted.
+The details are part of the <code>ansible-playbook --check</code> output
+and do not need <code>--diff</code>.</p>
 <p>It is not supported to create a configuration for one provider, and
 expect another provider to handle them. For example, creating profiles
 with the <code>initscripts</code> provider, and later enabling
