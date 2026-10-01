@@ -62,7 +62,7 @@ jobs:
 
       - name: Set commit status as pending
         if: github.event_name == 'issue_comment'
-        uses: myrotvorets/set-commit-status-action@c0f880c99d91381c6fdb97726f03feb8004409b4  # master
+        uses: myrotvorets/set-commit-status-action@b374c10a0639fcecd00109b579be23e4878a9b5f  # master
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: pending
@@ -150,7 +150,7 @@ jobs:
 
       - name: Ensure use of podman 5
         if: steps.check_platform.outputs.supported && steps.check_podman_version.outputs.need_podman_update == 1
-        uses: redhat-actions/podman-install@0499d3899e6b92f60548b38421893a7f8ba4bd07  # main
+        uses: redhat-actions/podman-install@6daab8b71872b8595fa4e0d3126da360afea3c3c  # main
 
       - name: Configure tox-lsr
         if: steps.check_platform.outputs.supported
@@ -260,7 +260,7 @@ jobs:
 
       - name: Set final commit status
         if: always() && github.event_name == 'issue_comment' && steps.head_sha_context.outputs.head_sha != '' && (steps.check_platform.outputs.supported || failure())
-        uses: myrotvorets/set-commit-status-action@c0f880c99d91381c6fdb97726f03feb8004409b4  # master
+        uses: myrotvorets/set-commit-status-action@b374c10a0639fcecd00109b579be23e4878a9b5f  # master
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: ${{ job.status }}
@@ -270,7 +270,7 @@ jobs:
 
       - name: Set commit status as success with a description that platform is skipped
         if: ${{ success() && github.event_name == 'issue_comment' && steps.check_platform.outputs.supported == '' }}
-        uses: myrotvorets/set-commit-status-action@c0f880c99d91381c6fdb97726f03feb8004409b4  # master
+        uses: myrotvorets/set-commit-status-action@b374c10a0639fcecd00109b579be23e4878a9b5f  # master
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: success

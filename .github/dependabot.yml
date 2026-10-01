@@ -6,4 +6,8 @@ updates:
     schedule:
       interval: monthly
     commit-message:
-      prefix: "ci: [citest_skip] "
+      prefix: "ci: "
+    groups:
+      all-actions:
+        patterns:
+          - "*" # This groups all GitHub Action updates into one PR
