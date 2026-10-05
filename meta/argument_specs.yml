@@ -2,43 +2,172 @@
 ---
 argument_specs:
   main:
-    short_description: The network role.
-    description: >
-      The network role allows you to configure Ethernet, bridge, bond,
-      VLAN, MacVLAN, Infiniband, wireless, and dummy network interfaces
-      on the target machines.
-
-      The role supports two providers, `nm` (NetworkManager) and
-      `initscripts`. `nm` is used by default since RHEL 7; `initscripts`
-      is only used by default on RHEL 6. The provider can be selected
-      explicitly with `network_provider`.
-
-      Two mechanisms are available to configure networking. The
-      `network_connections` variable manages connection profiles (one
-      list item per profile) and is supported by both providers. The
-      `network_state` variable applies an
-      [Nmstate](https://nmstate.io) desired state directly to the
-      devices and is only supported by the `nm` provider on RHEL 8 and
-      later.
-
-      Note: `network_provider`, `network_provider_os_default`,
-      `network_packages`, and `network_service_name` are intentionally
-      not listed below, even though they appear in `defaults/main.yml`.
-      Their defaults depend on facts (such as `ansible_facts.services`
-      and `ansible_facts.packages`) that are only gathered by this
-      role's own tasks. Ansible resolves the current value of every
-      declared option when it validates role arguments, and it does so
-      before the role's own tasks (including its fact gathering) run.
-      Declaring those variables here would force their fact-dependent
-      defaults to be evaluated too early and break provider
-      autodetection for the common case where the calling playbook has
-      not already gathered service and package facts.
-
-      `network_ignore_errors` and `network_force_state_change` are not
-      set in `defaults/main.yml` (they are left undefined so the
-      `network_connections` module can apply its own static default),
-      but they are documented, user-facing parameters read directly in
-      `tasks/main.yml` and are listed below.
+    short_description: Configure networking
+    # description renders as the "Synopsis" at the top of the page. Use it for
+    # the role summary and all the narrative a reader should see up front:
+    # providers, the two configuration mechanisms, requirements, warnings,
+    # compatibility, and limitations. Each list item becomes one bullet. Keep
+    # low-level implementation details out of here (put them in notes).
+    description:
+      - >
+        The C(network) role configures network interfaces and IP
+        settings on the target machines. It can configure Ethernet,
+        bridge, bonded, VLAN, MacVLAN, Infiniband, wireless (WiFi), and
+        dummy interfaces, IP configuration, and 802.1x authentication.
+      - >
+        The role supports two providers, V(nm) (NetworkManager) and
+        V(initscripts). V(nm) is used by default since RHEL 7 and
+        V(initscripts) on RHEL 6. The V(initscripts) provider requires
+        the C(network-scripts) package, which is deprecated in RHEL 8
+        and dropped in RHEL 9. The provider is autodetected per host
+        from the distribution unless set explicitly with the
+        C(network_provider) variable. Neither provider is tied to a
+        distribution: V(nm) works wherever NetworkManager API version
+        1.2 or later is available, and some settings require a newer
+        API version.
+      - >
+        Two mechanisms are available to configure networking. The
+        O(network_connections) variable manages connection profiles
+        (one list item per profile) and is supported by both providers.
+        The O(network_state) variable applies an Nmstate desired state
+        directly to the devices and is only supported by the V(nm)
+        provider on RHEL 8 and later.
+      - >
+        Because its backend is Nmstate, O(network_state) represents the
+        future direction of the role, aiming to provide a more
+        streamlined and reliable way to manage networking; most
+        features available in NetworkManager are also available through
+        it. For the Nmstate schema, syntax, and examples, see
+        L(nmstate.io,https://nmstate.io) and the L(nmstate API
+        documentation,https://docs.rs/nmstate/latest/nmstate/index.html).
+      - >
+        B(Warning): the C(network) role updates or creates all
+        connection profiles listed in O(network_connections) on the
+        target system, and it removes options that are present on the
+        system but not in O(network_connections). Partial configuration
+        can instead be achieved with O(network_state).
+      - >
+        Collection requirements: to manage C(rpm-ostree) nodes, the role
+        requires additional modules from external collections; install
+        them with C(ansible-galaxy collection install -vv -r
+        meta/collection-requirements.yml). To manage other systems, the
+        role has no additional requirements.
+      - >
+        The role operates both on the connection profiles of devices
+        (via O(network_connections)) and on devices directly (via
+        O(network_state)). You can create generic profiles, for example
+        a profile with a certain IP configuration, without activating
+        them, then apply the configuration to the interface with
+        C(nmcli) on the target system.
+      - >
+        Compatibility: both providers share the same configuration
+        scheme, so the same playbook can be used with NetworkManager and
+        initscripts. Not every option is handled identically by both
+        providers, so do a test run with C(--check) first. Creating a
+        configuration with one provider and expecting another provider
+        to handle it is not supported. The role also supports
+        distributions that it treats like RHEL, such as AlmaLinux,
+        CentOS, OracleLinux, and Rocky.
+      - >
+        Invalid versus wrong configuration: the role rejects invalid
+        configurations (test with C(--check) first), but there is no
+        protection against configuration that is valid but wrong.
+        Double-check your configuration before applying it.
+      - >
+        Limitations: the role does not bootstrap networking (consider
+        L(ansible-pull,https://docs.ansible.com/ansible/latest/cli/ansible-pull.html)
+        or auto-configuring the host during installation). For the
+        V(initscripts) provider, deploying a profile only writes the
+        ifcfg files; nothing happens until an C(up) or C(down) state
+        issues C(ifup) or C(ifdown). The V(initscripts) provider
+        requires dependent profiles in the right order, for example a
+        bonding controller before its ports. Removing a NetworkManager
+        profile also takes the connection down and may remove virtual
+        interfaces, while removing an V(initscripts) profile does not
+        change the current runtime state. For NetworkManager, modifying
+        a connection with autoconnect enabled may activate a new
+        profile, and deleting a connection that is currently active
+        removes the interface, so order the steps and handle the
+        C(autoconnect) property carefully (see
+        L(rh#1401515,https://bugzilla.redhat.com/show_bug.cgi?id=1401515)).
+      - >
+        Routing rules and named routing tables are not supported with
+        the V(initscripts) provider: if C(network_provider) is set to
+        V(initscripts), C(routing_rule) entries and named C(table)
+        references in C(route) are silently ignored. Use the V(nm)
+        provider for routing rule support.
+      - >
+        Configuring C(dns-resolver) through O(network_state) is not
+        supported when NetworkManager has a C([global-dns]) or
+        C([global-dns-domain-*]) section in its configuration files
+        (C(/etc/NetworkManager/NetworkManager.conf) or a C(conf.d)
+        snippet). nmstate applies DNS through NetworkManager's global DNS
+        API, which NetworkManager rejects while global DNS is set in a
+        configuration file; the role then fails with an error naming the
+        file. Either remove the section and reload NetworkManager, or
+        configure DNS on the connection profiles instead of
+        C(dns-resolver).
+      - >
+        The C(network_connections) module is intended for internal use
+        and integration testing only, and is not intended for direct
+        external use.
+      - 'For C(rpm-ostree) systems, see the C(README-ostree.md) file in the role.'
+    author:
+      - Thomas Haller
+      - Till Maas
+    # notes renders as the "Notes" section near the bottom of the page. Reserve
+    # it for low-level, implementation-level details that do not belong in the
+    # Synopsis - for example how fact-dependent defaults are resolved, or (in
+    # other roles) the variables the role returns. Each list item becomes one
+    # bullet.
+    notes:
+      - >
+        The C(network_provider), C(network_provider_os_default),
+        C(network_packages), and C(network_service_name) variables are
+        intentionally not listed in the parameters below, even though
+        they appear in C(defaults/main.yml). Their defaults depend on
+        facts (such as C(ansible_facts.services) and
+        C(ansible_facts.packages)) that are only gathered by this role's
+        own tasks. Ansible resolves the current value of every declared
+        option when it validates role arguments, and it does so before
+        the role's own tasks (including its fact gathering) run.
+        Declaring those variables here would force their fact-dependent
+        defaults to be evaluated too early and break provider
+        autodetection for the common case where the calling playbook has
+        not already gathered service and package facts.
+      - >
+        O(network_ignore_errors) and O(network_force_state_change) are
+        not set in C(defaults/main.yml) (they are left undefined so the
+        C(network_connections) module can apply its own static default),
+        but they are documented, user-facing parameters read directly in
+        C(tasks/main.yml) and are listed in the parameters below.
+    # attributes renders as the "Attributes" table. Use it for support
+    # information such as which platforms the role supports and whether it
+    # supports check mode. Every attribute requires a "support" value.
+    attributes:
+      check_mode:
+        support: full
+        description: >
+          The role can be run with C(--check) to preview the changes it
+          would make without applying them. Running with C(--check)
+          first is recommended before applying a new configuration.
+      platform:
+        support: full
+        platforms:
+          - Fedora
+          - EL
+          - CentOS
+          - RHEL
+          - AlmaLinux
+          - Rocky
+          - OracleLinux
+        description: >
+          Target operating systems. The role also supports distributions
+          that it treats like RHEL, such as AlmaLinux, CentOS,
+          OracleLinux, and Rocky.
+    # options renders as the "Parameters" table. List every role variable
+    # here with its type, default, choices, and description. Nested options
+    # (options within options) render as nested rows.
     options:
       network_connections:
         type: list
@@ -47,10 +176,10 @@ argument_specs:
         description: >
           A list of connection profile specifications to create,
           modify, activate, or remove. Profiles referenced by
-          `controller` or `parent` must appear earlier in the list than
+          C(controller) or C(parent) must appear earlier in the list than
           the profile referencing them. To remove every profile on the
           system that is not otherwise listed, add an item with no
-          `name` and `persistent_state` set to `absent`.
+          C(name) and C(persistent_state) set to V(absent).
         options:
           name:
             type: str
@@ -58,13 +187,13 @@ argument_specs:
               The name that identifies the connection profile. This is
               not necessarily the name of the networking interface,
               although a profile can be associated with an interface
-              using the same name. For `NetworkManager`, this
-              corresponds to `connection.id`. For `initscripts`, this
+              using the same name. For C(NetworkManager), this
+              corresponds to C(connection.id). For V(initscripts), this
               determines the ifcfg file name
-              `/etc/sysconfig/network-scripts/ifcfg-$NAME` and
-              therefore cannot contain `/`. Required unless
-              `persistent_state` is `absent`, in which case an empty
-              `name` matches and removes every other profile.
+              C(/etc/sysconfig/network-scripts/ifcfg-$NAME) and
+              therefore cannot contain C(/). Required unless
+              C(persistent_state) is V(absent), in which case an empty
+              C(name) matches and removes every other profile.
           state:
             type: str
             choices:
@@ -73,13 +202,13 @@ argument_specs:
               - present
               - absent
             description: >
-              The runtime state of the connection profile. `up`
-              activates the profile (equivalent to `nmcli connection up`
-              or `ifup`) and `down` deactivates it (equivalent to
-              `nmcli connection down` or `ifdown`). `present` and
-              `absent` are accepted as aliases of the `persistent_state`
-              values of the same name, but `state` and
-              `persistent_state` cannot both be set on the same item.
+              The runtime state of the connection profile. V(up)
+              activates the profile (equivalent to C(nmcli connection up)
+              or C(ifup)) and V(down) deactivates it (equivalent to
+              C(nmcli connection down) or C(ifdown)). V(present) and
+              V(absent) are accepted as aliases of the C(persistent_state)
+              values of the same name, but C(state) and
+              C(persistent_state) cannot both be set on the same item.
               If unset, the runtime state is left unchanged.
           persistent_state:
             type: str
@@ -88,26 +217,26 @@ argument_specs:
               - absent
             description: >
               Whether the connection profile should be saved on disk.
-              `present` (the default) creates or updates the profile
-              when `type` is also specified. `absent` deletes any
-              profile matching `name`.
+              V(present) (the default) creates or updates the profile
+              when C(type) is also specified. V(absent) deletes any
+              profile matching C(name).
           force_state_change:
             type: bool
             description: >
               Whether to force the runtime state change specified by
-              `state` even when the role does not detect a difference
+              C(state) even when the role does not detect a difference
               between the requested and current configuration. Only
-              meaningful together with `state`.
+              meaningful together with C(state).
           wait:
             type: float
             description: >
               The number of seconds to wait for the device to finish
-              activating when `state` is `up`. `0` starts the
+              activating when C(state) is V(up). V(0) starts the
               activation without waiting for completion, for example
               while a DHCP lease is obtained in the background.
               When unset, a suitable default timeout is used. Only
-              supported by the `nm` provider and only meaningful
-              together with `state`.
+              supported by the V(nm) provider and only meaningful
+              together with C(state).
           type:
             type: str
             choices:
@@ -121,28 +250,28 @@ argument_specs:
               - wireless
               - dummy
             description: >
-              The type of the connection profile. Providing `type`
+              The type of the connection profile. Providing C(type)
               means the profile is completely specified; without it,
-              only the runtime `state` of an existing profile can be
+              only the runtime C(state) of an existing profile can be
               changed.
           autoconnect:
             type: bool
             default: true
             description: >
               Whether the profile is activated automatically. For
-              `NetworkManager`, this corresponds to
-              `connection.autoconnect`. For `initscripts`, this
-              corresponds to `ONBOOT`.
+              C(NetworkManager), this corresponds to
+              C(connection.autoconnect). For V(initscripts), this
+              corresponds to C(ONBOOT).
           autoconnect_retries:
             type: int
             default: -1
             description: >
               The number of times to try autoactivating the connection
-              before giving up. `0` means try forever, and `-1` uses
+              before giving up. V(0) means try forever, and V(-1) uses
               the NetworkManager global default (normally 4 tries).
-              `1` tries activation only once before blocking
+              V(1) tries activation only once before blocking
               autoconnect until the next attempt to autoconnect.
-              Only supported by the `nm` provider.
+              Only supported by the V(nm) provider.
           port_type:
             type: str
             choices:
@@ -150,10 +279,10 @@ argument_specs:
               - bond
               - team
             description: >
-              The type of the `controller` profile that this profile is
-              a port of. Requires `controller` to be set. If not
+              The type of the C(controller) profile that this profile is
+              a port of. Requires C(controller) to be set. If not
               specified, it is derived from the type of the
-              `controller` profile.
+              C(controller) profile.
           slave_type:  # wokeignore:rule=slave
             type: str
             choices:
@@ -161,52 +290,52 @@ argument_specs:
               - bond
               - team
             description: >
-              Deprecated alias for `port_type`. Use `port_type` instead.
+              Deprecated alias for C(port_type). Use C(port_type) instead.
           controller:
             type: str
             description: >
-              The `name` of another profile in `network_connections`
-              that this profile is a port of, used for `bridge`,
-              `bond`, and `team` controller devices. This refers to a
+              The C(name) of another profile in O(network_connections)
+              that this profile is a port of, used for V(bridge),
+              V(bond), and V(team) controller devices. This refers to a
               profile name in the play, not an interface name or
-              NetworkManager connection ID. Ports must not specify `ip`
-              or `zone` settings.
+              NetworkManager connection ID. Ports must not specify C(ip)
+              or C(zone) settings.
           master:
             type: str
             description: >
-              Deprecated alias for `controller`. Use `controller`
+              Deprecated alias for C(controller). Use C(controller)
               instead.
           interface_name:
             type: str
             description: >
               The name of the networking interface that the profile is
               restricted to or, for virtual devices, the name of the
-              interface to create. Only allowed for `ethernet` and
-              `infiniband` when `mac` is not set. Set to an empty string
-              (`""`) to leave the profile unrestricted to a specific
-              interface. Defaults to the profile `name` for most types,
-              except that `bond`, `bridge`, `macvlan`, `team`, and
-              `vlan` require an explicit `interface_name`.
+              interface to create. Only allowed for V(ethernet) and
+              V(infiniband) when C(mac) is not set. Set to an empty string
+              (V("")) to leave the profile unrestricted to a specific
+              interface. Defaults to the profile C(name) for most types,
+              except that V(bond), V(bridge), V(macvlan), V(team), and
+              V(vlan) require an explicit C(interface_name).
           mac:
             type: str
             description: >
               Restricts the profile to the device with the given
-              hardware address. Only allowed for `type` `ethernet`
-              (6 octets) or `infiniband` (20 octets). Specify the value
+              hardware address. Only allowed for C(type) V(ethernet)
+              (6 octets) or V(infiniband) (20 octets). Specify the value
               in hexadecimal notation using colons, for example
-              `"00:00:5e:00:53:5d"`, and quote it to avoid it being
+              V("00:00:5e:00:53:5d"), and quote it to avoid it being
               parsed as a sexagesimal number.
           cloned_mac:
             type: str
             default: default
             description: >
               The MAC address strategy to apply on activation. Accepts
-              a hardware address in the same notation as `mac`, or one
-              of the special values `default` (honor the NetworkManager
-              default), `permanent` (use the device's permanent
-              address), `preserve` (do not change the current address),
-              `random` (generate a new address on every connect), or
-              `stable` (generate a stable, hashed address).
+              a hardware address in the same notation as C(mac), or one
+              of the special values V(default) (honor the NetworkManager
+              default), V(permanent) (use the device's permanent
+              address), V(preserve) (do not change the current address),
+              V(random) (generate a new address on every connect), or
+              V(stable) (generate a stable, hashed address).
           mtu:
             type: int
             description: >
@@ -217,22 +346,22 @@ argument_specs:
             type: str
             description: >
               The firewalld zone to associate with the interface. Ports
-              of `bridge`, `bond`, or `team` devices cannot specify a
+              of V(bridge), V(bond), or V(team) devices cannot specify a
               zone.
           check_iface_exists:
             type: bool
             default: true
             description: >
               Whether to check that the target interface exists before
-              activating the connection. Only supported by the `nm`
+              activating the connection. Only supported by the V(nm)
               provider.
           parent:
             type: str
             description: >
-              The `name` of another profile in `network_connections`
+              The C(name) of another profile in O(network_connections)
               that this profile's device is created on top of. Used for
-              `vlan`, `macvlan`, and `infiniband` (when `infiniband.p_key`
-              is set).
+              V(vlan), V(macvlan), and V(infiniband) (when
+              C(infiniband.p_key) is set).
           ignore_errors:
             type: bool
             description: >
@@ -242,92 +371,92 @@ argument_specs:
           vlan_id:
             type: int
             description: >
-              Deprecated alias for `vlan.id`. Use the `vlan` option
-              instead. Cannot be combined with `vlan`.
+              Deprecated alias for C(vlan.id). Use the C(vlan) option
+              instead. Cannot be combined with C(vlan).
           infiniband_transport_mode:
             type: str
             choices:
               - datagram
               - connected
             description: >
-              Deprecated alias for `infiniband.transport_mode`. Use the
-              `infiniband` option instead. Cannot be combined with an
-              `infiniband` dictionary.
+              Deprecated alias for C(infiniband.transport_mode). Use the
+              C(infiniband) option instead. Cannot be combined with an
+              C(infiniband) dictionary.
           infiniband_p_key:
             type: int
             description: >
-              Deprecated alias for `infiniband.p_key`. Use the
-              `infiniband` option instead. Cannot be combined with an
-              `infiniband` dictionary.
+              Deprecated alias for C(infiniband.p_key). Use the
+              C(infiniband) option instead. Cannot be combined with an
+              C(infiniband) dictionary.
           match:
             type: dict
             description: >
               Settings used to match the profile against devices or
-              systems, currently only supporting `path`.
+              systems, currently only supporting C(path).
             options:
               path:
                 type: list
                 elements: str
                 description: >
-                  A list of patterns to match against the `ID_PATH`
+                  A list of patterns to match against the C(ID_PATH)
                   udev property of a device, for example
-                  `pci-0000:00:03.0`. Supports the alternative (`|`),
-                  mandatory (`&`), and inverted (`!`) modifiers, as well
-                  as `*`, `?`, and `[...]` shell-style wildcards. Only
-                  supported for `ethernet` or `infiniband` profiles.
+                  V(pci-0000:00:03.0). Supports the alternative (C(|)),
+                  mandatory (C(&)), and inverted (C(!)) modifiers, as well
+                  as C(*), C(?), and C([...]) shell-style wildcards. Only
+                  supported for V(ethernet) or V(infiniband) profiles.
           ip:
             type: dict
             description: >
-              The IP configuration of the profile. Ports of `bridge`,
-              `bond`, or `team` devices cannot specify `ip` settings.
+              The IP configuration of the profile. Ports of V(bridge),
+              V(bond), or V(team) devices cannot specify C(ip) settings.
             options:
               dhcp4:
                 type: bool
                 description: >
                   Whether to obtain an IPv4 address using DHCP. If
-                  unset, defaults to `true` unless static IPv4
-                  addresses are configured in `address`.
+                  unset, defaults to V(true) unless static IPv4
+                  addresses are configured in C(address).
               dhcp4_send_hostname:
                 type: bool
                 description: >
                   Whether the DHCPv4 request should include the host's
-                  name. Only valid when `dhcp4` is enabled. Only
-                  supported by the `nm` provider.
+                  name. Only valid when C(dhcp4) is enabled. Only
+                  supported by the V(nm) provider.
               gateway4:
                 type: str
                 description: >
                   The default gateway for IPv4 packets, for example
-                  `192.0.2.1`.
+                  V(192.0.2.1).
               route_metric4:
                 type: int
                 description: >
                   The route metric used for DHCP-assigned routes and
                   the default IPv4 route, which also determines
                   priority when multiple interfaces are configured. For
-                  `initscripts`, this sets the metric of the default
+                  V(initscripts), this sets the metric of the default
                   route.
               auto6:
                 type: bool
                 description: >
                   Whether to configure IPv6 addressing using StateLess
                   Address Auto Configuration (SLAAC). If unset, defaults
-                  to `true` unless static IPv6 addresses are configured
-                  in `address`.
+                  to V(true) unless static IPv6 addresses are configured
+                  in C(address).
               ipv4_ignore_auto_dns:
                 type: bool
                 description: >
                   Whether to ignore IPv4 name servers and search
                   domains obtained automatically (for example via DHCP)
                   and only use the servers and domains specified in
-                  `dns` and `dns_search`. Not supported by the
-                  `initscripts` provider.
+                  C(dns) and C(dns_search). Not supported by the
+                  V(initscripts) provider.
               ipv6_ignore_auto_dns:
                 type: bool
                 description: >
                   Whether to ignore IPv6 name servers and search
                   domains obtained automatically and only use the
-                  servers and domains specified in `dns` and
-                  `dns_search`. Not supported by the `initscripts`
+                  servers and domains specified in C(dns) and
+                  C(dns_search). Not supported by the V(initscripts)
                   provider.
               wait_ip:
                 type: str
@@ -339,43 +468,43 @@ argument_specs:
                 default: any
                 description: >
                   Which IP stack must be configured before the
-                  connection is considered activated. `any` waits for
-                  either stack, `ipv4` and `ipv6` wait for the
-                  respective stack, and `ipv4+ipv6` waits for both.
+                  connection is considered activated. V(any) waits for
+                  either stack, V(ipv4) and V(ipv6) wait for the
+                  respective stack, and V(ipv4+ipv6) waits for both.
               ipv6_disabled:
                 type: bool
                 description: >
                   Whether IPv6 should be disabled for the connection.
-                  Mutually exclusive with `auto6` enabled, static IPv6
-                  addresses in `address`, `gateway6`, and
-                  `route_metric6`.
+                  Mutually exclusive with C(auto6) enabled, static IPv6
+                  addresses in C(address), C(gateway6), and
+                  C(route_metric6).
               gateway6:
                 type: str
                 description: >
                   The default gateway for IPv6 packets, for example
-                  `2001:db8::1`.
+                  V(2001:db8::1).
               route_metric6:
                 type: int
                 description: >
                   The route metric used for the default IPv6 route.
-                  Not supported by the `initscripts` provider.
+                  Not supported by the V(initscripts) provider.
               address:
                 type: list
                 elements: raw
                 description: >
                   A list of static IP addresses to assign. Each item is
-                  either a string in `<address>/<prefix>` notation, for
-                  example `192.0.2.3/24`, or a dictionary with an
-                  `address` key and an optional `prefix` key.
+                  either a string in C(<address>/<prefix>) notation, for
+                  example V(192.0.2.3/24), or a dictionary with an
+                  C(address) key and an optional C(prefix) key.
               auto_gateway:
                 type: bool
                 description: >
                   Whether a default route should be configured using
                   the automatically detected default gateway. Setting
-                  this to `false` is equivalent to `DEFROUTE=no` in
-                  initscripts or `ipv4.never-default`/
-                  `ipv6.never-default` set to `yes` with `nmcli`. If
-                  enabled, at least one of `gateway4`, `gateway6`, or
+                  this to V(false) is equivalent to C(DEFROUTE=no) in
+                  initscripts or C(ipv4.never-default)/
+                  C(ipv6.never-default) set to V(yes) with C(nmcli). If
+                  enabled, at least one of C(gateway4), C(gateway6), or
                   DHCP/SLAAC must be in use.
               route:
                 type: list
@@ -388,20 +517,20 @@ argument_specs:
                     required: true
                     description: >
                       The destination network address of the route, for
-                      example `198.51.100.128`. Classless inter-domain
+                      example V(198.51.100.128). Classless inter-domain
                       routing (CIDR) and network mask notations are not
-                      supported here; use `prefix` instead.
+                      supported here; use C(prefix) instead.
                   prefix:
                     type: int
                     description: >
                       The prefix length of the destination network in
-                      `network`. Defaults to the address family's full
+                      C(network). Defaults to the address family's full
                       prefix length when not specified.
                   gateway:
                     type: str
                     description: >
                       The gateway address for the route. Not allowed
-                      together with `type`.
+                      together with C(type).
                   metric:
                     type: int
                     default: -1
@@ -415,18 +544,18 @@ argument_specs:
                       - unreachable
                     description: >
                       The route type. Routes of these types do not
-                      support a `gateway`. If not specified, the route
+                      support a C(gateway). If not specified, the route
                       is a regular unicast route.
                   table:
                     type: raw
                     description: >
                       The routing table for the route, as a numeric
                       table ID or the name of a table defined in
-                      `/etc/iproute2/rt_tables` or
-                      `/etc/iproute2/rt_tables.d/*.conf`. The role does
+                      C(/etc/iproute2/rt_tables) or
+                      C(/etc/iproute2/rt_tables.d/*.conf). The role does
                       not create these routing table definitions
                       automatically. Not supported by the
-                      `initscripts` provider.
+                      V(initscripts) provider.
                   src:
                     type: str
                     description: >
@@ -435,15 +564,15 @@ argument_specs:
                 type: bool
                 default: false
                 description: >
-                  Whether to append the routes in `route` to the routes
+                  Whether to append the routes in C(route) to the routes
                   already present on the system instead of replacing
-                  them. Setting this to `true` without setting `route`
+                  them. Setting this to V(true) without setting C(route)
                   preserves the current static routes.
               rule_append_only:
                 type: bool
                 default: false
                 description: >
-                  Whether to append the rules in `routing_rule` to the
+                  Whether to append the rules in C(routing_rule) to the
                   routing rules already present on the system instead
                   of replacing them.
               dns:
@@ -451,20 +580,20 @@ argument_specs:
                 elements: str
                 description: >
                   A list of name server IP addresses for manual DNS
-                  configuration, for example `192.0.2.2`.
+                  configuration, for example V(192.0.2.2).
               dns_search:
                 type: list
                 elements: str
                 description: >
                   A list of DNS search domains for manual DNS
-                  configuration, for example `example.com`.
+                  configuration, for example V(example.com).
               dns_options:
                 type: list
                 elements: str
                 description: >
                   A list of DNS options as described in
-                  `man 5 resolv.conf`, for example `rotate` or
-                  `timeout:1`. Only supported by the `nm` provider.
+                  C(man 5 resolv.conf), for example V(rotate) or
+                  V(timeout:1). Only supported by the V(nm) provider.
               dns_priority:
                 type: int
                 default: 0
@@ -497,14 +626,14 @@ argument_specs:
                       - unreachable
                     default: to-table
                     description: >
-                      The action to take when the rule matches. `table`
-                      is required when `action` is `to-table`.
+                      The action to take when the rule matches. C(table)
+                      is required when C(action) is V(to-table).
                   dport:
                     type: raw
                     description: >
                       The destination port or port range to match, for
-                      example `1000-2000`. Accepts a single port number
-                      or a string in `<start>-<end>` notation, with
+                      example V(1000-2000). Accepts a single port number
+                      or a string in C(<start>-<end>) notation, with
                       valid ports ranging from 0 to 65534.
                   family:
                     type: str
@@ -512,25 +641,25 @@ argument_specs:
                       - ipv4
                       - ipv6
                     description: >
-                      The IP family of the rule. Derived from `from` or
-                      `to` when not specified.
+                      The IP family of the rule. Derived from C(from) or
+                      C(to) when not specified.
                   from:
                     type: raw
                     description: >
                       The source address to match, for example
-                      `192.168.100.58/24`. Accepts a string in
-                      `<address>/<prefix>` notation or a dictionary with
-                      `address` and `prefix` keys.
+                      V(192.168.100.58/24). Accepts a string in
+                      C(<address>/<prefix>) notation or a dictionary with
+                      C(address) and C(prefix) keys.
                   fwmark:
                     type: int
                     description: >
                       The firewall mark value of the packet to match.
-                      Must be set together with `fwmask`.
+                      Must be set together with C(fwmask).
                   fwmask:
                     type: int
                     description: >
                       The firewall mask value of the packet to match.
-                      Must be set together with `fwmark`.
+                      Must be set together with C(fwmark).
                   iif:
                     type: str
                     description: >
@@ -554,23 +683,23 @@ argument_specs:
                     type: raw
                     description: >
                       The source port or port range to match, in the
-                      same format as `dport`.
+                      same format as C(dport).
                   suppress_prefixlength:
                     type: int
                     description: >
                       Reject routing decisions with a prefix length
                       less than or equal to the specified value. Only
-                      allowed with the `to-table` action.
+                      allowed with the V(to-table) action.
                   table:
                     type: raw
                     description: >
-                      The routing table to look up for the `to-table`
-                      action, in the same format as `route.table`.
+                      The routing table to look up for the V(to-table)
+                      action, in the same format as C(route.table).
                   to:
                     type: raw
                     description: >
                       The destination address to match, in the same
-                      format as `from`.
+                      format as C(from).
                   tos:
                     type: int
                     description: >
@@ -579,53 +708,59 @@ argument_specs:
                     type: raw
                     description: >
                       The user ID or user ID range to match, in the
-                      same format as `dport`, with valid values ranging
+                      same format as C(dport), with valid values ranging
                       from 0 to 4294967295.
           ethernet:
             type: dict
             description: >
-              Ethernet link settings, corresponding to the `ethtool`
-              utility's link settings. Only allowed for `ethernet`,
-              `vlan`, `bridge`, `bond`, and `team` types.
+              Ethernet link settings, corresponding to the C(ethtool)
+              utility's link settings. Only allowed for V(ethernet),
+              V(vlan), V(bridge), V(bond), and V(team) types.
             options:
               autoneg:
                 type: bool
                 description: >
-                  Whether auto-negotiation is enabled. When `speed` or
-                  `duplex` are set, `autoneg` must not be enabled, and
-                  when it is disabled, both `speed` and `duplex` must be
+                  Whether auto-negotiation is enabled. When C(speed) or
+                  C(duplex) are set, C(autoneg) must not be enabled, and
+                  when it is disabled, both C(speed) and C(duplex) must be
                   set.
               speed:
                 type: int
                 default: 0
                 description: >
                   The link speed in Mbit/s. Required together with
-                  `duplex` when `autoneg` is disabled.
+                  C(duplex) when C(autoneg) is disabled.
               duplex:
                 type: str
                 choices:
                   - half
                   - full
                 description: >
-                  The link duplex mode. Required together with `speed`
-                  when `autoneg` is disabled.
+                  The link duplex mode. Required together with C(speed)
+                  when C(autoneg) is disabled.
           ethtool:
             type: dict
             description: >
-              Settings to enable or disable `ethtool` features on the
+              Settings to enable or disable C(ethtool) features on the
               device. Depending on the kernel and device, some settings
               might not be supported.
             options:
               features:
                 type: dict
                 description: >
-                  A dictionary of `ethtool` offload and feature names
-                  mapped to `true` or `false`. Every feature also accepts
-                  a deprecated alias spelled with dashes instead of
-                  underscores (matching `ethtool`'s and `nmcli`'s native
-                  `-`-separated feature names, for example
-                  `tx-tcp-segmentation` for `tx_tcp_segmentation`); use
-                  the underscored name instead.
+                  A dictionary that enables (V(true)) or disables
+                  (V(false)) individual C(ethtool) device features and
+                  offloads; every entry is a boolean toggle. Each key is
+                  a feature name: run C(ethtool -k <device>) to list the
+                  features a device supports and see C(man 8 ethtool) for
+                  the meaning of each one. The individual features are
+                  therefore not described separately below. Every feature
+                  also accepts a deprecated alias that uses dashes
+                  instead of underscores, matching the hyphen-separated
+                  feature names that C(ethtool) and C(nmcli) use natively
+                  (for example C(tx-tcp-segmentation) for
+                  C(tx_tcp_segmentation)); use the underscored name
+                  instead.
                 options:
                   esp_hw_offload: {type: bool}
                   esp-hw-offload: {type: bool}
@@ -721,35 +856,140 @@ argument_specs:
               coalesce:
                 type: dict
                 description: >
-                  A dictionary of `ethtool` interrupt coalescing
-                  settings.
+                  A dictionary of C(ethtool) interrupt coalescing
+                  settings. The C(*_low) and C(*_high) variants are only
+                  used when adaptive coalescing is enabled, applying
+                  while the measured packet rate is below C(pkt_rate_low)
+                  or above C(pkt_rate_high) respectively.
                 options:
-                  adaptive_rx: {type: bool}
-                  adaptive_tx: {type: bool}
-                  pkt_rate_high: {type: int}
-                  pkt_rate_low: {type: int}
-                  rx_frames: {type: int}
-                  rx_frames_high: {type: int}
-                  rx_frames_irq: {type: int}
-                  rx_frames_low: {type: int}
-                  rx_usecs: {type: int}
-                  rx_usecs_high: {type: int}
-                  rx_usecs_irq: {type: int}
-                  rx_usecs_low: {type: int}
-                  sample_interval: {type: int}
-                  stats_block_usecs: {type: int}
-                  tx_frames: {type: int}
-                  tx_frames_high: {type: int}
-                  tx_frames_irq: {type: int}
-                  tx_frames_low: {type: int}
-                  tx_usecs: {type: int}
-                  tx_usecs_high: {type: int}
-                  tx_usecs_irq: {type: int}
-                  tx_usecs_low: {type: int}
+                  adaptive_rx:
+                    type: bool
+                    description: >
+                      Whether adaptive Rx interrupt coalescing is
+                      enabled, letting the driver tune the Rx coalescing
+                      parameters dynamically based on the packet rate.
+                  adaptive_tx:
+                    type: bool
+                    description: >
+                      Whether adaptive Tx interrupt coalescing is
+                      enabled, letting the driver tune the Tx coalescing
+                      parameters dynamically based on the packet rate.
+                  pkt_rate_high:
+                    type: int
+                    description: >
+                      The packet rate, in packets per second, above
+                      which the C(*_high) coalescing parameters are used.
+                  pkt_rate_low:
+                    type: int
+                    description: >
+                      The packet rate, in packets per second, below
+                      which the C(*_low) coalescing parameters are used.
+                  rx_frames:
+                    type: int
+                    description: >
+                      The maximum number of received packets to wait for
+                      before raising an Rx interrupt.
+                  rx_frames_high:
+                    type: int
+                    description: >
+                      The number of received packets to wait for before
+                      raising an Rx interrupt while the packet rate is
+                      above C(pkt_rate_high).
+                  rx_frames_irq:
+                    type: int
+                    description: >
+                      The maximum number of received packets to wait for
+                      before raising an Rx interrupt while the host is
+                      already servicing an interrupt.
+                  rx_frames_low:
+                    type: int
+                    description: >
+                      The number of received packets to wait for before
+                      raising an Rx interrupt while the packet rate is
+                      below C(pkt_rate_low).
+                  rx_usecs:
+                    type: int
+                    description: >
+                      The number of microseconds to wait after a packet
+                      is received before raising an Rx interrupt.
+                  rx_usecs_high:
+                    type: int
+                    description: >
+                      The number of microseconds to wait before raising
+                      an Rx interrupt while the packet rate is above
+                      C(pkt_rate_high).
+                  rx_usecs_irq:
+                    type: int
+                    description: >
+                      The number of microseconds to wait before raising
+                      an Rx interrupt while the host is already servicing
+                      an interrupt.
+                  rx_usecs_low:
+                    type: int
+                    description: >
+                      The number of microseconds to wait before raising
+                      an Rx interrupt while the packet rate is below
+                      C(pkt_rate_low).
+                  sample_interval:
+                    type: int
+                    description: >
+                      How often, in seconds, the adaptive coalescing
+                      logic samples the packet rate.
+                  stats_block_usecs:
+                    type: int
+                    description: >
+                      The number of microseconds to wait between updates
+                      of the device's in-memory statistics.
+                  tx_frames:
+                    type: int
+                    description: >
+                      The maximum number of packets to transmit before
+                      raising a Tx interrupt.
+                  tx_frames_high:
+                    type: int
+                    description: >
+                      The number of packets to transmit before raising a
+                      Tx interrupt while the packet rate is above
+                      C(pkt_rate_high).
+                  tx_frames_irq:
+                    type: int
+                    description: >
+                      The maximum number of packets to transmit before
+                      raising a Tx interrupt while the host is already
+                      servicing an interrupt.
+                  tx_frames_low:
+                    type: int
+                    description: >
+                      The number of packets to transmit before raising a
+                      Tx interrupt while the packet rate is below
+                      C(pkt_rate_low).
+                  tx_usecs:
+                    type: int
+                    description: >
+                      The number of microseconds to wait after a packet
+                      is transmitted before raising a Tx interrupt.
+                  tx_usecs_high:
+                    type: int
+                    description: >
+                      The number of microseconds to wait before raising
+                      a Tx interrupt while the packet rate is above
+                      C(pkt_rate_high).
+                  tx_usecs_irq:
+                    type: int
+                    description: >
+                      The number of microseconds to wait before raising
+                      a Tx interrupt while the host is already servicing
+                      an interrupt.
+                  tx_usecs_low:
+                    type: int
+                    description: >
+                      The number of microseconds to wait before raising
+                      a Tx interrupt while the packet rate is below
+                      C(pkt_rate_low).
               ring:
                 type: dict
                 description: >
-                  A dictionary of `ethtool` `rx`/`tx` ring buffer
+                  A dictionary of C(ethtool) C(rx)/C(tx) ring buffer
                   entry counts.
                 options:
                   rx:
@@ -768,10 +1008,10 @@ argument_specs:
           bond:
             type: dict
             description: >
-              The bonding options of a `bond` profile. See the
-              [kernel bonding
-              documentation](https://www.kernel.org/doc/Documentation/networking/bonding.txt)
-              or your distribution's `nmcli` documentation for valid
+              The bonding options of a V(bond) profile. See the
+              L(kernel bonding
+              documentation,https://www.kernel.org/doc/Documentation/networking/bonding.txt)
+              or your distribution's C(nmcli) documentation for valid
               values.
             options:
               mode:
@@ -791,13 +1031,13 @@ argument_specs:
                 type: int
                 description: >
                   The 802.3ad system priority. Only valid with mode
-                  `802.3ad`.
+                  V(802.3ad).
               ad_actor_system:
                 type: str
                 description: >
                   The 802.3ad system MAC address used for the actor in
                   LACPDU protocol packet exchanges. Only valid with
-                  mode `802.3ad`.
+                  mode V(802.3ad).
               ad_select:
                 type: str
                 choices:
@@ -806,35 +1046,35 @@ argument_specs:
                   - count
                 description: >
                   The 802.3ad aggregation selection logic to use. Only
-                  valid with mode `802.3ad`.
+                  valid with mode V(802.3ad).
               ad_user_port_key:
                 type: int
                 description: >
                   The upper 10 bits of the port key. Only valid with
-                  mode `802.3ad`.
+                  mode V(802.3ad).
               all_ports_active:
                 type: bool
                 description: >
                   Whether duplicate frames received on inactive ports
-                  are delivered (`true`) or dropped (`false`).
+                  are delivered (V(true)) or dropped (V(false)).
               arp_all_targets:
                 type: str
                 choices:
                   - any
                   - all
                 description: >
-                  How many of `arp_ip_target` addresses must be
+                  How many of C(arp_ip_target) addresses must be
                   reachable for the ARP monitor to consider a port up.
-                  Only valid with modes `balance-rr`, `active-backup`,
-                  `balance-xor`, or `broadcast`.
+                  Only valid with modes V(balance-rr), V(active-backup),
+                  V(balance-xor), or V(broadcast).
               arp_interval:
                 type: int
                 description: >
                   The ARP link monitoring frequency in milliseconds.
-                  `0` disables ARP monitoring. Requires
-                  `arp_ip_target` to be set. Only valid with modes
-                  `balance-rr`, `active-backup`, `balance-xor`, or
-                  `broadcast`.
+                  V(0) disables ARP monitoring. Requires
+                  C(arp_ip_target) to be set. Only valid with modes
+                  V(balance-rr), V(active-backup), V(balance-xor), or
+                  V(broadcast).
               arp_validate:
                 type: str
                 choices:
@@ -850,20 +1090,20 @@ argument_specs:
                   any mode that supports ARP monitoring, or whether
                   non-ARP traffic should be filtered for link
                   monitoring purposes. Only valid with modes
-                  `balance-rr`, `active-backup`, `balance-xor`, or
-                  `broadcast`.
+                  V(balance-rr), V(active-backup), V(balance-xor), or
+                  V(broadcast).
               arp_ip_target:
                 type: str
                 description: >
                   The IP addresses to use as ARP monitoring peers when
-                  `arp_interval` is enabled. Requires `arp_interval` to
+                  C(arp_interval) is enabled. Requires C(arp_interval) to
                   be set.
               downdelay:
                 type: int
                 description: >
                   The time to wait, in milliseconds, before disabling a
                   port after a link failure is detected. Requires
-                  `miimon` to be enabled.
+                  C(miimon) to be enabled.
               fail_over_mac:
                 type: str
                 choices:
@@ -872,7 +1112,7 @@ argument_specs:
                   - follow
                 description: >
                   The policy for selecting the MAC address of the bond
-                  interface in `active-backup` mode.
+                  interface in V(active-backup) mode.
               lacp_rate:
                 type: str
                 choices:
@@ -880,7 +1120,7 @@ argument_specs:
                   - fast
                 description: >
                   The rate at which link partners are asked to transmit
-                  LACPDU packets. Only valid with mode `802.3ad`.
+                  LACPDU packets. Only valid with mode V(802.3ad).
               lp_interval:
                 type: int
                 description: >
@@ -906,20 +1146,20 @@ argument_specs:
                 description: >
                   The number of packets to transmit through a port
                   before moving to the next one. Only valid with mode
-                  `balance-rr`.
+                  V(balance-rr).
               peer_notif_delay:
                 type: int
                 description: >
                   The delay, in milliseconds, between each peer
                   notification issued after a failover event. Requires
-                  `miimon` to be enabled and must be a multiple of
-                  `miimon`. Not allowed together with `arp_interval`.
+                  C(miimon) to be enabled and must be a multiple of
+                  C(miimon). Not allowed together with C(arp_interval).
               primary:
                 type: str
                 description: >
                   The name of the primary port device. Only valid with
-                  modes `active-backup`, `balance-tlb`, or
-                  `balance-alb`.
+                  modes V(active-backup), V(balance-tlb), or
+                  V(balance-alb).
               primary_reselect:
                 type: str
                 choices:
@@ -937,19 +1177,19 @@ argument_specs:
                 type: bool
                 description: >
                   Whether dynamic shuffling of flows is enabled. Only
-                  valid with modes `balance-tlb` or `balance-alb`.
+                  valid with modes V(balance-tlb) or V(balance-alb).
               updelay:
                 type: int
                 description: >
                   The time to wait, in milliseconds, before enabling a
                   port after a link recovery is detected. Requires
-                  `miimon` to be enabled.
+                  C(miimon) to be enabled.
               use_carrier:
                 type: bool
                 description: >
-                  Whether `netif_carrier_ok()` (`true`) or MII/ETHTOOL
-                  ioctls (`false`) are used to determine link status
-                  for `miimon`.
+                  Whether the C(netif_carrier_ok) function (V(true)) or
+                  MII/ETHTOOL ioctls (V(false)) are used to determine
+                  link status for C(miimon).
               xmit_hash_policy:
                 type: str
                 choices:
@@ -964,8 +1204,8 @@ argument_specs:
           infiniband:
             type: dict
             description: >
-              Settings for `infiniband` connections. Only supported by
-              the `nm` provider.
+              Settings for V(infiniband) connections. Only supported by
+              the V(nm) provider.
             options:
               transport_mode:
                 type: str
@@ -980,15 +1220,15 @@ argument_specs:
                 description: >
                   The Infiniband P_Key to use for the device, a 16-bit
                   unsigned integer with the high bit set for "full
-                  membership". The values `0x0000` and `0x8000` are
-                  invalid. If set, `mac` or `parent` must also be set,
-                  and `interface_name` must be unset. When unset, the
+                  membership". The values V(0x0000) and V(0x8000) are
+                  invalid. If set, C(mac) or C(parent) must also be set,
+                  and C(interface_name) must be unset. When unset, the
                   connection is created on the physical Infiniband
                   fabric.
           vlan:
             type: dict
             description: >
-              Settings for `vlan` connections.
+              Settings for V(vlan) connections.
             options:
               id:
                 type: int
@@ -998,7 +1238,7 @@ argument_specs:
           macvlan:
             type: dict
             description: >
-              Settings for `macvlan` connections.
+              Settings for V(macvlan) connections.
             options:
               mode:
                 type: str
@@ -1016,8 +1256,8 @@ argument_specs:
                 default: true
                 description: >
                   Whether the underlying device is used in promiscuous
-                  mode. Can only be disabled (`false`) when `mode` is
-                  `passthru`.
+                  mode. Can only be disabled (V(false)) when C(mode) is
+                  V(passthru).
               tap:
                 type: bool
                 default: false
@@ -1027,9 +1267,9 @@ argument_specs:
           ieee802_1x:
             type: dict
             description: >
-              802.1x authentication settings for `ethernet` or
-              `wireless` interfaces. Only supported by the `nm`
-              provider. `tls` is currently the only supported EAP
+              802.1x authentication settings for V(ethernet) or
+              V(wireless) interfaces. Only supported by the V(nm)
+              provider. V(tls) is currently the only supported EAP
               method, and the certificates and keys it references must
               already be deployed on the host before running the role.
             options:
@@ -1055,7 +1295,7 @@ argument_specs:
               private_key_password:
                 type: str
                 description: >
-                  The password protecting `private_key`.
+                  The password protecting C(private_key).
               private_key_password_flags:
                 type: list
                 elements: str
@@ -1067,7 +1307,7 @@ argument_specs:
                 description: >
                   Flags controlling how NetworkManager manages the
                   private key password. See the "Secret flag types"
-                  section of `man 5 nm-settings` for details.
+                  section of C(man 5 nm-settings) for details.
               client_cert:
                 type: path
                 required: true
@@ -1085,8 +1325,8 @@ argument_specs:
                   The absolute path to a directory of additional PEM
                   encoded CA certificates used to verify the EAP
                   server. Can be used instead of or in addition to
-                  `ca_cert`. Cannot be used together with
-                  `system_ca_certs`.
+                  C(ca_cert). Cannot be used together with
+                  C(system_ca_certs).
               system_ca_certs:
                 type: bool
                 default: false
@@ -1101,9 +1341,9 @@ argument_specs:
           wireless:
             type: dict
             description: >
-              Settings for `wireless` connections, supporting WPA-PSK,
+              Settings for V(wireless) connections, supporting WPA-PSK,
               WPA-EAP (802.1x), WPA3-Personal SAE, and Enhanced Open
-              (OWE) authentication. Only supported by the `nm`
+              (OWE) authentication. Only supported by the V(nm)
               provider.
             options:
               ssid:
@@ -1121,13 +1361,13 @@ argument_specs:
                   - wpa-psk
                 description: >
                   The key management method used to authenticate to the
-                  network. When `wpa-eap` is used, 802.1x settings must
-                  also be defined in `ieee802_1x`.
+                  network. When V(wpa-eap) is used, 802.1x settings must
+                  also be defined in C(ieee802_1x).
               password:
                 type: str
                 description: >
                   The password for the network. Required when
-                  `key_mgmt` is `wpa-psk` or `sae`, and not allowed
+                  C(key_mgmt) is V(wpa-psk) or V(sae), and not allowed
                   otherwise.
       network_ignore_errors:
         type: bool
@@ -1135,27 +1375,27 @@ argument_specs:
           Whether to ignore errors encountered while applying a
           connection profile and continue applying the remaining
           profiles instead of failing the play. Acts as the default for
-          every item of `network_connections` that does not set its own
-          `ignore_errors`.
+          every item of O(network_connections) that does not set its own
+          C(ignore_errors).
       network_force_state_change:
         type: bool
         description: >
           Whether to force the runtime state change requested by a
-          profile's `state` even when the role does not detect a
+          profile's C(state) even when the role does not detect a
           difference between the requested and current configuration.
-          Acts as the default for every item of `network_connections`
-          that does not set its own `force_state_change`.
+          Acts as the default for every item of O(network_connections)
+          that does not set its own C(force_state_change).
       network_state:
         type: dict
         default: {}
         description: >
           The desired network state to apply directly to the devices,
-          using the [Nmstate](https://nmstate.io) schema (see the
-          [Nmstate examples](https://nmstate.io/examples.html) and the
-          [nmstate API
-          documentation](https://docs.rs/nmstate/latest/nmstate/index.html)).
+          using the L(Nmstate,https://nmstate.io) schema (see the
+          L(Nmstate examples,https://nmstate.io/examples.html) and the
+          L(nmstate API
+          documentation,https://docs.rs/nmstate/latest/nmstate/index.html)).
           When left empty, no state is applied. Only supported by the
-          `nm` provider on RHEL 8 and later. Only the top-level keys
+          V(nm) provider on RHEL 8 and later. Only the top-level keys
           are listed below; nmstate itself validates everything nested
           under them, so this role does not re-validate that content.
         options:
@@ -1167,29 +1407,29 @@ argument_specs:
           hostname:
             type: dict
             description: >
-              The desired hostname configuration. See the [Nmstate
-              hostname schema](https://nmstate.io/devel/yaml_api.html)
+              The desired hostname configuration. See the L(Nmstate
+              hostname schema,https://nmstate.io/devel/yaml_api.html)
               for its exact structure.
           dns-resolver:
             type: dict
             description: >
               The desired DNS resolver configuration (search domains
-              and servers). See the [Nmstate DNS resolver
-              schema](https://nmstate.io/devel/yaml_api.html) for its
+              and servers). See the L(Nmstate DNS resolver
+              schema,https://nmstate.io/devel/yaml_api.html) for its
               exact structure. Cannot be used while NetworkManager has
-              a `[global-dns]` or `[global-dns-domain-*]` section
+              a C([global-dns]) or C([global-dns-domain-*]) section
               configured.
           routes:
             type: dict
             description: >
-              The desired static routes. See the [Nmstate routes
-              schema](https://nmstate.io/devel/yaml_api.html) for its
+              The desired static routes. See the L(Nmstate routes
+              schema,https://nmstate.io/devel/yaml_api.html) for its
               exact structure.
           route-rules:
             type: dict
             description: >
-              The desired routing rules. See the [Nmstate route rules
-              schema](https://nmstate.io/devel/yaml_api.html) for its
+              The desired routing rules. See the L(Nmstate route rules
+              schema,https://nmstate.io/devel/yaml_api.html) for its
               exact structure.
           interfaces:
             type: list
@@ -1197,22 +1437,22 @@ argument_specs:
             description: >
               The desired per-interface configuration (type, state, IP
               addressing, and type-specific settings such as bridge,
-              bond, or VLAN options). See the [Nmstate interface
-              schema](https://nmstate.io/devel/yaml_api.html) for its
+              bond, or VLAN options). See the L(Nmstate interface
+              schema,https://nmstate.io/devel/yaml_api.html) for its
               exact structure.
           ovs-db:
             type: dict
             description: >
               The desired global Open vSwitch database configuration.
-              See the [Nmstate OVS-DB
-              schema](https://nmstate.io/devel/yaml_api.html) for its
+              See the L(Nmstate OVS-DB
+              schema,https://nmstate.io/devel/yaml_api.html) for its
               exact structure.
           ovn:
             type: dict
             description: >
               The desired OVN (Open Virtual Network) mapping
-              configuration. See the [Nmstate OVN
-              schema](https://nmstate.io/devel/yaml_api.html) for its
+              configuration. See the L(Nmstate OVN
+              schema,https://nmstate.io/devel/yaml_api.html) for its
               exact structure.
       network_allow_restart:
         type: bool
@@ -1220,7 +1460,215 @@ argument_specs:
         description: >
           Whether the role is allowed to restart NetworkManager when a
           package installed for a wireless or team interface (such as
-          `NetworkManager-wifi` or `NetworkManager-team`) requires it
+          C(NetworkManager-wifi) or C(NetworkManager-team)) requires it
           to be reloaded. A restart can disrupt connectivity, so the
           role refuses to restart NetworkManager unless this is set to
-          `true`.
+          V(true).
+    # examples renders as the "Examples" section. It is a single YAML block
+    # (note the "|") holding one or more example plays. Give each play a
+    # "name" so the reader can tell the examples apart.
+    examples: |
+      - name: Configure an Ethernet profile with full IPv4 and IPv6 settings
+        hosts: all
+        vars:
+          network_connections:
+            - name: eth0
+              type: ethernet
+              ip:
+                route_metric4: 100
+                dhcp4: false
+                gateway4: 192.0.2.1
+                dns:
+                  - 192.0.2.2
+                  - 198.51.100.5
+                dns_search:
+                  - example.com
+                  - subdomain.example.com
+                dns_options:
+                  - rotate
+                  - timeout:1
+                route_metric6: -1
+                auto6: false
+                gateway6: 2001:db8::1
+                address:
+                  - 192.0.2.3/24
+                  - 198.51.100.3/26
+                  - 2001:db8::80/7
+                route:
+                  - network: 198.51.100.128
+                    prefix: 26
+                    gateway: 198.51.100.1
+                    metric: 2
+                  - network: 198.51.100.64
+                    prefix: 26
+                    gateway: 198.51.100.6
+                    metric: 4
+                route_append_only: false
+                rule_append_only: true
+        roles:
+          - linux-system-roles.network
+
+      - name: Create a bridge with a bond attached to it
+        hosts: all
+        vars:
+          network_connections:
+            - name: internal-br0
+              interface_name: br0
+              type: bridge
+              ip:
+                dhcp4: false
+                auto6: false
+            - name: br0-bond0
+              type: bond
+              interface_name: bond0
+              controller: internal-br0
+              port_type: bridge
+            - name: br0-bond0-eth1
+              type: ethernet
+              interface_name: eth1
+              controller: br0-bond0
+              port_type: bond
+        roles:
+          - linux-system-roles.network
+
+      - name: Configure a VLAN on top of an Ethernet profile
+        hosts: all
+        vars:
+          network_connections:
+            - name: eth1-profile
+              autoconnect: false
+              type: ethernet
+              interface_name: eth1
+              ip:
+                dhcp4: false
+                auto6: false
+            - name: eth1.6
+              autoconnect: false
+              type: vlan
+              parent: eth1-profile
+              vlan:
+                id: 6
+              ip:
+                address:
+                  - 192.0.2.5/24
+                auto6: false
+        roles:
+          - linux-system-roles.network
+
+      - name: Configure a MACVLAN on top of an Ethernet profile
+        hosts: all
+        vars:
+          network_connections:
+            - name: eth0-profile
+              type: ethernet
+              interface_name: eth0
+              ip:
+                address:
+                  - 192.168.0.1/24
+            - name: veth0
+              type: macvlan
+              parent: eth0-profile
+              macvlan:
+                mode: bridge
+                promiscuous: true
+                tap: false
+              ip:
+                address:
+                  - 192.168.1.1/24
+        roles:
+          - linux-system-roles.network
+
+      - name: Configure a WPA-PSK wireless connection
+        hosts: all
+        vars:
+          network_connections:
+            - name: wlan0
+              type: wireless
+              wireless:
+                ssid: "My WPA2-PSK Network"
+                key_mgmt: "wpa-psk"
+                # recommend vault encrypting the wireless password
+                password: "{{ vault_wifi_password }}"
+        roles:
+          - linux-system-roles.network
+
+      - name: Configure 802.1x (EAP-TLS) authentication on an Ethernet profile
+        hosts: all
+        vars:
+          network_connections:
+            - name: eth0
+              type: ethernet
+              ieee802_1x:
+                identity: myhost
+                eap: tls
+                private_key: /etc/pki/tls/client.key
+                # recommend vault encrypting the private key password
+                private_key_password: "{{ vault_private_key_password }}"
+                client_cert: /etc/pki/tls/client.pem
+                ca_cert: /etc/pki/tls/cacert.pem
+                domain_suffix_match: example.com
+        roles:
+          - linux-system-roles.network
+
+      - name: Apply IP addresses directly to devices with network_state
+        hosts: all
+        vars:
+          network_state:
+            interfaces:
+              - name: ethtest0
+                type: ethernet
+                state: up
+                ipv4:
+                  enabled: true
+                  address:
+                    - ip: 192.168.122.250
+                      prefix-length: 24
+                  dhcp: false
+                ipv6:
+                  enabled: true
+                  address:
+                    - ip: 2001:db8::1:1
+                      prefix-length: 64
+                  autoconf: false
+                  dhcp: false
+        roles:
+          - linux-system-roles.network
+
+      - name: Configure a static route with network_state
+        hosts: all
+        vars:
+          network_state:
+            interfaces:
+              - name: eth1
+                type: ethernet
+                state: up
+                ipv4:
+                  enabled: true
+                  address:
+                    - ip: 192.0.2.251
+                      prefix-length: 24
+                  dhcp: false
+            routes:
+              config:
+                - destination: 198.51.100.0/24
+                  metric: 150
+                  next-hop-address: 192.0.2.251
+                  next-hop-interface: eth1
+                  table-id: 254
+        roles:
+          - linux-system-roles.network
+
+      - name: Configure DNS search domains and servers with network_state
+        hosts: all
+        vars:
+          network_state:
+            dns-resolver:
+              config:
+                search:
+                  - example.com
+                  - example.org
+                server:
+                  - 2001:4860:4860::8888
+                  - 8.8.8.8
+        roles:
+          - linux-system-roles.network
