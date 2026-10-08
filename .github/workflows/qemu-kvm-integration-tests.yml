@@ -28,6 +28,7 @@ jobs:
           - { image: "fedora-43", env: "qemu-ansible-core-2-20" }
           - { image: "fedora-44", env: "qemu-ansible-core-2-21" }
           - { image: "leap-15.6", env: "qemu-ansible-core-2-18" }
+          - { image: "leap-16.0", env: "qemu-ansible-core-2-20" }
 
           # container
           - { image: "centos-9", env: "container-ansible-core-2-16" }
@@ -62,7 +63,7 @@ jobs:
 
       - name: Set commit status as pending
         if: github.event_name == 'issue_comment'
-        uses: myrotvorets/set-commit-status-action@b374c10a0639fcecd00109b579be23e4878a9b5f  # master
+        uses: myrotvorets/set-commit-status-action@7f84e174036426c90737dbfa32e9fd56859f93d0  # master
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: pending
@@ -89,7 +90,7 @@ jobs:
           case "$image" in
           centos-*) platform=el; platform_version=el"${image#centos-}" ;;
           fedora-*) platform=fedora; platform_version="${image/-/}" ;;
-          leap-*) platform=leap; platform_version="${image}" ;;
+          leap-*) platform=leap; platform_version="${image%%.*}"; platform_version="${platform_version/-/}" ;;
           esac
           supported=
           if yq -e '.galaxy_info.galaxy_tags[] | select(. == "'${platform_version}'" or . == "'${platform}'")' meta/main.yml; then
@@ -132,8 +133,8 @@ jobs:
           set -euxo pipefail
           python3 -m pip install --upgrade pip
           sudo apt update
-          sudo apt install -y --no-install-recommends git ansible-core genisoimage qemu-system-x86
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@d594be24ed56e586a5796720d51c261e40c20496"
+          sudo apt install -y --no-install-recommends git ansible-core genisoimage qemu-system-x86 qemu-utils
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@bfd11b23a1ed56388ea7ab8263d30e3172553a7c"
 
       - name: Check for podman version 5 or higher
         id: check_podman_version
@@ -150,7 +151,7 @@ jobs:
 
       - name: Ensure use of podman 5
         if: steps.check_platform.outputs.supported && steps.check_podman_version.outputs.need_podman_update == 1
-        uses: redhat-actions/podman-install@6daab8b71872b8595fa4e0d3126da360afea3c3c  # main
+        uses: redhat-actions/podman-install@5b0fb16319979de14e2c7c2c1cc27c98f107ae52  # main
 
       - name: Configure tox-lsr
         if: steps.check_platform.outputs.supported
@@ -260,7 +261,7 @@ jobs:
 
       - name: Set final commit status
         if: always() && github.event_name == 'issue_comment' && steps.head_sha_context.outputs.head_sha != '' && (steps.check_platform.outputs.supported || failure())
-        uses: myrotvorets/set-commit-status-action@b374c10a0639fcecd00109b579be23e4878a9b5f  # master
+        uses: myrotvorets/set-commit-status-action@7f84e174036426c90737dbfa32e9fd56859f93d0  # master
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: ${{ job.status }}
@@ -270,7 +271,7 @@ jobs:
 
       - name: Set commit status as success with a description that platform is skipped
         if: ${{ success() && github.event_name == 'issue_comment' && steps.check_platform.outputs.supported == '' }}
-        uses: myrotvorets/set-commit-status-action@b374c10a0639fcecd00109b579be23e4878a9b5f  # master
+        uses: myrotvorets/set-commit-status-action@7f84e174036426c90737dbfa32e9fd56859f93d0  # master
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: success
