@@ -33,7 +33,7 @@ jobs:
 
       - name: Set commit status as pending
         if: github.event_name == 'issue_comment'
-        uses: myrotvorets/set-commit-status-action@b374c10a0639fcecd00109b579be23e4878a9b5f  # master
+        uses: myrotvorets/set-commit-status-action@7f84e174036426c90737dbfa32e9fd56859f93d0  # master
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: pending
@@ -57,7 +57,7 @@ jobs:
       - name: Install tox, tox-lsr
         run: |
           set -euxo pipefail
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@d594be24ed56e586a5796720d51c261e40c20496"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@bfd11b23a1ed56388ea7ab8263d30e3172553a7c"
 
       - name: Run ansible-plugin-scan
         run: |
@@ -66,7 +66,7 @@ jobs:
 
       - name: Set final commit status
         if: always() && github.event_name == 'issue_comment' && steps.head_sha_context.outputs.head_sha != ''
-        uses: myrotvorets/set-commit-status-action@b374c10a0639fcecd00109b579be23e4878a9b5f  # master
+        uses: myrotvorets/set-commit-status-action@7f84e174036426c90737dbfa32e9fd56859f93d0  # master
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: ${{ job.status }}
