@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+# meta/argument_specs.yml cannot fully validate the `raw`-typed fields nested
+# under `network_connections[].ip`, since each of them accepts more than one
+# type (for example, a string or a dict). The `network_connections` module
+# itself performs comprehensive validation of these fields at runtime (see
+# module_utils/network_lsr/argument_validator.py), so the checks below only
+# need to catch type mistakes early, before the role starts installing
+# packages or making other system changes.
+- name: Validate raw-typed fields in network_connections
+  ansible.builtin.include_tasks: assert_connection_vars.yml
+  loop: "{{ network_connections }}"
+  loop_control:
+    loop_var: __connection
+    index_var: __conn_idx
+    label: "{{ __connection.name | d('unnamed') }}"
+  when: network_connections | length > 0

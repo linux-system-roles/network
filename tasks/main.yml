@@ -4,6 +4,9 @@
 - name: Ensure ansible_facts used by role
   include_tasks: tasks/set_facts.yml
 
+- name: Validate role parameters
+  ansible.builtin.include_tasks: tasks/assert_role_vars.yml
+
 - name: Print network provider
   debug:
     msg: "Using network provider: {{ network_provider }}"
