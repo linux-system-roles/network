@@ -15,3 +15,14 @@
     index_var: __conn_idx
     label: "{{ __connection.name | d('unnamed') }}"
   when: network_connections | length > 0
+
+- name: Assert network_transactional_update_reboot_ok is null or a boolean
+  ansible.builtin.assert:
+    that:
+      - >-
+        (network_transactional_update_reboot_ok is none)
+        or (network_transactional_update_reboot_ok is sameas true)
+        or (network_transactional_update_reboot_ok is sameas false)
+    fail_msg: >-
+      network_transactional_update_reboot_ok must be null or a boolean,
+      got {{ network_transactional_update_reboot_ok | type_debug }}

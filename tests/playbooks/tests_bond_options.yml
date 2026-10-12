@@ -29,6 +29,11 @@
       - {key: 'use_carrier', value: '1'}
       - {key: 'xmit_hash_policy', value: 'encap2+3'}
   tasks:
+    - name: Skip if the bonding kernel module is not available
+      include_tasks: tasks/skip_if_kernel_module_missing.yml
+      vars:
+        __required_kernel_modules:
+          - bonding
     - name: Show playbook name
       debug:
         msg: "this is: playbooks/tests_bond_options.yml"

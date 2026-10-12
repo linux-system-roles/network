@@ -10,6 +10,11 @@
     port2_profile: bond0.1
     dhcp_interface2: test2
   tasks:
+    - name: Skip if the bonding kernel module is not available
+      include_tasks: tasks/skip_if_kernel_module_missing.yml
+      vars:
+        __required_kernel_modules:
+          - bonding
     - name: Test removing bond device
       block:
         - name: "INIT Prepare setup"
