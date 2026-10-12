@@ -7,6 +7,11 @@
     interface: lsr101
     vlan_interface: lsr101.90
   tasks:
+    - name: Skip if the 8021q kernel module is not available
+      include_tasks: tasks/skip_if_kernel_module_missing.yml
+      vars:
+        __required_kernel_modules:
+          - 8021q
     - name: Include the task 'show_interfaces.yml'
       include_tasks: tasks/show_interfaces.yml
     - name: Include the task 'manage_test_interface.yml'

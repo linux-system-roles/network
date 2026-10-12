@@ -31,3 +31,4 @@
   import_playbook: playbooks/tests_wireless_and_network_restart.yml
   when:
     - __network_distro_major_version != '6'
+    - ansible_facts['os_family'] != 'Suse'

@@ -57,7 +57,8 @@ For each host a list of networking profiles can be configured via the
 
 For each host the network state configuration can also be applied to the interface
 directly via the `network_state` variable, and only the `nm` provider supports using
-the `network_state` variable.
+the `network_state` variable. Nmstate is not available on SLE 16 and openSUSE Leap 16,
+so `network_state` cannot be used there.
 
 Note that the `network` role both operates on the connection profiles of the devices
 (via the `network_connections` variable) and on devices directly (via the
@@ -104,6 +105,13 @@ the name prefix. List of variables:
 - `network_connections` - The connection profiles are configured as
   `network_connections`, which is a list of dictionaries that include specific
   options.
+- `network_transactional_update_reboot_ok` - It defaults to `null`. This
+  variable is used to handle reboots required by transactional updates. If a
+  transactional update requires a reboot, the role will proceed with the reboot
+  if it is set to `true`. If set to `false`, the role will notify the user that
+  a reboot is required, allowing for custom handling of the reboot requirement.
+  If it is not set, the role will fail to ensure the reboot requirement is not
+  overlooked. For non-transactional update systems, this variable is ignored.
 - `network_allow_restart` - It defaults to `false`. To load NetworkManager plugins
   after installation, NetworkManager requires to be restarted. For example, if a
   wireless connection is configured and NetworkManager-wifi is not installed,
@@ -292,7 +300,8 @@ disabled (`autoneg: false`).
 #### `type: bridge`, `type: bond`, `type: team`
 
 The `bridge`, `bond`, `team` device types work similar. Note that `team` is not
-supported in RHEL6 kernels, and has been deprecated in RHEL 9.
+supported in RHEL6 kernels, has been deprecated in RHEL 9, and is not supported in
+SUSE 16.
 
 For ports, the `port_type` and `controller` properties must be set. Note that ports
 should not have `ip` settings, which means that the active ports will not have IP
