@@ -27,6 +27,11 @@
   tags:
     - "tests::match"
   tasks:
+    - name: Skip if the 8021q kernel module is not available
+      include_tasks: tasks/skip_if_kernel_module_missing.yml
+      vars:
+        __required_kernel_modules:
+          - 8021q
     - name: Show playbook name
       debug:
         msg: "this is: playbooks/tests_mac_address_match.yml"

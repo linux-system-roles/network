@@ -29,6 +29,18 @@
       set_fact:
         __network_is_ostree: "{{ __ostree_booted_stat.stat.exists }}"
 
+- name: Determine if system is transactional update and set flag
+  when: not __network_is_transactional is defined
+  block:
+    - name: Check if transactional-update exists in /sbin
+      stat:
+        path: /sbin/transactional-update
+      register: __transactional_update_stat
+
+    - name: Set flag if transactional-update exists
+      set_fact:
+        __network_is_transactional: "{{ __transactional_update_stat.stat.exists }}"
+
 - name: Check which services are running
   service_facts:
   no_log: "{{ ansible_verbosity < 3 }}"

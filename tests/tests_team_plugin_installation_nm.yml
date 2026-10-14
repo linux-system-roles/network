@@ -33,3 +33,5 @@
     - __network_distro_major_version != '6'
     - not __is_rh_distro or
       __network_distro_major_version | int < 10
+    - ansible_facts['os_family'] | d('') != 'Suse' or
+      __network_distro_major_version | int < 16

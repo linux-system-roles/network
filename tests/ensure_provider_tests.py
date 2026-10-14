@@ -105,12 +105,22 @@ RUN_PLAYBOOK_WITH_INITSCRIPTS = """# SPDX-License-Identifier: BSD-3-Clause
 
 MINIMUM_VERSION = "minimum_version"
 EXTRA_RUN_CONDITION = "extra_run_condition"
+# run_role_with_clear_facts clears facts, and the import condition is evaluated
+# again after that, so tolerate a missing os_family
+NOT_SUSE = "\n    - ansible_facts['os_family'] | d('') != 'Suse'"
+NOT_SUSE_16 = (
+    "\n    - ansible_facts['os_family'] | d('') != 'Suse' or\n"
+    "      __network_distro_major_version | int < 16"
+)
 NM_ONLY_TESTS = {
+    # the mock wifi setup needs hostapd and RHEL paths, which SUSE lacks
     "playbooks/tests_802_1x_updated.yml": {
-        EXTRA_RUN_CONDITION: "not __network_is_rhel or __network_distro_major_version | int > 7",
+        EXTRA_RUN_CONDITION: "not __network_is_rhel or __network_distro_major_version | int > 7"
+        + NOT_SUSE,
     },
     "playbooks/tests_802_1x.yml": {
-        EXTRA_RUN_CONDITION: "not __network_is_rhel or __network_distro_major_version | int > 7",
+        EXTRA_RUN_CONDITION: "not __network_is_rhel or __network_distro_major_version | int > 7"
+        + NOT_SUSE,
     },
     "playbooks/tests_ignore_auto_dns.yml": {},
     "playbooks/tests_bond_options.yml": {},
@@ -127,6 +137,7 @@ NM_ONLY_TESTS = {
         MINIMUM_VERSION: "'1.18.0'",
         "comment": "# needs any old version of NM",
     },
+    # SUSE has no initscripts provider
     "playbooks/tests_provider.yml": {
         MINIMUM_VERSION: "'1.20.0'",
         "comment": "# NetworkManager 1.20.0 added support for forgetting profiles",
@@ -135,17 +146,19 @@ NM_ONLY_TESTS = {
             "       __network_distro_major_version | int < 41)\n"
             "      or not __network_is_os_family_rhel\n"
             "      or __network_distro_major_version | int < 9"
-        ),
+        )
+        + NOT_SUSE,
     },
     "playbooks/tests_eth_pci_address_match.yml": {
         MINIMUM_VERSION: "'1.26.0'",
         "comment": "# NetworkManager 1.26.0 added support for match.path setting",
     },
+    # nmstate is not shipped on SUSE
     "playbooks/tests_network_state.yml": {
-        EXTRA_RUN_CONDITION: "__network_distro_major_version | int > 7",
+        EXTRA_RUN_CONDITION: "__network_distro_major_version | int > 7" + NOT_SUSE,
     },
     "playbooks/tests_network_state_global_dns.yml": {
-        EXTRA_RUN_CONDITION: "__network_distro_major_version | int > 7",
+        EXTRA_RUN_CONDITION: "__network_distro_major_version | int > 7" + NOT_SUSE,
     },
     "playbooks/tests_reapply.yml": {},
     "playbooks/tests_route_table.yml": {},
@@ -155,26 +168,35 @@ NM_ONLY_TESTS = {
 blackhole, prohibit and unreachable",
     },
     "playbooks/tests_routing_rules.yml": {},
-    # teaming support dropped in EL10
+    # teaming support dropped in EL10 and SUSE 16
     "playbooks/tests_team.yml": {
-        EXTRA_RUN_CONDITION: "not __is_rh_distro or\n      __network_distro_major_version | int < 10",
+        EXTRA_RUN_CONDITION: "not __is_rh_distro or\n      __network_distro_major_version | int < 10"
+        + NOT_SUSE_16,
     },
     "playbooks/tests_team_plugin_installation.yml": {
-        EXTRA_RUN_CONDITION: "not __is_rh_distro or\n      __network_distro_major_version | int < 10",
+        EXTRA_RUN_CONDITION: "not __is_rh_distro or\n      __network_distro_major_version | int < 10"
+        + NOT_SUSE_16,
     },
     # hostapd is not available on RHEL7, so tests_wireless cannot be run on RHEL7
+    # and the mock wifi setup does not run on SUSE
     "playbooks/tests_wireless.yml": {
-        EXTRA_RUN_CONDITION: "not __network_is_rhel or __network_distro_major_version | int > 7",
+        EXTRA_RUN_CONDITION: "not __network_is_rhel or __network_distro_major_version | int > 7"
+        + NOT_SUSE,
     },
-    "playbooks/tests_wireless_and_network_restart.yml": {},
+    # SUSE builds the wifi plugin into NetworkManager, so no restart is ever needed
+    "playbooks/tests_wireless_and_network_restart.yml": {
+        EXTRA_RUN_CONDITION: "ansible_facts['os_family'] | d('') != 'Suse'",
+    },
     "playbooks/tests_wireless_plugin_installation.yml": {},
     "playbooks/tests_wireless_wpa3_owe.yml": {
         "comment": "# OWE has not been supported by NetworkManager 1.18.8 on EL 7.",
-        EXTRA_RUN_CONDITION: "not __is_rh_distro or __network_distro_major_version | int > 7",
+        EXTRA_RUN_CONDITION: "not __is_rh_distro or __network_distro_major_version | int > 7"
+        + NOT_SUSE,
     },
     "playbooks/tests_wireless_wpa3_sae.yml": {
         "comment": "# SAE has not been supported by NetworkManager 1.18.8 on EL 7.",
-        EXTRA_RUN_CONDITION: "not __is_rh_distro or __network_distro_major_version | int > 7",
+        EXTRA_RUN_CONDITION: "not __is_rh_distro or __network_distro_major_version | int > 7"
+        + NOT_SUSE,
     },
 }
 # NM_CONDITIONAL_TESTS is used to store the test playbooks which are demanding for NM

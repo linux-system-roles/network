@@ -24,8 +24,11 @@ galaxy_info:
     - el9
     - el10
     - fedora
+    - leap16
     - network
     - networking
     - redhat
     - rhel
+    - sles
+    - sles16
     - system

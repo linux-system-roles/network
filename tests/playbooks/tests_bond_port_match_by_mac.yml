@@ -13,6 +13,11 @@
     profile: test2conn
     interface: test2
   tasks:
+    - name: Skip if the bonding kernel module is not available
+      include_tasks: tasks/skip_if_kernel_module_missing.yml
+      vars:
+        __required_kernel_modules:
+          - bonding
     - name: Test creating the connection to match the port device
         based on the perm_hwaddr
       tags:

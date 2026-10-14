@@ -56,6 +56,21 @@
   when:
     - ansible_facts["distribution"] == 'Fedora' or
       ansible_facts["distribution_major_version"] | int > 7
+    - ansible_facts["pkg_mgr"] != "zypper"
+    - __network_wireless_connections_defined
+      or __network_team_connections_defined
+    - not __network_is_ostree
+
+- name: Check if updates for network packages are available through the
+    Zypper package manager due to wireless or team interfaces
+  package:
+    update_cache: true
+    name: "{{ network_packages }}"
+    state: latest  # noqa package-latest
+  register: zypper_package_update_info
+  check_mode: true
+  when:
+    - ansible_facts["pkg_mgr"] == "zypper"
     - __network_wireless_connections_defined
       or __network_team_connections_defined
     - not __network_is_ostree
@@ -90,6 +105,7 @@
     - network_provider == "nm"
     - not network_allow_restart
     - dnf_package_update_info is changed or yum_package_update_info is changed
+      or zypper_package_update_info is changed
 
 # Depending on the plugins, checking installed packages might be slow
 # for example subscription manager might slow this down
@@ -121,6 +137,7 @@
       ansible_facts["distribution_major_version"] | int > 27 or
       ansible_facts["distribution"] != 'Fedora' and
       ansible_facts["distribution_major_version"] | int > 7
+  register: __network_nmstate_install
 
 - name: Install python3-libnmstate when using network_state variable
   package:
@@ -135,6 +152,48 @@
       ansible_facts["distribution_major_version"] | int > 34 or
       ansible_facts["distribution"] != 'Fedora' and
       ansible_facts["distribution_major_version"] | int > 8
+  register: __network_libnmstate_install
+
+# A staged install reports ok on re-runs, so ask rpm (by provides) if it is live.
+- name: Check whether the packages are live on a transactional update system
+  command:  # noqa command-instead-of-module
+    argv: "{{ ['rpm', '-q', '--whatprovides'] + network_packages +
+      (['NetworkManager', 'nmstate']
+       if __network_nmstate_install is not skipped else []) +
+      (['python3-libnmstate']
+       if __network_libnmstate_install is not skipped else []) }}"
+  register: __network_packages_live
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when: __network_is_transactional | d(false)
+
+- name: Handle reboot for transactional update systems
+  when:
+    - __network_is_transactional | d(false)
+    - __network_package_install is changed or
+      __network_nmstate_install is changed or
+      __network_libnmstate_install is changed or
+      (__network_packages_live.rc | d(0)) != 0
+  block:
+    - name: Notify user that reboot is needed to apply changes
+      debug:
+        msg: >
+          Reboot required to apply changes due to transactional updates.
+
+    - name: Reboot transactional update systems
+      reboot:
+        msg: Rebooting the system to apply transactional update changes.
+      when:
+        - network_transactional_update_reboot_ok is not none
+        - network_transactional_update_reboot_ok | bool
+
+    - name: Fail if reboot is needed and not set
+      fail:
+        msg: >
+          Reboot is required but not allowed. Please set 'network_transactional_update_reboot_ok' to proceed.
+      when:
+        - network_transactional_update_reboot_ok is none
 
 # If network packages changed and wireless or team connections are specified,
 # NetworkManager must be restarted, and the user needs to explicitly consent

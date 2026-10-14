@@ -8,10 +8,12 @@
       vars:
         package: NetworkManager-wifi
 
+    # SUSE builds the wifi plugin into NetworkManager; there is no package to check
     - name: Remove the NetworkManager-wifi package
       package:
         name: "NetworkManager-wifi"
         state: absent
+      when: ansible_facts['os_family'] != 'Suse'
 
     - name: "Get the rpm package facts"
       package_facts:
@@ -22,6 +24,7 @@
         that:
           - "'NetworkManager-wifi' not in ansible_facts.packages"
         msg: "NetworkManager-wifi is not removed before wirelss configuration"
+      when: ansible_facts['os_family'] != 'Suse'
 
     - name: "Wireless configuration"
       include_tasks: tasks/run_role_with_clear_facts.yml
@@ -44,6 +47,7 @@
         that:
           - "'NetworkManager-wifi' in ansible_facts.packages"
         msg: "NetworkManager-wifi is not installed after wireless configured"
+      when: ansible_facts['os_family'] != 'Suse'
 
     - name: Verify network state restored to default
       include_tasks: tasks/check_network_dns.yml

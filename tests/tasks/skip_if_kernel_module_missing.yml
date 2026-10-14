@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: BSD-3-Clause
+---
+- name: Check if the required kernel modules are available
+  command:
+    argv: [modinfo, -n, "{{ item }}"]
+  loop: "{{ __required_kernel_modules }}"
+  register: __kernel_module_info
+  changed_when: false
+  check_mode: false
+  failed_when:
+    - __kernel_module_info.rc != 0
+    - "'not found' not in __kernel_module_info.stderr"
+
+- name: Set the list of missing kernel modules
+  set_fact:
+    __missing_kernel_modules: "{{ __kernel_module_info.results |
+      rejectattr('rc', 'eq', 0) | map(attribute='item') | list }}"
+
+- name: Report test will be skipped because a kernel module is not available
+  debug:
+    msg: "Test will be skipped because these kernel modules are not available:
+      {{ __missing_kernel_modules | join(', ') }}"
+  when: __missing_kernel_modules | length > 0
+
+- name: End test if a required kernel module is not available
+  meta: end_host
+  when: __missing_kernel_modules | length > 0
