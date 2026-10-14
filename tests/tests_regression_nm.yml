@@ -49,4 +49,4 @@
        __network_distro_major_version | int < 41) or
       __network_distro_major_version | int < 9
     # The test uses the initscripts provider, which SUSE does not ship
-    - ansible_facts['os_family'] != 'Suse'
+    - ansible_facts['os_family'] | d('') != 'Suse'
