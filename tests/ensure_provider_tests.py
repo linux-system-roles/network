@@ -105,9 +105,11 @@ RUN_PLAYBOOK_WITH_INITSCRIPTS = """# SPDX-License-Identifier: BSD-3-Clause
 
 MINIMUM_VERSION = "minimum_version"
 EXTRA_RUN_CONDITION = "extra_run_condition"
-NOT_SUSE = "\n    - ansible_facts['os_family'] != 'Suse'"
+# run_role_with_clear_facts clears facts, and the import condition is evaluated
+# again after that, so tolerate a missing os_family
+NOT_SUSE = "\n    - ansible_facts['os_family'] | d('') != 'Suse'"
 NOT_SUSE_16 = (
-    "\n    - ansible_facts['os_family'] != 'Suse' or\n"
+    "\n    - ansible_facts['os_family'] | d('') != 'Suse' or\n"
     "      __network_distro_major_version | int < 16"
 )
 NM_ONLY_TESTS = {
@@ -183,7 +185,7 @@ blackhole, prohibit and unreachable",
     },
     # SUSE builds the wifi plugin into NetworkManager, so no restart is ever needed
     "playbooks/tests_wireless_and_network_restart.yml": {
-        EXTRA_RUN_CONDITION: "ansible_facts['os_family'] != 'Suse'",
+        EXTRA_RUN_CONDITION: "ansible_facts['os_family'] | d('') != 'Suse'",
     },
     "playbooks/tests_wireless_plugin_installation.yml": {},
     "playbooks/tests_wireless_wpa3_owe.yml": {
