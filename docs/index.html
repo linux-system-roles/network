@@ -291,7 +291,9 @@ RHEL9.</p></li>
 <p>For each host the network state configuration can also be applied to
 the interface directly via the <code>network_state</code> variable, and
 only the <code>nm</code> provider supports using the
-<code>network_state</code> variable.</p>
+<code>network_state</code> variable. Nmstate is not available on SLE 16
+and openSUSE Leap 16, so <code>network_state</code> cannot be used
+there.</p>
 <p>Note that the <code>network</code> role both operates on the
 connection profiles of the devices (via the
 <code>network_connections</code> variable) and on devices directly (via
@@ -335,6 +337,15 @@ create new profiles with the new provider.</li>
 <li><code>network_connections</code> - The connection profiles are
 configured as <code>network_connections</code>, which is a list of
 dictionaries that include specific options.</li>
+<li><code>network_transactional_update_reboot_ok</code> - It defaults to
+<code>null</code>. This variable is used to handle reboots required by
+transactional updates. If a transactional update requires a reboot, the
+role will proceed with the reboot if it is set to <code>true</code>. If
+set to <code>false</code>, the role will notify the user that a reboot
+is required, allowing for custom handling of the reboot requirement. If
+it is not set, the role will fail to ensure the reboot requirement is
+not overlooked. For non-transactional update systems, this variable is
+ignored.</li>
 <li><code>network_allow_restart</code> - It defaults to
 <code>false</code>. To load NetworkManager plugins after installation,
 NetworkManager requires to be restarted. For example, if a wireless
@@ -533,7 +544,8 @@ settings are required when autonegotiation is disabled
 <code>type: bond</code>, <code>type: team</code></h3>
 <p>The <code>bridge</code>, <code>bond</code>, <code>team</code> device
 types work similar. Note that <code>team</code> is not supported in
-RHEL6 kernels, and has been deprecated in RHEL 9.</p>
+RHEL6 kernels, has been deprecated in RHEL 9, and is not supported in
+SUSE 16.</p>
 <p>For ports, the <code>port_type</code> and <code>controller</code>
 properties must be set. Note that ports should not have <code>ip</code>
 settings, which means that the active ports will not have IP addresses
