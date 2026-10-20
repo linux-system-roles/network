@@ -69,6 +69,7 @@ environment:
   SR_TFT_DEBUG: false
 prepare:
   - name: Use vault.centos.org repos (CS 7, 8 EOL workaround)
+    order: 10
     script: |
       if grep -q 'CentOS Stream release 8' /etc/redhat-release; then
         sed -i '/^mirror/d;s/#\(baseurl=http:\/\/\)mirror/\1vault/' /etc/yum.repos.d/*.repo
@@ -77,6 +78,7 @@ prepare:
         sed -i '/^mirror/d;s/#\?\(baseurl=http:\/\/\)mirror/\1vault/' /etc/yum.repos.d/*.repo
       fi
   - name: Ensure use of devel site for yum repos
+    order: 10
     script: |
       sed -i -e 's|\.lab\.bos\.|.devel.|g' -e 's|\.eng\.bos\.|.devel.|g' /etc/yum.repos.d/*.repo
 discover:
