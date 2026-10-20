@@ -63,7 +63,7 @@ jobs:
 
       - name: Set commit status as pending
         if: github.event_name == 'issue_comment'
-        uses: myrotvorets/set-commit-status-action@7f84e174036426c90737dbfa32e9fd56859f93d0  # master
+        uses: linux-system-roles/.github/github-actions/commit-status@main
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: pending
@@ -72,7 +72,7 @@ jobs:
           targetUrl: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ job.check_run_id }}
 
       - name: Checkout repo
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           ref: ${{ steps.head_sha_context.outputs.head_sha || github.sha }}
@@ -151,7 +151,7 @@ jobs:
 
       - name: Ensure use of podman 5
         if: steps.check_platform.outputs.supported && steps.check_podman_version.outputs.need_podman_update == 1
-        uses: redhat-actions/podman-install@5b0fb16319979de14e2c7c2c1cc27c98f107ae52  # main
+        uses: linux-system-roles/.github/github-actions/podman-install@main
 
       - name: Configure tox-lsr
         if: steps.check_platform.outputs.supported
@@ -235,7 +235,7 @@ jobs:
 
       - name: Upload test logs on failure
         if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: "logs-${{ matrix.scenario.image }}-${{ matrix.scenario.env }}"
           path: |
@@ -261,7 +261,7 @@ jobs:
 
       - name: Set final commit status
         if: always() && github.event_name == 'issue_comment' && steps.head_sha_context.outputs.head_sha != '' && (steps.check_platform.outputs.supported || failure())
-        uses: myrotvorets/set-commit-status-action@7f84e174036426c90737dbfa32e9fd56859f93d0  # master
+        uses: linux-system-roles/.github/github-actions/commit-status@main
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: ${{ job.status }}
@@ -271,7 +271,7 @@ jobs:
 
       - name: Set commit status as success with a description that platform is skipped
         if: ${{ success() && github.event_name == 'issue_comment' && steps.check_platform.outputs.supported == '' }}
-        uses: myrotvorets/set-commit-status-action@7f84e174036426c90737dbfa32e9fd56859f93d0  # master
+        uses: linux-system-roles/.github/github-actions/commit-status@main
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: success

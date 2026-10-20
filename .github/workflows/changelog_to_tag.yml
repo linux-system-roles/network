@@ -22,7 +22,7 @@ jobs:
           sudo apt install -y git
 
       - name: checkout PR
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
 
@@ -71,7 +71,7 @@ jobs:
           echo "tagname=$_tagname" >> "$GITHUB_OUTPUT"
           echo "branch=$_branch" >> "$GITHUB_OUTPUT"
       - name: Create tag
-        uses: mathieudutour/github-tag-action@af99e60ce8132224b8e6ebab5023449fe256ed46  # v7
+        uses: linux-system-roles/.github/github-actions/tag@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           custom_tag: ${{ steps.tag.outputs.tagname }}
@@ -79,7 +79,7 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd  # v1.21.0
+        uses: linux-system-roles/.github/github-actions/release@main
         with:
           tag: ${{ steps.tag.outputs.tagname }}
           name: Version ${{ steps.tag.outputs.tagname }}
@@ -87,7 +87,7 @@ jobs:
           makeLatest: true
 
       - name: Publish role to Galaxy
-        uses: robertdebock/galaxy-action@7d89099e09f4385ec4b53eb58c0d120f1ad806dd  # 1.2.1
+        uses: linux-system-roles/.github/github-actions/galaxy-import@main
         with:
           galaxy_api_key: ${{ secrets.galaxy_api_key }}
           git_branch: ${{ steps.tag.outputs.branch }}

@@ -38,7 +38,7 @@ jobs:
 
       - name: Set commit status as pending
         if: github.event_name == 'issue_comment'
-        uses: myrotvorets/set-commit-status-action@7f84e174036426c90737dbfa32e9fd56859f93d0  # master
+        uses: linux-system-roles/.github/github-actions/commit-status@main
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: pending
@@ -53,7 +53,7 @@ jobs:
           sudo apt install -y git
 
       - name: Check out code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           ref: ${{ steps.head_sha_context.outputs.head_sha || github.sha }}
@@ -62,22 +62,23 @@ jobs:
         run: sed -i '1,8 {/^\[\!.*actions\/workflows/d}' README.md
 
       - name: Convert README.md to HTML
-        uses: docker://pandoc/core:latest
+        uses: linux-system-roles/.github/github-actions/pandoc@main
         with:
+          image: pandoc/core@sha256:62518bfb6833705dc90a1634d8d879299bd820b3f74ad3b32fba8b618452553a
           args: >-
             --from gfm --to html5 --toc --shift-heading-level-by=-1
             --template .pandoc_template.html5
             --output README.html README.md
 
       - name: Upload README.html as an artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: README.html
           path: README.html
 
       - name: Set final commit status
         if: always() && github.event_name == 'issue_comment' && steps.head_sha_context.outputs.head_sha != ''
-        uses: myrotvorets/set-commit-status-action@7f84e174036426c90737dbfa32e9fd56859f93d0  # master
+        uses: linux-system-roles/.github/github-actions/commit-status@main
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: ${{ job.status }}
