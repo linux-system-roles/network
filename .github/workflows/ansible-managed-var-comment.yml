@@ -33,7 +33,7 @@ jobs:
 
       - name: Set commit status as pending
         if: github.event_name == 'issue_comment'
-        uses: myrotvorets/set-commit-status-action@7f84e174036426c90737dbfa32e9fd56859f93d0  # master
+        uses: linux-system-roles/.github/github-actions/commit-status@main
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: pending
@@ -49,7 +49,7 @@ jobs:
           sudo apt install -y git
 
       - name: Checkout repo
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           ref: ${{ steps.head_sha_context.outputs.head_sha || github.sha }}
@@ -66,7 +66,7 @@ jobs:
 
       - name: Set final commit status
         if: always() && github.event_name == 'issue_comment' && steps.head_sha_context.outputs.head_sha != ''
-        uses: myrotvorets/set-commit-status-action@7f84e174036426c90737dbfa32e9fd56859f93d0  # master
+        uses: linux-system-roles/.github/github-actions/commit-status@main
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: ${{ job.status }}

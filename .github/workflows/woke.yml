@@ -35,7 +35,7 @@ jobs:
 
       - name: Set commit status as pending
         if: github.event_name == 'issue_comment'
-        uses: myrotvorets/set-commit-status-action@7f84e174036426c90737dbfa32e9fd56859f93d0  # master
+        uses: linux-system-roles/.github/github-actions/commit-status@main
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: pending
@@ -44,14 +44,14 @@ jobs:
           targetUrl: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ job.check_run_id }}
 
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           ref: ${{ steps.head_sha_context.outputs.head_sha || github.sha }}
 
       - name: Run lsr-woke-action
         # Originally, uses: get-woke/woke-action@v0
-        uses: linux-system-roles/lsr-woke-action@33e72e28c826f05aaee08d0b70c7d2cd9e0a39a7  # main
+        uses: linux-system-roles/.github/github-actions/woke@main
         with:
           woke-args: "-c https://raw.githubusercontent.com/linux-system-roles/tox-lsr/main/src/tox_lsr/config_files/woke.yml --count-only-error-for-failure"
           # Cause the check to fail on any broke rules
@@ -59,7 +59,7 @@ jobs:
 
       - name: Set final commit status
         if: always() && github.event_name == 'issue_comment' && steps.head_sha_context.outputs.head_sha != ''
-        uses: myrotvorets/set-commit-status-action@7f84e174036426c90737dbfa32e9fd56859f93d0  # master
+        uses: linux-system-roles/.github/github-actions/commit-status@main
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: ${{ job.status }}

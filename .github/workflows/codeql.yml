@@ -46,7 +46,7 @@ jobs:
 
       - name: Set commit status as pending
         if: github.event_name == 'issue_comment'
-        uses: myrotvorets/set-commit-status-action@7f84e174036426c90737dbfa32e9fd56859f93d0  # master
+        uses: linux-system-roles/.github/github-actions/commit-status@main
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: pending
@@ -61,28 +61,28 @@ jobs:
           sudo apt install -y git
 
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           ref: ${{ steps.head_sha_context.outputs.head_sha || github.sha }}
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2  # v4.38.2
+        uses: github/codeql-action/init@v4.39.0
         with:
           languages: ${{ matrix.language }}
           queries: +security-and-quality
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2  # v4.38.2
+        uses: github/codeql-action/autobuild@v4.39.0
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2  # v4.38.2
+        uses: github/codeql-action/analyze@v4.39.0
         with:
           category: "/language:${{ matrix.language }}"
 
       - name: Set final commit status
         if: always() && github.event_name == 'issue_comment' && steps.head_sha_context.outputs.head_sha != ''
-        uses: myrotvorets/set-commit-status-action@7f84e174036426c90737dbfa32e9fd56859f93d0  # master
+        uses: linux-system-roles/.github/github-actions/commit-status@main
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: ${{ job.status }}

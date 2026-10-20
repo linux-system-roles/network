@@ -32,7 +32,7 @@ jobs:
           sudo apt install -y git
 
       - name: Checkout latest code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: true  # needed for commit and push
           fetch-depth: 0
@@ -53,35 +53,11 @@ jobs:
           git push -f --set-upstream origin ${{ env.BRANCH_NAME }}
 
       - name: Create and comment pull request
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9
+        uses: linux-system-roles/.github/github-actions/periodic-ci-pr@main
         with:
           github-token: ${{ secrets.GH_PUSH_TOKEN }}
-          script: |
-            const head = [context.repo.owner, ":", "${{ env.BRANCH_NAME }}"].join("");
-            const response = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              head: head,
-              base: context.ref,
-              state: "open"
-            });
-            let pr_number = '';
-            if (response.data.length === 0) {
-              pr_number = (await github.rest.pulls.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: "${{ env.COMMIT_MESSAGE }}",
-                body: "${{ env.BODY_MESSAGE }}",
-                head: "${{ env.BRANCH_NAME }}",
-                base: context.ref,
-                draft: true
-              })).data.number;
-            } else {
-              pr_number = response.data[0].number;
-            }
-            github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr_number,
-              body: "${{ env.COMMENT }}",
-            });
+          branch: ${{ env.BRANCH_NAME }}
+          base: ${{ github.ref_name }}
+          title: ${{ env.COMMIT_MESSAGE }}
+          body: ${{ env.BODY_MESSAGE }}
+          comment: ${{ env.COMMENT }}

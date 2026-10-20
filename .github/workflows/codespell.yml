@@ -35,7 +35,7 @@ jobs:
 
       - name: Set commit status as pending
         if: github.event_name == 'issue_comment'
-        uses: myrotvorets/set-commit-status-action@7f84e174036426c90737dbfa32e9fd56859f93d0  # master
+        uses: linux-system-roles/.github/github-actions/commit-status@main
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: pending
@@ -44,17 +44,17 @@ jobs:
           targetUrl: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/job/${{ job.check_run_id }}
 
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           ref: ${{ steps.head_sha_context.outputs.head_sha || github.sha }}
 
       - name: Codespell
-        uses: codespell-project/actions-codespell@e3258cca84ce02b0bb36a3d41f2c18f719a0cc1a  # v2.4.3
+        uses: codespell-project/actions-codespell@v2.4.3
 
       - name: Set final commit status
         if: always() && github.event_name == 'issue_comment' && steps.head_sha_context.outputs.head_sha != ''
-        uses: myrotvorets/set-commit-status-action@7f84e174036426c90737dbfa32e9fd56859f93d0  # master
+        uses: linux-system-roles/.github/github-actions/commit-status@main
         with:
           sha: ${{ steps.head_sha_context.outputs.head_sha }}
           status: ${{ job.status }}
