@@ -5,6 +5,13 @@
 # that outcome.
 - name: Verify invalid parameters are rejected
   hosts: all
+  vars:
+    __invalid_input_failure_messages: >-
+      {{ ([ansible_failed_result.msg | default('') | string,
+           ansible_failed_result.msg.msg | default('') | string]
+          + (ansible_failed_result.results | default([])
+             | map(attribute='msg') | map('default', '') | list))
+         | join(' ') }}
   tasks:
     - name: Run invalid input tests
       block:
@@ -33,6 +40,13 @@
                 - name: Mark invalid connection type rejected
                   ansible.builtin.set_fact:
                     __invalid_input_type_choice_failed: true
+                  when:
+                    - >-
+                      'value of type must be one of' in
+                      __invalid_input_failure_messages
+                    - >-
+                      'got: not_a_real_type found in network_connections' in
+                      __invalid_input_failure_messages
 
             - name: Assert invalid connection type was rejected
               ansible.builtin.assert:
@@ -55,6 +69,13 @@
                 - name: Mark invalid connection state rejected
                   ansible.builtin.set_fact:
                     __invalid_input_state_choice_failed: true
+                  when:
+                    - >-
+                      'value of state must be one of' in
+                      __invalid_input_failure_messages
+                    - >-
+                      'got: not_a_valid_state found in network_connections' in
+                      __invalid_input_failure_messages
 
             - name: Assert invalid connection state was rejected
               ansible.builtin.assert:
@@ -80,6 +101,13 @@
                 - name: Mark invalid bond mode rejected
                   ansible.builtin.set_fact:
                     __invalid_input_bond_mode_choice_failed: true
+                  when:
+                    - >-
+                      'value of mode must be one of' in
+                      __invalid_input_failure_messages
+                    - >-
+                      'got: not_a_real_mode found in network_connections -> bond' in
+                      __invalid_input_failure_messages
 
             - name: Assert invalid bond mode was rejected
               ansible.builtin.assert:
@@ -105,6 +133,13 @@
                 - name: Mark invalid wireless key_mgmt rejected
                   ansible.builtin.set_fact:
                     __invalid_input_key_mgmt_choice_failed: true
+                  when:
+                    - >-
+                      'value of key_mgmt must be one of' in
+                      __invalid_input_failure_messages
+                    - >-
+                      'got: not_a_real_key_mgmt found in network_connections -> wireless' in
+                      __invalid_input_failure_messages
 
             - name: Assert invalid wireless key_mgmt was rejected
               ansible.builtin.assert:
@@ -130,9 +165,10 @@
                 - name: Mark missing vlan.id rejected
                   ansible.builtin.set_fact:
                     __invalid_input_missing_vlan_id_failed: true
-                  when: >-
-                    'missing required arguments' in
-                    (ansible_failed_result | default({}) | to_json)
+                  when:
+                    - >-
+                      'missing required arguments: id found in network_connections -> vlan' in
+                      __invalid_input_failure_messages
 
             - name: Assert missing vlan.id was rejected
               ansible.builtin.assert:
@@ -156,9 +192,10 @@
                 - name: Mark missing wireless fields rejected
                   ansible.builtin.set_fact:
                     __invalid_input_missing_wireless_failed: true
-                  when: >-
-                    'missing required arguments' in
-                    (ansible_failed_result | default({}) | to_json)
+                  when:
+                    - >-
+                      'missing required arguments: key_mgmt, ssid found in network_connections -> wireless' in
+                      __invalid_input_failure_messages
 
             - name: Assert missing wireless fields was rejected
               ansible.builtin.assert:
@@ -184,9 +221,10 @@
                 - name: Mark missing ieee802_1x.identity rejected
                   ansible.builtin.set_fact:
                     __invalid_input_missing_identity_failed: true
-                  when: >-
-                    'missing required arguments' in
-                    (ansible_failed_result | default({}) | to_json)
+                  when:
+                    - >-
+                      'missing required arguments: identity found in network_connections -> ieee802_1x' in
+                      __invalid_input_failure_messages
 
             - name: Assert missing ieee802_1x.identity was rejected
               ansible.builtin.assert:
@@ -207,6 +245,13 @@
                 - name: Mark invalid network_allow_restart rejected
                   ansible.builtin.set_fact:
                     __invalid_input_allow_restart_type_failed: true
+                  when:
+                    - >-
+                      "argument 'network_allow_restart' is of type" in
+                      __invalid_input_failure_messages
+                    - >-
+                      'unable to convert to bool' in
+                      __invalid_input_failure_messages
 
             - name: Assert invalid network_allow_restart type was rejected
               ansible.builtin.assert:
@@ -230,6 +275,16 @@
                 - name: Mark invalid mtu type rejected
                   ansible.builtin.set_fact:
                     __invalid_input_mtu_type_failed: true
+                  when:
+                    - >-
+                      "argument 'mtu' is of type" in
+                      __invalid_input_failure_messages
+                    - >-
+                      "found in 'network_connections'" in
+                      __invalid_input_failure_messages
+                    - >-
+                      'unable to convert to int' in
+                      __invalid_input_failure_messages
 
             - name: Assert invalid mtu type was rejected
               ansible.builtin.assert:
@@ -254,6 +309,10 @@
                 - name: Mark unknown ip key rejected
                   ansible.builtin.set_fact:
                     __invalid_input_unknown_ip_key_failed: true
+                  when:
+                    - >-
+                      'network_connections.ip.totally_bogus_key. Supported parameters include:' in
+                      __invalid_input_failure_messages
 
             - name: Assert unknown ip key was rejected
               ansible.builtin.assert:
@@ -283,9 +342,13 @@
             - name: Mark ip.address integer item rejected
               ansible.builtin.set_fact:
                 __invalid_input_address_type_failed: true
-              when: >-
-                'ip.address' in
-                (ansible_failed_result | default({}) | to_json)
+              when:
+                - >-
+                  "network_connections[0].ip.address[0] must be a string in '<address>/<prefix>' notation" in
+                  __invalid_input_failure_messages
+                - >-
+                  'got int' in
+                  __invalid_input_failure_messages
 
         - name: Assert ip.address integer item was rejected
           ansible.builtin.assert:
@@ -313,9 +376,10 @@
             - name: Mark ip.route.table boolean rejected
               ansible.builtin.set_fact:
                 __invalid_input_route_table_type_failed: true
-              when: >-
-                'ip.route' in
-                (ansible_failed_result | default({}) | to_json)
+              when:
+                - >-
+                  'network_connections[0].ip.route[0].table must be a string or integer, got bool' in
+                  __invalid_input_failure_messages
 
         - name: Assert ip.route.table boolean was rejected
           ansible.builtin.assert:
@@ -344,9 +408,13 @@
             - name: Mark routing_rule.dport boolean rejected
               ansible.builtin.set_fact:
                 __invalid_input_dport_type_failed: true
-              when: >-
-                'routing_rule' in
-                (ansible_failed_result | default({}) | to_json)
+              when:
+                - >-
+                  "network_connections[0].ip.routing_rule[0].dport must be a string in '<start>-<end>' notation" in
+                  __invalid_input_failure_messages
+                - >-
+                  'got bool' in
+                  __invalid_input_failure_messages
 
         - name: Assert routing_rule.dport boolean was rejected
           ansible.builtin.assert:
@@ -374,9 +442,13 @@
             - name: Mark routing_rule.from integer rejected
               ansible.builtin.set_fact:
                 __invalid_input_from_type_failed: true
-              when: >-
-                'routing_rule' in
-                (ansible_failed_result | default({}) | to_json)
+              when:
+                - >-
+                  "network_connections[0].ip.routing_rule[0].from must be a string in '<address>/<prefix>' notation" in
+                  __invalid_input_failure_messages
+                - >-
+                  'got int' in
+                  __invalid_input_failure_messages
 
         - name: Assert routing_rule.from integer was rejected
           ansible.builtin.assert:
@@ -389,11 +461,10 @@
         # ====================================================
         # Section 4: network_connections module runtime validation
         # ====================================================
-        # These constraints are enforced deep inside
-        # module_utils/network_lsr/argument_validator.py when the
-        # network_connections module actually runs, not by argument_specs.yml
-        # or assert_role_vars.yml. The role must run far enough to reach the
-        # module task for these to trigger, but it's still worth covering.
+        # These constraints are enforced in
+        # module_utils/network_lsr/argument_validator.py. The first two
+        # tests run the role through its module task. The wireless test
+        # calls the module directly to avoid package setup before validation.
 
         # --- Test: integer passed to a plain str field (mac) ---
         - name: Assert rejects mac given as an integer
@@ -401,6 +472,7 @@
             - name: Run role with mac as an integer
               ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
               vars:
+                network_provider: nm
                 network_connections:
                   - name: eth0
                     type: ethernet
@@ -409,9 +481,10 @@
             - name: Mark integer mac rejected
               ansible.builtin.set_fact:
                 __invalid_input_mac_int_type_failed: true
-              when: >-
-                'mac' in
-                (ansible_failed_result | default({}) | to_json)
+              when:
+                - >-
+                  "configuration error: connections[0].mac: must be a string but is '123456'" in
+                  __invalid_input_failure_messages
 
         - name: Assert integer mac was rejected
           ansible.builtin.assert:
@@ -429,6 +502,7 @@
             - name: Run role with vlan.id out of range
               ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
               vars:
+                network_provider: nm
                 network_connections:
                   - name: eth0
                     type: ethernet
@@ -441,9 +515,10 @@
             - name: Mark out-of-range vlan.id rejected
               ansible.builtin.set_fact:
                 __invalid_input_vlan_id_range_failed: true
-              when: >-
-                'vlan' in
-                (ansible_failed_result | default({}) | to_json)
+              when:
+                - >-
+                  'configuration error: connections[1].vlan.id: value is 9999 but cannot be greater then 4094' in
+                  __invalid_input_failure_messages
 
         - name: Assert out-of-range vlan.id was rejected
           ansible.builtin.assert:
@@ -457,10 +532,11 @@
         # --- Test: cross-field dependency violation (wireless key_mgmt/password) ---
         - name: Assert rejects wpa-psk wireless without a password
           block:
-            - name: Run role with wpa-psk key_mgmt and no password
-              ansible.builtin.include_tasks: tasks/run_role_with_clear_facts.yml
-              vars:
-                network_connections:
+            - name: Run network_connections with wpa-psk and no password
+              network_connections:
+                provider: nm
+                __header: Invalid input test
+                connections:
                   - name: wlan0
                     type: wireless
                     wireless:
@@ -470,9 +546,10 @@
             - name: Mark missing wireless password rejected
               ansible.builtin.set_fact:
                 __invalid_input_wireless_password_dependency_failed: true
-              when: >-
-                'wireless' in
-                (ansible_failed_result | default({}) | to_json)
+              when:
+                - >-
+                  'connections[0].wireless: must supply a password if using wpa-psk key management' in
+                  __invalid_input_failure_messages
 
         - name: Assert missing wireless password was rejected
           ansible.builtin.assert:
