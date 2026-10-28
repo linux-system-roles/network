@@ -110,6 +110,17 @@
 # Depending on the plugins, checking installed packages might be slow
 # for example subscription manager might slow this down
 # Therefore install packages only when rpm does not find them
+# package_facts lists package names only, not the names that packages provide
+- name: Check if the network packages are provided by installed packages
+  command:  # noqa command-instead-of-module
+    argv: "{{ ['rpm', '-q', '--whatprovides'] + ([network_packages] | flatten) }}"
+  register: __network_packages_provided
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when:
+    - not network_packages is subset(ansible_facts.packages.keys())
+
 - name: Install packages
   package:
     name: "{{ network_packages }}"
@@ -118,6 +129,7 @@
       ternary('ansible.posix.rhel_rpm_ostree', omit) }}"
   when:
     - not network_packages is subset(ansible_facts.packages.keys())
+    - __network_packages_provided.rc != 0
   register: __network_package_install
   until: __network_package_install is success
   retries: 6
@@ -157,7 +169,7 @@
 # A staged install reports ok on re-runs, so ask rpm (by provides) if it is live.
 - name: Check whether the packages are live on a transactional update system
   command:  # noqa command-instead-of-module
-    argv: "{{ ['rpm', '-q', '--whatprovides'] + network_packages +
+    argv: "{{ ['rpm', '-q', '--whatprovides'] + ([network_packages] | flatten) +
       (['NetworkManager', 'nmstate']
        if __network_nmstate_install is not skipped else []) +
       (['python3-libnmstate']

@@ -48,6 +48,9 @@
             - name: Assert change:false
               assert:
                 that: not __network_connections_result is changed
+            - name: Assert that the repeat run skipped installing packages
+              assert:
+                that: __network_package_install is skipped
         - name: Configure the ethernet device without enabling the IPv4 and IPv6
           vars:
             network_connections:
