@@ -99,7 +99,7 @@ For example:
 The git commit message/PR body should also contain an attribution like the following:
 
 ```
-Assisted-by <AI agent> using model(s) ModelA[, ModelB, ...]
+Assisted-by: <AI agent> using model(s) ModelA[, ModelB, ...]
 ```
 
 ## Python Code
