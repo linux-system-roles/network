@@ -32,7 +32,7 @@
 - name: Assert ip.route table entries are a string or an integer
   ansible.builtin.assert:
     that:
-      - (item.table | type_debug) in ['str', 'int', 'unicode']
+      - item.table is string or (item.table | type_debug) == 'int'
     fail_msg: >-
       network_connections[{{ __conn_idx }}].ip.route[{{ ansible_loop.index0 }}].table
       must be a string or integer, got {{ item.table | type_debug }}
@@ -47,7 +47,7 @@
 - name: Assert routing_rule.dport is a string range or an integer
   ansible.builtin.assert:
     that:
-      - (item.dport | type_debug) in ['str', 'int', 'unicode']
+      - item.dport is string or (item.dport | type_debug) == 'int'
     fail_msg: >-
       network_connections[{{ __conn_idx }}].ip.routing_rule[{{ ansible_loop.index0 }}].dport
       must be a string in '<start>-<end>' notation or an integer,
@@ -63,7 +63,7 @@
 - name: Assert routing_rule.sport is a string range or an integer
   ansible.builtin.assert:
     that:
-      - (item.sport | type_debug) in ['str', 'int', 'unicode']
+      - item.sport is string or (item.sport | type_debug) == 'int'
     fail_msg: >-
       network_connections[{{ __conn_idx }}].ip.routing_rule[{{ ansible_loop.index0 }}].sport
       must be a string in '<start>-<end>' notation or an integer,
@@ -79,7 +79,7 @@
 - name: Assert routing_rule.uid is a string range or an integer
   ansible.builtin.assert:
     that:
-      - (item.uid | type_debug) in ['str', 'int', 'unicode']
+      - item.uid is string or (item.uid | type_debug) == 'int'
     fail_msg: >-
       network_connections[{{ __conn_idx }}].ip.routing_rule[{{ ansible_loop.index0 }}].uid
       must be a string in '<start>-<end>' notation or an integer,
@@ -133,7 +133,7 @@
 - name: Assert routing_rule.table entries are a string or an integer
   ansible.builtin.assert:
     that:
-      - (item.table | type_debug) in ['str', 'int', 'unicode']
+      - item.table is string or (item.table | type_debug) == 'int'
     fail_msg: >-
       network_connections[{{ __conn_idx }}].ip.routing_rule[{{ ansible_loop.index0 }}].table
       must be a string or integer, got {{ item.table | type_debug }}
