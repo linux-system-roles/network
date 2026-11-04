@@ -114,9 +114,12 @@ prepare:
       done
       install -d -m 0755 "$plugin_dir" "$plugin_conf_dir"
       install -m 0644 "$download_dir/package_retry.py" "$plugin_dir/package_retry.py"
-      # Retry after 5, 10, 20, 40, and 80 seconds.
-      sed -i -e 's/^retries = .*/retries = 5/' \
-        -e 's/^strategy = .*/strategy = exponential/' "$download_dir/package_retry.conf"
+      # exponential retries too soon, and if you make the interval large, the last retries
+      # happen too late - so try fixed with a delay of 5 minutes
+      sed -e 's/^retries = .*/retries = 3/' \
+        -e 's/^delay = .*/delay = 300/' \
+        -e 's/^strategy = .*/strategy = fixed/' \
+        -i "$download_dir/package_retry.conf"
       install -m 0644 "$download_dir/package_retry.conf" "$plugin_conf_dir/package_retry.conf"
 discover:
   - name: Prepare managed node
