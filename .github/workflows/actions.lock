@@ -47,6 +47,7 @@ workflows:
         - 'linux-system-roles/.github@main'
     '.github/workflows/qemu-kvm-integration-tests.yml':
         - 'actions/checkout@v7.0.1'
+        - 'actions/setup-python@v7.1.0'
         - 'actions/upload-artifact@v7.0.2'
         - 'linux-system-roles/.github@main'
     '.github/workflows/shellcheck.yml':
@@ -109,7 +110,7 @@ dependencies:
         repo_id: 259445878
     'linux-system-roles/.github@main':
         ref: 'main'
-        commit: 'sha1-df8dd90550279264a8ff13a2153ff747d79047a1'
+        commit: 'sha1-54e8132c2d5c8ea4edf115040dc11cf0d5b2dfff'
         owner_id: 28014670
         repo_id: 320092621
     'sclorg/testing-farm-as-github-action@v4.3.1':
