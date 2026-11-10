@@ -18,18 +18,18 @@ permissions:
 jobs:
   ansible_test:
     if: inputs.requested || github.event_name != 'issue_comment'
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.versions.runner_os }}
     strategy:
       fail-fast: false  # get all results, not just the first failure
       matrix:
         versions:
-          - { ansible: "2-14", python: "3.9" }
-          - { ansible: "2-16", python: "3.11" }
-          - { ansible: "2-17", python: "3.12" }
-          - { ansible: "2-18", python: "3.12" }
-          - { ansible: "2-19", python: "3.13" }
-          - { ansible: "2-20", python: "3.13" }
-          - { ansible: "milestone", python: "3.13" }
+          - { ansible: "2-14", python: "3.9", runner_os: "ubuntu-latest" }
+          - { ansible: "2-16", python: "3.11", runner_os: "ubuntu-latest" }
+          - { ansible: "2-17", python: "3.12", runner_os: "ubuntu-latest" }
+          - { ansible: "2-20", python: "3.13", runner_os: "ubuntu-latest" }
+          - { ansible: "2-21", python: "3.13", runner_os: "ubuntu-latest" }
+          - { ansible: "2-22", python: "3.14", runner_os: "ubuntu-26.04" }
+          - { ansible: "milestone", python: "3.14", runner_os: "ubuntu-latest" }
     steps:
       - name: Get PR head SHA and context
         if: github.event_name == 'issue_comment'
@@ -71,7 +71,7 @@ jobs:
       - name: Install tox, tox-lsr
         run: |
           set -euxo pipefail
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@bfd11b23a1ed56388ea7ab8263d30e3172553a7c"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@b8adb1a54303ce668b39fedf86e89cd0895df948"
 
       - name: Set up Python
         uses: actions/setup-python@v7.1.0
@@ -82,10 +82,23 @@ jobs:
         run: tox -e collection
 
       - name: Run ansible-test
+        if: matrix.versions.ansible != '2-22'
         run: |
           tox \
             -x testenv:ansible-test-${{ matrix.versions.ansible }}.basepython="python${{ matrix.versions.python }}" \
             -e ansible-test-${{ matrix.versions.ansible }}
+
+      # https://bugs.launchpad.net/ubuntu/+source/podman/+bug/2154379
+      - name: Run ansible-test 2.22 without a container
+        if: matrix.versions.ansible == '2-22'
+        run: |
+          set -euo pipefail
+          python -m pip install 'ansible-core==2.22.*'
+          tempdir=$(mktemp -d)
+          trap 'rm -rf "$tempdir"' EXIT
+          cp -a .tox/ansible_collections "$tempdir/"
+          cd "$tempdir/ansible_collections/fedora/linux_system_roles"
+          ansible-test sanity
 
       - name: Set final commit status
         if: always() && github.event_name == 'issue_comment' && steps.head_sha_context.outputs.head_sha != ''

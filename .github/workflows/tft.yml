@@ -80,8 +80,8 @@ jobs:
           meta_main=meta/main.yml
           # All Fedora are supported, add latest Fedora versions to supported_platforms
           if yq '.galaxy_info.galaxy_tags[]' "$meta_main" | grep -qi fedora$; then
-            supported_platforms+=" Fedora-43"
             supported_platforms+=" Fedora-44"
+            supported_platforms+=" Fedora-45"
           fi
           # Specific Fedora versions supported
           if yq '.galaxy_info.galaxy_tags[]' "$meta_main" | grep -qiP 'fedora\d+$'; then
@@ -107,10 +107,10 @@ jobs:
       matrix:
         include:
           # Ensure ansible version is a string!
-          - platform: Fedora-43
-            ansible_version: "2.20"
           - platform: Fedora-44
             ansible_version: "2.21"
+          - platform: Fedora-45
+            ansible_version: "2.22"
           - platform: CentOS-7-latest
             ansible_version: "2.9"
           - platform: CentOS-Stream-8
@@ -183,6 +183,7 @@ jobs:
           environment_settings: '{ "provisioning": { "tags": { "BusinessUnit": "system_roles" } } }'
           # Keeping SR_ARTIFACTS_URL at the bottom makes the link in logs clickable
           variables: "SR_ANSIBLE_VER=${{ matrix.ansible_version }};\
+            SR_ANSIBLE_VER_PRE_RELEASE=${{ matrix.pre_release }};\
             SR_REPO_NAME=${{ github.event.repository.name }};\
             SR_GITHUB_ORG=${{ github.repository_owner }};\
             SR_PR_NUM=${{ github.event.issue.number || github.event.number }};\

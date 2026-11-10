@@ -25,8 +25,8 @@ jobs:
           # QEMU
           - { image: "centos-9", env: "qemu-ansible-core-2-16" }
           - { image: "centos-10", env: "qemu-ansible-core-2-17" }
-          - { image: "fedora-43", env: "qemu-ansible-core-2-20" }
           - { image: "fedora-44", env: "qemu-ansible-core-2-21" }
+          - { image: "fedora-45", env: "qemu-ansible-core-2-22", python: "3.14" }
           - { image: "leap-15.6", env: "qemu-ansible-core-2-18" }
           - { image: "leap-16.0", env: "qemu-ansible-core-2-20" }
 
@@ -36,11 +36,12 @@ jobs:
           # broken on non-running dbus
           # - { image: "centos-10", env: "container-ansible-core-2-17" }
           - { image: "centos-10-bootc", env: "container-ansible-core-2-17" }
-          - { image: "fedora-43", env: "container-ansible-core-2-20" }
           - { image: "fedora-44", env: "container-ansible-core-2-21" }
-          - { image: "fedora-43-bootc", env: "container-ansible-core-2-20" }
+          - { image: "fedora-45", env: "container-ansible-core-2-22", python: "3.14" }
           # ansible-core 2.21 cannot enable services using service module in bootc images
           - { image: "fedora-44-bootc", env: "container-ansible-core-2-20" }
+          # fedora-45 requires ansible-core 2.22
+          - { image: "fedora-45-bootc", env: "container-ansible-core-2-22", python: "3.14" }
 
     env:
       TOX_ARGS: "--skip-tags tests::infiniband,tests::nvme,tests::scsi"
@@ -127,6 +128,12 @@ jobs:
           echo "set man-db/auto-update false" | sudo debconf-communicate
           sudo dpkg-reconfigure man-db
 
+      - name: Set up Python
+        if: steps.check_platform.outputs.supported && matrix.scenario.python != ''
+        uses: actions/setup-python@v7.1.0
+        with:
+          python-version: ${{ matrix.scenario.python }}
+
       - name: Install test dependencies
         if: steps.check_platform.outputs.supported
         run: |
@@ -134,7 +141,7 @@ jobs:
           python3 -m pip install --upgrade pip
           sudo apt update
           sudo apt install -y --no-install-recommends git ansible-core genisoimage qemu-system-x86 qemu-utils
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@bfd11b23a1ed56388ea7ab8263d30e3172553a7c"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@b8adb1a54303ce668b39fedf86e89cd0895df948"
 
       - name: Check for podman version 5 or higher
         id: check_podman_version
