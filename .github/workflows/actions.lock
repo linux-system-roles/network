@@ -26,7 +26,7 @@ workflows:
     '.github/workflows/citest.yml': []
     '.github/workflows/codeql.yml':
         - 'actions/checkout@v7.0.1'
-        - 'github/codeql-action@v4.39.1'
+        - 'github/codeql-action@v4.39.3'
         - 'linux-system-roles/.github@main'
     '.github/workflows/codespell.yml':
         - 'actions/checkout@v7.0.1'
@@ -103,14 +103,14 @@ dependencies:
         commit: 'sha1-e3258cca84ce02b0bb36a3d41f2c18f719a0cc1a'
         owner_id: 39140587
         repo_id: 263411323
-    'github/codeql-action@v4.39.1':
-        ref: 'v4.39.1'
-        commit: 'sha1-9b3254085494b55a0f7c4c2b3d2d52cc712ce370'
+    'github/codeql-action@v4.39.3':
+        ref: 'v4.39.3'
+        commit: 'sha1-33d7b85da1a04171e211befe2c739303b9a4c066'
         owner_id: 9919
         repo_id: 259445878
     'linux-system-roles/.github@main':
         ref: 'main'
-        commit: 'sha1-54e8132c2d5c8ea4edf115040dc11cf0d5b2dfff'
+        commit: 'sha1-6a871b700c52584c272c33029b1bdd62a0e474cb'
         owner_id: 28014670
         repo_id: 320092621
     'sclorg/testing-farm-as-github-action@v4.3.1':

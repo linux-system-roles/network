@@ -23,7 +23,7 @@ jobs:
       fail-fast: false  # get all results, not just the first failure
       matrix:
         versions:
-          - { ansible: "2-14", python: "3.9", runner_os: "ubuntu-latest" }
+          - { ansible: "2-14", python: "3.9", runner_os: "ubuntu-24.04" }
           - { ansible: "2-16", python: "3.11", runner_os: "ubuntu-latest" }
           - { ansible: "2-17", python: "3.12", runner_os: "ubuntu-latest" }
           - { ansible: "2-20", python: "3.13", runner_os: "ubuntu-latest" }
@@ -71,7 +71,7 @@ jobs:
       - name: Install tox, tox-lsr
         run: |
           set -euxo pipefail
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@b8adb1a54303ce668b39fedf86e89cd0895df948"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@b30596c6fd1863b2eed20206ef32d13eac478e18"
 
       - name: Set up Python
         uses: actions/setup-python@v7.1.0

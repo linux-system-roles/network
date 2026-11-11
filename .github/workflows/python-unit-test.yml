@@ -22,7 +22,7 @@ jobs:
           - ver: "2.7"
             os: ubuntu-22.04
           - ver: "3.9"
-            os: ubuntu-latest
+            os: ubuntu-24.04
           - ver: "3.10"
             os: ubuntu-latest
           - ver: "3.11"
@@ -94,7 +94,7 @@ jobs:
             tox=tox
             virtualenv=virtualenv
           fi
-          pip install "$tox" "$virtualenv" "git+https://github.com/linux-system-roles/tox-lsr@b8adb1a54303ce668b39fedf86e89cd0895df948"
+          pip install "$tox" "$virtualenv" "git+https://github.com/linux-system-roles/tox-lsr@b30596c6fd1863b2eed20206ef32d13eac478e18"
           # If you have additional OS dependency packages e.g. libcairo2-dev
           # then put them in .github/config/ubuntu-requirements.txt, one
           # package per line.
