@@ -110,7 +110,7 @@ dependencies:
         repo_id: 259445878
     'linux-system-roles/.github@main':
         ref: 'main'
-        commit: 'sha1-6a871b700c52584c272c33029b1bdd62a0e474cb'
+        commit: 'sha1-c685ee6b59776f177edf523bf4eab71c8ee195eb'
         owner_id: 28014670
         repo_id: 320092621
     'sclorg/testing-farm-as-github-action@v4.3.1':

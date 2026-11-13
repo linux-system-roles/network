@@ -91,8 +91,8 @@ jobs:
 
           if [ -z "${existed_in_remote}" ]; then
             echo "Creating $branch branch"
-            git config --global user.name "${{ github.actor }}"
-            git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+            git config --global user.name "$GITHUB_ACTOR"
+            git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
             git checkout --orphan $branch
             git reset --hard
             git commit --allow-empty -m "Initializing $branch branch"
@@ -140,8 +140,8 @@ jobs:
 
       - name: Commit changes
         run: |
-          git config --global user.name "${{ github.actor }}"
-          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git config --global user.name "$GITHUB_ACTOR"
+          git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
           git add ${{ env.RELEASE_VERSION }}/README.html docs/index.html
           git commit -m "Update README.html for ${{ env.RELEASE_VERSION }}"
 

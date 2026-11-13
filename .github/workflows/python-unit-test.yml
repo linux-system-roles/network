@@ -94,7 +94,7 @@ jobs:
             tox=tox
             virtualenv=virtualenv
           fi
-          pip install "$tox" "$virtualenv" "git+https://github.com/linux-system-roles/tox-lsr@b30596c6fd1863b2eed20206ef32d13eac478e18"
+          pip install "$tox" "$virtualenv" "git+https://github.com/linux-system-roles/tox-lsr@241b655430b2fa3c2406b6d2a1190c9febb34b5b"
           # If you have additional OS dependency packages e.g. libcairo2-dev
           # then put them in .github/config/ubuntu-requirements.txt, one
           # package per line.
