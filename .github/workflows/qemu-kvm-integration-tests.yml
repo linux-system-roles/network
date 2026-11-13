@@ -141,7 +141,7 @@ jobs:
           python3 -m pip install --upgrade pip
           sudo apt update
           sudo apt install -y --no-install-recommends git ansible-core genisoimage qemu-system-x86 qemu-utils
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@b30596c6fd1863b2eed20206ef32d13eac478e18"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@241b655430b2fa3c2406b6d2a1190c9febb34b5b"
 
       - name: Check for podman version 5 or higher
         id: check_podman_version
@@ -165,6 +165,17 @@ jobs:
         run: >-
           curl -o ~/.config/linux-system-roles.json
           https://raw.githubusercontent.com/linux-system-roles/linux-system-roles.github.io/master/download/linux-system-roles.json
+
+      # https://bugs.launchpad.net/ubuntu/+source/podman/+bug/2154379
+      # https://lists.ubuntu.com/archives/apparmor/2026-January/013962.html
+      - name: Disable AppArmor and unprivileged_userns restriction
+        if: steps.check_platform.outputs.supported && startsWith(matrix.scenario.env, 'container')
+        run: |
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          # disable AppArmor
+          sudo apt install -y apparmor-utils
+          sudo aa-teardown
+          sudo aa-status && echo ERROR: failed to disable AppArmor || echo INFO: AppArmor disabled
 
       - name: Run qemu integration tests
         if: steps.check_platform.outputs.supported && startsWith(matrix.scenario.env, 'qemu')
@@ -257,6 +268,8 @@ jobs:
         if: steps.check_platform.outputs.supported && failure()
         run: |
           set -euo pipefail
+          # ensure python3-requests for check_logs
+          sudo apt install -y python3-requests
           # grab check_logs.py script
           curl -s -L -o check_logs.py https://raw.githubusercontent.com/linux-system-roles/auto-maintenance/refs/heads/main/check_logs.py
           chmod +x check_logs.py
