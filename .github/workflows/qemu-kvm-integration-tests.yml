@@ -141,7 +141,7 @@ jobs:
           python3 -m pip install --upgrade pip
           sudo apt update
           sudo apt install -y --no-install-recommends git ansible-core genisoimage qemu-system-x86 qemu-utils
-          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@8a78b9aa198295bb149510610453d33a1afe6366"
+          pip3 install "git+https://github.com/linux-system-roles/tox-lsr@2c1ac0f6720808ec9304663941d48df001185b54"
 
       - name: Check for podman version 5 or higher
         id: check_podman_version
