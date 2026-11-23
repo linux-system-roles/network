@@ -1,6 +1,42 @@
 Changelog
 =========
 
+[1.22.0] - 2026-11-23
+--------------------
+
+### New Features
+
+- feat: Argument spec implementation for network role (#913)
+- feat: show detailed NetworkManager connection diffs in check mode (#918)
+- feat: Add SLE16 support (#927)
+
+### Bug Fixes
+
+- fix: Check network packages by provides, and accept a string (#932)
+
+### Other Changes
+
+- ci: no CI test by default - implement slash commands for CI tests [citest_skip] (#915)
+- ci: ansible-test-milestone is now version 2.23 - update sanity ignore files (#916)
+- ci: allow lsr org members to run ci tests (#917)
+- ci: Run Dependabot monthly and group changes in a single PR (#924)
+- ci: bump tox-lsr version 3.21.0, myrotvorets/set-commit-status-action, support leap-16.0 (#926)
+- ci: use shared actions and lock workflow dependencies (#928)
+- ci: use shared actions and lock workflow dependencies (#929)
+- ci: Use order 10 for centos vault task so that it runs first (#930)
+- test: check invalid inputs for correct error message (#931)
+- docs: add AI policy; update setup-python, codeql actions (#933)
+- ci: retry centos vault repo failures using new package_retry yum/dnf plugin (#934)
+- refactor: use is string test for string type checks (#935)
+- docs: tag markdown plain text blocks correctly (#936)
+- ci: Use a fixed 5 minute backoff for CentOS vault repos (#937)
+- ci: support Fedora 45, Ansible 2.22; drop Fedora 43 (#938)
+- ci: use ubuntu 24.04 for test envs that use py39 (#939)
+- ci: use ubuntu 26.04 with podman 5.x and disable apparmor restriction (#940)
+- docs: add AGENTS.md with shared developer conventions from .github (#942)
+- docs: remove extra blank lines from .coderabbit.yaml (#943)
+- ci: update tox-lsr for support for tests/module_utils (#944)
+
 [1.21.1] - 2026-09-17
 --------------------
 
